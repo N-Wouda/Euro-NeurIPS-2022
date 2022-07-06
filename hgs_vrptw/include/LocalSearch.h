@@ -100,9 +100,10 @@ struct Node
     TimeWindowData postfixTwData;  // TimeWindowData for subsequence (cour...0)
                                    // including self
     bool isSeed;  // Tells whether a nextSeed is available (faster twData calculations)
-    TimeWindowData toNextSeedTwD;  // TimeWindowData for subsequence (cour...cour+4)
-                                   // excluding self, including cour + 4
-    Node *nextSeed;  // next seeded node if available (nullptr otherwise)
+    TimeWindowData
+        toNextSeedTwD;  // TimeWindowData for subsequence (cour...cour+4)
+                        // excluding self, including cour + 4
+    Node *nextSeed;     // next seeded node if available (nullptr otherwise)
 };
 
 // This struct is used for grouping all node data that is relevant during the
@@ -298,10 +299,10 @@ private:
     void preprocessInsertions(Route *R1,
                               Route *R2);  // Preprocess all insertion costs of
                                            // nodes of route R1 in route R2
-    void
-    preprocessInsertionsWithTW(Route *R1,
-                               Route *R2);  // Preprocess all insertion costs of
-                                            // nodes of route R1 in route R2
+    void preprocessInsertionsWithTW(
+        Route *R1,
+        Route *R2);  // Preprocess all insertion costs of
+                     // nodes of route R1 in route R2
 
     /* RELOCATE MOVES BETWEEN TRIPS*/
     bool RelocateStar();  // Calculates all SWAP* between nodeU and all routes

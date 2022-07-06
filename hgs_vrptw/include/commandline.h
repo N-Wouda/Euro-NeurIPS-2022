@@ -43,9 +43,10 @@ public:
     // argv are the command line arguments:
     //		1) The path to the genvrp executable to run
     //		2) The path to the instance to consider
-    //		3) The path to the file where the solution will be stored //TODO: Can
-    //this also be a number as a time limit? 		4) Possibly combinations of command
-    //line argument descriptions with their value (counted as 2 per argument in argc)
+    //		3) The path to the file where the solution will be stored //TODO:
+    //Can this also be a number as a time limit? 		4) Possibly combinations of
+    // command line argument descriptions with their value (counted as 2 per
+    // argument in argc)
     CommandLine(int argc, char *argv[])
     {
         // Check if the number of arguments is odd and at least three, since the

@@ -65,9 +65,10 @@ public:
                               // integers representing clients (can not be the
                               // depot 0). Size is nbClients
     std::vector<std::vector<int>>
-        chromR;  // For each vehicle, the associated sequence of deliveries (complete
-                 // solution). Size is nbVehicles. Routes are stored starting index
-                 // maxVehicles-1, so the first indices will likely be empty
+        chromR;  // For each vehicle, the associated sequence of deliveries
+                 // (complete solution). Size is nbVehicles. Routes are stored
+                 // starting index maxVehicles-1, so the first indices will
+                 // likely be empty
     std::vector<int> successors;  // For each node, the successor in the solution
                                   // (can be the depot 0). Size is nbClients+1
     std::vector<int>
@@ -78,8 +79,8 @@ public:
                              // be the depot 0), ordered by increasing proximity
                              // (the set container follows a natural ordering
                              // based on the value of the first pair)
-    bool isFeasible;       // Feasibility status of the individual
-    double biasedFitness;  // Biased fitness of the solution
+    bool isFeasible;         // Feasibility status of the individual
+    double biasedFitness;    // Biased fitness of the solution
 
     // Measuring cost of a solution from the information of chromR
     void evaluateCompleteCost();

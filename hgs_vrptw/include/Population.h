@@ -69,8 +69,9 @@ private:
     // Removes the worst individual in terms of biased fitness
     void removeWorstBiasedFitness(SubPopulation &subpop);
 
-    // Performs local search and adds the individual. If the individual is infeasible,
-    // with some probability we try to repair it and add it if this succeeds.
+    // Performs local search and adds the individual. If the individual is
+    // infeasible, with some probability we try to repair it and add it if this
+    // succeeds.
     void doLocalSearchAndAddIndividual(Individual *indiv);
 
 public:

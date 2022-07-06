@@ -412,10 +412,11 @@ void LocalSearch::run(Individual *indiv,
                                                // since last move evaluations
                                                // for nodeU
                 {
-                    // Randomizing the order of the neighborhoods within this loop
-                    // does not matter much as we are already randomizing the order
-                    // of the node pairs (and it's not very common to find improving
-                    // moves of different types for the same node pair)
+                    // Randomizing the order of the neighborhoods within this
+                    // loop does not matter much as we are already randomizing
+                    // the order of the node pairs (and it's not very common to
+                    // find improving moves of different types for the same node
+                    // pair)
                     setLocalVariablesRouteU();
                     setLocalVariablesRouteV();
                     if (MoveSingleClient())

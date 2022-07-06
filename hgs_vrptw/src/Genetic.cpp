@@ -19,8 +19,9 @@ void Genetic::run(int maxIterNonProd, int timeLimit)
         // makes no sense
         return;
     }
-    // Do iterations of the Genetic Algorithm, until more then maxIterNonProd consecutive
-    // iterations without improvement or a time limit (in seconds) is reached
+    // Do iterations of the Genetic Algorithm, until more then maxIterNonProd
+    // consecutive iterations without improvement or a time limit (in seconds)
+    // is reached
     int nbIterNonProd = 1;
     for (int nbIter = 0;
          nbIterNonProd <= maxIterNonProd && !params->isTimeLimitExceeded();
