@@ -30,16 +30,10 @@ public:
     }
 
     // Return the min unsigned integer value
-    static constexpr size_t min()
-    {
-        return 0;
-    }
+    static constexpr size_t min() { return 0; }
 
     // Return the max unsigned integer value
-    static constexpr size_t max()
-    {
-        return UINT_MAX;
-    }
+    static constexpr size_t max() { return UINT_MAX; }
 
     // Defines the operator '()'. So a new random number will be returned when
     // rng() is called on the XorShift128 instance rng.

@@ -26,8 +26,8 @@ SOFTWARE.*/
 
 #include "Params.h"
 
+#include <climits>
 #include <iostream>
-#include <limits.h>
 #include <string>
 
 // Class interacting with the command line
@@ -43,10 +43,10 @@ public:
     // argv are the command line arguments:
     //		1) The path to the genvrp executable to run
     //		2) The path to the instance to consider
-    //		3) The path to the file where the solution will be stored //TODO:
-    //Can this also be a number as a time limit? 		4) Possibly combinations of
-    // command line argument descriptions with their value (counted as 2 per
-    // argument in argc)
+    //		3) The path to the file where the solution will be stored
+    //          TODO: Can this also be a number as a time limit?
+    //      4) Possibly combinations of command line argument descriptions with
+    //         their value (counted as 2 per argument in argc)
     CommandLine(int argc, char *argv[])
     {
         // Check if the number of arguments is odd and at least three, since the
@@ -69,7 +69,8 @@ public:
             // only used for the DIMACS Challenge
             if (is_number(config.pathSolution))
             {
-                // Get time limit from controller (will also be terminated externally)
+                // Get time limit from controller (will also be terminated
+                // externally)
                 config.timeLimit = atoi(argv[2]);
                 config.pathSolution = config.pathInstance + ".sol";
                 config.isDimacsRun = true;
@@ -123,8 +124,8 @@ public:
                     config.penaltyBooster = atof(argv[i + 1]);
                 else if (std::string(argv[i])
                          == "-useSymmetricCorrelatedVertices")
-                    config.useSymmetricCorrelatedVertices = atoi(argv[i + 1])
-                                                            != 0;
+                    config.useSymmetricCorrelatedVertices
+                        = atoi(argv[i + 1]) != 0;
                 else if (std::string(argv[i]) == "-doRepeatUntilTimeLimit")
                     config.doRepeatUntilTimeLimit = atoi(argv[i + 1]) != 0;
                 else if (std::string(argv[i]) == "-minimumPopulationSize")
@@ -141,8 +142,8 @@ public:
                     config.repairProbability = atoi(argv[i + 1]);
                 else if (std::string(argv[i])
                          == "-growNbGranularAfterNonImprovementIterations")
-                    config.growNbGranularAfterNonImprovementIterations = atoi(
-                        argv[i + 1]);
+                    config.growNbGranularAfterNonImprovementIterations
+                        = atoi(argv[i + 1]);
                 else if (std::string(argv[i])
                          == "-growNbGranularAfterIterations")
                     config.growNbGranularAfterIterations = atoi(argv[i + 1]);
@@ -150,14 +151,15 @@ public:
                     config.growNbGranularSize = atoi(argv[i + 1]);
                 else if (std::string(argv[i])
                          == "-growPopulationAfterNonImprovementIterations")
-                    config.growPopulationAfterNonImprovementIterations = atoi(
-                        argv[i + 1]);
+                    config.growPopulationAfterNonImprovementIterations
+                        = atoi(argv[i + 1]);
                 else if (std::string(argv[i])
                          == "-growPopulationAfterIterations")
                     config.growPopulationAfterIterations = atoi(argv[i + 1]);
                 else if (std::string(argv[i]) == "-growPopulationSize")
                     config.growPopulationSize = atoi(argv[i + 1]);
-                else if (std::string(argv[i]) == "-intensificationProbabilityLS")
+                else if (std::string(argv[i])
+                         == "-intensificationProbabilityLS")
                     config.intensificationProbabilityLS = atoi(argv[i + 1]);
                 else if (std::string(argv[i]) == "-diversityWeight")
                     config.diversityWeight = atof(argv[i + 1]);
@@ -167,8 +169,8 @@ public:
                     config.skipSwapStarDist = atoi(argv[i + 1]) != 0;
                 else if (std::string(argv[i])
                          == "-circleSectorOverlapToleranceDegrees")
-                    config.circleSectorOverlapToleranceDegrees = atoi(
-                        argv[i + 1]);
+                    config.circleSectorOverlapToleranceDegrees
+                        = atoi(argv[i + 1]);
                 else if (std::string(argv[i]) == "-minCircleSectorSizeDegrees")
                     config.minCircleSectorSizeDegrees = atoi(argv[i + 1]);
                 else

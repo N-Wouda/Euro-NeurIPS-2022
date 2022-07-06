@@ -24,7 +24,7 @@ void Population::doLocalSearchAndAddIndividual(Individual *indiv)
     // the penalties for infeasibilities (w.r.t. capacities and time warps) in a
     // new Local Search in case of infeasibility
     if (!indiv->isFeasible
-        && params->rng() % 100 < (unsigned int) params->config.repairProbability)
+        && params->rng() % 100 < (unsigned int)params->config.repairProbability)
     {
         localSearch->run(indiv,
                          params->penaltyCapacity * 10.,
@@ -55,8 +55,8 @@ void Population::generatePopulation()
     double fractionGeneratedSweep = params->config.fractionGeneratedSweep;
     double fractionGeneratedRandomly = params->config.fractionGeneratedRandomly;
     int minSweepFillPercentage = params->config.minSweepFillPercentage;
-    int maxToleratedCapacityViolation = params->config
-                                            .maxToleratedCapacityViolation;
+    int maxToleratedCapacityViolation
+        = params->config.maxToleratedCapacityViolation;
     int maxToleratedTimeWarp = params->config.maxToleratedTimeWarp;
     double initialTimeWarpPenalty = params->config.initialTimeWarpPenalty;
     // ------- End of configurable parameters
@@ -73,14 +73,14 @@ void Population::generatePopulation()
 
     // Too low fill percentage may cause that not all clients are planned
     minSweepFillPercentage = std::max(minSweepFillPercentage, 30);
-    int nofNearestIndividualsToGenerate = round(fractionGeneratedNearest
-                                                * nofIndividuals);
-    int nofFurthestIndividualsToGenerate = round(fractionGeneratedFurthest
-                                                 * nofIndividuals);
-    int nofSweepIndividualsToGenerate = round(fractionGeneratedSweep
-                                              * nofIndividuals);
-    int nofRandomIndividualsToGenerate = round(fractionGeneratedRandomly
-                                               * nofIndividuals);
+    int nofNearestIndividualsToGenerate
+        = round(fractionGeneratedNearest * nofIndividuals);
+    int nofFurthestIndividualsToGenerate
+        = round(fractionGeneratedFurthest * nofIndividuals);
+    int nofSweepIndividualsToGenerate
+        = round(fractionGeneratedSweep * nofIndividuals);
+    int nofRandomIndividualsToGenerate
+        = round(fractionGeneratedRandomly * nofIndividuals);
 
     // Generate some individuals using the NEAREST construction heuristic
     for (int i = 0; i < nofNearestIndividualsToGenerate; i++)
@@ -95,14 +95,11 @@ void Population::generatePopulation()
         // Create the first individual without violations
         int toleratedCapacityViolation
             = i == 0 ? 0 : params->rng() % (maxToleratedCapacityViolation + 1);
-        int toleratedTimeWarp = i == 0 ? 0
-                                       : params->rng()
-                                             % (maxToleratedTimeWarp + 1);
+        int toleratedTimeWarp
+            = i == 0 ? 0 : params->rng() % (maxToleratedTimeWarp + 1);
         Individual indiv(params, false);
-        localSearch->constructIndividualWithSeedOrder(toleratedCapacityViolation,
-                                                      toleratedTimeWarp,
-                                                      false,
-                                                      &indiv);
+        localSearch->constructIndividualWithSeedOrder(
+            toleratedCapacityViolation, toleratedTimeWarp, false, &indiv);
         doLocalSearchAndAddIndividual(&indiv);
     }
 
@@ -124,14 +121,11 @@ void Population::generatePopulation()
         // Create the first individual without violations
         int toleratedCapacityViolation
             = i == 0 ? 0 : params->rng() % (maxToleratedCapacityViolation + 1);
-        int toleratedTimeWarp = i == 0 ? 0
-                                       : params->rng()
-                                             % (maxToleratedTimeWarp + 1);
+        int toleratedTimeWarp
+            = i == 0 ? 0 : params->rng() % (maxToleratedTimeWarp + 1);
         Individual indiv(params, false);
-        localSearch->constructIndividualWithSeedOrder(toleratedCapacityViolation,
-                                                      toleratedTimeWarp,
-                                                      true,
-                                                      &indiv);
+        localSearch->constructIndividualWithSeedOrder(
+            toleratedCapacityViolation, toleratedTimeWarp, true, &indiv);
         doLocalSearchAndAddIndividual(&indiv);
     }
 
@@ -151,11 +145,10 @@ void Population::generatePopulation()
             return;
         }
         // Create the first individual without load restrictions
-        int fillPercentage = i == 0 ? 100
-                                    : minSweepFillPercentage
-                                          + params->rng()
-                                                % (100 - minSweepFillPercentage
-                                                   + 1);
+        int fillPercentage
+            = i == 0 ? 100
+                     : minSweepFillPercentage
+                           + params->rng() % (100 - minSweepFillPercentage + 1);
         Individual indiv(params, false);
         localSearch->constructIndividualBySweep(fillPercentage, &indiv);
         doLocalSearchAndAddIndividual(&indiv);
@@ -201,8 +194,8 @@ bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
     }
 
     // Find the adequate subpopulation in relation to the individual feasibility
-    SubPopulation &subpop = (indiv->isFeasible) ? feasibleSubpopulation
-                                                : infeasibleSubpopulation;
+    SubPopulation &subpop
+        = (indiv->isFeasible) ? feasibleSubpopulation : infeasibleSubpopulation;
 
     // Create a copy of the individual and update the proximity structures
     // calculating inter-individual distances
@@ -294,10 +287,10 @@ void Population::updateBiasedFitnesses(SubPopulation &pop)
         {
             // Ranking the individuals based on the diversity rank and diversity
             // measure from 0 to 1
-            double divRank = static_cast<double>(i)
-                             / static_cast<double>(pop.size() - 1);
-            double fitRank = ranking[i].second
-                             / static_cast<double>(pop.size() - 1);
+            double divRank
+                = static_cast<double>(i) / static_cast<double>(pop.size() - 1);
+            double fitRank
+                = ranking[i].second / static_cast<double>(pop.size() - 1);
 
             // Elite individuals cannot be smaller than population size
             if (static_cast<int>(pop.size()) <= params->config.nbElite)
@@ -341,9 +334,10 @@ void Population::removeWorstBiasedFitness(SubPopulation &pop)
     // Loop over all individuals and save the wordt individual
     for (int i = 1; i < static_cast<int>(pop.size()); i++)
     {
-        // An averageBrokenPairsDistanceClosest equal to 0 indicates that a clone exists
-        bool isClone = (pop[i]->averageBrokenPairsDistanceClosest(1)
-                        < MY_EPSILON);
+        // An averageBrokenPairsDistanceClosest equal to 0 indicates that a
+        // clone exists
+        bool isClone
+            = (pop[i]->averageBrokenPairsDistanceClosest(1) < MY_EPSILON);
         if ((isClone && !isWorstIndividualClone)
             || (isClone == isWorstIndividualClone
                 && pop[i]->biasedFitness > worstIndividualBiasedFitness))
@@ -391,24 +385,21 @@ void Population::restart()
 void Population::managePenalties()
 {
     // Setting some bounds [0.1,100000] to the penalty values for safety
-    double fractionFeasibleLoad = static_cast<double>(
-                                      std::count(listFeasibilityLoad.begin(),
-                                                 listFeasibilityLoad.end(),
-                                                 true))
-                                  / static_cast<double>(
-                                      listFeasibilityLoad.size());
+    double fractionFeasibleLoad
+        = static_cast<double>(std::count(
+              listFeasibilityLoad.begin(), listFeasibilityLoad.end(), true))
+          / static_cast<double>(listFeasibilityLoad.size());
     if (fractionFeasibleLoad <= 0.01 && params->config.penaltyBooster > 0.
         && params->penaltyCapacity < 100000.)
     {
-        params->penaltyCapacity = std::min(params->penaltyCapacity
-                                               * params->config.penaltyBooster,
-                                           100000.);
+        params->penaltyCapacity = std::min(
+            params->penaltyCapacity * params->config.penaltyBooster, 100000.);
     }
     else if (fractionFeasibleLoad < params->config.targetFeasible - 0.05
              && params->penaltyCapacity < 100000.)
     {
-        params->penaltyCapacity = std::min(params->penaltyCapacity * 1.2,
-                                           100000.);
+        params->penaltyCapacity
+            = std::min(params->penaltyCapacity * 1.2, 100000.);
     }
     else if (fractionFeasibleLoad > params->config.targetFeasible + 0.05
              && params->penaltyCapacity > 0.1)
@@ -425,15 +416,14 @@ void Population::managePenalties()
     if (fractionFeasibleTimeWarp <= 0.01 && params->config.penaltyBooster > 0.
         && params->penaltyTimeWarp < 100000.)
     {
-        params->penaltyTimeWarp = std::min(params->penaltyTimeWarp
-                                               * params->config.penaltyBooster,
-                                           100000.);
+        params->penaltyTimeWarp = std::min(
+            params->penaltyTimeWarp * params->config.penaltyBooster, 100000.);
     }
     else if (fractionFeasibleTimeWarp < params->config.targetFeasible - 0.05
              && params->penaltyTimeWarp < 100000.)
     {
-        params->penaltyTimeWarp = std::min(params->penaltyTimeWarp * 1.2,
-                                           100000.);
+        params->penaltyTimeWarp
+            = std::min(params->penaltyTimeWarp * 1.2, 100000.);
     }
     else if (fractionFeasibleTimeWarp > params->config.targetFeasible + 0.05
              && params->penaltyTimeWarp > 0.1)
@@ -453,7 +443,8 @@ void Population::managePenalties()
     }
 
     // If needed, reorder the individuals in the infeasible subpopulation since
-    // the penalty values have changed (simple bubble sort for the sake of simplicity)
+    // the penalty values have changed (simple bubble sort for the sake of
+    // simplicity)
     for (int i = 0; i < static_cast<int>(infeasibleSubpopulation.size()); i++)
     {
         for (size_t j = 0; j < infeasibleSubpopulation.size() - i - 1; j++)
@@ -475,15 +466,16 @@ Individual *Population::getBinaryTournament()
     Individual *individual1;
     Individual *individual2;
 
-    // Update the fitness values of all the individuals (feasible and infeasible)
+    // Update the fitness values of all the individuals (feasible and
+    // infeasible)
     updateBiasedFitnesses(feasibleSubpopulation);
     updateBiasedFitnesses(infeasibleSubpopulation);
 
     // Pick a first random number individual from the total population (of both
     // feasible and infeasible individuals)
-    int place1 = params->rng()
-                 % (feasibleSubpopulation.size()
-                    + infeasibleSubpopulation.size());
+    int place1
+        = params->rng()
+          % (feasibleSubpopulation.size() + infeasibleSubpopulation.size());
     if (place1 >= static_cast<int>(feasibleSubpopulation.size()))
     {
         individual1
@@ -496,9 +488,9 @@ Individual *Population::getBinaryTournament()
 
     // Pick a second random number individual from the total population (of both
     // feasible and infeasible individuals)
-    int place2 = params->rng()
-                 % (feasibleSubpopulation.size()
-                    + infeasibleSubpopulation.size());
+    int place2
+        = params->rng()
+          % (feasibleSubpopulation.size() + infeasibleSubpopulation.size());
     if (place2 >= static_cast<int>(feasibleSubpopulation.size()))
     {
         individual2
@@ -527,7 +519,8 @@ Population::getNonIdenticalParentsBinaryTournament()
     Individual *parentA = getBinaryTournament();
     Individual *parentB = getBinaryTournament();
     int num_tries = 1;
-    // Pick two other individuals as long as they are identical (try at most 9 times)
+    // Pick two other individuals as long as they are identical (try at most 9
+    // times)
     while (parentA->brokenPairsDistance(parentB) < MY_EPSILON && num_tries < 10)
     {
         parentB = getBinaryTournament();
@@ -625,16 +618,16 @@ void Population::printState(int nbIter, int nbIterNoImprovement)
                                                listFeasibilityTimeWarp.end(),
                                                true))
                     / static_cast<double>(listFeasibilityTimeWarp.size()));
-    std::printf(" | Pen %.2f %.2f",
-                params->penaltyCapacity,
-                params->penaltyTimeWarp);
+    std::printf(
+        " | Pen %.2f %.2f", params->penaltyCapacity, params->penaltyTimeWarp);
     std::cout << std::endl;
 }
 
 double Population::getDiversity(const SubPopulation &pop)
 {
     // The diversity of the population: The average of the
-    // averageBrokenPairsDistanceClosest over the best "mu" individuals of the population
+    // averageBrokenPairsDistanceClosest over the best "mu" individuals of the
+    // population
     double average = 0.;
 
     // Sum all the averageBrokenPairsDistanceClosest of the individuals
@@ -687,15 +680,15 @@ double Population::getAverageCost(const SubPopulation &pop)
 
 void Population::exportBKS(std::string fileName)
 {
-    // Create some variables to store the cost and the solution of the last BKS stored
+    // Create some variables to store the cost and the solution of the last BKS
+    // stored
     double readCost;
     std::vector<std::vector<int>> readSolution;
 
     // Read the current BKS solution from the file
     std::cout << "----- CHECKING FOR POSSIBLE BKS UPDATE" << std::endl;
-    bool readOK = Individual::readCVRPLibFormat(fileName,
-                                                readSolution,
-                                                readCost);
+    bool readOK
+        = Individual::readCVRPLibFormat(fileName, readSolution, readCost);
 
     // Check if the solution of the HGS is better than the current BKS
     if (bestSolutionOverall.myCostSol.penalizedCost < 1.e29
@@ -785,8 +778,8 @@ void Population::logSolution(int nbIter,
     myfile << std::endl;
 }
 
-Population::Population(Params *params, Split *split, LocalSearch *localSearch) :
-    params(params), split(split), localSearch(localSearch)
+Population::Population(Params *params, Split *split, LocalSearch *localSearch)
+    : params(params), split(split), localSearch(localSearch)
 {
     // Create lists for the load feasibility of the last 100 individuals
     // generated by LS, where all feasibilities are set to true

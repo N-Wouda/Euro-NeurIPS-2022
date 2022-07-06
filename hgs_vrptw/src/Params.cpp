@@ -14,7 +14,6 @@
 #include <string>
 #include <vector>
 
-
 Params::Params(const CommandLine &cl)
 {
     // Read and create some parameter values from the commandline
@@ -28,8 +27,8 @@ Params::Params(const CommandLine &cl)
     // to allow for faster calculations
     circleSectorOverlapTolerance = static_cast<int>(
         config.circleSectorOverlapToleranceDegrees / 360. * 65536);
-    minCircleSectorSize = static_cast<int>(config.minCircleSectorSizeDegrees
-                                           / 360. * 65536);
+    minCircleSectorSize
+        = static_cast<int>(config.minCircleSectorSizeDegrees / 360. * 65536);
 
     // Initialize some parameter values
     std::string content, content2, content3;
@@ -50,10 +49,9 @@ Params::Params(const CommandLine &cl)
         // Read the instance name from the first line and remove \r
         getline(inputFile, content);
         instanceName = content;
-        instanceName.erase(std::remove(instanceName.begin(),
-                                       instanceName.end(),
-                                       '\r'),
-                           instanceName.end());
+        instanceName.erase(
+            std::remove(instanceName.begin(), instanceName.end(), '\r'),
+            instanceName.end());
 
         // Read the next lines
         getline(inputFile,
@@ -96,8 +94,8 @@ Params::Params(const CommandLine &cl)
                 cli[nbClients].earliestArrival *= 10;
                 cli[nbClients].latestArrival *= 10;
                 cli[nbClients].serviceDuration *= 10;
-                cli[nbClients].polarAngle = CircleSector::positive_mod(
-                    static_cast<int>(
+                cli[nbClients].polarAngle
+                    = CircleSector::positive_mod(static_cast<int>(
                         32768.
                         * atan2(cli[nbClients].coordY - cli[0].coordY,
                                 cli[nbClients].coordX - cli[0].coordX)
@@ -229,8 +227,8 @@ Params::Params(const CommandLine &cl)
                         }
 
                         cli[i].custNum--;
-                        cli[i].polarAngle = CircleSector::positive_mod(
-                            static_cast<int>(
+                        cli[i].polarAngle
+                            = CircleSector::positive_mod(static_cast<int>(
                                 32768.
                                 * atan2(cli[i].coordY - cli[0].coordY,
                                         cli[i].coordX - cli[0].coordX)
@@ -376,7 +374,8 @@ Params::Params(const CommandLine &cl)
                                     + config.pathInstance);
     }
 
-    // Default initialization if the number of vehicles has not been provided by the user
+    // Default initialization if the number of vehicles has not been provided by
+    // the user
     if (nbVehicles == INT_MAX)
     {
         // Safety margin: 30% + 3 more vehicles than the trivial bin packing LB
@@ -470,7 +469,6 @@ Params::Params(const CommandLine &cl)
         }
     }
 
-
     if (!isExplicitDistanceMatrix)
     {
         // Calculation of the distance matrix
@@ -503,10 +501,9 @@ Params::Params(const CommandLine &cl)
         }
     }
 
-
     // Compute order proximities once
-    orderProximities = std::vector<std::vector<std::pair<double, int>>>(
-        nbClients + 1);
+    orderProximities
+        = std::vector<std::vector<std::pair<double, int>>>(nbClients + 1);
     // Loop over all clients (excluding the depot)
     for (int i = 1; i <= nbClients; i++)
     {
@@ -514,7 +511,8 @@ Params::Params(const CommandLine &cl)
         auto &orderProximity = orderProximities[i];
         orderProximity.clear();
 
-        // Loop over all clients (excluding the depot and the specific client itself)
+        // Loop over all clients (excluding the depot and the specific client
+        // itself)
         for (int j = 1; j <= nbClients; j++)
         {
             if (i != j)
@@ -555,7 +553,8 @@ Params::Params(const CommandLine &cl)
         std::sort(orderProximity.begin(), orderProximity.end());
     }
 
-    // Calculate, for all vertices, the correlation for the nbGranular closest vertices
+    // Calculate, for all vertices, the correlation for the nbGranular closest
+    // vertices
     SetCorrelatedVertices();
 
     // Safeguards to avoid possible numerical instability in case of instances
@@ -580,10 +579,8 @@ Params::Params(const CommandLine &cl)
     }
 
     // A reasonable scale for the initial values of the penalties
-    penaltyCapacity = std::max(0.1,
-                               std::min(1000.,
-                                        static_cast<double>(maxDist)
-                                            / maxDemand));
+    penaltyCapacity = std::max(
+        0.1, std::min(1000., static_cast<double>(maxDist) / maxDemand));
 
     // Initial parameter values of these two parameters are not argued
     penaltyWaitTime = 0.;
@@ -602,7 +599,7 @@ double Params::getTimeElapsedSeconds()
             = (std::chrono::system_clock::now() - startWallClockTime);
         return wctduration.count();
     }
-    return (std::clock() - startCPUTime) / (double) CLOCKS_PER_SEC;
+    return (std::clock() - startCPUTime) / (double)CLOCKS_PER_SEC;
 }
 
 bool Params::isTimeLimitExceeded()

@@ -20,9 +20,8 @@ void Individual::evaluateCompleteCost()
             int latestReleaseTime = params->cli[chromR[r][0]].releaseTime;
             for (int i = 1; i < static_cast<int>(chromR[r].size()); i++)
             {
-                latestReleaseTime
-                    = std::max(latestReleaseTime,
-                               params->cli[chromR[r][i]].releaseTime);
+                latestReleaseTime = std::max(
+                    latestReleaseTime, params->cli[chromR[r][i]].releaseTime);
             }
             // Get the distance, load, serviceDuration and time associated with
             // the vehicle traveling from the depot to the first client Assume
@@ -58,7 +57,8 @@ void Individual::evaluateCompleteCost()
             {
                 // Sum the distance, load, serviceDuration and time associated
                 // with the vehicle traveling from the depot to the next client
-                distance += params->timeCost.get(chromR[r][i - 1], chromR[r][i]);
+                distance
+                    += params->timeCost.get(chromR[r][i - 1], chromR[r][i]);
                 load += params->cli[chromR[r][i]].demand;
                 service += params->cli[chromR[r][i]].serviceDuration;
                 time = time + params->cli[chromR[r][i - 1]].serviceDuration
@@ -67,8 +67,8 @@ void Individual::evaluateCompleteCost()
                 // Add possible waiting time
                 if (time < params->cli[chromR[r][i]].earliestArrival)
                 {
-                    waitTime += params->cli[chromR[r][i]].earliestArrival
-                                - time;
+                    waitTime
+                        += params->cli[chromR[r][i]].earliestArrival - time;
                     time = params->cli[chromR[r][i]].earliestArrival;
                 }
                 // Add possible time warp
@@ -86,10 +86,12 @@ void Individual::evaluateCompleteCost()
             // For the last client, the successors is the depot. Also update the
             // distance and time
             successors[chromR[r][chromR[r].size() - 1]] = 0;
-            distance += params->timeCost.get(chromR[r][chromR[r].size() - 1], 0);
-            time = time
-                   + params->cli[chromR[r][chromR[r].size() - 1]].serviceDuration
-                   + params->timeCost.get(chromR[r][chromR[r].size() - 1], 0);
+            distance
+                += params->timeCost.get(chromR[r][chromR[r].size() - 1], 0);
+            time
+                = time
+                  + params->cli[chromR[r][chromR[r].size() - 1]].serviceDuration
+                  + params->timeCost.get(chromR[r][chromR[r].size() - 1], 0);
 
             // For the depot, we only need to check the end of the time window
             // (add possible time warp)
@@ -111,13 +113,14 @@ void Individual::evaluateCompleteCost()
         }
     }
 
-    // When all vehicles are dealt with, calculated total penalized cost and check
-    // if the solution is feasible. (Wait time does not affect feasibility)
-    myCostSol.penalizedCost = myCostSol.distance
-                              + myCostSol.capacityExcess
-                                    * params->penaltyCapacity
-                              + myCostSol.timeWarp * params->penaltyTimeWarp
-                              + myCostSol.waitTime * params->penaltyWaitTime;
+    // When all vehicles are dealt with, calculated total penalized cost and
+    // check if the solution is feasible. (Wait time does not affect
+    // feasibility)
+    myCostSol.penalizedCost
+        = myCostSol.distance
+          + myCostSol.capacityExcess * params->penaltyCapacity
+          + myCostSol.timeWarp * params->penaltyTimeWarp
+          + myCostSol.waitTime * params->penaltyWaitTime;
     isFeasible = (myCostSol.capacityExcess < MY_EPSILON
                   && myCostSol.timeWarp < MY_EPSILON);
 }
@@ -148,7 +151,8 @@ void Individual::removeProximity(Individual *indiv)
 
 double Individual::brokenPairsDistance(Individual *indiv2)
 {
-    // Initialize the difference to zero. Then loop over all clients of this individual
+    // Initialize the difference to zero. Then loop over all clients of this
+    // individual
     int differences = 0;
     for (int j = 1; j <= params->nbClients; j++)
     {
@@ -159,8 +163,9 @@ double Individual::brokenPairsDistance(Individual *indiv2)
         {
             differences++;
         }
-        // Last loop covers all but the first arc. Increase the difference if the
-        // predecessor of j in this individual is not directly linked to j in indiv2
+        // Last loop covers all but the first arc. Increase the difference if
+        // the predecessor of j in this individual is not directly linked to j
+        // in indiv2
         if (predecessors[j] == 0 && indiv2->predecessors[j] != 0
             && indiv2->successors[j] != 0)
         {
@@ -173,8 +178,8 @@ double Individual::brokenPairsDistance(Individual *indiv2)
 double Individual::averageBrokenPairsDistanceClosest(int nbClosest)
 {
     double result = 0;
-    int maxSize = std::min(nbClosest,
-                           static_cast<int>(indivsPerProximity.size()));
+    int maxSize
+        = std::min(nbClosest, static_cast<int>(indivsPerProximity.size()));
     auto it = indivsPerProximity.begin();
     for (int i = 0; i < maxSize; i++)
     {
@@ -272,8 +277,8 @@ bool Individual::readCVRPLibFormat(std::string fileName,
     return false;
 }
 
-Individual::Individual(Params *params, bool initializeChromTAndShuffle) :
-    params(params), isFeasible(false), biasedFitness(0)
+Individual::Individual(Params *params, bool initializeChromTAndShuffle)
+    : params(params), isFeasible(false), biasedFitness(0)
 {
     successors = std::vector<int>(params->nbClients + 1);
     predecessors = std::vector<int>(params->nbClients + 1);

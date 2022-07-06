@@ -37,16 +37,16 @@ void Genetic::run(int maxIterNonProd, int timeLimit)
 
         /* LOCAL SEARCH */
         // Run the Local Search on the new individual
-        localSearch->run(offspring,
-                         params->penaltyCapacity,
-                         params->penaltyTimeWarp);
+        localSearch->run(
+            offspring, params->penaltyCapacity, params->penaltyTimeWarp);
         // Check if the new individual is the best feasible individual of the
         // population, based on penalizedCost
         bool isNewBest = population->addIndividual(offspring, true);
-        // In case of infeasibility, repair the individual with a certain probability
+        // In case of infeasibility, repair the individual with a certain
+        // probability
         if (!offspring->isFeasible
             && params->rng() % 100
-                   < (unsigned int) params->config.repairProbability)
+                   < (unsigned int)params->config.repairProbability)
         {
             // Run the Local Search again, but with penalties for
             // infeasibilities multiplied by 10
@@ -88,9 +88,8 @@ void Genetic::run(int maxIterNonProd, int timeLimit)
         if (params->config.logPoolInterval > 0
             && nbIter % params->config.logPoolInterval == 0)
         {
-            population->exportPopulation(nbIter,
-                                         params->config.pathSolution
-                                             + ".log.csv");
+            population->exportPopulation(
+                nbIter, params->config.pathSolution + ".log.csv");
         }
 
         /* FOR TESTS INVOLVING SUCCESSIVE RUNS UNTIL A TIME LIMIT: WE RESET THE
@@ -109,13 +108,15 @@ void Genetic::run(int maxIterNonProd, int timeLimit)
         if (nbIter > 0 && params->config.growNbGranularSize != 0
             && ((params->config.growNbGranularAfterIterations > 0
                  && nbIter % params->config.growNbGranularAfterIterations == 0)
-                || (params->config.growNbGranularAfterNonImprovementIterations > 0
+                || (params->config.growNbGranularAfterNonImprovementIterations
+                        > 0
                     && nbIterNonProd
                                % params->config
                                      .growNbGranularAfterNonImprovementIterations
                            == 0)))
         {
-            // Note: changing nbGranular also changes how often the order is reshuffled
+            // Note: changing nbGranular also changes how often the order is
+            // reshuffled
             params->config.nbGranular += params->config.growNbGranularSize;
             params->SetCorrelatedVertices();
         }
@@ -125,21 +126,22 @@ void Genetic::run(int maxIterNonProd, int timeLimit)
         if (nbIter > 0 && params->config.growPopulationSize != 0
             && ((params->config.growPopulationAfterIterations > 0
                  && nbIter % params->config.growPopulationAfterIterations == 0)
-                || (params->config.growPopulationAfterNonImprovementIterations > 0
+                || (params->config.growPopulationAfterNonImprovementIterations
+                        > 0
                     && nbIterNonProd
                                % params->config
                                      .growPopulationAfterNonImprovementIterations
                            == 0)))
         {
             // This will automatically adjust after some iterations
-            params->config.minimumPopulationSize += params->config
-                                                        .growPopulationSize;
+            params->config.minimumPopulationSize
+                += params->config.growPopulationSize;
         }
     }
 }
 
-Individual *Genetic::crossoverOX(
-    std::pair<const Individual *, const Individual *> parents)
+Individual *
+Genetic::crossoverOX(std::pair<const Individual *, const Individual *> parents)
 {
     // Picking the start and end of the crossover zone
     int start = params->rng() % params->nbClients;
@@ -169,8 +171,8 @@ void Genetic::doOXcrossover(
     int end)
 {
     // Frequency vector to track the clients which have been inserted already
-    std::vector<bool> freqClient = std::vector<bool>(params->nbClients + 1,
-                                                     false);
+    std::vector<bool> freqClient
+        = std::vector<bool>(params->nbClients + 1, false);
 
     // Copy in place the elements from start to end (possibly "wrapping around"
     // the end of the array)
@@ -224,17 +226,17 @@ Individual *Genetic::crossoverSREX(
     for (int r = 0; r < nOfMovedRoutes; r++)
     {
         // Insert the first
-        clientsInSelectedA
-            .insert(parents.first->chromR[(startA + r) % nOfRoutesA].begin(),
-                    parents.first->chromR[(startA + r) % nOfRoutesA].end());
+        clientsInSelectedA.insert(
+            parents.first->chromR[(startA + r) % nOfRoutesA].begin(),
+            parents.first->chromR[(startA + r) % nOfRoutesA].end());
     }
 
     std::unordered_set<int> clientsInSelectedB;
     for (int r = 0; r < nOfMovedRoutes; r++)
     {
-        clientsInSelectedB
-            .insert(parents.second->chromR[(startB + r) % nOfRoutesB].begin(),
-                    parents.second->chromR[(startB + r) % nOfRoutesB].end());
+        clientsInSelectedB.insert(
+            parents.second->chromR[(startB + r) % nOfRoutesB].begin(),
+            parents.second->chromR[(startB + r) % nOfRoutesB].end());
     }
 
     bool improved = true;
@@ -396,24 +398,22 @@ Individual *Genetic::crossoverSREX(
 
     // Identify differences between route sets
     std::unordered_set<int> clientsInSelectedANotB;
-    std::copy_if(clientsInSelectedA.begin(),
-                 clientsInSelectedA.end(),
-                 std::inserter(clientsInSelectedANotB,
-                               clientsInSelectedANotB.end()),
-                 [&clientsInSelectedB](int c) {
-                     return clientsInSelectedB.find(c)
-                            == clientsInSelectedB.end();
-                 });
+    std::copy_if(
+        clientsInSelectedA.begin(),
+        clientsInSelectedA.end(),
+        std::inserter(clientsInSelectedANotB, clientsInSelectedANotB.end()),
+        [&clientsInSelectedB](int c) {
+            return clientsInSelectedB.find(c) == clientsInSelectedB.end();
+        });
 
     std::unordered_set<int> clientsInSelectedBNotA;
-    std::copy_if(clientsInSelectedB.begin(),
-                 clientsInSelectedB.end(),
-                 std::inserter(clientsInSelectedBNotA,
-                               clientsInSelectedBNotA.end()),
-                 [&clientsInSelectedA](int c) {
-                     return clientsInSelectedA.find(c)
-                            == clientsInSelectedA.end();
-                 });
+    std::copy_if(
+        clientsInSelectedB.begin(),
+        clientsInSelectedB.end(),
+        std::inserter(clientsInSelectedBNotA, clientsInSelectedBNotA.end()),
+        [&clientsInSelectedA](int c) {
+            return clientsInSelectedA.find(c) == clientsInSelectedA.end();
+        });
 
     // Replace selected routes from parent A with routes from parent B
     for (int r = 0; r < nOfMovedRoutes; r++)
@@ -498,14 +498,14 @@ void Genetic::insertUnplannedTasks(Individual *offspring,
                 continue;
             }
 
-            newDistanceFromInsert = params->timeCost
-                                        .get(c, offspring->chromR[r][0]);
+            newDistanceFromInsert
+                = params->timeCost.get(c, offspring->chromR[r][0]);
             if (earliestArrival + newDistanceFromInsert
                 < params->cli[offspring->chromR[r][0]].latestArrival)
             {
-                distanceDelta = params->timeCost.get(0, c) + newDistanceToInsert
-                                - params->timeCost.get(0,
-                                                       offspring->chromR[r][0]);
+                distanceDelta
+                    = params->timeCost.get(0, c) + newDistanceToInsert
+                      - params->timeCost.get(0, offspring->chromR[r][0]);
                 if (distanceDelta < bestDistance)
                 {
                     bestDistance = distanceDelta;
@@ -516,20 +516,20 @@ void Genetic::insertUnplannedTasks(Individual *offspring,
             for (int i = 1; i < static_cast<int>(offspring->chromR[r].size());
                  i++)
             {
-                newDistanceToInsert = params->timeCost
-                                          .get(offspring->chromR[r][i - 1], c);
-                newDistanceFromInsert = params->timeCost
-                                            .get(c, offspring->chromR[r][i]);
+                newDistanceToInsert
+                    = params->timeCost.get(offspring->chromR[r][i - 1], c);
+                newDistanceFromInsert
+                    = params->timeCost.get(c, offspring->chromR[r][i]);
                 if (params->cli[offspring->chromR[r][i - 1]].earliestArrival
                             + newDistanceToInsert
                         < latestArrival
                     && earliestArrival + newDistanceFromInsert
                            < params->cli[offspring->chromR[r][i]].latestArrival)
                 {
-                    distanceDelta = newDistanceToInsert + newDistanceFromInsert
-                                    - params->timeCost
-                                          .get(offspring->chromR[r][i - 1],
-                                               offspring->chromR[r][i]);
+                    distanceDelta
+                        = newDistanceToInsert + newDistanceFromInsert
+                          - params->timeCost.get(offspring->chromR[r][i - 1],
+                                                 offspring->chromR[r][i]);
                     if (distanceDelta < bestDistance)
                     {
                         bestDistance = distanceDelta;
@@ -538,29 +538,27 @@ void Genetic::insertUnplannedTasks(Individual *offspring,
                 }
             }
 
-            newDistanceToInsert = params->timeCost
-                                      .get(offspring->chromR[r].back(), c);
+            newDistanceToInsert
+                = params->timeCost.get(offspring->chromR[r].back(), c);
             if (params->cli[offspring->chromR[r].back()].earliestArrival
                     + newDistanceToInsert
                 < latestArrival)
             {
-                distanceDelta = newDistanceToInsert + params->timeCost.get(c, 0)
-                                - params->timeCost
-                                      .get(offspring->chromR[r].back(), 0);
+                distanceDelta
+                    = newDistanceToInsert + params->timeCost.get(c, 0)
+                      - params->timeCost.get(offspring->chromR[r].back(), 0);
                 if (distanceDelta < bestDistance)
                 {
                     bestDistance = distanceDelta;
-                    bestLocation = {r,
-                                    static_cast<int>(
-                                        offspring->chromR[r].size())};
+                    bestLocation
+                        = {r, static_cast<int>(offspring->chromR[r].size())};
                 }
             }
         }
 
-        offspring->chromR[bestLocation.first]
-            .insert(offspring->chromR[bestLocation.first].begin()
-                        + bestLocation.second,
-                    c);
+        offspring->chromR[bestLocation.first].insert(
+            offspring->chromR[bestLocation.first].begin() + bestLocation.second,
+            c);
     }
 }
 
@@ -581,17 +579,17 @@ Individual *Genetic::bestOfSREXAndOXCrossovers(
 Genetic::Genetic(Params *params,
                  Split *split,
                  Population *population,
-                 LocalSearch *localSearch) :
-    params(params),
-    split(split),
-    population(population),
-    localSearch(localSearch)
+                 LocalSearch *localSearch)
+    : params(params),
+      split(split),
+      population(population),
+      localSearch(localSearch)
 {
     // After initializing the parameters of the Genetic object, also generate
     // new individuals in the array candidateOffsprings
-    std::generate(candidateOffsprings.begin(),
-                  candidateOffsprings.end(),
-                  [&] { return new Individual(params); });
+    std::generate(candidateOffsprings.begin(), candidateOffsprings.end(), [&] {
+        return new Individual(params);
+    });
 }
 
 Genetic::~Genetic(void)

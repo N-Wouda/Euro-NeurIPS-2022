@@ -10,7 +10,8 @@
 
 void Split::generalSplit(Individual *indiv, int nbMaxVehicles)
 {
-    // Do not apply Split with fewer vehicles than the trivial (LP) bin packing bound
+    // Do not apply Split with fewer vehicles than the trivial (LP) bin packing
+    // bound
     maxVehicles = std::max(nbMaxVehicles,
                            static_cast<int>(std::ceil(
                                params->totalDemand / params->vehicleCapacity)));
@@ -24,16 +25,16 @@ void Split::generalSplit(Individual *indiv, int nbMaxVehicles)
         // Store all information on clientSplits (use chromT[i-1] since the
         // depot is not included in chromT)
         cliSplit[i].demand = params->cli[indiv->chromT[i - 1]].demand;
-        cliSplit[i].serviceTime = params->cli[indiv->chromT[i - 1]]
-                                      .serviceDuration;
+        cliSplit[i].serviceTime
+            = params->cli[indiv->chromT[i - 1]].serviceDuration;
         cliSplit[i].d0_x = params->timeCost.get(0, indiv->chromT[i - 1]);
         cliSplit[i].dx_0 = params->timeCost.get(indiv->chromT[i - 1], 0);
 
         // The distance to the next client is INT_MIN for the last client
         if (i < params->nbClients)
         {
-            cliSplit[i].dnext = params->timeCost.get(indiv->chromT[i - 1],
-                                                     indiv->chromT[i]);
+            cliSplit[i].dnext
+                = params->timeCost.get(indiv->chromT[i - 1], indiv->chromT[i]);
         }
         else
         {
@@ -93,7 +94,8 @@ int Split::splitSimple(Individual *indiv)
 
                 // Keep track of the cumulative distance
                 // The start of each vehicle is from the depot to the client
-                // Otherwise use the distance from the previous client to this client
+                // Otherwise use the distance from the previous client to this
+                // client
                 if (j == i + 1)
                 {
                     distance += cliSplit[j].d0_x;
@@ -105,10 +107,10 @@ int Split::splitSimple(Individual *indiv)
 
                 // Calculate the cost when this client returns to the depot,
                 // including a penalty for possible capacity violations
-                double cost = distance + cliSplit[j].dx_0
-                              + params->penaltyCapacity
-                                    * std::max(load - params->vehicleCapacity,
-                                               0);
+                double cost
+                    = distance + cliSplit[j].dx_0
+                      + params->penaltyCapacity
+                            * std::max(load - params->vehicleCapacity, 0);
 
                 // If this leads to lower potential, update to this lower
                 // potential, and set the predecessor of j to be i
@@ -123,7 +125,8 @@ int Split::splitSimple(Individual *indiv)
     else
     {
         // The duration is not constrained here. This runs in O(n)
-        // Create a queue of size nbClients + 1, where the first node is 0 (the depot)
+        // Create a queue of size nbClients + 1, where the first node is 0 (the
+        // depot)
         Trivial_Deque queue = Trivial_Deque(params->nbClients + 1, 0);
 
         // Loop over all clients, excluding the depot
@@ -186,7 +189,8 @@ int Split::splitSimple(Individual *indiv)
         // Clear the corresponding chromR
         indiv->chromR[k].clear();
 
-        // Loop from the begin to the end of the route corresponding to this vehicle
+        // Loop from the begin to the end of the route corresponding to this
+        // vehicle
         int begin = pred[0][end];
         for (int ii = begin; ii < end; ii++)
         {
@@ -233,11 +237,10 @@ int Split::splitLF(Individual *indiv)
                         distance += cliSplit[j].d0_x;
                     else
                         distance += cliSplit[j - 1].dnext;
-                    double cost = distance + cliSplit[j].dx_0
-                                  + params->penaltyCapacity
-                                        * std::max(load
-                                                       - params->vehicleCapacity,
-                                                   0);
+                    double cost
+                        = distance + cliSplit[j].dx_0
+                          + params->penaltyCapacity
+                                * std::max(load - params->vehicleCapacity, 0);
                     if (potential[k][i] + cost < potential[k + 1][j])
                     {
                         potential[k + 1][j] = potential[k][i] + cost;
@@ -272,7 +275,8 @@ int Split::splitLF(Individual *indiv)
                     // If i is not dominated by the last of the pile
                     if (!dominates(queue.get_back(), i, k))
                     {
-                        // then i will be inserted, need to remove whoever he dominates
+                        // then i will be inserted, need to remove whoever he
+                        // dominates
                         while (queue.size() > 0
                                && dominatesRight(queue.get_back(), i, k))
                             queue.pop_back();
@@ -329,12 +333,9 @@ Split::Split(Params *params) : params(params)
     sumDistance = std::vector<int>(params->nbClients + 1, 0);
     sumLoad = std::vector<int>(params->nbClients + 1, 0);
     sumService = std::vector<int>(params->nbClients + 1, 0);
-    potential
-        = std::vector<std::vector<double>>(params->nbVehicles + 1,
-                                           std::vector<double>(params->nbClients
-                                                                   + 1,
-                                                               1.e30));
-    pred = std::vector<std::vector<int>>(params->nbVehicles + 1,
-                                         std::vector<int>(params->nbClients + 1,
-                                                          0));
+    potential = std::vector<std::vector<double>>(
+        params->nbVehicles + 1,
+        std::vector<double>(params->nbClients + 1, 1.e30));
+    pred = std::vector<std::vector<int>>(
+        params->nbVehicles + 1, std::vector<int>(params->nbClients + 1, 0));
 }

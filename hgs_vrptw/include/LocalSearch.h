@@ -79,14 +79,15 @@ struct Node
     bool isDepot;          // Tells whether this node represents a depot or not
     int cour;              // Node index
     int position;          // Position in the route
-    int whenLastTestedRI;  // "When" the RI moves for this node have been last tested
+    int whenLastTestedRI;  // "When" the RI moves for this node have been last
+                           // tested
     Node *next;            // Next node in the route order
     Node *prev;            // Previous node in the route order
     Route *route;          // Pointer towards the associated route
-    int cumulatedLoad;  // Cumulated load on this route until the client
-                        // (including itself)
-    int cumulatedTime;  // Cumulated time on this route until the client
-                        // (including itself)
+    int cumulatedLoad;     // Cumulated load on this route until the client
+                           // (including itself)
+    int cumulatedTime;     // Cumulated time on this route until the client
+                           // (including itself)
     int cumulatedReversalDistance;  // Difference of cost if the segment of
                                     // route (0...cour) is reversed (useful for
                                     // 2-opt moves with asymmetric problems)
@@ -94,12 +95,13 @@ struct Node
                        // removed (used in SWAP*)
     int deltaRemovalTW;  // Difference of cost in the current route if the node
                          // is removed, including TimeWarp (used in SWAP*)
-    TimeWindowData twData;  // TimeWindowData for individual node (cour)
-    TimeWindowData
-        prefixTwData;  // TimeWindowData for subsequence (0...cour) including self
+    TimeWindowData twData;         // TimeWindowData for individual node (cour)
+    TimeWindowData prefixTwData;   // TimeWindowData for subsequence (0...cour)
+                                   // including self
     TimeWindowData postfixTwData;  // TimeWindowData for subsequence (cour...0)
                                    // including self
-    bool isSeed;  // Tells whether a nextSeed is available (faster twData calculations)
+    bool isSeed;  // Tells whether a nextSeed is available (faster twData
+                  // calculations)
     TimeWindowData
         toNextSeedTwD;  // TimeWindowData for subsequence (cour...cour+4)
                         // excluding self, including cour + 4
@@ -164,10 +166,7 @@ struct ThreeBestInsert
         bestLocation[2] = nullptr;
     }
 
-    ThreeBestInsert()
-    {
-        reset();
-    };
+    ThreeBestInsert() { reset(); };
 };
 
 // Structured used to keep track of the best SWAP* move
@@ -230,14 +229,14 @@ private:
     bool routeUTimeWarp, routeULoadPenalty, routeVTimeWarp, routeVLoadPenalty;
     double penaltyCapacityLS, penaltyTimeWarpLS;
 
-    void
-    setLocalVariablesRouteU();  // Initializes some local variables and distances
-                                // associated to routeU to avoid always querying
-                                // the same values in the distance matrix
-    void
-    setLocalVariablesRouteV();  // Initializes some local variables and distances
-                                // associated to routeV to avoid always querying
-                                // the same values in the distance matrix
+    void setLocalVariablesRouteU();  // Initializes some local variables and
+                                     // distances associated to routeU to avoid
+                                     // always querying the same values in the
+                                     // distance matrix
+    void setLocalVariablesRouteV();  // Initializes some local variables and
+                                     // distances associated to routeV to avoid
+                                     // always querying the same values in the
+                                     // distance matrix
 
     // Functions in charge of excess load penalty calculations
     inline double penaltyExcessLoad(double myLoad)
@@ -260,10 +259,10 @@ private:
 
     /* RELOCATE MOVES */
     // (Legacy notations: move1...move9 from Prins 2004)
-    bool
-    MoveSingleClient();  // If U is a client node, remove U and insert it after V
-    bool MoveTwoClients();  // If U and X are client nodes, remove them and
-                            // insert (U,X) after V
+    bool MoveSingleClient();  // If U is a client node, remove U and insert it
+                              // after V
+    bool MoveTwoClients();    // If U and X are client nodes, remove them and
+                              // insert (U,X) after V
     bool MoveTwoClientsReversed();  // If U and X are client nodes, remove them
                                     // and insert (X,U) after V
 
@@ -299,27 +298,27 @@ private:
     void preprocessInsertions(Route *R1,
                               Route *R2);  // Preprocess all insertion costs of
                                            // nodes of route R1 in route R2
-    void preprocessInsertionsWithTW(
-        Route *R1,
-        Route *R2);  // Preprocess all insertion costs of
-                     // nodes of route R1 in route R2
+    void
+    preprocessInsertionsWithTW(Route *R1,
+                               Route *R2);  // Preprocess all insertion costs of
+                                            // nodes of route R1 in route R2
 
     /* RELOCATE MOVES BETWEEN TRIPS*/
     bool RelocateStar();  // Calculates all SWAP* between nodeU and all routes
                           // recently changed
 
     /* SUB-ROUTINES FOR TIME WINDOWS */
-    TimeWindowData getEdgeTwData(
-        Node *U,
-        Node *V);  // Calculates time window data for edge between U and V, does
-                   // not have to be currently adjacent
+    TimeWindowData
+    getEdgeTwData(Node *U,
+                  Node *V);  // Calculates time window data for edge between U
+                             // and V, does not have to be currently adjacent
     TimeWindowData getRouteSegmentTwData(
         Node *U,
         Node *V);  // Calculates time window data for segment in single route
     TimeWindowData MergeTWDataRecursive(const TimeWindowData &twData1,
                                         const TimeWindowData &twData2);
 
-    template<typename... Args>
+    template <typename... Args>
     inline TimeWindowData MergeTWDataRecursive(const TimeWindowData &first,
                                                const TimeWindowData &second,
                                                Args... args)
@@ -340,9 +339,8 @@ private:
 
 public:
     // Run the local search with the specified penalty values
-    void run(Individual *indiv,
-             double penaltyCapacityLS,
-             double penaltyTimeWarpLS);
+    void
+    run(Individual *indiv, double penaltyCapacityLS, double penaltyTimeWarpLS);
 
     // Initialize data for construction heuristics
     void initializeConstruction(Individual *indiv,

@@ -44,13 +44,13 @@ struct CostSol
                    // possible arrival) over all routes
 
     // Constructor, initialize everything with 0
-    CostSol() :
-        penalizedCost(0.),
-        nbRoutes(0),
-        distance(0),
-        capacityExcess(0),
-        waitTime(0),
-        timeWarp(0)
+    CostSol()
+        : penalizedCost(0.),
+          nbRoutes(0),
+          distance(0),
+          capacityExcess(0),
+          waitTime(0),
+          timeWarp(0)
     {
     }
 };
@@ -69,8 +69,9 @@ public:
                  // (complete solution). Size is nbVehicles. Routes are stored
                  // starting index maxVehicles-1, so the first indices will
                  // likely be empty
-    std::vector<int> successors;  // For each node, the successor in the solution
-                                  // (can be the depot 0). Size is nbClients+1
+    std::vector<int>
+        successors;  // For each node, the successor in the solution
+                     // (can be the depot 0). Size is nbClients+1
     std::vector<int>
         predecessors;  // For each node, the predecessor in the solution (can be
                        // the depot 0). Size is nbClients+1
@@ -97,7 +98,8 @@ public:
     // that differ between two solutions
     double brokenPairsDistance(Individual *indiv2);
 
-    // Returns the average distance of this individual with the nbClosest individuals
+    // Returns the average distance of this individual with the nbClosest
+    // individuals
     double averageBrokenPairsDistanceClosest(int nbClosest);
 
     // Exports a solution in CVRPLib format (adds a final line with the

@@ -39,9 +39,7 @@ struct ClientSplit
     int dnext;        // The distance from the client to the next client
 
     // Constructor, initializing everything with zero
-    ClientSplit() : demand(0), serviceTime(0), d0_x(0), dx_0(0), dnext(0)
-    {
-    }
+    ClientSplit() : demand(0), serviceTime(0), d0_x(0), dx_0(0), dnext(0) {}
 };
 
 // Simple Deque which is used for all Linear Split algorithms
@@ -53,16 +51,10 @@ struct Trivial_Deque
     int indexBack;   // Index of the back element
 
     // Removes the front element of the queue
-    inline void pop_front()
-    {
-        indexFront++;
-    }
+    inline void pop_front() { indexFront++; }
 
     // Removes the back element of the queue D
-    inline void pop_back()
-    {
-        indexBack--;
-    }
+    inline void pop_back() { indexBack--; }
 
     // Appends a new element to the back of the queue D
     inline void push_back(int i)
@@ -72,22 +64,13 @@ struct Trivial_Deque
     }
 
     // Returns the front element of the queue
-    inline int get_front()
-    {
-        return myDeque[indexFront];
-    }
+    inline int get_front() { return myDeque[indexFront]; }
 
     // Returns the second-front element of the queue
-    inline int get_next_front()
-    {
-        return myDeque[indexFront + 1];
-    }
+    inline int get_next_front() { return myDeque[indexFront + 1]; }
 
     // Returns the back element of the queue
-    inline int get_back()
-    {
-        return myDeque[indexBack];
-    }
+    inline int get_back() { return myDeque[indexBack]; }
 
     // Resets the queue
     void reset(int firstNode)
@@ -98,10 +81,7 @@ struct Trivial_Deque
     }
 
     // Returns the size of the queue
-    inline int size()
-    {
-        return indexBack - indexFront + 1;
-    }
+    inline int size() { return indexBack - indexFront + 1; }
 
     // Constructor, to creata a queue with place for nbElements elements, where
     // firstNode is the first node
@@ -149,9 +129,8 @@ private:
         return potential[k][i] + sumDistance[j] - sumDistance[i + 1]
                + cliSplit[i + 1].d0_x + cliSplit[j].dx_0
                + params->penaltyCapacity
-                     * std::max(sumLoad[j] - sumLoad[i]
-                                    - params->vehicleCapacity,
-                                0);
+                     * std::max(
+                         sumLoad[j] - sumLoad[i] - params->vehicleCapacity, 0);
     }
 
     // Tests if i dominates j as a predecessor for all nodes x >= j+1
@@ -180,8 +159,9 @@ private:
     int splitLF(Individual *indiv);
 
 public:
-    // General Split function (tests the unlimited fleet, and only if it does not
-    // produce a feasible solution, runs the Split algorithm for limited fleet)
+    // General Split function (tests the unlimited fleet, and only if it does
+    // not produce a feasible solution, runs the Split algorithm for limited
+    // fleet)
     void generalSplit(Individual *indiv, int nbMaxVehicles);
 
     // Constructor

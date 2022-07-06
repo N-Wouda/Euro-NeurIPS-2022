@@ -35,7 +35,7 @@ SOFTWARE.*/
 #include <string>
 #include <vector>
 
-#define MY_EPSILON \
+#define MY_EPSILON                                                             \
     0.00001  // Precision parameter, used to avoid numerical instabilities
 #define PI 3.14159265359  // Number pi, with 11 decimal precision
 
@@ -108,14 +108,14 @@ public:
         // Parameters of the Genetic Algorithm
         int minimumPopulationSize = 25;  // Minimum population size
         int generationSize
-            = 40;  // Number of solutions created before reaching the maximum
-                   // population size (i.e., generation size)
+            = 40;         // Number of solutions created before reaching the
+                          // maximum population size (i.e., generation size)
         int nbElite = 4;  // Number of elite individuals (reduced in HGS-2020)
         int nbClose = 5;  // Number of closest solutions/individuals considered
                           // when calculating diversity contribution
-        double targetFeasible
-            = 0.2;  // Reference proportion for the number of feasible individuals,
-                    // used for the adaptation of the penalty parameters
+        double targetFeasible = 0.2;  // Reference proportion for the number of
+                                      // feasible individuals, used for the
+                                      // adaptation of the penalty parameters
         int repairProbability
             = 50;  // Integer (0-100) representing repair probability if
                    // individual is infeasible after local search
@@ -129,7 +129,8 @@ public:
             = 5000;  // The number of iterations without improvements after
                      // which the minimumPopulationSize is grown
         int growPopulationAfterIterations
-            = 0;  // The number of iteration after which minimumPopulationSize is grown
+            = 0;  // The number of iteration after which minimumPopulationSize
+                  // is grown
         int growPopulationSize
             = 0;  // The number minimumPopulationSize is increase by
         double diversityWeight = 0.;  // Weight for diversity criterium, if 0,
@@ -188,9 +189,10 @@ public:
 
     // Data of the problem instance
     std::string instanceName;
-    bool isDurationConstraint;  // Indicates if the problem includes duration constraints
-    bool isTimeWindowConstraint;    // Indicates if the problem includes time
-                                    // window constraints
+    bool isDurationConstraint;    // Indicates if the problem includes duration
+                                  // constraints
+    bool isTimeWindowConstraint;  // Indicates if the problem includes time
+                                  // window constraints
     bool isExplicitDistanceMatrix;  // Indicates if the problem is with explicit
                                     // distances (non-euclidean)
     int nbClients;                  // Number of clients (excluding the depot)
@@ -205,7 +207,8 @@ public:
     Matrix timeCost;          // Distance matrix (including the depot!)
     std::vector<std::vector<std::pair<double, int>>>
         orderProximities;  // For each client, other clients sorted by proximity
-                           // (size nbClients + 1, but nothing stored for the depot!)
+                           // (size nbClients + 1, but nothing stored for the
+                           // depot!)
     std::vector<std::vector<int>>
         correlatedVertices;  // Neighborhood restrictions: For each client, list
                              // of nearby clients (size nbClients + 1, but
@@ -224,7 +227,8 @@ public:
     // Whether time limit is exceeded
     bool isTimeLimitExceeded();
 
-    // Calculate, for all vertices, the correlation for the nbGranular closest vertices
+    // Calculate, for all vertices, the correlation for the nbGranular closest
+    // vertices
     void SetCorrelatedVertices();
 };
 

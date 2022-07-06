@@ -2,11 +2,12 @@
 #define CIRCLESECTOR_H
 
 // Data structure to represent circle sectors
-// Angles are measured in [0,65535] instead of [0,359], in such a way that modulo
-// operations are much faster (since 2^16 = 65536) Credit to Fabian Giesen at
-// "https://web.archive.org/web/20200912191950" and
+// Angles are measured in [0,65535] instead of [0,359], in such a way that
+// modulo operations are much faster (since 2^16 = 65536) Credit to Fabian
+// Giesen at "https://web.archive.org/web/20200912191950" and
 // "https://fgiesen.wordpress.com/2015/09/24/intervals-in-modular-arithmetic/"
-// for useful implementation tips regarding interval overlaps in modular arithmetics
+// for useful implementation tips regarding interval overlaps in modular
+// arithmetics
 struct CircleSector
 {
     int start;  // The angle where the circle sector starts
@@ -41,7 +42,8 @@ struct CircleSector
 
     // Tests overlap of two circle sectors with tolerance
     // Note, this effectively is sector1.isEnclosed(sector2.start) ||
-    // sector2.isEnclosed(sector1.start), while also taking into account tolerance
+    // sector2.isEnclosed(sector1.start), while also taking into account
+    // tolerance
     static bool overlap(const CircleSector &sector1,
                         const CircleSector &sector2,
                         const int tolerance)
@@ -55,7 +57,8 @@ struct CircleSector
     }
 
     // Extends the circle sector to include an additional point
-    // Done in a "greedy" way, such that the resulting circle sector is the smallest
+    // Done in a "greedy" way, such that the resulting circle sector is the
+    // smallest
     void extend(int point)
     {
         // Check if the point is in the circle sector
