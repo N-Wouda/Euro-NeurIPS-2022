@@ -11,6 +11,7 @@ TODO
 
 ### Team
 - Jansen, Yde <yde_jansen@hotmail.com>
+- Pentinga, Luuk <l.pentinga@rug.nl>
 - Wouda, Niels <n.a.wouda@rug.nl>
 
 ### Supervision
