@@ -2,7 +2,7 @@
 #ifndef XORSHIFT128_H
 #define XORSHIFT128_H
 
-#include <limits.h>
+#include <climits>
 
 // This is a Xorshift random number generators, also called shift-register
 // generators, which is a pseudorandom number generators. It generates the next

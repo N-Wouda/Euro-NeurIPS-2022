@@ -29,10 +29,10 @@ SOFTWARE.*/
 #include "Params.h"
 #include "Split.h"
 
+#include <ctime>
 #include <iosfwd>
 #include <list>
 #include <string>
-#include <time.h>
 #include <vector>
 
 // Create the alias SubPopulation for an object of type std::vector<Individual*>

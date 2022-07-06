@@ -7,8 +7,6 @@
 #include "Split.h"
 
 #include <algorithm>
-#include <iterator>
-#include <time.h>
 #include <unordered_set>
 
 void Genetic::run(int maxIterNonProd, int timeLimit)

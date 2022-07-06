@@ -5,7 +5,6 @@
 
 #include <cmath>
 #include <string>
-#include <utility>
 #include <vector>
 
 void Split::generalSplit(Individual *indiv, int nbMaxVehicles)

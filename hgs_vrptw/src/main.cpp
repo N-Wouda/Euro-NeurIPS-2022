@@ -1,5 +1,4 @@
 #include "Genetic.h"
-#include "Individual.h"
 #include "LocalSearch.h"
 #include "Params.h"
 #include "Population.h"
@@ -7,7 +6,6 @@
 #include "commandline.h"
 
 #include <iostream>
-#include <time.h>
 
 // Main class of the algorithm. Used to read from the parameters from the
 // command line, create the structures and initial population, and run the

@@ -27,17 +27,16 @@ SOFTWARE.*/
 #include "Matrix.h"
 #include "xorshift128.h"
 
-#include <assert.h>
+#include <cassert>
 #include <chrono>
+#include <climits>
 #include <ctime>
 #include <iostream>
-#include <limits.h>
 #include <string>
 #include <vector>
 
-#define MY_EPSILON                                                             \
-    0.00001  // Precision parameter, used to avoid numerical instabilities
-#define PI 3.14159265359  // Number pi, with 11 decimal precision
+#define MY_EPSILON 0.00001  // Used to avoid numerical instabilities
+#define PI 3.14159265359    // Pi, with 11 decimal precision
 
 // Structure of a Client, including its index, position, and all other variables
 // and parameters
