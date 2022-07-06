@@ -6,6 +6,9 @@ set(geneticSources
 set(individualSources
         Individual.cpp)
 
+set(localSearchSources
+        LocalSearch.cpp)
+
 set(paramsSources
         Params.cpp)
 
@@ -19,6 +22,7 @@ set(splitSources
 add_library(vrp
         ${geneticSources}
         ${individualSources}
+        ${localSearchSources}
         ${paramsSources}
         ${populationSources}
         ${splitSources})
