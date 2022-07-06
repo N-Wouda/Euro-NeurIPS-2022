@@ -2,11 +2,11 @@
 #define CIRCLESECTOR_H
 
 // Data structure to represent circle sectors
-// Angles are measured in [0,65535] instead of [0,359], in such a way that modulo operations are
-// much faster (since 2^16 = 65536) Credit to Fabian Giesen at
+// Angles are measured in [0,65535] instead of [0,359], in such a way that modulo
+// operations are much faster (since 2^16 = 65536) Credit to Fabian Giesen at
 // "https://web.archive.org/web/20200912191950" and
-// "https://fgiesen.wordpress.com/2015/09/24/intervals-in-modular-arithmetic/" for useful implementation tips regarding
-// interval overlaps in modular arithmetics
+// "https://fgiesen.wordpress.com/2015/09/24/intervals-in-modular-arithmetic/"
+// for useful implementation tips regarding interval overlaps in modular arithmetics
 struct CircleSector
 {
     int start;  // The angle where the circle sector starts
@@ -19,13 +19,14 @@ struct CircleSector
     static int positive_mod(int i)
     {
         // Using the formula positive_mod(i,x) = (i % x + x) % x
-        // Remark that "i % 65536" should be automatically compiled in an optimized form as "i &
-        // 0xffff" for faster calculations
+        // Remark that "i % 65536" should be automatically compiled in an
+        // optimized form as "i & 0xffff" for faster calculations
         return (i % 65536 + 65536) % 65536;
     }
 
     // Initialize a circle sector from a single point
-    // The function extend(int point) can be used to create a circle sector that is not only one point
+    // The function extend(int point) can be used to create a circle sector that
+    // is not only one point
     void initialize(int point)
     {
         start = point;
@@ -41,13 +42,16 @@ struct CircleSector
     // Tests overlap of two circle sectors with tolerance
     // Note, this effectively is sector1.isEnclosed(sector2.start) ||
     // sector2.isEnclosed(sector1.start), while also taking into account tolerance
-    static bool overlap(const CircleSector &sector1, const CircleSector &sector2, const int tolerance)
+    static bool overlap(const CircleSector &sector1,
+                        const CircleSector &sector2,
+                        const int tolerance)
     {
-        // the RHS is the size of the sector, by adding the tolerance outside of the positive_mod,
-        // we avoid overflow beyond a full circle
-        return (
-            (positive_mod(sector2.start - sector1.start) <= positive_mod(sector1.end - sector1.start) + tolerance)
-            || (positive_mod(sector1.start - sector2.start) <= positive_mod(sector2.end - sector2.start) + tolerance));
+        // the RHS is the size of the sector, by adding the tolerance outside of
+        // the positive_mod, we avoid overflow beyond a full circle
+        return ((positive_mod(sector2.start - sector1.start)
+                 <= positive_mod(sector1.end - sector1.start) + tolerance)
+                || (positive_mod(sector1.start - sector2.start)
+                    <= positive_mod(sector2.end - sector2.start) + tolerance));
     }
 
     // Extends the circle sector to include an additional point
@@ -57,7 +61,8 @@ struct CircleSector
         // Check if the point is in the circle sector
         if (!isEnclosed(point))
         {
-            // If the point is outside the circle sector, extend the circle sector in a greedy way
+            // If the point is outside the circle sector, extend the circle
+            // sector in a greedy way
             if (positive_mod(point - end) <= positive_mod(start - point))
                 end = point;
             else

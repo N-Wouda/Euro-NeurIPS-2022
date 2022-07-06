@@ -47,9 +47,10 @@ struct ClientSplit
 // Simple Deque which is used for all Linear Split algorithms
 struct Trivial_Deque
 {
-    std::vector<int> myDeque;  // Vector structure to keep the elements of the queue
-    int indexFront;            // Index of the front element
-    int indexBack;             // Index of the back element
+    std::vector<int>
+        myDeque;     // Vector structure to keep the elements of the queue
+    int indexFront;  // Index of the front element
+    int indexBack;   // Index of the back element
 
     // Removes the front element of the queue
     inline void pop_front()
@@ -102,7 +103,8 @@ struct Trivial_Deque
         return indexBack - indexFront + 1;
     }
 
-    // Constructor, to creata a queue with place for nbElements elements, where firstNode is the first node
+    // Constructor, to creata a queue with place for nbElements elements, where
+    // firstNode is the first node
     Trivial_Deque(int nbElements, int firstNode)
     {
         myDeque = std::vector<int>(nbElements);
@@ -116,37 +118,50 @@ class Split
 {
 private:
     Params *params;   // Problem parameters
-    int maxVehicles;  // Maximum number of vehicles (not lower than the trivial (LP) Bin Packing Bound)
+    int maxVehicles;  // Maximum number of vehicles (not lower than the trivial
+                      // (LP) Bin Packing Bound)
 
-    // Auxiliary data structures to run the Linear Split algorithm (all of size nbClients + 1)
+    // Auxiliary data structures to run the Linear Split algorithm (all of size
+    // nbClients + 1)
     std::vector<ClientSplit>
-        cliSplit;  // Vector of all clientSplits (size nbClients + 1, but nothing stored for the depot!)
+        cliSplit;  // Vector of all clientSplits (size nbClients + 1, but
+                   // nothing stored for the depot!)
     std::vector<std::vector<double>>
-        potential;  // potential[0][t] is the costs of a shortest path from 0 to t (so we want to minimize the potential)
-    // The next variable pred stores the client starting the route of a given client. So pred[k] is the client starting
-    // the route where k is also in.
-    std::vector<std::vector<int>> pred;  // Indice of the predecessor in an optimal path
-    std::vector<int> sumDistance;  // Cumulative distance. sumDistance[i] for i > 1 contains the sum of distances :
-                                   // sum_{k=1}^{i-1} d_{k,k+1}
-    std::vector<int> sumLoad;  // Cumulative demand. sumLoad[i] for i >= 1 contains the sum of loads : sum_{k=1}^{i} q_k
-    std::vector<int> sumService;  // Cumulative service time. sumService[i] for i >= 1 contains the sum of service time
-                                  // : sum_{k=1}^{i} s_k
+        potential;  // potential[0][t] is the costs of a shortest path from 0 to
+                    // t (so we want to minimize the potential)
+    // The next variable pred stores the client starting the route of a given
+    // client. So pred[k] is the client starting the route where k is also in.
+    std::vector<std::vector<int>>
+        pred;  // Indice of the predecessor in an optimal path
+    std::vector<int>
+        sumDistance;  // Cumulative distance. sumDistance[i] for i > 1 contains
+                      // the sum of distances : sum_{k=1}^{i-1} d_{k,k+1}
+    std::vector<int> sumLoad;  // Cumulative demand. sumLoad[i] for i >= 1
+                               // contains the sum of loads : sum_{k=1}^{i} q_k
+    std::vector<int>
+        sumService;  // Cumulative service time. sumService[i] for i >= 1
+                     // contains the sum of service time : sum_{k=1}^{i} s_k
 
     // To be called with i < j only
     // Computes the cost of propagating the label i until j
     inline double propagate(int i, int j, int k)
     {
-        return potential[k][i] + sumDistance[j] - sumDistance[i + 1] + cliSplit[i + 1].d0_x + cliSplit[j].dx_0
-               + params->penaltyCapacity * std::max(sumLoad[j] - sumLoad[i] - params->vehicleCapacity, 0);
+        return potential[k][i] + sumDistance[j] - sumDistance[i + 1]
+               + cliSplit[i + 1].d0_x + cliSplit[j].dx_0
+               + params->penaltyCapacity
+                     * std::max(sumLoad[j] - sumLoad[i]
+                                    - params->vehicleCapacity,
+                                0);
     }
 
     // Tests if i dominates j as a predecessor for all nodes x >= j+1
     // We assume that i < j
     inline bool dominates(int i, int j, int k)
     {
-        return potential[k][j] + cliSplit[j + 1].d0_x > potential[k][i] + cliSplit[i + 1].d0_x + sumDistance[j + 1]
-                                                            - sumDistance[i + 1]
-                                                            + params->penaltyCapacity * (sumLoad[j] - sumLoad[i]);
+        return potential[k][j] + cliSplit[j + 1].d0_x
+               > potential[k][i] + cliSplit[i + 1].d0_x + sumDistance[j + 1]
+                     - sumDistance[i + 1]
+                     + params->penaltyCapacity * (sumLoad[j] - sumLoad[i]);
     }
 
     // Tests if j dominates i as a predecessor for all nodes x >= j+1
@@ -154,7 +169,8 @@ private:
     inline bool dominatesRight(int i, int j, int k)
     {
         return potential[k][j] + cliSplit[j + 1].d0_x
-               < potential[k][i] + cliSplit[i + 1].d0_x + sumDistance[j + 1] - sumDistance[i + 1] + MY_EPSILON;
+               < potential[k][i] + cliSplit[i + 1].d0_x + sumDistance[j + 1]
+                     - sumDistance[i + 1] + MY_EPSILON;
     }
 
     // Split for unlimited fleet
@@ -164,8 +180,8 @@ private:
     int splitLF(Individual *indiv);
 
 public:
-    // General Split function (tests the unlimited fleet, and only if it does not produce a feasible solution, runs the
-    // Split algorithm for limited fleet)
+    // General Split function (tests the unlimited fleet, and only if it does not
+    // produce a feasible solution, runs the Split algorithm for limited fleet)
     void generalSplit(Individual *indiv, int nbMaxVehicles);
 
     // Constructor

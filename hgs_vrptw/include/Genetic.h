@@ -33,17 +33,20 @@ SOFTWARE.*/
 #include <array>
 #include <unordered_set>
 
-// Class to run the genetic algorithm, which incorporates functionality of population management, doing crossovers and
-// updating parameters.
+// Class to run the genetic algorithm, which incorporates functionality of
+// population management, doing crossovers and updating parameters.
 class Genetic
 {
 public:
-    // Running the genetic algorithm until maxIterNonProd consecutive iterations without improvement or a time limit (in
-    // seconds) is reached
+    // Running the genetic algorithm until maxIterNonProd consecutive iterations
+    // without improvement or a time limit (in seconds) is reached
     void run(int maxIterNonProd, int timeLimit);
 
     // Constructor
-    Genetic(Params *params, Split *split, Population *population, LocalSearch *localSearch);
+    Genetic(Params *params,
+            Split *split,
+            Population *population,
+            LocalSearch *localSearch);
 
     // Destructor
     ~Genetic();
@@ -61,25 +64,31 @@ private:
     // 0 and 1 are reserved for SREX, 2 and 3 are reserved for OX
     std::array<Individual *, numberOfCandidateOffsprings> candidateOffsprings;
 
-    // Function to do two OX Crossovers for a pair of individuals (the two parents) and return the best individual based
-    // on penalizedCost
-    Individual *crossoverOX(std::pair<const Individual *, const Individual *> parents);
-    // Function to do one (in place) OX Crossover for one individual 'result', given the two parents and the beginning
-    // and end (inclusive) of the crossover zone
+    // Function to do two OX Crossovers for a pair of individuals (the two
+    // parents) and return the best individual based on penalizedCost
+    Individual *crossoverOX(
+        std::pair<const Individual *, const Individual *> parents);
+    // Function to do one (in place) OX Crossover for one individual 'result',
+    // given the two parents and the beginning and end (inclusive) of the
+    // crossover zone
     void doOXcrossover(Individual *result,
                        std::pair<const Individual *, const Individual *> parents,
                        int start,
                        int end);
 
-    // Function to do two SREX Crossovers for a pair of individuals (the two parents) and return the best individual
-    // based on penalizedCost
-    Individual *crossoverSREX(std::pair<const Individual *, const Individual *> parents);
-    // Insert unplanned tasks (those that were in the removed routes of A but not the inserted routes of B or vice versa)
-    void insertUnplannedTasks(Individual *offspring, std::unordered_set<int> unplanned);
+    // Function to do two SREX Crossovers for a pair of individuals (the two
+    // parents) and return the best individual based on penalizedCost
+    Individual *crossoverSREX(
+        std::pair<const Individual *, const Individual *> parents);
+    // Insert unplanned tasks (those that were in the removed routes of A but
+    // not the inserted routes of B or vice versa)
+    void insertUnplannedTasks(Individual *offspring,
+                              std::unordered_set<int> unplanned);
 
-    // Function to do one OX and one SREX Crossover for a pair of individuals (the two parents), and get the best result
-    // based on penalizedCost
-    Individual *bestOfSREXAndOXCrossovers(std::pair<const Individual *, const Individual *> parents);
+    // Function to do one OX and one SREX Crossover for a pair of individuals
+    // (the two parents), and get the best result based on penalizedCost
+    Individual *bestOfSREXAndOXCrossovers(
+        std::pair<const Individual *, const Individual *> parents);
 };
 
 #endif
