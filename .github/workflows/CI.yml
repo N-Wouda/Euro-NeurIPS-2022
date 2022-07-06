@@ -33,7 +33,7 @@ jobs:
           poetry run python controller.py --instance instances/ORTEC-VRPTW-ASYM-0bdff870-d1-n458-k35.txt --epoch_tlim 30 --static -- python solver.py
       - uses: DoozyX/clang-format-lint-action@v0.13
         with:
-          source: 'baselines/hgs_vrptw'
+          source: 'hgs_vrptw'
           extensions: 'h,cpp'
           clangFormatVersion: 12
           style: allman

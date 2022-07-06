@@ -4,9 +4,9 @@
 
 #include <limits.h>
 
-// This is a Xorshift random number generators, also called shift-register generators, which is a pseudorandom number generators.
-// It generates the next number in the sequence by repeatedly taking the 'exclusive or' (the ^ operator) of a number with a bit-shifted version of itself.
-// For more information, see: https://en.wikipedia.org/wiki/Xorshift
+// This is a Xorshift random number generators, also called shift-register generators, which is a pseudorandom number
+// generators. It generates the next number in the sequence by repeatedly taking the 'exclusive or' (the ^ operator) of
+// a number with a bit-shifted version of itself. For more information, see: https://en.wikipedia.org/wiki/Xorshift
 class XorShift128
 {
     // This random number generator uses 4 numbers.
@@ -28,23 +28,23 @@ public:
     // Return the min unsigned integer value
     static constexpr size_t min()
     {
-	    return 0;
+        return 0;
     }
 
     // Return the max unsigned integer value
     static constexpr size_t max()
     {
-	    return UINT_MAX;
+        return UINT_MAX;
     }
 
     // Defines the operator '()'. So a new random number will be returned when rng() is called on the XorShift128 instance rng.
     unsigned operator()()
-	{
+    {
         // Algorithm "xor128" from p. 5 of Marsaglia, "Xorshift RNGs"
         unsigned t = state_[3];
 
         // Perform a contrived 32-bit shift.
-    	unsigned s = state_[0];
+        unsigned s = state_[0];
         state_[3] = state_[2];
         state_[2] = state_[1];
         state_[1] = s;
