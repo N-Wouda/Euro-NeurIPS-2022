@@ -10,7 +10,9 @@ TODO
 ## Contributors
 
 ### Team
+- Doorn, Jasper van <j.m.h.van.doorn@vu.nl>
 - Jansen, Yde <yde_jansen@hotmail.com>
+- Lan, Leon <l.lan@vu.nl>
 - Pentinga, Luuk <l.pentinga@rug.nl>
 - Wouda, Niels <n.a.wouda@rug.nl>
 
