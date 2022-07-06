@@ -30,7 +30,7 @@ def solve_static_vrptw(instance, time_limit=3600, tmp_dir="tmp", seed=1):
     instance_filename = os.path.join(tmp_dir, "problem.vrptw")
     tools.write_vrplib(instance_filename, instance, is_vrptw=True)
     
-    executable = os.path.join('baselines', 'hgs_vrptw', 'genvrp')
+    executable = os.path.join('release', 'bin', 'genvrp')
     # On windows, we may have genvrp.exe
     if platform.system() == 'Windows' and os.path.isfile(executable + '.exe'):
         executable = executable + '.exe'

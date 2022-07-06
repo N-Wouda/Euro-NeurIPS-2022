@@ -159,3 +159,5 @@ dmypy.json
 
 # IDE and compiled assets
 .idea/
+build/
+release/
