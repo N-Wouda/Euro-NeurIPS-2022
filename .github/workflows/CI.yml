@@ -25,10 +25,8 @@ jobs:
           pip install poetry
           poetry install
       - name: Make all
-        run: | 
-          cd hgs_vrptw
-          cmake && make
-          cd ..
+        run: |
+          cmake -Brelease -Shgs_vrptw && cd release && make
       - name: Test controller
         run: |
           poetry run python controller.py --instance instances/ORTEC-VRPTW-ASYM-0bdff870-d1-n458-k35.txt --epoch_tlim 5 -- python solver.py
