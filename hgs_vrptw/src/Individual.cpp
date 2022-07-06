@@ -20,16 +20,20 @@ void Individual::evaluateCompleteCost()
             int latestReleaseTime = params->cli[chromR[r][0]].releaseTime;
             for (int i = 1; i < static_cast<int>(chromR[r].size()); i++)
             {
-                latestReleaseTime = std::max(latestReleaseTime, params->cli[chromR[r][i]].releaseTime);
+                latestReleaseTime
+                    = std::max(latestReleaseTime,
+                               params->cli[chromR[r][i]].releaseTime);
             }
-            // Get the distance, load, serviceDuration and time associated with the vehicle traveling from the depot to
-            // the first client Assume depot has service time 0 and earliestArrival 0
+            // Get the distance, load, serviceDuration and time associated with
+            // the vehicle traveling from the depot to the first client Assume
+            // depot has service time 0 and earliestArrival 0
             int distance = params->timeCost.get(0, chromR[r][0]);
             int load = params->cli[chromR[r][0]].demand;
             int service = params->cli[chromR[r][0]].serviceDuration;
-            // Running time excludes service of current node. This is the time that runs with the vehicle traveling
-            // We start the route at the latest release time (or later but then we can just wait and there is no penalty
-            // for waiting)
+            // Running time excludes service of current node. This is the time
+            // that runs with the vehicle traveling We start the route at the
+            // latest release time (or later but then we can just wait and there
+            // is no penalty for waiting)
             int time = latestReleaseTime + distance;
             int waitTime = 0;
             int timeWarp = 0;
@@ -52,8 +56,8 @@ void Individual::evaluateCompleteCost()
             // Loop over all clients for this vehicle
             for (int i = 1; i < static_cast<int>(chromR[r].size()); i++)
             {
-                // Sum the distance, load, serviceDuration and time associated with the vehicle traveling from the depot
-                // to the next client
+                // Sum the distance, load, serviceDuration and time associated
+                // with the vehicle traveling from the depot to the next client
                 distance += params->timeCost.get(chromR[r][i - 1], chromR[r][i]);
                 load += params->cli[chromR[r][i]].demand;
                 service += params->cli[chromR[r][i]].serviceDuration;
@@ -63,7 +67,8 @@ void Individual::evaluateCompleteCost()
                 // Add possible waiting time
                 if (time < params->cli[chromR[r][i]].earliestArrival)
                 {
-                    waitTime += params->cli[chromR[r][i]].earliestArrival - time;
+                    waitTime += params->cli[chromR[r][i]].earliestArrival
+                                - time;
                     time = params->cli[chromR[r][i]].earliestArrival;
                 }
                 // Add possible time warp
@@ -78,19 +83,23 @@ void Individual::evaluateCompleteCost()
                 successors[chromR[r][i - 1]] = chromR[r][i];
             }
 
-            // For the last client, the successors is the depot. Also update the distance and time
+            // For the last client, the successors is the depot. Also update the
+            // distance and time
             successors[chromR[r][chromR[r].size() - 1]] = 0;
             distance += params->timeCost.get(chromR[r][chromR[r].size() - 1], 0);
-            time = time + params->cli[chromR[r][chromR[r].size() - 1]].serviceDuration
+            time = time
+                   + params->cli[chromR[r][chromR[r].size() - 1]].serviceDuration
                    + params->timeCost.get(chromR[r][chromR[r].size() - 1], 0);
 
-            // For the depot, we only need to check the end of the time window (add possible time warp)
+            // For the depot, we only need to check the end of the time window
+            // (add possible time warp)
             if (time > params->cli[0].latestArrival)
             {
                 timeWarp += time - params->cli[0].latestArrival;
                 time = params->cli[0].latestArrival;
             }
-            // Update variables that track stats on the whole solution (all vehicles combined)
+            // Update variables that track stats on the whole solution (all
+            // vehicles combined)
             myCostSol.distance += distance;
             myCostSol.waitTime += waitTime;
             myCostSol.timeWarp += timeWarp;
@@ -102,12 +111,15 @@ void Individual::evaluateCompleteCost()
         }
     }
 
-    // When all vehicles are dealt with, calculated total penalized cost and check if the solution is feasible. (Wait
-    // time does not affect feasibility)
-    myCostSol.penalizedCost = myCostSol.distance + myCostSol.capacityExcess * params->penaltyCapacity
+    // When all vehicles are dealt with, calculated total penalized cost and check
+    // if the solution is feasible. (Wait time does not affect feasibility)
+    myCostSol.penalizedCost = myCostSol.distance
+                              + myCostSol.capacityExcess
+                                    * params->penaltyCapacity
                               + myCostSol.timeWarp * params->penaltyTimeWarp
                               + myCostSol.waitTime * params->penaltyWaitTime;
-    isFeasible = (myCostSol.capacityExcess < MY_EPSILON && myCostSol.timeWarp < MY_EPSILON);
+    isFeasible = (myCostSol.capacityExcess < MY_EPSILON
+                  && myCostSol.timeWarp < MY_EPSILON);
 }
 
 void Individual::shuffleChromT()
@@ -140,14 +152,17 @@ double Individual::brokenPairsDistance(Individual *indiv2)
     int differences = 0;
     for (int j = 1; j <= params->nbClients; j++)
     {
-        // Increase the difference if the successor of j in this individual is not directly linked to j in indiv2
-        if (successors[j] != indiv2->successors[j] && successors[j] != indiv2->predecessors[j])
+        // Increase the difference if the successor of j in this individual is
+        // not directly linked to j in indiv2
+        if (successors[j] != indiv2->successors[j]
+            && successors[j] != indiv2->predecessors[j])
         {
             differences++;
         }
-        // Last loop covers all but the first arc. Increase the difference if the predecessor of j in this individual is
-        // not directly linked to j in indiv2
-        if (predecessors[j] == 0 && indiv2->predecessors[j] != 0 && indiv2->successors[j] != 0)
+        // Last loop covers all but the first arc. Increase the difference if the
+        // predecessor of j in this individual is not directly linked to j in indiv2
+        if (predecessors[j] == 0 && indiv2->predecessors[j] != 0
+            && indiv2->successors[j] != 0)
         {
             differences++;
         }
@@ -158,7 +173,8 @@ double Individual::brokenPairsDistance(Individual *indiv2)
 double Individual::averageBrokenPairsDistanceClosest(int nbClosest)
 {
     double result = 0;
-    int maxSize = std::min(nbClosest, static_cast<int>(indivsPerProximity.size()));
+    int maxSize = std::min(nbClosest,
+                           static_cast<int>(indivsPerProximity.size()));
     auto it = indivsPerProximity.begin();
     for (int i = 0; i < maxSize; i++)
     {
@@ -170,7 +186,8 @@ double Individual::averageBrokenPairsDistanceClosest(int nbClosest)
 
 void Individual::exportCVRPLibFormat(std::string fileName)
 {
-    std::cout << "----- WRITING SOLUTION WITH VALUE " << myCostSol.penalizedCost << " IN : " << fileName << std::endl;
+    std::cout << "----- WRITING SOLUTION WITH VALUE " << myCostSol.penalizedCost
+              << " IN : " << fileName << std::endl;
     std::ofstream myfile(fileName);
     if (myfile.is_open())
     {
@@ -178,7 +195,8 @@ void Individual::exportCVRPLibFormat(std::string fileName)
         {
             if (!chromR[k].empty())
             {
-                myfile << "Route #" << k + 1 << ":";  // Route IDs start at 1 in the file format
+                myfile << "Route #" << k + 1
+                       << ":";  // Route IDs start at 1 in the file format
                 for (int i : chromR[k])
                 {
                     myfile << " " << i;
@@ -195,12 +213,14 @@ void Individual::exportCVRPLibFormat(std::string fileName)
 
 void Individual::printCVRPLibFormat()
 {
-    std::cout << "----- PRINTING SOLUTION WITH VALUE " << myCostSol.penalizedCost << std::endl;
+    std::cout << "----- PRINTING SOLUTION WITH VALUE "
+              << myCostSol.penalizedCost << std::endl;
     for (int k = 0; k < params->nbVehicles; k++)
     {
         if (!chromR[k].empty())
         {
-            std::cout << "Route #" << k + 1 << ":";  // Route IDs start at 1 in the file format
+            std::cout << "Route #" << k + 1
+                      << ":";  // Route IDs start at 1 in the file format
             for (int i : chromR[k])
             {
                 std::cout << " " << i;
@@ -213,7 +233,9 @@ void Individual::printCVRPLibFormat()
     fflush(stdout);
 }
 
-bool Individual::readCVRPLibFormat(std::string fileName, std::vector<std::vector<int>> &readSolution, double &readCost)
+bool Individual::readCVRPLibFormat(std::string fileName,
+                                   std::vector<std::vector<int>> &readSolution,
+                                   double &readCost)
 {
     readSolution.clear();
     std::ifstream inputFile(fileName);
@@ -242,7 +264,8 @@ bool Individual::readCVRPLibFormat(std::string fileName, std::vector<std::vector
             return true;
         }
         else
-            std::cout << "----- UNEXPECTED WORD IN SOLUTION FORMAT: " << inputString << std::endl;
+            std::cout << "----- UNEXPECTED WORD IN SOLUTION FORMAT: "
+                      << inputString << std::endl;
     }
     else
         std::cout << "----- IMPOSSIBLE TO OPEN: " << fileName << std::endl;
