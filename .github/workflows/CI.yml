@@ -35,5 +35,4 @@ jobs:
         with:
           source: 'hgs_vrptw'
           extensions: 'h,cpp'
-          clangFormatVersion: 12
-          style: allman
+          clangFormatVersion: 10
