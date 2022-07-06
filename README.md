@@ -1,3 +1,5 @@
+[![CI](https://github.com/N-Wouda/Euro-NeurIPS-2022/actions/workflows/CI.yml/badge.svg)](https://github.com/N-Wouda/Euro-NeurIPS-2022/actions/workflows/CI.yml)
+
 # EURO Meets NeurIPS 2022 Vehicle Routing Competition
 
 Based on the quickstart code [here](https://github.com/ortec/euro-neurips-vrp-2022-quickstart).
