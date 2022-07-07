@@ -24,7 +24,8 @@ bool cmpd(double a, double b, double eps = 1e-5)
     return std::fabs(a - b) < eps;
 }
 
-void LocalSearch::initializeConstruction(std::vector<NodeToInsert> *nodesToInsert)
+void LocalSearch::initializeConstruction(
+    std::vector<NodeToInsert> *nodesToInsert)
 {
     // Initialize datastructures relevant for constructions.
     // Local search-related data structures are not initialized.
@@ -95,9 +96,8 @@ void LocalSearch::constructIndividualBySweep(int fillPercentage,
     // Sort nodes according to angle with depot.
     std::sort(std::begin(nodesToInsert),
               std::end(nodesToInsert),
-              [](NodeToInsert a, NodeToInsert b) {
-                  return a.angleFromDepot < b.angleFromDepot;
-              });
+              [](NodeToInsert a, NodeToInsert b)
+              { return a.angleFromDepot < b.angleFromDepot; });
 
     // Distribute clients over routes.
     int load = 0;
@@ -143,7 +143,8 @@ void LocalSearch::constructIndividualBySweep(int fillPercentage,
         // Sort routes with short time window in increasing end of time window.
         std::sort(std::begin(nodeIndicesToInsertShortTw),
                   std::end(nodeIndicesToInsertShortTw),
-                  [&nodesToInsert](int a, int b) {
+                  [&nodesToInsert](int a, int b)
+                  {
                       return nodesToInsert[a].twData.latestArrival
                              < nodesToInsert[b].twData.latestArrival;
                   });
