@@ -24,8 +24,7 @@ bool cmpd(double a, double b, double eps = 1e-5)
     return std::fabs(a - b) < eps;
 }
 
-void LocalSearch::initializeConstruction(
-    Individual *indiv, std::vector<NodeToInsert> *nodesToInsert)
+void LocalSearch::initializeConstruction(std::vector<NodeToInsert> *nodesToInsert)
 {
     // Initialize datastructures relevant for constructions.
     // Local search-related data structures are not initialized.
@@ -89,7 +88,7 @@ void LocalSearch::constructIndividualBySweep(int fillPercentage,
                                              Individual *indiv)
 {
     std::vector<NodeToInsert> nodesToInsert;
-    initializeConstruction(indiv, &nodesToInsert);
+    initializeConstruction(&nodesToInsert);
 
     std::vector<std::vector<int>> nodeIndicesPerRoute;
 
@@ -219,7 +218,7 @@ void LocalSearch::constructIndividualWithSeedOrder(
     Individual *indiv)
 {
     std::vector<NodeToInsert> nodesToInsert;
-    initializeConstruction(indiv, &nodesToInsert);
+    initializeConstruction(&nodesToInsert);
 
     std::set<int> unassignedNodeIndices;
     for (int i = 1; i <= params->nbClients; i++)
