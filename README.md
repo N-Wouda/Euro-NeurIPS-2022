@@ -22,4 +22,5 @@ TODO
 
 ### Supervision
 - Aerts-Veenstra, Marjolein <m.aerts-veenstra@rug.nl>
+- Bhulai, Sandjai <s.bhulai@vu.nl>
 - Rijal, Arpan <a.rijal@rug.nl>
