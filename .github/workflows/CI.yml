@@ -38,3 +38,4 @@ jobs:
           source: 'hgs_vrptw'
           extensions: 'h,cpp'
           clangFormatVersion: 10
+          exclude: 'hgs_vrpt/extern/*'
