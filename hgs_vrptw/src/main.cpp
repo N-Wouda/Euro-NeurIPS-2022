@@ -7,65 +7,36 @@
 
 #include <iostream>
 
-// Main class of the algorithm. Used to read from the parameters from the
-// command line, create the structures and initial population, and run the
-// hybrid genetic search
 int main(int argc, char *argv[])
+try
 {
-    try
+    CommandLine args(argc, argv);
+    Params params(args);
+
+    Split split(&params);
+    LocalSearch ls(&params);
+    Population pop(&params, &split, &ls);
+
+    Genetic solver(&params, &split, &pop, &ls);
+    solver.run(args.config.nbIter, args.config.timeLimit);
+
+    if (pop.getBestFound() != nullptr)
     {
-        // Reading the arguments of the program
-        CommandLine commandline(argc, argv);
+        pop.getBestFound()->exportCVRPLibFormat(args.config.pathSolution);
 
-        // Reading the data file and initializing some data structures
-        std::cout << "----- READING DATA SET FROM: "
-                  << commandline.config.pathInstance << std::endl;
-        Params params(commandline);
+        pop.exportSearchProgress(args.config.pathSolution + ".PG.csv",
+                                 args.config.pathInstance,
+                                 args.config.seed);
 
-        // Creating the Split and Local Search structures
-        Split split(&params);
-        LocalSearch localSearch(&params);
-
-        // Initial population
-        std::cout << "----- INSTANCE LOADED WITH " << params.nbClients
-                  << " CLIENTS AND " << params.nbVehicles << " VEHICLES"
-                  << std::endl;
-        std::cout << "----- BUILDING INITIAL POPULATION" << std::endl;
-        Population population(&params, &split, &localSearch);
-
-        // Genetic algorithm
-        std::cout << "----- STARTING GENETIC ALGORITHM" << std::endl;
-        Genetic solver(&params, &split, &population, &localSearch);
-        solver.run(commandline.config.nbIter, commandline.config.timeLimit);
-        std::cout << "----- GENETIC ALGORITHM FINISHED, TIME SPENT: "
-                  << params.getTimeElapsedSeconds() << std::endl;
-
-        // Export the best solution, if it exist
-        if (population.getBestFound() != nullptr)
-        {
-            population.getBestFound()->exportCVRPLibFormat(
-                commandline.config.pathSolution);
-            population.exportSearchProgress(commandline.config.pathSolution
-                                                + ".PG.csv",
-                                            commandline.config.pathInstance,
-                                            commandline.config.seed);
-            if (commandline.config.pathBKS != "")
-            {
-                population.exportBKS(commandline.config.pathBKS);
-            }
-        }
+        if (!args.config.pathBKS.empty())
+            pop.exportBKS(args.config.pathBKS);
     }
-
-    // Catch exceptions
-    catch (const std::string &e)
-    {
-        std::cout << "EXCEPTION | " << e << std::endl;
-    }
-    catch (const std::exception &e)
-    {
-        std::cout << "EXCEPTION | " << e.what() << std::endl;
-    }
-
-    // Return 0 if the program execution was successfull
-    return 0;
+}
+catch (std::string const &e)
+{
+    std::cout << "EXCEPTION | " << e << '\n';
+}
+catch (std::exception const &e)
+{
+    std::cout << "EXCEPTION | " << e.what() << '\n';
 }

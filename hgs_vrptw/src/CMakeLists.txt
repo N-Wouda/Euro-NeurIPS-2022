@@ -19,7 +19,7 @@ set(splitSources
         Split.cpp)
 
 # (Internal) library
-add_library(vrp
+add_library(hgs
         ${geneticSources}
         ${individualSources}
         ${localSearchSources}
@@ -27,5 +27,10 @@ add_library(vrp
         ${populationSources}
         ${splitSources})
 
+# Executable
 add_executable(genvrp main.cpp)
-target_link_libraries(genvrp PRIVATE vrp)
+target_link_libraries(genvrp PRIVATE hgs)
+
+# Python bindings
+pybind11_add_module(hgspy bindings.cpp)
+target_link_libraries(hgspy PRIVATE hgs)

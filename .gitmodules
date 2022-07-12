@@ -1,0 +1,4 @@
+[submodule "hgs_vrptw/extern/pybind11"]
+	path = hgs_vrptw/extern/pybind11
+	url = ../../pybind/pybind11
+	branch = stable
