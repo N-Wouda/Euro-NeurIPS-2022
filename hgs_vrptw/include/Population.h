@@ -128,11 +128,11 @@ public:
 
     // Returns the average diversity value among the minimumPopulationSize best
     // individuals in the subpopulation Returns -1.0 if the size of pop <= 0
-    double getDiversity(const SubPopulation &pop);
+    double getDiversity(SubPopulation const &pop);
 
     // Returns the average solution value among the minimumPopulationSize best
     // individuals in the subpopulation Returns -1.0 if the size of pop <= 0
-    double getAverageCost(const SubPopulation &pop);
+    double getAverageCost(SubPopulation const &pop);
 
     // Constructor
     Population(Params *params, Split *split, LocalSearch *localSearch);

@@ -185,9 +185,9 @@ bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
     // Update the feasibility if needed
     if (updateFeasible)
     {
-        listFeasibilityLoad.push_back(indiv->myCostSol.capacityExcess
+        listFeasibilityLoad.push_back(indiv->costs.capacityExcess
                                       < MY_EPSILON);
-        listFeasibilityTimeWarp.push_back(indiv->myCostSol.timeWarp
+        listFeasibilityTimeWarp.push_back(indiv->costs.timeWarp
                                           < MY_EPSILON);
         listFeasibilityLoad.pop_front();
         listFeasibilityTimeWarp.pop_front();
@@ -210,8 +210,8 @@ bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
     // Identify the correct location in the population and insert the individual
     int place = static_cast<int>(subpop.size());
     while (place > 0
-           && subpop[place - 1]->myCostSol.penalizedCost
-                  > indiv->myCostSol.penalizedCost - MY_EPSILON)
+           && subpop[place - 1]->costs.penalizedCost
+                  > indiv->costs.penalizedCost - MY_EPSILON)
     {
         place--;
     }
@@ -230,17 +230,17 @@ bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
 
     // Track best solution
     if (indiv->isFeasible
-        && indiv->myCostSol.penalizedCost
-               < bestSolutionRestart.myCostSol.penalizedCost - MY_EPSILON)
+        && indiv->costs.penalizedCost
+               < bestSolutionRestart.costs.penalizedCost - MY_EPSILON)
     {
         bestSolutionRestart = *indiv;
-        if (indiv->myCostSol.penalizedCost
-            < bestSolutionOverall.myCostSol.penalizedCost - MY_EPSILON)
+        if (indiv->costs.penalizedCost
+            < bestSolutionOverall.costs.penalizedCost - MY_EPSILON)
         {
             bestSolutionOverall = *indiv;
             searchProgress.push_back(
                 {params->getTimeElapsedSeconds(),
-                 bestSolutionOverall.myCostSol.penalizedCost});
+                 bestSolutionOverall.costs.penalizedCost});
             if (params->config.isDimacsRun)
             {
                 // Since the controller may kill the script at any time,
@@ -265,12 +265,12 @@ void Population::updateBiasedFitnesses(SubPopulation &pop)
 {
     // Ranking the individuals based on their diversity contribution (decreasing
     // order of averageBrokenPairsDistanceClosest)
-    std::vector<std::pair<double, int>> ranking;
-    for (int i = 0; i < static_cast<int>(pop.size()); i++)
+    std::vector<std::pair<double, size_t>> ranking;
+    for (size_t i = 0; i < pop.size(); i++)
     {
-        ranking.push_back(
-            {-pop[i]->averageBrokenPairsDistanceClosest(params->config.nbClose),
-             i});
+        ranking.emplace_back(
+            -pop[i]->averageBrokenPairsDistanceClosest(params->config.nbClose),
+            i);
     }
     std::sort(ranking.begin(), ranking.end());
 
@@ -434,12 +434,12 @@ void Population::managePenalties()
     // Update the evaluations
     for (int i = 0; i < static_cast<int>(infeasibleSubpopulation.size()); i++)
     {
-        infeasibleSubpopulation[i]->myCostSol.penalizedCost
-            = infeasibleSubpopulation[i]->myCostSol.distance
+        infeasibleSubpopulation[i]->costs.penalizedCost
+            = infeasibleSubpopulation[i]->costs.distance
               + params->penaltyCapacity
-                    * infeasibleSubpopulation[i]->myCostSol.capacityExcess
+                    * infeasibleSubpopulation[i]->costs.capacityExcess
               + params->penaltyTimeWarp
-                    * infeasibleSubpopulation[i]->myCostSol.timeWarp;
+                    * infeasibleSubpopulation[i]->costs.timeWarp;
     }
 
     // If needed, reorder the individuals in the infeasible subpopulation since
@@ -449,8 +449,8 @@ void Population::managePenalties()
     {
         for (size_t j = 0; j < infeasibleSubpopulation.size() - i - 1; j++)
         {
-            if (infeasibleSubpopulation[j]->myCostSol.penalizedCost
-                > infeasibleSubpopulation[j + 1]->myCostSol.penalizedCost
+            if (infeasibleSubpopulation[j]->costs.penalizedCost
+                > infeasibleSubpopulation[j + 1]->costs.penalizedCost
                       + MY_EPSILON)
             {
                 Individual *indiv = infeasibleSubpopulation[j];
@@ -463,100 +463,62 @@ void Population::managePenalties()
 
 Individual *Population::getBinaryTournament()
 {
-    Individual *individual1;
-    Individual *individual2;
-
-    // Update the fitness values of all the individuals (feasible and
-    // infeasible)
+    // TODO only compute updated biased fitness of selected individuals?
     updateBiasedFitnesses(feasibleSubpopulation);
     updateBiasedFitnesses(infeasibleSubpopulation);
 
+    auto feasSize = feasibleSubpopulation.size();
+    auto infeasSize = infeasibleSubpopulation.size();
+
     // Pick a first random number individual from the total population (of both
     // feasible and infeasible individuals)
-    int place1
-        = params->rng()
-          % (feasibleSubpopulation.size() + infeasibleSubpopulation.size());
-    if (place1 >= static_cast<int>(feasibleSubpopulation.size()))
-    {
-        individual1
-            = infeasibleSubpopulation[place1 - feasibleSubpopulation.size()];
-    }
-    else
-    {
-        individual1 = feasibleSubpopulation[place1];
-    }
+    size_t idx1 = params->rng() % (feasSize + infeasSize);
+    auto *individual1 = idx1 >= feasSize
+                            ? infeasibleSubpopulation[idx1 - feasSize]
+                            : feasibleSubpopulation[idx1];
 
     // Pick a second random number individual from the total population (of both
     // feasible and infeasible individuals)
-    int place2
-        = params->rng()
-          % (feasibleSubpopulation.size() + infeasibleSubpopulation.size());
-    if (place2 >= static_cast<int>(feasibleSubpopulation.size()))
-    {
-        individual2
-            = infeasibleSubpopulation[place2 - feasibleSubpopulation.size()];
-    }
-    else
-    {
-        individual2 = feasibleSubpopulation[place2];
-    }
+    size_t idx2 = params->rng() % (feasSize + infeasSize);
+    auto *individual2 = idx2 >= feasSize
+                            ? infeasibleSubpopulation[idx2 - feasSize]
+                            : feasibleSubpopulation[idx2];
 
-    // Return the individual with the lowest biasedFitness value
-    if (individual1->biasedFitness < individual2->biasedFitness)
-    {
-        return individual1;
-    }
-    else
-    {
-        return individual2;
-    }
+    return individual1->biasedFitness < individual2->biasedFitness
+               ? individual1
+               : individual2;
 }
 
 std::pair<Individual *, Individual *>
 Population::getNonIdenticalParentsBinaryTournament()
 {
     // Pick two individual using a binary tournament
-    Individual *parentA = getBinaryTournament();
-    Individual *parentB = getBinaryTournament();
-    int num_tries = 1;
-    // Pick two other individuals as long as they are identical (try at most 9
-    // times)
-    while (parentA->brokenPairsDistance(parentB) < MY_EPSILON && num_tries < 10)
-    {
-        parentB = getBinaryTournament();
-        num_tries++;
-    }
+    Individual *par1 = getBinaryTournament();
+    Individual *par2 = getBinaryTournament();
 
-    // Return the two individuals as a pair
-    return std::make_pair(parentA, parentB);
+    // If same parent, try a few more times to get some diversity
+    size_t numTries = 1;
+    while (par1 == par2 && numTries++ < 10)
+        par2 = getBinaryTournament();
+
+    return std::make_pair(par1, par2);
 }
 
 Individual *Population::getBestFeasible()
 {
-    // Return the best feasible solution if a feasible solution exists
-    if (!feasibleSubpopulation.empty())
-    {
-        return feasibleSubpopulation[0];
-    }
-    else
-        return nullptr;
+    return feasibleSubpopulation.empty() ? nullptr : feasibleSubpopulation[0];
 }
 
 Individual *Population::getBestInfeasible()
 {
-    // Return the best infeasible solution if an infeasible solution exists
-    if (!infeasibleSubpopulation.empty())
-    {
-        return infeasibleSubpopulation[0];
-    }
-    else
-        return nullptr;
+    return infeasibleSubpopulation.empty() ? nullptr
+                                           : infeasibleSubpopulation[0];
 }
 
 Individual *Population::getBestFound()
 {
     // Return the best overall solution if a solution exists
-    if (bestSolutionOverall.myCostSol.penalizedCost < 1.e29)
+    if (bestSolutionOverall.costs.penalizedCost < 1.e29)
     {
         return &bestSolutionOverall;
     }
@@ -580,7 +542,7 @@ void Population::printState(int nbIter, int nbIterNoImprovement)
     {
         std::printf(" | Feas %zu %.2f %.2f",
                     feasibleSubpopulation.size(),
-                    getBestFeasible()->myCostSol.penalizedCost,
+                    getBestFeasible()->costs.penalizedCost,
                     getAverageCost(feasibleSubpopulation));
     }
     else
@@ -595,7 +557,7 @@ void Population::printState(int nbIter, int nbIterNoImprovement)
     {
         std::printf(" | Inf %zu %.2f %.2f",
                     infeasibleSubpopulation.size(),
-                    getBestInfeasible()->myCostSol.penalizedCost,
+                    getBestInfeasible()->costs.penalizedCost,
                     getAverageCost(infeasibleSubpopulation));
     }
     else
@@ -623,7 +585,7 @@ void Population::printState(int nbIter, int nbIterNoImprovement)
     std::cout << std::endl;
 }
 
-double Population::getDiversity(const SubPopulation &pop)
+double Population::getDiversity(SubPopulation const &pop)
 {
     // The diversity of the population: The average of the
     // averageBrokenPairsDistanceClosest over the best "mu" individuals of the
@@ -635,23 +597,14 @@ double Population::getDiversity(const SubPopulation &pop)
     // measurements
     int size = std::min(params->config.minimumPopulationSize,
                         static_cast<int>(pop.size()));
-    for (int i = 0; i < size; i++)
-    {
-        average += pop[i]->averageBrokenPairsDistanceClosest(size);
-    }
 
-    // Calculate the average and return if possible
-    if (size > 0)
-    {
-        return average / static_cast<double>(size);
-    }
-    else
-    {
-        return -1.0;
-    }
+    for (int i = 0; i < size; i++)
+        average += pop[i]->averageBrokenPairsDistanceClosest(size);
+
+    return size > 0 ? average / size : -1;
 }
 
-double Population::getAverageCost(const SubPopulation &pop)
+double Population::getAverageCost(SubPopulation const &pop)
 {
     // The average cost of the population: The average of the penalizedCost over
     // the best "mu" individuals of the population
@@ -662,20 +615,11 @@ double Population::getAverageCost(const SubPopulation &pop)
     // measurements
     int size = std::min(params->config.minimumPopulationSize,
                         static_cast<int>(pop.size()));
-    for (int i = 0; i < size; i++)
-    {
-        average += pop[i]->myCostSol.penalizedCost;
-    }
 
-    // Calculate the average and return if possible
-    if (size > 0)
-    {
-        return average / static_cast<double>(size);
-    }
-    else
-    {
-        return -1.0;
-    }
+    for (int i = 0; i < size; i++)
+        average += pop[i]->costs.penalizedCost;
+
+    return size > 0 ? average / size : -1;
 }
 
 Population::Population(Params *params, Split *split, LocalSearch *localSearch)
@@ -692,15 +636,9 @@ Population::Population(Params *params, Split *split, LocalSearch *localSearch)
 
 Population::~Population()
 {
-    // Delete all information from the feasibleSubpopulation
-    for (int i = 0; i < static_cast<int>(feasibleSubpopulation.size()); i++)
-    {
-        delete feasibleSubpopulation[i];
-    }
+    for (auto &feas : feasibleSubpopulation)
+        delete feas;
 
-    // Delete all information from the infeasibleSubpopulation
-    for (int i = 0; i < static_cast<int>(infeasibleSubpopulation.size()); i++)
-    {
-        delete infeasibleSubpopulation[i];
-    }
+    for (auto &infeas : infeasibleSubpopulation)
+        delete infeas;
 }

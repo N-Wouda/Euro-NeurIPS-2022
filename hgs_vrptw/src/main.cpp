@@ -21,7 +21,7 @@ try
     auto const res = solver.run(args.config.nbIter, args.config.timeLimit);
 
     if (res.getBestFound() && !args.config.pathBKS.empty())
-        res.exportBestKnownSolution(args.config.pathBKS);
+        res.writeBestKnowSolution(args.config.pathBKS);
 }
 catch (std::string const &e)
 {

@@ -11,7 +11,7 @@
 void Individual::evaluateCompleteCost()
 {
     // Create an object to store all information regarding solution costs
-    myCostSol = CostSol();
+    costs = CostSol();
     // Loop over all routes that are not empty
     for (int r = 0; r < params->nbVehicles; r++)
     {
@@ -102,13 +102,13 @@ void Individual::evaluateCompleteCost()
             }
             // Update variables that track stats on the whole solution (all
             // vehicles combined)
-            myCostSol.distance += distance;
-            myCostSol.waitTime += waitTime;
-            myCostSol.timeWarp += timeWarp;
-            myCostSol.nbRoutes++;
+            costs.distance += distance;
+            costs.waitTime += waitTime;
+            costs.timeWarp += timeWarp;
+            costs.nbRoutes++;
             if (load > params->vehicleCapacity)
             {
-                myCostSol.capacityExcess += load - params->vehicleCapacity;
+                costs.capacityExcess += load - params->vehicleCapacity;
             }
         }
     }
@@ -116,13 +116,13 @@ void Individual::evaluateCompleteCost()
     // When all vehicles are dealt with, calculated total penalized cost and
     // check if the solution is feasible. (Wait time does not affect
     // feasibility)
-    myCostSol.penalizedCost
-        = myCostSol.distance
-          + myCostSol.capacityExcess * params->penaltyCapacity
-          + myCostSol.timeWarp * params->penaltyTimeWarp
-          + myCostSol.waitTime * params->penaltyWaitTime;
-    isFeasible = (myCostSol.capacityExcess < MY_EPSILON
-                  && myCostSol.timeWarp < MY_EPSILON);
+    costs.penalizedCost
+        = costs.distance
+          + costs.capacityExcess * params->penaltyCapacity
+          + costs.timeWarp * params->penaltyTimeWarp
+          + costs.waitTime * params->penaltyWaitTime;
+    isFeasible = (costs.capacityExcess < MY_EPSILON
+                  && costs.timeWarp < MY_EPSILON);
 }
 
 void Individual::shuffleChromT()
@@ -208,14 +208,14 @@ void Individual::exportCVRPLibFormat(std::string const &path) const
             out << '\n';
         }
 
-    out << "Cost " << myCostSol.penalizedCost << '\n';
+    out << "Cost " << costs.penalizedCost << '\n';
     out << "Time " << params->getTimeElapsedSeconds() << '\n';
 }
 
 void Individual::printCVRPLibFormat()
 {
     std::cout << "----- PRINTING SOLUTION WITH VALUE "
-              << myCostSol.penalizedCost << std::endl;
+              << costs.penalizedCost << std::endl;
     for (int k = 0; k < params->nbVehicles; k++)
     {
         if (!chromR[k].empty())
@@ -229,7 +229,7 @@ void Individual::printCVRPLibFormat()
             std::cout << std::endl;
         }
     }
-    std::cout << "Cost " << myCostSol.penalizedCost << std::endl;
+    std::cout << "Cost " << costs.penalizedCost << std::endl;
     std::cout << "Time " << params->getTimeElapsedSeconds() << std::endl;
     fflush(stdout);
 }
@@ -273,6 +273,14 @@ bool Individual::readCVRPLibFormat(std::string fileName,
     return false;
 }
 
+bool Individual::operator==(Individual const &other) const
+{
+    auto diff = std::abs(costs.penalizedCost - other.costs.penalizedCost);
+    return diff < MY_EPSILON
+           && chromT == other.chromT
+           && chromR == other.chromR;
+}
+
 Individual::Individual(Params *params, bool initializeChromTAndShuffle)
     : params(params), isFeasible(false), biasedFitness(0)
 {
@@ -288,5 +296,5 @@ Individual::Individual(Params *params, bool initializeChromTAndShuffle)
 
 Individual::Individual() : params(nullptr), isFeasible(false), biasedFitness(0)
 {
-    myCostSol.penalizedCost = 1.e30;
+    costs.penalizedCost = 1.e30;
 }

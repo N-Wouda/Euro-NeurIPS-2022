@@ -6,7 +6,7 @@
 
 class Result
 {
-    using SubPopulation = std::vector<Individual const *>;
+    using SubPopulation = std::vector<Individual *>;
 
     SubPopulation const &feasible;
     SubPopulation const &infeasible;
@@ -17,7 +17,11 @@ public:
     {
     }
 
-    void exportBestKnownSolution(std::string const &path) const;
+    /**
+     * Exports the best known feasible solution to the location indicated by
+     * `path`.
+     */
+    void writeBestKnowSolution(std::string const &path) const;
 
     [[nodiscard]] Individual const *getBestFound() const;
 };

@@ -4,7 +4,7 @@
 #include <fstream>
 #include <vector>
 
-void Result::exportBestKnownSolution(std::string const &path) const
+void Result::writeBestKnowSolution(std::string const &path) const
 {
     // Compare to current best known solution, if exists.
     double currCost;
@@ -13,21 +13,11 @@ void Result::exportBestKnownSolution(std::string const &path) const
 
     auto const *bestSol = getBestFound();
 
-    if (!readOK || bestSol->myCostSol.penalizedCost < currCost)
+    if (!readOK || bestSol->costs.penalizedCost < currCost)
         bestSol->exportCVRPLibFormat(path);
 }
 
 Individual const *Result::getBestFound() const
 {
-    double cost = UINT_MAX;
-    Individual const *best = nullptr;
-
-    for (auto const *indiv : feasible)
-        if (indiv->myCostSol.penalizedCost < cost)
-        {
-            best = indiv;
-            cost = indiv->myCostSol.penalizedCost;
-        }
-
-    return best;
+    return feasible[0];  // since they are sorted by cost.
 }

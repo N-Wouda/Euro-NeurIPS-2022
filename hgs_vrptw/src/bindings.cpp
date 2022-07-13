@@ -20,13 +20,13 @@ PYBIND11_MODULE(hgspy, m)
     py::class_<Split>(m, "Split");
 
     py::class_<Result>(m, "Result")
-        .def(py::init<std::vector<Individual const *> const &,
-                      std::vector<Individual const *> const &>(),
+        .def(py::init<std::vector<Individual *> const &,
+                      std::vector<Individual *> const &>(),
              py::arg("feasible"),
              py::arg("infeasible"))
         .def("get_best_found", &Result::getBestFound)
         .def("export_best_known_solution",
-             &Result::exportBestKnownSolution,
+             &Result::writeBestKnowSolution,
              py::arg("path"));
 
     py::class_<Genetic>(m, "Genetic")

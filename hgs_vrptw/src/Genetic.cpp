@@ -79,14 +79,6 @@ Result const Genetic::run(int maxIterNonProd, int timeLimit)
         {
             population->printState(nbIter, nbIterNonProd);
         }
-        // Log the current population to a .csv file every logPoolInterval
-        // iterations (if logPoolInterval is not 0)
-        if (params->config.logPoolInterval > 0
-            && nbIter % params->config.logPoolInterval == 0)
-        {
-            population->exportPopulation(
-                nbIter, params->config.pathSolution + ".log.csv");
-        }
 
         /* FOR TESTS INVOLVING SUCCESSIVE RUNS UNTIL A TIME LIMIT: WE RESET THE
          * ALGORITHM/POPULATION EACH TIME maxIterNonProd IS ATTAINED*/
@@ -135,7 +127,7 @@ Result const Genetic::run(int maxIterNonProd, int timeLimit)
         }
     }
 
-    return Result();
+    return Result(population->getFeasible(), population->getInfeasible());
 }
 
 Individual *
@@ -147,17 +139,15 @@ Genetic::crossoverOX(std::pair<const Individual *, const Individual *> parents)
 
     // If the start and end overlap, change the end of the crossover zone
     while (end == start)
-    {
         end = params->rng() % params->nbClients;
-    }
 
     // Create two individuals using OX
     doOXcrossover(candidateOffsprings[2], parents, start, end);
     doOXcrossover(candidateOffsprings[3], parents, start, end);
 
     // Return the best individual of the two, based on penalizedCost
-    return candidateOffsprings[2]->myCostSol.penalizedCost
-                   < candidateOffsprings[3]->myCostSol.penalizedCost
+    return candidateOffsprings[2]->costs.penalizedCost
+                   < candidateOffsprings[3]->costs.penalizedCost
                ? candidateOffsprings[2]
                : candidateOffsprings[3];
 }
@@ -205,8 +195,8 @@ Individual *Genetic::crossoverSREX(
     std::pair<const Individual *, const Individual *> parents)
 {
     // Get the number of routes of both parents
-    int nOfRoutesA = parents.first->myCostSol.nbRoutes;
-    int nOfRoutesB = parents.second->myCostSol.nbRoutes;
+    int nOfRoutesA = parents.first->costs.nbRoutes;
+    int nOfRoutesB = parents.second->costs.nbRoutes;
 
     // Picking the start index of routes to replace of parent A
     // We like to replace routes with a large overlap of tasks, so we choose
@@ -461,8 +451,8 @@ Individual *Genetic::crossoverSREX(
     candidateOffsprings[0]->evaluateCompleteCost();
     candidateOffsprings[1]->evaluateCompleteCost();
 
-    return candidateOffsprings[0]->myCostSol.penalizedCost
-                   < candidateOffsprings[1]->myCostSol.penalizedCost
+    return candidateOffsprings[0]->costs.penalizedCost
+                   < candidateOffsprings[1]->costs.penalizedCost
                ? candidateOffsprings[0]
                : candidateOffsprings[1];
 }
@@ -566,8 +556,8 @@ Individual *Genetic::bestOfSREXAndOXCrossovers(
     Individual *offspringSREX = crossoverSREX(parents);
 
     // Return the best individual, based on penalizedCost
-    return offspringOX->myCostSol.penalizedCost
-                   < offspringSREX->myCostSol.penalizedCost
+    return offspringOX->costs.penalizedCost
+                   < offspringSREX->costs.penalizedCost
                ? offspringOX
                : offspringSREX;
 }

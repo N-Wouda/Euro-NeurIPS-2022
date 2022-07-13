@@ -60,7 +60,7 @@ class Individual
 {
 public:
     Params *params;           // Problem parameters
-    CostSol myCostSol;        // Information on the cost of the solution
+    CostSol costs;        // Information on the cost of the solution
     std::vector<int> chromT;  // Giant tour representing the individual: list of
                               // integers representing clients (can not be the
                               // depot 0). Size is nbClients
@@ -104,7 +104,7 @@ public:
 
     // Exports a solution in CVRPLib format (adds a final line with the
     // computational time)
-    void exportCVRPLibFormat(std::string const &path) const
+    void exportCVRPLibFormat(std::string const &path) const;
 
     // Prints a solution in CVRPLib format (adds a final line with the
     // computational time)
@@ -115,6 +115,8 @@ public:
     static bool readCVRPLibFormat(std::string fileName,
                                   std::vector<std::vector<int>> &readSolution,
                                   double &readCost);
+
+    bool operator==(Individual const &other) const;
 
     // Constructor: create a random individual
     Individual(Params *params, bool initializeChromTAndShuffle = true);
