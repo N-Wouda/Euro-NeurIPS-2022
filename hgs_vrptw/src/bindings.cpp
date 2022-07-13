@@ -110,7 +110,8 @@ PYBIND11_MODULE(hgspy, m)
                       std::vector<Individual *> const &>(),
              py::arg("feasible"),
              py::arg("infeasible"))
-        .def("get_best_found", &Result::getBestFound);
+        .def("get_best_found",
+             [](Result &result) { return *result.getBestFound(); });
 
     py::class_<Genetic>(m, "Genetic")
         .def(py::init<Params *, Split *, Population *, LocalSearch *>(),
