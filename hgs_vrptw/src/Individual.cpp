@@ -209,42 +209,7 @@ void Individual::exportCVRPLibFormat(std::string const &path) const
 
     out << "Cost " << costs.penalizedCost << '\n';
     out << "Time " << params->getTimeElapsedSeconds() << '\n';
-}
 
-std::pair<std::vector<std::vector<int>>, double>
-Individual::readCVRPLibFormat(std::string const &path)
-{
-    std::ifstream in(path);
-
-    if (!in)
-        throw std::runtime_error("Could not open " + path);
-
-    std::string inputString;
-    in >> inputString;
-
-    std::vector<std::vector<int>> sol;
-
-    // Loops as long as the first line keyword is "Route"
-    for (int r = 0; inputString == "Route"; r++)
-    {
-        sol.emplace_back();
-        in >> inputString;
-        getline(in, inputString);
-        std::stringstream ss(inputString);
-        int inputCustomer;
-
-        while (ss >> inputCustomer)
-            sol[r].push_back(inputCustomer);
-
-        in >> inputString;
-    }
-
-    double cost;
-
-    if (inputString == "Cost")
-        in >> cost;
-
-    return std::make_pair(sol, cost);
 }
 
 bool Individual::operator==(Individual const &other) const

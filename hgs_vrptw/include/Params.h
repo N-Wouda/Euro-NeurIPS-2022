@@ -73,7 +73,6 @@ public:
                                   // seconds. Default value: infinity
         bool useWallClockTime
             = false;  // If True, measure wall clock time rather than CPU time
-        std::string pathBKS = "";  // Path to Best Known Solution
 
         // Parameters for the Construction Heuristics
         double fractionGeneratedNearest
@@ -137,9 +136,6 @@ public:
 
         // Other parameters
         int nbVeh = INT_MAX;      // Number of vehicles
-        int logPoolInterval = 0;  // The verbose level of the algorithm log
-        bool isDimacsRun
-            = false;  // If DIMACS run, print incumbent and avoid other output
         bool useDynamicParameters
             = false;  // To use dynamic parameters based on instance attributes
         std::string pathSolution;  // Solution path
@@ -218,7 +214,7 @@ public:
                               // nonempty routes) (0 - 65536)
 
     // Initialization from a given data set
-    Params(Config &config);
+    explicit Params(Config &config);
 
     // Get time elapsed since start of program
     double getTimeElapsedSeconds();

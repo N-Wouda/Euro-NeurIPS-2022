@@ -1,19 +1,18 @@
 # Solver for Dynamic VRPTW, baseline strategy is to use the static solver HGS-VRPTW repeatedly
 import argparse
+import os
 import subprocess
 import sys
-import os
 import uuid
-import platform
+
 import numpy as np
 
 import tools
-from environment import VRPEnvironment, ControllerEnvironment
 from baselines.strategies import STRATEGIES
+from environment import ControllerEnvironment, VRPEnvironment
 
 
 def solve_static_vrptw(instance, time_limit=3600, tmp_dir="tmp", seed=1):
-
     # Prevent passing empty instances to the static solver, e.g. when
     # strategy decides to not dispatch any requests for the current epoch
     if instance['coords'].shape[0] <= 1:
@@ -29,20 +28,28 @@ def solve_static_vrptw(instance, time_limit=3600, tmp_dir="tmp", seed=1):
     os.makedirs(tmp_dir, exist_ok=True)
     instance_filename = os.path.join(tmp_dir, "problem.vrptw")
     tools.write_vrplib(instance_filename, instance, is_vrptw=True)
-    
+    out_filename = os.path.join(tmp_dir, "problem.sol")
+
     executable = os.path.join('release', 'bin', 'genvrp')
-    # On windows, we may have genvrp.exe
-    if platform.system() == 'Windows' and os.path.isfile(executable + '.exe'):
-        executable = executable + '.exe'
     assert os.path.isfile(executable), f"HGS executable {executable} does not exist!"
+
     # Call HGS solver with unlimited number of vehicles allowed and parse outputs
     # Subtract two seconds from the time limit to account for writing of the instance and delay in enforcing the time limit by HGS
-    with subprocess.Popen([
-                executable, instance_filename, str(max(time_limit - 2, 1)), 
-                '-seed', str(seed), '-veh', '-1', '-useWallClockTime', '1'
-            ], stdout=subprocess.PIPE, text=True) as p:
-        routes = []
-        for line in p.stdout:
+    p = subprocess.Popen([
+        executable,
+        instance_filename,
+        out_filename,
+        '-t', str(max(time_limit - 2, 1)),
+        '-seed', str(seed),
+        '-veh', '-1',
+        '-useWallClockTime', '1'
+    ])
+
+    p.wait()
+
+    routes = []
+    with open(out_filename, 'r') as fh:
+        for line in fh:
             line = line.strip()
             # Parse only lines which contain a route
             if line.startswith('Route'):
@@ -59,9 +66,7 @@ def solve_static_vrptw(instance, time_limit=3600, tmp_dir="tmp", seed=1):
                 yield solution, cost
                 # Start next solution
                 routes = []
-            elif "EXCEPTION" in line:
-                raise Exception("HGS failed with exception: " + line)
-        assert len(routes) == 0, "HGS has terminated with imcomplete solution (is the line with Cost missing?)"
+    assert len(routes) == 0, "HGS has terminated with imcomplete solution (is the line with Cost missing?)"
 
 
 def run_oracle(args, env):
@@ -108,7 +113,7 @@ def run_baseline(args, env, oracle_solution=None):
             num_new_requests = num_requests_open - num_requests_postponed
             log(f" | Requests: +{num_new_requests:3d} = {num_requests_open:3d}, {epoch_instance['must_dispatch'].sum():3d}/{num_requests_open:3d} must-go...", newline=False, flush=True)
 
-        
+
         if oracle_solution is not None:
             request_idx = set(epoch_instance['request_idx'])
             epoch_solution = [route for route in oracle_solution if len(request_idx.intersection(route)) == len(route)]
@@ -127,7 +132,7 @@ def run_baseline(args, env, oracle_solution=None):
 
             # Map HGS solution to indices of corresponding requests
             epoch_solution = [epoch_instance_dispatch['request_idx'][route] for route in epoch_solution]
-        
+
         if args.verbose:
             num_requests_dispatched = sum([len(route) for route in epoch_solution])
             num_requests_open = len(epoch_instance['request_idx']) - 1
@@ -138,7 +143,7 @@ def run_baseline(args, env, oracle_solution=None):
         observation, reward, done, info = env.step(epoch_solution)
         assert cost is None or reward == -cost, "Reward should be negative cost of solution"
         assert not info['error'], f"Environment error: {info['error']}"
-        
+
         total_reward += reward
 
     if args.verbose:
@@ -157,7 +162,7 @@ def log(obj, newline=True, flush=False):
 
 
 if __name__ == "__main__":
-    
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--strategy", type=str, default='greedy', help="Baseline strategy used to decide whether to dispatch routes")
     # Note: these arguments are only for convenience during development, during testing you should use controller.py
@@ -173,32 +178,24 @@ if __name__ == "__main__":
     if args.tmp_dir is None:
         # Generate random tmp directory
         args.tmp_dir = os.path.join("tmp", str(uuid.uuid4()))
-        cleanup_tmp_dir = True
+
+    if args.instance is not None:
+        env = VRPEnvironment(seed=args.instance_seed, instance=tools.read_vrplib(args.instance), epoch_tlim=args.epoch_tlim, is_static=args.static)
     else:
-        # If tmp dir is manually provided, don't clean it up (for debugging)
-        cleanup_tmp_dir = False
+        assert args.strategy != "oracle", "Oracle can not run with external controller"
+        # Run within external controller
+        env = ControllerEnvironment(sys.stdin, sys.stdout)
 
-    try:
-        if args.instance is not None:
-            env = VRPEnvironment(seed=args.instance_seed, instance=tools.read_vrplib(args.instance), epoch_tlim=args.epoch_tlim, is_static=args.static)
-        else:
-            assert args.strategy != "oracle", "Oracle can not run with external controller"
-            # Run within external controller
-            env = ControllerEnvironment(sys.stdin, sys.stdout)
+    # Make sure these parameters are not used by your solver
+    args.instance = None
+    args.instance_seed = None
+    args.static = None
+    args.epoch_tlim = None
 
-        # Make sure these parameters are not used by your solver
-        args.instance = None
-        args.instance_seed = None
-        args.static = None
-        args.epoch_tlim = None
+    if args.strategy == 'oracle':
+        run_oracle(args, env)
+    else:
+        run_baseline(args, env)
 
-        if args.strategy == 'oracle':
-            run_oracle(args, env)
-        else:
-            run_baseline(args, env)
-
-        if args.instance is not None:
-            log(tools.json_dumps_np(env.final_solutions))
-    finally:
-        if cleanup_tmp_dir:
-            tools.cleanup_tmp_dir(args.tmp_dir)
+    if args.instance is not None:
+        log(tools.json_dumps_np(env.final_solutions))

@@ -44,7 +44,6 @@ public:
     //		1) The path to the genvrp executable to run
     //		2) The path to the instance to consider
     //		3) The path to the file where the solution will be stored
-    //          TODO: Can this also be a number as a time limit?
     //      4) Possibly combinations of command line argument descriptions with
     //         their value (counted as 2 per argument in argc)
     CommandLine(int argc, char **argv) : argc(argc), argv(argv)
@@ -79,8 +78,6 @@ public:
                 config.useWallClockTime = atoi(argv[i + 1]) != 0;
             else if (std::string(argv[i]) == "-it")
                 config.nbIter = atoi(argv[i + 1]);
-            else if (std::string(argv[i]) == "-bks")
-                config.pathBKS = std::string(argv[i + 1]);
             else if (std::string(argv[i]) == "-seed")
                 config.seed = atoi(argv[i + 1]);
             else if (std::string(argv[i]) == "-veh")

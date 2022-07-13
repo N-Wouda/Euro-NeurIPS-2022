@@ -18,15 +18,12 @@ public:
     }
 
     /**
-     * Exports the best known feasible solution to the location indicated by
-     * `path`.
-     */
-    void writeBestKnowSolution(std::string const &path) const;
-
-    /**
      * Returns the best observed solution.
      */
-    [[nodiscard]] Individual const *getBestFound() const;
+    [[nodiscard]] Individual const *getBestFound() const
+    {
+        return feasible[0];  // since they are sorted by increasing cost
+    }
 };
 
 #endif  // RESULT_H

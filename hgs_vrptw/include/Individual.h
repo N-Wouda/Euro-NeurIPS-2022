@@ -106,11 +106,6 @@ public:
     // computational time)
     void exportCVRPLibFormat(std::string const &path) const;
 
-    // Reads a solution in CVRPLib format, returns TRUE if the process worked,
-    // or FALSE if the file does not exist or is not readable
-    static std::pair<std::vector<std::vector<int>>, double>
-    readCVRPLibFormat(std::string const &path);
-
     bool operator==(Individual const &other) const;
 
     // Constructor: create a random individual

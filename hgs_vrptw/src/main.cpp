@@ -22,8 +22,11 @@ try
     Genetic solver(&params, &split, &pop, &ls);
     auto const res = solver.run(config.nbIter, config.timeLimit);
 
-    if (res.getBestFound() && !config.pathBKS.empty())
-        res.writeBestKnowSolution(config.pathBKS);
+    if (res.getBestFound())
+    {
+        auto const *bestSol = res.getBestFound();
+        bestSol->exportCVRPLibFormat(config.pathSolution);
+    }
 }
 catch (std::string const &e)
 {
