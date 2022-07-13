@@ -86,12 +86,9 @@ void Population::generatePopulation()
     for (int i = 0; i < nofNearestIndividualsToGenerate; i++)
     {
         if (params->isTimeLimitExceeded())
-        {
-            std::cout << "Time limit during generation of initial population"
-                      << std::endl;
-            printState(-1, -1);
-            return;
-        }
+            throw std::runtime_error(
+                "Time limit exceeded generating population.");
+
         // Create the first individual without violations
         int toleratedCapacityViolation
             = i == 0 ? 0 : params->rng() % (maxToleratedCapacityViolation + 1);
@@ -103,21 +100,13 @@ void Population::generatePopulation()
         doLocalSearchAndAddIndividual(&indiv);
     }
 
-    // Output that some individuals have been created
-    std::cout << "Generated " << nofNearestIndividualsToGenerate
-              << " individuals using Nearest" << std::endl;
-    printState(-1, -1);
-
     // Generate some individuals using the FURHEST construction heuristic
     for (int i = 0; i < nofFurthestIndividualsToGenerate; i++)
     {
         if (params->isTimeLimitExceeded())
-        {
-            std::cout << "Time limit during generation of initial population"
-                      << std::endl;
-            printState(-1, -1);
-            return;
-        }
+            throw std::runtime_error(
+                "Time limit exceeded generating population.");
+
         // Create the first individual without violations
         int toleratedCapacityViolation
             = i == 0 ? 0 : params->rng() % (maxToleratedCapacityViolation + 1);
@@ -129,21 +118,13 @@ void Population::generatePopulation()
         doLocalSearchAndAddIndividual(&indiv);
     }
 
-    // Output that some individuals have been created
-    std::cout << "Generated " << nofFurthestIndividualsToGenerate
-              << " individuals using Furthest" << std::endl;
-    printState(-1, -1);
-
     // Generate some individuals using the SWEEP construction heuristic
     for (int i = 0; i < nofSweepIndividualsToGenerate; i++)
     {
         if (params->isTimeLimitExceeded())
-        {
-            std::cout << "Time limit during generation of initial population"
-                      << std::endl;
-            printState(-1, -1);
-            return;
-        }
+            throw std::runtime_error(
+                "Time limit exceeded generating population.");
+
         // Create the first individual without load restrictions
         int fillPercentage
             = i == 0 ? 100
@@ -154,30 +135,17 @@ void Population::generatePopulation()
         doLocalSearchAndAddIndividual(&indiv);
     }
 
-    // Output that some individuals have been created
-    std::cout << "Generated " << nofSweepIndividualsToGenerate
-              << " individuals using Sweep" << std::endl;
-    printState(-1, -1);
-
     // Generate some individuals using a RANDOM strategy
     for (int i = 0; i < nofRandomIndividualsToGenerate; i++)
     {
         if (params->isTimeLimitExceeded())
-        {
-            std::cout << "Time limit during generation of initial population"
-                      << std::endl;
-            printState(-1, -1);
-            return;
-        }
+            throw std::runtime_error(
+                "Time limit exceeded generating population.");
+
         Individual randomIndiv(params);
         split->generalSplit(&randomIndiv, params->nbVehicles);
         doLocalSearchAndAddIndividual(&randomIndiv);
     }
-
-    // Output that some individuals have been created
-    std::cout << "Generated " << nofRandomIndividualsToGenerate
-              << " individuals Randomly" << std::endl;
-    printState(-1, -1);
 }
 
 bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
@@ -185,10 +153,8 @@ bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
     // Update the feasibility if needed
     if (updateFeasible)
     {
-        listFeasibilityLoad.push_back(indiv->costs.capacityExcess
-                                      < MY_EPSILON);
-        listFeasibilityTimeWarp.push_back(indiv->costs.timeWarp
-                                          < MY_EPSILON);
+        listFeasibilityLoad.push_back(indiv->costs.capacityExcess < MY_EPSILON);
+        listFeasibilityTimeWarp.push_back(indiv->costs.timeWarp < MY_EPSILON);
         listFeasibilityLoad.pop_front();
         listFeasibilityTimeWarp.pop_front();
     }
@@ -238,27 +204,14 @@ bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
             < bestSolutionOverall.costs.penalizedCost - MY_EPSILON)
         {
             bestSolutionOverall = *indiv;
-            searchProgress.push_back(
-                {params->getTimeElapsedSeconds(),
-                 bestSolutionOverall.costs.penalizedCost});
-            if (params->config.isDimacsRun)
-            {
-                // Since the controller may kill the script at any time,
-                // directly write output
-                // bestSolutionOverall.exportCVRPLibFormat(params->config.pathSolution);
-                // exportSearchProgress(params->config.pathSolution + ".PG.csv",
-                // params->config.pathInstance, params->config.seed);
-
-                // Print solution for processing by the controller (after output
-                // is written since controller may terminate program!) Note:
-                // delay for writing is negligible
-                bestSolutionOverall.printCVRPLibFormat();
-            }
+            searchProgress.emplace_back(
+                params->getTimeElapsedSeconds(),
+                bestSolutionOverall.costs.penalizedCost);
         }
         return true;
     }
-    else
-        return false;
+
+    return false;
 }
 
 void Population::updateBiasedFitnesses(SubPopulation &pop)
@@ -360,22 +313,17 @@ void Population::removeWorstBiasedFitness(SubPopulation &pop)
 
 void Population::restart()
 {
-    std::cout << "----- RESET: CREATING A NEW POPULATION -----" << std::endl;
-
-    // Delete all the individuals (feasible and infeasible)
     for (Individual *indiv : feasibleSubpopulation)
-    {
         delete indiv;
-    }
+
     for (Individual *indiv : infeasibleSubpopulation)
-    {
         delete indiv;
-    }
 
     // Clear the pools of solutions and make a new empty individual as the best
     // solution after the restart
     feasibleSubpopulation.clear();
     infeasibleSubpopulation.clear();
+
     bestSolutionRestart = Individual();
 
     // Generate a new initial population
@@ -524,65 +472,6 @@ Individual *Population::getBestFound()
     }
     else
         return nullptr;
-}
-
-void Population::printState(int nbIter, int nbIterNoImprovement)
-{
-    // Print the number of iterations, the number of iterations since the last
-    // improvement, and the running time
-    std::printf("It %6d %6d | T(s) %.2f",
-                nbIter,
-                nbIterNoImprovement,
-                params->getTimeElapsedSeconds());
-
-    // If there is at least one feasible solution, print the number of feasible
-    // solutions, the cost of the best feasible solution, and the average cost
-    // of the feasible solutions
-    if (getBestFeasible() != nullptr)
-    {
-        std::printf(" | Feas %zu %.2f %.2f",
-                    feasibleSubpopulation.size(),
-                    getBestFeasible()->costs.penalizedCost,
-                    getAverageCost(feasibleSubpopulation));
-    }
-    else
-    {
-        std::printf(" | NO-FEASIBLE");
-    }
-
-    // If there is at least one infeasible solution, print the number of
-    // infeasible solutions, the cost of the best infeasible solution, and the
-    // average cost of the infeasible solutions
-    if (getBestInfeasible() != nullptr)
-    {
-        std::printf(" | Inf %zu %.2f %.2f",
-                    infeasibleSubpopulation.size(),
-                    getBestInfeasible()->costs.penalizedCost,
-                    getAverageCost(infeasibleSubpopulation));
-    }
-    else
-    {
-        std::printf(" | NO-INFEASIBLE");
-    }
-
-    // Print the diversity of both pools of solutions, the average load- and
-    // time warp feasibilities of the last 100 solutions generated by LS, and
-    // the penalties for the capacit and the time warp
-    std::printf(" | Div %.2f %.2f",
-                getDiversity(feasibleSubpopulation),
-                getDiversity(infeasibleSubpopulation));
-    std::printf(" | Feas %.2f %.2f",
-                static_cast<double>(std::count(listFeasibilityLoad.begin(),
-                                               listFeasibilityLoad.end(),
-                                               true))
-                    / static_cast<double>(listFeasibilityLoad.size()),
-                static_cast<double>(std::count(listFeasibilityTimeWarp.begin(),
-                                               listFeasibilityTimeWarp.end(),
-                                               true))
-                    / static_cast<double>(listFeasibilityTimeWarp.size()));
-    std::printf(
-        " | Pen %.2f %.2f", params->penaltyCapacity, params->penaltyTimeWarp);
-    std::cout << std::endl;
 }
 
 double Population::getDiversity(SubPopulation const &pop)

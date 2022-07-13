@@ -71,14 +71,7 @@ Result const Genetic::run(int maxIterNonProd, int timeLimit)
         /* DIVERSIFICATION, PENALTY MANAGEMENT AND TRACES */
         // Update the penaltyTimeWarp and penaltyCapacity every 100 iterations
         if (nbIter % 100 == 0)
-        {
             population->managePenalties();
-        }
-        // Print the state of the population every 500 iterations
-        if (nbIter % 500 == 0)
-        {
-            population->printState(nbIter, nbIterNonProd);
-        }
 
         /* FOR TESTS INVOLVING SUCCESSIVE RUNS UNTIL A TIME LIMIT: WE RESET THE
          * ALGORITHM/POPULATION EACH TIME maxIterNonProd IS ATTAINED*/

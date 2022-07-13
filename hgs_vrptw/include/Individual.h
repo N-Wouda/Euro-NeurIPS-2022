@@ -60,7 +60,7 @@ class Individual
 {
 public:
     Params *params;           // Problem parameters
-    CostSol costs;        // Information on the cost of the solution
+    CostSol costs;            // Information on the cost of the solution
     std::vector<int> chromT;  // Giant tour representing the individual: list of
                               // integers representing clients (can not be the
                               // depot 0). Size is nbClients
@@ -106,15 +106,10 @@ public:
     // computational time)
     void exportCVRPLibFormat(std::string const &path) const;
 
-    // Prints a solution in CVRPLib format (adds a final line with the
-    // computational time)
-    void printCVRPLibFormat();
-
     // Reads a solution in CVRPLib format, returns TRUE if the process worked,
     // or FALSE if the file does not exist or is not readable
-    static bool readCVRPLibFormat(std::string fileName,
-                                  std::vector<std::vector<int>> &readSolution,
-                                  double &readCost);
+    static std::pair<std::vector<std::vector<int>>, double>
+    readCVRPLibFormat(std::string const &path);
 
     bool operator==(Individual const &other) const;
 

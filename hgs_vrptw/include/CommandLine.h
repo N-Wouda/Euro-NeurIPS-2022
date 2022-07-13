@@ -35,10 +35,10 @@ SOFTWARE.*/
 // to the command line
 class CommandLine
 {
-public:
-    Params::Config config;  // Object to store all run configurations
+    int argc;
+    char **argv;
 
-    // Reads the command line and extracts run configurations
+public:
     // argc is the number of command line arguments
     // argv are the command line arguments:
     //		1) The path to the genvrp executable to run
@@ -47,157 +47,122 @@ public:
     //          TODO: Can this also be a number as a time limit?
     //      4) Possibly combinations of command line argument descriptions with
     //         their value (counted as 2 per argument in argc)
-    CommandLine(int argc, char *argv[])
+    CommandLine(int argc, char **argv) : argc(argc), argv(argv)
     {
         // Check if the number of arguments is odd and at least three, since the
         // three paths should at least be given
-        if (argc % 2 != 1 || argc % 2 == 0 || argc < 3)
+        if (argc % 2 != 1 || argc < 3)
         {
-            // Output error message and help menu to the command line
-            std::cout << "----- NUMBER OF COMMANDLINE ARGUMENTS IS INCORRECT: "
-                      << argc << std::endl;
-            display_help();
-            throw std::string("Incorrect line of command");
-        }
-        else
-        {
-            // Get the paths of the instance and the solution
-            config.pathInstance = std::string(argv[1]);
-            config.pathSolution = std::string(argv[2]);
-            // If the pathSolution is a number, this is the time limit and the
-            // path the the solution is config.pathInstance + ".sol" This was
-            // only used for the DIMACS Challenge
-            if (is_number(config.pathSolution))
-            {
-                // Get time limit from controller (will also be terminated
-                // externally)
-                config.timeLimit = atoi(argv[2]);
-                config.pathSolution = config.pathInstance + ".sol";
-                config.isDimacsRun = true;
-                std::cout << "----- RUNNING " << config.pathInstance
-                          << " WITHIN DIMACS CONTROLLER WITH TIME LIMIT "
-                          << config.timeLimit << std::endl;
-            }
-            // Go over all possible command line arguments and store their
-            // values Explanations per command line argument can be found at
-            // their variable declaration, as well as in display_help()
-            for (int i = 3; i < argc; i += 2)
-            {
-                if (std::string(argv[i]) == "-t")
-                    config.timeLimit = atoi(argv[i + 1]);
-                else if (std::string(argv[i]) == "-useWallClockTime")
-                    config.useWallClockTime = atoi(argv[i + 1]) != 0;
-                else if (std::string(argv[i]) == "-it")
-                    config.nbIter = atoi(argv[i + 1]);
-                else if (std::string(argv[i]) == "-bks")
-                    config.pathBKS = std::string(argv[i + 1]);
-                else if (std::string(argv[i]) == "-seed")
-                    config.seed = atoi(argv[i + 1]);
-                else if (std::string(argv[i]) == "-veh")
-                    config.nbVeh = atoi(argv[i + 1]);
-                else if (std::string(argv[i]) == "-isDimacsRun")
-                    config.isDimacsRun = atoi(argv[i + 1]) != 0;
-                else if (std::string(argv[i]) == "-useDynamicParameters")
-                    config.useDynamicParameters = atoi(argv[i + 1]) != 0;
-                else if (std::string(argv[i]) == "-logpool")
-                    config.logPoolInterval = atoi(argv[i + 1]);
-                else if (std::string(argv[i]) == "-nbGranular")
-                    config.nbGranular = atoi(argv[i + 1]);
-                else if (std::string(argv[i]) == "-fractionGeneratedNearest")
-                    config.fractionGeneratedNearest = atof(argv[i + 1]);
-                else if (std::string(argv[i]) == "-fractionGeneratedFurthest")
-                    config.fractionGeneratedFurthest = atof(argv[i + 1]);
-                else if (std::string(argv[i]) == "-fractionGeneratedSweep")
-                    config.fractionGeneratedSweep = atof(argv[i + 1]);
-                else if (std::string(argv[i]) == "-fractionGeneratedRandomly")
-                    config.fractionGeneratedRandomly = atof(argv[i + 1]);
-                else if (std::string(argv[i]) == "-minSweepFillPercentage")
-                    config.minSweepFillPercentage = atoi(argv[i + 1]);
-                else if (std::string(argv[i])
-                         == "-maxToleratedCapacityViolation")
-                    config.maxToleratedCapacityViolation = atoi(argv[i + 1]);
-                else if (std::string(argv[i]) == "-maxToleratedTimeWarp")
-                    config.maxToleratedTimeWarp = atoi(argv[i + 1]);
-                else if (std::string(argv[i]) == "-initialTimeWarpPenalty")
-                    config.initialTimeWarpPenalty = atof(argv[i + 1]);
-                else if (std::string(argv[i]) == "-penaltyBooster")
-                    config.penaltyBooster = atof(argv[i + 1]);
-                else if (std::string(argv[i])
-                         == "-useSymmetricCorrelatedVertices")
-                    config.useSymmetricCorrelatedVertices
-                        = atoi(argv[i + 1]) != 0;
-                else if (std::string(argv[i]) == "-doRepeatUntilTimeLimit")
-                    config.doRepeatUntilTimeLimit = atoi(argv[i + 1]) != 0;
-                else if (std::string(argv[i]) == "-minimumPopulationSize")
-                    config.minimumPopulationSize = atoi(argv[i + 1]);
-                else if (std::string(argv[i]) == "-generationSize")
-                    config.generationSize = atoi(argv[i + 1]);
-                else if (std::string(argv[i]) == "-nbElite")
-                    config.nbElite = atoi(argv[i + 1]);
-                else if (std::string(argv[i]) == "-nbClose")
-                    config.nbClose = atoi(argv[i + 1]);
-                else if (std::string(argv[i]) == "-targetFeasible")
-                    config.targetFeasible = atof(argv[i + 1]);
-                else if (std::string(argv[i]) == "-repairProbability")
-                    config.repairProbability = atoi(argv[i + 1]);
-                else if (std::string(argv[i])
-                         == "-growNbGranularAfterNonImprovementIterations")
-                    config.growNbGranularAfterNonImprovementIterations
-                        = atoi(argv[i + 1]);
-                else if (std::string(argv[i])
-                         == "-growNbGranularAfterIterations")
-                    config.growNbGranularAfterIterations = atoi(argv[i + 1]);
-                else if (std::string(argv[i]) == "-growNbGranularSize")
-                    config.growNbGranularSize = atoi(argv[i + 1]);
-                else if (std::string(argv[i])
-                         == "-growPopulationAfterNonImprovementIterations")
-                    config.growPopulationAfterNonImprovementIterations
-                        = atoi(argv[i + 1]);
-                else if (std::string(argv[i])
-                         == "-growPopulationAfterIterations")
-                    config.growPopulationAfterIterations = atoi(argv[i + 1]);
-                else if (std::string(argv[i]) == "-growPopulationSize")
-                    config.growPopulationSize = atoi(argv[i + 1]);
-                else if (std::string(argv[i])
-                         == "-intensificationProbabilityLS")
-                    config.intensificationProbabilityLS = atoi(argv[i + 1]);
-                else if (std::string(argv[i]) == "-diversityWeight")
-                    config.diversityWeight = atof(argv[i + 1]);
-                else if (std::string(argv[i]) == "-useSwapStarTW")
-                    config.useSwapStarTW = atoi(argv[i + 1]) != 0;
-                else if (std::string(argv[i]) == "-skipSwapStarDist")
-                    config.skipSwapStarDist = atoi(argv[i + 1]) != 0;
-                else if (std::string(argv[i])
-                         == "-circleSectorOverlapToleranceDegrees")
-                    config.circleSectorOverlapToleranceDegrees
-                        = atoi(argv[i + 1]);
-                else if (std::string(argv[i]) == "-minCircleSectorSizeDegrees")
-                    config.minCircleSectorSizeDegrees = atoi(argv[i + 1]);
-                else
-                {
-                    // Output error message and help menu to the command line
-                    std::cout << "----- ARGUMENT NOT RECOGNIZED: "
-                              << std::string(argv[i]) << std::endl;
-                    display_help();
-                    throw std::string("Incorrect line of command");
-                }
-            }
+            displayHelp();
+
+            throw std::string("Incorrect number of arguments");
         }
     }
 
-    // Check if the input string s is a number (it only contains numbers)
-    // Example: is_number("3") is true
-    // Example: is_number("231k3") is false
-    bool is_number(const std::string &s)
+    // Extracts run configurations from command line arguments
+    Params::Config parse()
     {
-        std::string::const_iterator it = s.begin();
-        while (it != s.end() && std::isdigit(*it))
-            ++it;
-        return !s.empty() && it == s.end();
+        Params::Config config;
+
+        // Get the paths of the instance and the solution
+        config.pathInstance = std::string(argv[1]);
+        config.pathSolution = std::string(argv[2]);
+
+        // Go over all possible command line arguments and store their
+        // values Explanations per command line argument can be found at
+        // their variable declaration, as well as in displayHelp()
+        for (int i = 3; i < argc; i += 2)
+        {
+            if (std::string(argv[i]) == "-t")
+                config.timeLimit = atoi(argv[i + 1]);
+            else if (std::string(argv[i]) == "-useWallClockTime")
+                config.useWallClockTime = atoi(argv[i + 1]) != 0;
+            else if (std::string(argv[i]) == "-it")
+                config.nbIter = atoi(argv[i + 1]);
+            else if (std::string(argv[i]) == "-bks")
+                config.pathBKS = std::string(argv[i + 1]);
+            else if (std::string(argv[i]) == "-seed")
+                config.seed = atoi(argv[i + 1]);
+            else if (std::string(argv[i]) == "-veh")
+                config.nbVeh = atoi(argv[i + 1]);
+            else if (std::string(argv[i]) == "-isDimacsRun")
+                config.isDimacsRun = atoi(argv[i + 1]) != 0;
+            else if (std::string(argv[i]) == "-useDynamicParameters")
+                config.useDynamicParameters = atoi(argv[i + 1]) != 0;
+            else if (std::string(argv[i]) == "-logpool")
+                config.logPoolInterval = atoi(argv[i + 1]);
+            else if (std::string(argv[i]) == "-nbGranular")
+                config.nbGranular = atoi(argv[i + 1]);
+            else if (std::string(argv[i]) == "-fractionGeneratedNearest")
+                config.fractionGeneratedNearest = atof(argv[i + 1]);
+            else if (std::string(argv[i]) == "-fractionGeneratedFurthest")
+                config.fractionGeneratedFurthest = atof(argv[i + 1]);
+            else if (std::string(argv[i]) == "-fractionGeneratedSweep")
+                config.fractionGeneratedSweep = atof(argv[i + 1]);
+            else if (std::string(argv[i]) == "-fractionGeneratedRandomly")
+                config.fractionGeneratedRandomly = atof(argv[i + 1]);
+            else if (std::string(argv[i]) == "-minSweepFillPercentage")
+                config.minSweepFillPercentage = atoi(argv[i + 1]);
+            else if (std::string(argv[i]) == "-maxToleratedCapacityViolation")
+                config.maxToleratedCapacityViolation = atoi(argv[i + 1]);
+            else if (std::string(argv[i]) == "-maxToleratedTimeWarp")
+                config.maxToleratedTimeWarp = atoi(argv[i + 1]);
+            else if (std::string(argv[i]) == "-initialTimeWarpPenalty")
+                config.initialTimeWarpPenalty = atof(argv[i + 1]);
+            else if (std::string(argv[i]) == "-penaltyBooster")
+                config.penaltyBooster = atof(argv[i + 1]);
+            else if (std::string(argv[i]) == "-useSymmetricCorrelatedVertices")
+                config.useSymmetricCorrelatedVertices = atoi(argv[i + 1]) != 0;
+            else if (std::string(argv[i]) == "-doRepeatUntilTimeLimit")
+                config.doRepeatUntilTimeLimit = atoi(argv[i + 1]) != 0;
+            else if (std::string(argv[i]) == "-minimumPopulationSize")
+                config.minimumPopulationSize = atoi(argv[i + 1]);
+            else if (std::string(argv[i]) == "-generationSize")
+                config.generationSize = atoi(argv[i + 1]);
+            else if (std::string(argv[i]) == "-nbElite")
+                config.nbElite = atoi(argv[i + 1]);
+            else if (std::string(argv[i]) == "-nbClose")
+                config.nbClose = atoi(argv[i + 1]);
+            else if (std::string(argv[i]) == "-targetFeasible")
+                config.targetFeasible = atof(argv[i + 1]);
+            else if (std::string(argv[i]) == "-repairProbability")
+                config.repairProbability = atoi(argv[i + 1]);
+            else if (std::string(argv[i])
+                     == "-growNbGranularAfterNonImprovementIterations")
+                config.growNbGranularAfterNonImprovementIterations
+                    = atoi(argv[i + 1]);
+            else if (std::string(argv[i]) == "-growNbGranularAfterIterations")
+                config.growNbGranularAfterIterations = atoi(argv[i + 1]);
+            else if (std::string(argv[i]) == "-growNbGranularSize")
+                config.growNbGranularSize = atoi(argv[i + 1]);
+            else if (std::string(argv[i])
+                     == "-growPopulationAfterNonImprovementIterations")
+                config.growPopulationAfterNonImprovementIterations
+                    = atoi(argv[i + 1]);
+            else if (std::string(argv[i]) == "-growPopulationAfterIterations")
+                config.growPopulationAfterIterations = atoi(argv[i + 1]);
+            else if (std::string(argv[i]) == "-growPopulationSize")
+                config.growPopulationSize = atoi(argv[i + 1]);
+            else if (std::string(argv[i]) == "-intensificationProbabilityLS")
+                config.intensificationProbabilityLS = atoi(argv[i + 1]);
+            else if (std::string(argv[i]) == "-diversityWeight")
+                config.diversityWeight = atof(argv[i + 1]);
+            else if (std::string(argv[i]) == "-useSwapStarTW")
+                config.useSwapStarTW = atoi(argv[i + 1]) != 0;
+            else if (std::string(argv[i]) == "-skipSwapStarDist")
+                config.skipSwapStarDist = atoi(argv[i + 1]) != 0;
+            else if (std::string(argv[i])
+                     == "-circleSectorOverlapToleranceDegrees")
+                config.circleSectorOverlapToleranceDegrees = atoi(argv[i + 1]);
+            else if (std::string(argv[i]) == "-minCircleSectorSizeDegrees")
+                config.minCircleSectorSizeDegrees = atoi(argv[i + 1]);
+        }
+
+        return config;
     }
 
     // Printing information to command line about how to use the code
-    void display_help()
+    void displayHelp()
     {
         std::cout << std::endl;
         std::cout << "-------------------------------------------------- "

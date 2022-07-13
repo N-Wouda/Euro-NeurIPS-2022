@@ -123,9 +123,6 @@ public:
     // nullptr
     Individual *getBestFound();
 
-    // Prints population state
-    void printState(int nbIter, int nbIterNoImprovement);
-
     // Returns the average diversity value among the minimumPopulationSize best
     // individuals in the subpopulation Returns -1.0 if the size of pop <= 0
     double getDiversity(SubPopulation const &pop);

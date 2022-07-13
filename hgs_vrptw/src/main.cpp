@@ -1,9 +1,9 @@
+#include "CommandLine.h"
 #include "Genetic.h"
 #include "LocalSearch.h"
 #include "Params.h"
 #include "Population.h"
 #include "Split.h"
-#include "commandline.h"
 
 #include <iostream>
 
@@ -11,23 +11,25 @@ int main(int argc, char *argv[])
 try
 {
     CommandLine args(argc, argv);
-    Params params(args);
+    auto config = args.parse();
+
+    Params params(config);
 
     Split split(&params);
     LocalSearch ls(&params);
     Population pop(&params, &split, &ls);
 
     Genetic solver(&params, &split, &pop, &ls);
-    auto const res = solver.run(args.config.nbIter, args.config.timeLimit);
+    auto const res = solver.run(config.nbIter, config.timeLimit);
 
-    if (res.getBestFound() && !args.config.pathBKS.empty())
-        res.writeBestKnowSolution(args.config.pathBKS);
+    if (res.getBestFound() && !config.pathBKS.empty())
+        res.writeBestKnowSolution(config.pathBKS);
 }
 catch (std::string const &e)
 {
-    std::cout << "EXCEPTION | " << e << '\n';
+    std::cerr << "EXCEPTION | " << e << '\n';
 }
 catch (std::exception const &e)
 {
-    std::cout << "EXCEPTION | " << e.what() << '\n';
+    std::cerr << "EXCEPTION | " << e.what() << '\n';
 }

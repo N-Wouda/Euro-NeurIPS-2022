@@ -116,13 +116,12 @@ void Individual::evaluateCompleteCost()
     // When all vehicles are dealt with, calculated total penalized cost and
     // check if the solution is feasible. (Wait time does not affect
     // feasibility)
-    costs.penalizedCost
-        = costs.distance
-          + costs.capacityExcess * params->penaltyCapacity
-          + costs.timeWarp * params->penaltyTimeWarp
-          + costs.waitTime * params->penaltyWaitTime;
-    isFeasible = (costs.capacityExcess < MY_EPSILON
-                  && costs.timeWarp < MY_EPSILON);
+    costs.penalizedCost = costs.distance
+                          + costs.capacityExcess * params->penaltyCapacity
+                          + costs.timeWarp * params->penaltyTimeWarp
+                          + costs.waitTime * params->penaltyWaitTime;
+    isFeasible
+        = (costs.capacityExcess < MY_EPSILON && costs.timeWarp < MY_EPSILON);
 }
 
 void Individual::shuffleChromT()
@@ -212,72 +211,46 @@ void Individual::exportCVRPLibFormat(std::string const &path) const
     out << "Time " << params->getTimeElapsedSeconds() << '\n';
 }
 
-void Individual::printCVRPLibFormat()
+std::pair<std::vector<std::vector<int>>, double>
+Individual::readCVRPLibFormat(std::string const &path)
 {
-    std::cout << "----- PRINTING SOLUTION WITH VALUE "
-              << costs.penalizedCost << std::endl;
-    for (int k = 0; k < params->nbVehicles; k++)
-    {
-        if (!chromR[k].empty())
-        {
-            std::cout << "Route #" << k + 1
-                      << ":";  // Route IDs start at 1 in the file format
-            for (int i : chromR[k])
-            {
-                std::cout << " " << i;
-            }
-            std::cout << std::endl;
-        }
-    }
-    std::cout << "Cost " << costs.penalizedCost << std::endl;
-    std::cout << "Time " << params->getTimeElapsedSeconds() << std::endl;
-    fflush(stdout);
-}
+    std::ifstream in(path);
 
-bool Individual::readCVRPLibFormat(std::string fileName,
-                                   std::vector<std::vector<int>> &readSolution,
-                                   double &readCost)
-{
-    readSolution.clear();
-    std::ifstream inputFile(fileName);
-    if (inputFile.is_open())
+    if (!in)
+        throw std::runtime_error("Could not open " + path);
+
+    std::string inputString;
+    in >> inputString;
+
+    std::vector<std::vector<int>> sol;
+
+    // Loops as long as the first line keyword is "Route"
+    for (int r = 0; inputString == "Route"; r++)
     {
-        std::string inputString;
-        inputFile >> inputString;
-        // Loops as long as the first line keyword is "Route"
-        for (int r = 0; inputString == "Route"; r++)
-        {
-            readSolution.push_back(std::vector<int>());
-            inputFile >> inputString;
-            getline(inputFile, inputString);
-            std::stringstream ss(inputString);
-            int inputCustomer;
-            // Loops as long as there is an integer to read
-            while (ss >> inputCustomer)
-            {
-                readSolution[r].push_back(inputCustomer);
-            }
-            inputFile >> inputString;
-        }
-        if (inputString == "Cost")
-        {
-            inputFile >> readCost;
-            return true;
-        }
-        else
-            std::cout << "----- UNEXPECTED WORD IN SOLUTION FORMAT: "
-                      << inputString << std::endl;
+        sol.emplace_back();
+        in >> inputString;
+        getline(in, inputString);
+        std::stringstream ss(inputString);
+        int inputCustomer;
+
+        while (ss >> inputCustomer)
+            sol[r].push_back(inputCustomer);
+
+        in >> inputString;
     }
-    else
-        std::cout << "----- IMPOSSIBLE TO OPEN: " << fileName << std::endl;
-    return false;
+
+    double cost;
+
+    if (inputString == "Cost")
+        in >> cost;
+
+    return std::make_pair(sol, cost);
 }
 
 bool Individual::operator==(Individual const &other) const
 {
     auto diff = std::abs(costs.penalizedCost - other.costs.penalizedCost);
-    return diff < MY_EPSILON
-           && chromT == other.chromT
+    return diff < MY_EPSILON && chromT == other.chromT
            && chromR == other.chromR;
 }
 

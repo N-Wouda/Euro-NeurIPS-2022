@@ -1,19 +1,24 @@
 #include "Result.h"
 #include "Individual.h"
 
-#include <fstream>
-#include <vector>
-
 void Result::writeBestKnowSolution(std::string const &path) const
 {
     // Compare to current best known solution, if exists.
     double currCost;
-    std::vector<std::vector<int>> currSol;
-    bool readOK = Individual::readCVRPLibFormat(path, currSol, currCost);
+
+    try
+    {
+        auto [_, cost] = Individual::readCVRPLibFormat(path);
+        currCost = cost;
+    }
+    catch (std::runtime_error const &e)
+    {
+        currCost = UINT_MAX;
+    }
 
     auto const *bestSol = getBestFound();
 
-    if (!readOK || bestSol->costs.penalizedCost < currCost)
+    if (bestSol->costs.penalizedCost < currCost)
         bestSol->exportCVRPLibFormat(path);
 }
 

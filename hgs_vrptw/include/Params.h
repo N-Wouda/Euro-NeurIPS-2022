@@ -218,7 +218,7 @@ public:
                               // nonempty routes) (0 - 65536)
 
     // Initialization from a given data set
-    Params(const CommandLine &);
+    Params(Config &config);
 
     // Get time elapsed since start of program
     double getTimeElapsedSeconds();

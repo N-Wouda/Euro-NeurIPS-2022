@@ -1,8 +1,8 @@
 #include "Params.h"
 
 #include "CircleSector.h"
+#include "CommandLine.h"
 #include "Matrix.h"
-#include "commandline.h"
 #include "xorshift128.h"
 
 #include <algorithm>
@@ -13,10 +13,8 @@
 #include <string>
 #include <vector>
 
-Params::Params(const CommandLine &cl)
+Params::Params(Config &config) : config(config)
 {
-    // Read and create some parameter values from the commandline
-    config = cl.config;
     nbVehicles = config.nbVeh;
     rng = XorShift128(config.seed);
     startWallClockTime = std::chrono::system_clock::now();
@@ -380,34 +378,14 @@ Params::Params(const CommandLine &cl)
         // Safety margin: 30% + 3 more vehicles than the trivial bin packing LB
         nbVehicles = static_cast<int>(
             std::ceil(1.3 * totalDemand / vehicleCapacity) + 3.);
-        std::cout
-            << "----- FLEET SIZE WAS NOT SPECIFIED: DEFAULT INITIALIZATION TO "
-            << nbVehicles << " VEHICLES" << std::endl;
     }
-    else if (nbVehicles == -1)
+    else if (nbVehicles == -1)  // unlimited
     {
         nbVehicles = nbClients;
-        std::cout << "----- FLEET SIZE UNLIMITED: SET TO UPPER BOUND OF "
-                  << nbVehicles << " VEHICLES" << std::endl;
-    }
-    else
-    {
-        std::cout << "----- FLEET SIZE SPECIFIED IN THE COMMANDLINE: SET TO "
-                  << nbVehicles << " VEHICLES" << std::endl;
     }
 
-    // If the run is a DIMACS run, store the solution in the current folder
-    if (config.isDimacsRun)
-    {
-        config.pathSolution = instanceName + ".sol";
-        std::cout << "DIMACS RUN for instance name " << instanceName
-                  << ", writing solution to " << config.pathSolution
-                  << std::endl;
-    }
-
-    // For DIMACS runs, or when dynamic parameters have to be used, set more
-    // parameter values
-    if (config.isDimacsRun || config.useDynamicParameters)
+    // When dynamic parameters have to be used, set more parameter values
+    if (config.useDynamicParameters)
     {
         // Determine categories of instances based on number of stops/route and
         // whether it has large time windows Calculate an upper bound for the
@@ -415,6 +393,7 @@ Params::Params(const CommandLine &cl)
         double stopsPerRoute = vehicleCapacity / (totalDemand / nbClients);
         // Routes are large when more than 25 stops per route
         bool hasLargeRoutes = stopsPerRoute > 25;
+
         // Get the time horizon (by using the time window of the depot)
         int horizon = cli[0].latestArrival - cli[0].earliestArrival;
         int nbLargeTW = 0;
@@ -422,16 +401,10 @@ Params::Params(const CommandLine &cl)
         // Loop over all clients (excluding the depot) and count the amount of
         // large time windows (greater than 0.7*horizon)
         for (int i = 1; i <= nbClients; i++)
-        {
             if (cli[i].latestArrival - cli[i].earliestArrival > 0.7 * horizon)
-            {
                 nbLargeTW++;
-            }
-        }
-        // Output if an instance has large routes and a large time window
+
         bool hasLargeTW = nbLargeTW > 0;
-        std::cout << "----- HasLargeRoutes: " << hasLargeRoutes
-                  << ", HasLargeTW: " << hasLargeTW << std::endl;
 
         // Set the parameter values based on the characteristics of the instance
         if (hasLargeRoutes)

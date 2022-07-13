@@ -23,6 +23,9 @@ public:
      */
     void writeBestKnowSolution(std::string const &path) const;
 
+    /**
+     * Returns the best observed solution.
+     */
     [[nodiscard]] Individual const *getBestFound() const;
 };
 
