@@ -4,19 +4,17 @@
 #include "LocalSearch.h"
 #include "Params.h"
 #include "Population.h"
+#include "Result.h"
 #include "Split.h"
 
 #include <algorithm>
 #include <unordered_set>
 
-void Genetic::run(int maxIterNonProd, int timeLimit)
+Result const Genetic::run(int maxIterNonProd, int timeLimit)
 {
     if (params->nbClients == 1)
-    {
-        // Edge case: with 1 client, crossover will fail, genetic algorithm
-        // makes no sense
-        return;
-    }
+        throw std::runtime_error("Cannot run genetic algorithm with one node.");
+
     // Do iterations of the Genetic Algorithm, until more then maxIterNonProd
     // consecutive iterations without improvement or a time limit (in seconds)
     // is reached
@@ -136,6 +134,8 @@ void Genetic::run(int maxIterNonProd, int timeLimit)
                 += params->config.growPopulationSize;
         }
     }
+
+    return Result();
 }
 
 Individual *
@@ -400,18 +400,16 @@ Individual *Genetic::crossoverSREX(
         clientsInSelectedA.begin(),
         clientsInSelectedA.end(),
         std::inserter(clientsInSelectedANotB, clientsInSelectedANotB.end()),
-        [&clientsInSelectedB](int c) {
-            return clientsInSelectedB.find(c) == clientsInSelectedB.end();
-        });
+        [&clientsInSelectedB](int c)
+        { return clientsInSelectedB.find(c) == clientsInSelectedB.end(); });
 
     std::unordered_set<int> clientsInSelectedBNotA;
     std::copy_if(
         clientsInSelectedB.begin(),
         clientsInSelectedB.end(),
         std::inserter(clientsInSelectedBNotA, clientsInSelectedBNotA.end()),
-        [&clientsInSelectedA](int c) {
-            return clientsInSelectedA.find(c) == clientsInSelectedA.end();
-        });
+        [&clientsInSelectedA](int c)
+        { return clientsInSelectedA.find(c) == clientsInSelectedA.end(); });
 
     // Replace selected routes from parent A with routes from parent B
     for (int r = 0; r < nOfMovedRoutes; r++)
@@ -585,9 +583,9 @@ Genetic::Genetic(Params *params,
 {
     // After initializing the parameters of the Genetic object, also generate
     // new individuals in the array candidateOffsprings
-    std::generate(candidateOffsprings.begin(), candidateOffsprings.end(), [&] {
-        return new Individual(params);
-    });
+    std::generate(candidateOffsprings.begin(),
+                  candidateOffsprings.end(),
+                  [&] { return new Individual(params); });
 }
 
 Genetic::~Genetic(void)

@@ -104,7 +104,7 @@ public:
 
     // Exports a solution in CVRPLib format (adds a final line with the
     // computational time)
-    void exportCVRPLibFormat(std::string fileName);
+    void exportCVRPLibFormat(std::string const &path) const
 
     // Prints a solution in CVRPLib format (adds a final line with the
     // computational time)

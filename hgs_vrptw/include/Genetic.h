@@ -28,6 +28,7 @@ SOFTWARE.*/
 #include "LocalSearch.h"
 #include "Params.h"
 #include "Population.h"
+#include "Result.h"
 #include "Split.h"
 
 #include <array>
@@ -40,7 +41,7 @@ class Genetic
 public:
     // Running the genetic algorithm until maxIterNonProd consecutive iterations
     // without improvement or a time limit (in seconds) is reached
-    void run(int maxIterNonProd, int timeLimit);
+    Result const run(int maxIterNonProd, int timeLimit);
 
     // Constructor
     Genetic(Params *params,

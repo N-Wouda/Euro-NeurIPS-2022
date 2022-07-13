@@ -2,6 +2,7 @@
 #include "LocalSearch.h"
 #include "Params.h"
 #include "Population.h"
+#include "Result.h"
 #include "Split.h"
 
 #include <pybind11/pybind11.h>
@@ -10,14 +11,6 @@ namespace py = pybind11;
 
 PYBIND11_MODULE(hgspy, m)
 {
-    py::class_<Genetic>(m, "Genetic")
-        .def(py::init<Params *, Split *, Population *, LocalSearch *>(),
-             py::arg("params"),
-             py::arg("split"),
-             py::arg("population"),
-             py::arg("local_search"))
-        .def("run", &Genetic::run);
-
     py::class_<LocalSearch>(m, "LocalSearch");
 
     py::class_<Params>(m, "Params");
@@ -25,6 +18,24 @@ PYBIND11_MODULE(hgspy, m)
     py::class_<Population>(m, "Population");
 
     py::class_<Split>(m, "Split");
+
+    py::class_<Result>(m, "Result")
+        .def(py::init<std::vector<Individual const *> const &,
+                      std::vector<Individual const *> const &>(),
+             py::arg("feasible"),
+             py::arg("infeasible"))
+        .def("get_best_found", &Result::getBestFound)
+        .def("export_best_known_solution",
+             &Result::exportBestKnownSolution,
+             py::arg("path"));
+
+    py::class_<Genetic>(m, "Genetic")
+        .def(py::init<Params *, Split *, Population *, LocalSearch *>(),
+             py::arg("params"),
+             py::arg("split"),
+             py::arg("population"),
+             py::arg("local_search"))
+        .def("run", &Genetic::run);
 
     //    py::class_<MasterProblem>(m, "MasterProblem")
     //        .def(py::init<ProblemData &, double, double>(),

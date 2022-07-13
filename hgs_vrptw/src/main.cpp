@@ -18,19 +18,10 @@ try
     Population pop(&params, &split, &ls);
 
     Genetic solver(&params, &split, &pop, &ls);
-    solver.run(args.config.nbIter, args.config.timeLimit);
+    auto const res = solver.run(args.config.nbIter, args.config.timeLimit);
 
-    if (pop.getBestFound() != nullptr)
-    {
-        pop.getBestFound()->exportCVRPLibFormat(args.config.pathSolution);
-
-        pop.exportSearchProgress(args.config.pathSolution + ".PG.csv",
-                                 args.config.pathInstance,
-                                 args.config.seed);
-
-        if (!args.config.pathBKS.empty())
-            pop.exportBKS(args.config.pathBKS);
-    }
+    if (res.getBestFound() && !args.config.pathBKS.empty())
+        res.exportBestKnownSolution(args.config.pathBKS);
 }
 catch (std::string const &e)
 {

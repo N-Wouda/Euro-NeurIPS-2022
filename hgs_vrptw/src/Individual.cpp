@@ -189,31 +189,27 @@ double Individual::averageBrokenPairsDistanceClosest(int nbClosest)
     return result / maxSize;
 }
 
-void Individual::exportCVRPLibFormat(std::string fileName)
+void Individual::exportCVRPLibFormat(std::string const &path) const
 {
-    std::cout << "----- WRITING SOLUTION WITH VALUE " << myCostSol.penalizedCost
-              << " IN : " << fileName << std::endl;
-    std::ofstream myfile(fileName);
-    if (myfile.is_open())
-    {
-        for (int k = 0; k < params->nbVehicles; k++)
+    std::ofstream out(path);
+
+    if (!out)
+        throw std::runtime_error("Could not open " + path);
+
+    for (int k = 0; k < params->nbVehicles; k++)
+        if (!chromR[k].empty())
         {
-            if (!chromR[k].empty())
-            {
-                myfile << "Route #" << k + 1
-                       << ":";  // Route IDs start at 1 in the file format
-                for (int i : chromR[k])
-                {
-                    myfile << " " << i;
-                }
-                myfile << std::endl;
-            }
+            // Route IDs start at 1 in the file format
+            out << "Route #" << k + 1 << ":";
+
+            for (int i : chromR[k])
+                out << " " << i;
+
+            out << '\n';
         }
-        myfile << "Cost " << myCostSol.penalizedCost << std::endl;
-        myfile << "Time " << params->getTimeElapsedSeconds() << std::endl;
-    }
-    else
-        std::cout << "----- IMPOSSIBLE TO OPEN: " << fileName << std::endl;
+
+    out << "Cost " << myCostSol.penalizedCost << '\n';
+    out << "Time " << params->getTimeElapsedSeconds() << '\n';
 }
 
 void Individual::printCVRPLibFormat()

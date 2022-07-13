@@ -35,15 +35,13 @@ SOFTWARE.*/
 #include <string>
 #include <vector>
 
-// Create the alias SubPopulation for an object of type std::vector<Individual*>
-typedef std::vector<Individual *> SubPopulation;
-
 // Class representing the population of a Genetic Algorithm with functionality
 // to write information to files, do binary tournaments, update fitness values
 // etc.
 class Population
 {
-private:
+    using SubPopulation = std::vector<Individual *>;
+
     Params *params;            // Problem parameters
     Split *split;              // Split algorithm
     LocalSearch *localSearch;  // Local search structure
@@ -105,6 +103,16 @@ public:
     std::pair<Individual *, Individual *>
     getNonIdenticalParentsBinaryTournament();
 
+    [[nodiscard]] SubPopulation const &getFeasible() const
+    {
+        return feasibleSubpopulation;
+    }
+
+    [[nodiscard]] SubPopulation const &getInfeasible() const
+    {
+        return infeasibleSubpopulation;
+    }
+
     // Accesses the best feasible individual If not possible, return nullptr
     Individual *getBestFeasible();
 
@@ -125,20 +133,6 @@ public:
     // Returns the average solution value among the minimumPopulationSize best
     // individuals in the subpopulation Returns -1.0 if the size of pop <= 0
     double getAverageCost(const SubPopulation &pop);
-
-    // Overwrites a solution written in a file if the current solution is better
-    void exportBKS(std::string fileName);
-
-    // Exports the history of solution improvements to a file
-    void exportSearchProgress(std::string fileName,
-                              std::string instanceName,
-                              int seedRNG);
-
-    // Exports the population to a file
-    void exportPopulation(int nbIter, std::string fileName);
-
-    // Logs costs and list of client vists of one solution/individual to a file
-    void logSolution(int nbIter, std::ofstream &myfile, Individual *indiv);
 
     // Constructor
     Population(Params *params, Split *split, LocalSearch *localSearch);
