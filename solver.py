@@ -1,5 +1,7 @@
 # Solver for Dynamic VRPTW, baseline strategy is to use the static solver HGS-VRPTW repeatedly
 import argparse
+import importlib.machinery
+import importlib.util
 import os
 import subprocess
 import sys
@@ -13,6 +15,9 @@ from environment import ControllerEnvironment, VRPEnvironment
 
 
 def solve_static_vrptw(instance, time_limit=3600, tmp_dir="tmp", seed=1):
+    # TODO all this works, but it is not pretty. Clean this up in tandem with
+    #  the C++ implementation.
+
     # Prevent passing empty instances to the static solver, e.g. when
     # strategy decides to not dispatch any requests for the current epoch
     if instance['coords'].shape[0] <= 1:
@@ -30,22 +35,33 @@ def solve_static_vrptw(instance, time_limit=3600, tmp_dir="tmp", seed=1):
     tools.write_vrplib(instance_filename, instance, is_vrptw=True)
     out_filename = os.path.join(tmp_dir, "problem.sol")
 
-    executable = os.path.join('release', 'bin', 'genvrp')
-    assert os.path.isfile(executable), f"HGS executable {executable} does not exist!"
+    lib_path = f'release/lib/hgspy.cpython-39-x86_64-linux-gnu.so'
+    loader = importlib.machinery.ExtensionFileLoader('hgspy', lib_path)
+    spec = importlib.util.spec_from_loader(loader.name, loader)
+    hgspy = importlib.util.module_from_spec(spec)
+    loader.exec_module(hgspy)
 
-    # Call HGS solver with unlimited number of vehicles allowed and parse outputs
-    # Subtract two seconds from the time limit to account for writing of the instance and delay in enforcing the time limit by HGS
-    p = subprocess.Popen([
-        executable,
+    from hgspy import Genetic, Params, Split, Population, LocalSearch
+
+    params = Params(
         instance_filename,
         out_filename,
-        '-t', str(max(time_limit - 2, 1)),
-        '-seed', str(seed),
-        '-veh', '-1',
-        '-useWallClockTime', '1'
-    ])
+        timeLimit=max(time_limit - 2, 1),
+        seed=seed,
+        nbVeh=-1,
+        useWallClockTime=True
+    )
 
-    p.wait()
+    split = Split(params)
+    ls = LocalSearch(params)
+
+    pop = Population(params, split, ls)
+    algo = Genetic(params, split, pop, ls)
+
+    res = algo.run(1_000, 60)
+    best = res.get_best_found()
+
+    best.export_cvrplib_format(out_filename)
 
     routes = []
     with open(out_filename, 'r') as fh:
@@ -152,17 +168,7 @@ def run_baseline(args, env, oracle_solution=None):
     return total_reward
 
 
-def log(obj, newline=True, flush=False):
-    # Write logs to stderr since program uses stdout to communicate with controller
-    sys.stderr.write(str(obj))
-    if newline:
-        sys.stderr.write('\n')
-    if flush:
-        sys.stderr.flush()
-
-
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--strategy", type=str, default='greedy', help="Baseline strategy used to decide whether to dispatch routes")
     # Note: these arguments are only for convenience during development, during testing you should use controller.py
@@ -196,6 +202,3 @@ if __name__ == "__main__":
         run_oracle(args, env)
     else:
         run_baseline(args, env)
-
-    if args.instance is not None:
-        log(tools.json_dumps_np(env.final_solutions))

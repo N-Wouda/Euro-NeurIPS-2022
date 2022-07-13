@@ -7,8 +7,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <fstream>
-#include <iostream>
 #include <list>
 #include <vector>
 
@@ -160,13 +158,13 @@ bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
     }
 
     // Find the adequate subpopulation in relation to the individual feasibility
-    SubPopulation &subpop
-        = (indiv->isFeasible) ? feasibleSubpopulation : infeasibleSubpopulation;
+    SubPopulation &pop
+        = indiv->isFeasible ? feasibleSubpopulation : infeasibleSubpopulation;
 
     // Create a copy of the individual and update the proximity structures
     // calculating inter-individual distances
-    Individual *myIndividual = new Individual(*indiv);
-    for (Individual *myIndividual2 : subpop)
+    auto *myIndividual = new Individual(*indiv);
+    for (Individual *myIndividual2 : pop)
     {
         double myDistance = myIndividual->brokenPairsDistance(myIndividual2);
         myIndividual2->indivsPerProximity.insert({myDistance, myIndividual});
@@ -174,23 +172,24 @@ bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
     }
 
     // Identify the correct location in the population and insert the individual
-    int place = static_cast<int>(subpop.size());
+    // TODO binsearch?
+    int place = static_cast<int>(pop.size());
     while (place > 0
-           && subpop[place - 1]->costs.penalizedCost
+           && pop[place - 1]->costs.penalizedCost
                   > indiv->costs.penalizedCost - MY_EPSILON)
     {
         place--;
     }
-    subpop.emplace(subpop.begin() + place, myIndividual);
+    pop.emplace(pop.begin() + place, myIndividual);
 
     // Trigger a survivor selection if the maximimum population size is exceeded
-    if (static_cast<int>(subpop.size())
+    if (static_cast<int>(pop.size())
         > params->config.minimumPopulationSize + params->config.generationSize)
     {
-        while (static_cast<int>(subpop.size())
+        while (static_cast<int>(pop.size())
                > params->config.minimumPopulationSize)
         {
-            removeWorstBiasedFitness(subpop);
+            removeWorstBiasedFitness(pop);
         }
     }
 
@@ -307,6 +306,7 @@ void Population::removeWorstBiasedFitness(SubPopulation &pop)
     // Cleaning its distances from the other individuals in the population
     for (Individual *myIndividual2 : pop)
         myIndividual2->removeProximity(worstIndividual);
+    
     // Freeing memory
     delete worstIndividual;
 }

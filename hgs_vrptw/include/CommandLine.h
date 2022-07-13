@@ -59,7 +59,7 @@ public:
     }
 
     // Extracts run configurations from command line arguments
-    Params::Config parse()
+    Params parse()
     {
         Params::Config config;
 
@@ -82,12 +82,8 @@ public:
                 config.seed = atoi(argv[i + 1]);
             else if (std::string(argv[i]) == "-veh")
                 config.nbVeh = atoi(argv[i + 1]);
-            else if (std::string(argv[i]) == "-isDimacsRun")
-                config.isDimacsRun = atoi(argv[i + 1]) != 0;
             else if (std::string(argv[i]) == "-useDynamicParameters")
                 config.useDynamicParameters = atoi(argv[i + 1]) != 0;
-            else if (std::string(argv[i]) == "-logpool")
-                config.logPoolInterval = atoi(argv[i + 1]);
             else if (std::string(argv[i]) == "-nbGranular")
                 config.nbGranular = atoi(argv[i + 1]);
             else if (std::string(argv[i]) == "-fractionGeneratedNearest")
@@ -155,11 +151,11 @@ public:
                 config.minCircleSectorSizeDegrees = atoi(argv[i + 1]);
         }
 
-        return config;
+        return Params(config);
     }
 
     // Printing information to command line about how to use the code
-    void displayHelp()
+    static void displayHelp()
     {
         std::cout << std::endl;
         std::cout << "-------------------------------------------------- "
@@ -167,58 +163,23 @@ public:
                      "-----------------------------------------"
                   << std::endl;
         std::cout << "Call with: ./genvrp instancePath solPath [-it nbIter] "
-                     "[-t myCPUtime] [-bks bksPath] [-seed "
-                     "mySeed] [-veh nbVehicles]    "
-                  << std::endl;
-        std::cout << "                                         [-logpool "
-                     "interval]                                     "
-                     "                       "
-                  << std::endl;
+                     "[-t myCPUtime] [-seed mySeed] [-veh nbVehicles]\n";
         std::cout << std::endl;
         std::cout << "[-it <int>] sets a maximum number of iterations without "
-                     "improvement. Defaults to 20,000          "
-                     "                       "
-                  << std::endl;
+                     "improvement. Defaults to 20,000\n";
         std::cout << "[-t <int>] sets a time limit in seconds. Defaults to "
-                     "infinity                                    "
-                     "                       "
-                  << std::endl;
-        std::cout << "[-bks <string>] sets an optional path to a Best Known "
-                     "Solution. This file will be overwritten in "
-                     "case of improvement    "
-                  << std::endl;
-        std::cout << "[-seed <int>] sets a fixed seed. Defaults to 0           "
-                     "                                        "
-                     "                       "
-                  << std::endl;
+                     "infinity\n";
+        std::cout << "[-seed <int>] sets a fixed seed. Defaults to 0\n";
         std::cout << "[-veh <int>] sets a prescribed fleet size. Otherwise a "
-                     "reasonable UB on the the fleet size is "
-                     "calculated                "
-                  << std::endl;
-        std::cout << "[-logpool <int>] sets the amount of iterations after "
-                     "which the population is logged. Defaults to "
-                     "0.                     "
-                  << std::endl;
+                     "reasonable UB on the the fleet size is calculated\n";
         std::cout << std::endl;
         std::cout << "Additional Arguments:                                    "
-                     "                                        "
-                     "                       "
-                  << std::endl;
-        std::cout << "[-isDimacsRun <bool>] sets when DIMACS instance is run: "
-                     "print incumbent and avoid other output. "
-                     "It can be 0 or 1.       "
-                  << std::endl;
-        std::cout << "                      Defaults to 0                      "
-                     "                                        "
-                     "                       "
                   << std::endl;
         std::cout << "[-useDynamicParameters <int>] sets when dynamic "
                      "parameters are used based on instance "
                      "attributes. It can be 0 or 1.     "
                   << std::endl;
         std::cout << "                              Defaults to 0              "
-                     "                                        "
-                     "                       "
                   << std::endl;
         std::cout << "[-nbGranular <int>] Granular search parameter, limits "
                      "the number of moves in the RI local "
@@ -250,7 +211,6 @@ public:
                   << std::endl;
         std::cout << "[-maxToleratedTimeWarp <int>] sets the maximum tolerated "
                      "time warp. Defaults to 100              "
-                     "                       "
                   << std::endl;
         std::cout << "[-initialTimeWarpPenalty <double>] sets the time warp "
                      "penalty to use at the start of the "
@@ -261,8 +221,6 @@ public:
                      "feas. solutions.       "
                   << std::endl;
         std::cout << "                           Defaults to 2.0               "
-                     "                                        "
-                     "                       "
                   << std::endl;
         std::cout << "[-useSymmetricCorrelatedVertices <bool>] sets when "
                      "correlation matrix is symmetric. It can be 0 "
@@ -274,11 +232,9 @@ public:
                   << std::endl;
         std::cout << "                                 reached. It can be 0 or "
                      "1. Defaults to 1                        "
-                     "                       "
                   << std::endl;
         std::cout << "[-minimumPopulationSize <int>] sets the minimum "
                      "population size. Defaults to 25                  "
-                     "                       "
                   << std::endl;
         std::cout << "[-generationSize <int>] sets the number of solutions "
                      "created before reaching the maximum "
@@ -286,7 +242,6 @@ public:
                   << std::endl;
         std::cout << "[-nbElite <int>] sets the number of elite individuals. "
                      "Defaults to 4                             "
-                     "                       "
                   << std::endl;
         std::cout << "[-nbClose <int>] sets the number of closest individuals "
                      "when calculating diversity contribution. "
@@ -297,8 +252,6 @@ public:
                      "params adaptation.       "
                   << std::endl;
         std::cout << "                           Defaults to 0.2               "
-                     "                                        "
-                     "                       "
                   << std::endl;
         std::cout << "[-repairProbability <int>] sets the repair probability "
                      "if individual is infeasible after local "
@@ -310,7 +263,6 @@ public:
                   << std::endl;
         std::cout << "                                                     the "
                      "nbGranular is grown. Defaults to 5000   "
-                     "                       "
                   << std::endl;
         std::cout << "[-growNbGranularAfterIterations <int>] sets the number "
                      "of iteration after which the nbGranular "
@@ -318,7 +270,6 @@ public:
                   << std::endl;
         std::cout << "[-growNbGranularSize <int>] sets the number nbGranular "
                      "is increase by. Defaults to 0             "
-                     "                       "
                   << std::endl;
         std::cout << "[-growPopulationAfterNonImprovementIterations <int>] "
                      "sets the number of iterations without "
@@ -333,12 +284,9 @@ public:
                      "minimumPopulationSize is grown.         "
                   << std::endl;
         std::cout << "                                       Defaults to 0     "
-                     "                                        "
-                     "                       "
                   << std::endl;
         std::cout << "[-growPopulationSize <int>] sets the number "
                      "minimumPopulationSize is increase by. Defaults to 0  "
-                     "                       "
                   << std::endl;
         std::cout << "[-intensificationProbabilityLS <int>] sets the "
                      "probability intensification moves are performed "
@@ -349,12 +297,9 @@ public:
                      "1-nbElite/populationSize.          "
                   << std::endl;
         std::cout << "                            Defaults to 0.0              "
-                     "                                        "
-                     "                       "
                   << std::endl;
         std::cout << "[-useSwapStarTW <bool>] sets when to use time windows "
                      "swap star. It can be 0 or 1. Defaults to 1 "
-                     "                       "
                   << std::endl;
         std::cout << "[-skipSwapStarDist <bool>] sets when to skip normal swap "
                      "star based on distance. It can be 0 or "
@@ -366,7 +311,6 @@ public:
                   << std::endl;
         std::cout << "                                             sectors for "
                      "SWAP*. Defaults to 0                    "
-                     "                       "
                   << std::endl;
         std::cout << "[-minCircleSectorSizeDegrees <int>] sets the minimum "
                      "size (in degrees 0 - 359) for circle "
@@ -374,13 +318,7 @@ public:
                   << std::endl;
         std::cout << "                                    circle sectors have "
                      "'overlap'. Defaults to 15                "
-                     "                       "
                   << std::endl;
-        std::cout << "---------------------------------------------------------"
-                     "----------------------------------------"
-                     "--------------------------------"
-                  << std::endl;
-        std::cout << std::endl;
     };
 };
 

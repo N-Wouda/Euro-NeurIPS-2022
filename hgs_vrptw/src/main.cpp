@@ -11,21 +11,19 @@ int main(int argc, char *argv[])
 try
 {
     CommandLine args(argc, argv);
-    auto config = args.parse();
-
-    Params params(config);
+    Params params = args.parse();
 
     Split split(&params);
     LocalSearch ls(&params);
     Population pop(&params, &split, &ls);
 
     Genetic solver(&params, &split, &pop, &ls);
-    auto const res = solver.run(config.nbIter, config.timeLimit);
+    auto const res = solver.run(params.config.nbIter, params.config.timeLimit);
 
-    if (res.getBestFound())
+    if (res.getBestFound() != nullptr)
     {
         auto const *bestSol = res.getBestFound();
-        bestSol->exportCVRPLibFormat(config.pathSolution);
+        bestSol->exportCVRPLibFormat(params.config.pathSolution);
     }
 }
 catch (std::string const &e)

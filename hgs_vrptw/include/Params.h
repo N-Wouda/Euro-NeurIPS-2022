@@ -63,6 +63,9 @@ class CommandLine;
 // data of the instance needed by the algorithm
 class Params
 {
+private:
+    void setup();
+
 public:
     // Stores all the parameters values (given by using the command line)
     struct Config
@@ -135,7 +138,7 @@ public:
                                       // weight is 1 - nbElite / populationSize
 
         // Other parameters
-        int nbVeh = INT_MAX;      // Number of vehicles
+        int nbVeh = INT_MAX;  // Number of vehicles
         bool useDynamicParameters
             = false;  // To use dynamic parameters based on instance attributes
         std::string pathSolution;  // Solution path
@@ -184,10 +187,8 @@ public:
 
     // Data of the problem instance
     std::string instanceName;
-    bool isDurationConstraint;    // Indicates if the problem includes duration
-                                  // constraints
-    bool isTimeWindowConstraint;  // Indicates if the problem includes time
-                                  // window constraints
+    bool isDurationConstraint;  // Indicates if the problem includes duration
+                                // constraints
     bool isExplicitDistanceMatrix;  // Indicates if the problem is with explicit
                                     // distances (non-euclidean)
     int nbClients;                  // Number of clients (excluding the depot)
@@ -215,6 +216,45 @@ public:
 
     // Initialization from a given data set
     explicit Params(Config &config);
+
+    Params(std::string const &instancePath,
+           std::string const &solPath,
+           int nbIter = 20'000,
+           int timeLimit = INT_MAX,
+           int seed = 0,
+           bool useWallClockTime = false,
+           double fractionGeneratedNearest = 0.05,
+           double fractionGeneratedFurthest = 0.05,
+           double fractionGeneratedSweep = 0.05,
+           double fractionGeneratedRandomly = 0.85,
+           int minSweepFillPercentage = 60,
+           int maxToleratedCapacityViolation = 50,
+           int maxToleratedTimeWarp = 100,
+           double initialTimeWarpPenalty = 1.0,
+           double penaltyBooster = 2.,
+           int minimumPopulationSize = 25,
+           int generationSize = 40,
+           int nbElite = 4,
+           int nbClose = 5,
+           double targetFeasible = 0.2,
+           int repairProbability = 50,
+           int growNbGranularAfterNonImprovementIterations = 5000,
+           int growNbGranularAfterIterations = 0,
+           int growNbGranularSize = 0,
+           int growPopulationAfterNonImprovementIterations = 5000,
+           int growPopulationAfterIterations = 0,
+           int growPopulationSize = 0,
+           double diversityWeight = 0.,
+           int nbVeh = INT_MAX,
+           bool useDynamicParameters = false,
+           int nbGranular = 40,
+           int intensificationProbabilityLS = 15,
+           bool useSwapStarTW = true,
+           bool skipSwapStarDist = false,
+           int circleSectorOverlapToleranceDegrees = 0,
+           int minCircleSectorSizeDegrees = 15,
+           bool useSymmetricCorrelatedVertices = false,
+           bool doRepeatUntilTimeLimit = true);
 
     // Get time elapsed since start of program
     double getTimeElapsedSeconds();

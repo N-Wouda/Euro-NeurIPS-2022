@@ -62,9 +62,7 @@ Result const Genetic::run(int maxIterNonProd, int timeLimit)
 
         /* TRACKING THE NUMBER OF ITERATIONS SINCE LAST SOLUTION IMPROVEMENT */
         if (isNewBest)
-        {
             nbIterNonProd = 1;
-        }
         else
             nbIterNonProd++;
 
@@ -123,33 +121,30 @@ Result const Genetic::run(int maxIterNonProd, int timeLimit)
     return Result(population->getFeasible(), population->getInfeasible());
 }
 
-Individual *
-Genetic::crossoverOX(std::pair<const Individual *, const Individual *> parents)
+Individual *Genetic::crossoverOX(Parents parents)
 {
     // Picking the start and end of the crossover zone
-    int start = params->rng() % params->nbClients;
-    int end = params->rng() % params->nbClients;
+    size_t start = params->rng() % params->nbClients;
+    size_t end = params->rng() % params->nbClients;
 
     // If the start and end overlap, change the end of the crossover zone
     while (end == start)
         end = params->rng() % params->nbClients;
 
-    // Create two individuals using OX
     doOXcrossover(candidateOffsprings[2], parents, start, end);
     doOXcrossover(candidateOffsprings[3], parents, start, end);
 
-    // Return the best individual of the two, based on penalizedCost
-    return candidateOffsprings[2]->costs.penalizedCost
-                   < candidateOffsprings[3]->costs.penalizedCost
-               ? candidateOffsprings[2]
-               : candidateOffsprings[3];
+    auto cand1Cost = candidateOffsprings[2]->costs.penalizedCost;
+    auto cand2Cost = candidateOffsprings[3]->costs.penalizedCost;
+
+    return cand1Cost < cand2Cost ? candidateOffsprings[2]
+                                 : candidateOffsprings[3];
 }
 
-void Genetic::doOXcrossover(
-    Individual *result,
-    std::pair<const Individual *, const Individual *> parents,
-    int start,
-    int end)
+void Genetic::doOXcrossover(Individual *result,
+                            Parents parents,
+                            size_t start,
+                            size_t end)
 {
     // Frequency vector to track the clients which have been inserted already
     std::vector<bool> freqClient
@@ -157,7 +152,7 @@ void Genetic::doOXcrossover(
 
     // Copy in place the elements from start to end (possibly "wrapping around"
     // the end of the array)
-    int j = start;
+    size_t j = start;
     while (j % params->nbClients != (end + 1) % params->nbClients)
     {
         result->chromT[j % params->nbClients]
@@ -173,7 +168,7 @@ void Genetic::doOXcrossover(
         // Check if the next client is already copied in place
         int temp = parents.second->chromT[(end + i) % params->nbClients];
         // If the client is not yet copied in place, copy in place now
-        if (freqClient[temp] == false)
+        if (!freqClient[temp])
         {
             result->chromT[j % params->nbClients] = temp;
             j++;
@@ -184,8 +179,7 @@ void Genetic::doOXcrossover(
     split->generalSplit(result, params->nbVehicles);
 }
 
-Individual *Genetic::crossoverSREX(
-    std::pair<const Individual *, const Individual *> parents)
+Individual *Genetic::crossoverSREX(Parents parents)
 {
     // Get the number of routes of both parents
     int nOfRoutesA = parents.first->costs.nbRoutes;
@@ -195,26 +189,22 @@ Individual *Genetic::crossoverSREX(
     // We like to replace routes with a large overlap of tasks, so we choose
     // adjacent routes (they are sorted on polar angle)
     int startA = params->rng() % nOfRoutesA;
-    int nOfMovedRoutes = std::min(nOfRoutesA, nOfRoutesB) == 1
-                             ? 1
-                             : params->rng()
-                                       % (std::min(nOfRoutesA - 1,
-                                                   nOfRoutesB - 1))
-                                   + 1;  // Prevent not moving any routes
     int startB = startA < nOfRoutesB ? startA : 0;
 
+    int nOfMovedRoutes
+        = std::min(nOfRoutesA, nOfRoutesB) == 1
+              ? 1
+              : params->rng() % (std::min(nOfRoutesA - 1, nOfRoutesB - 1)) + 1;
+
     std::unordered_set<int> clientsInSelectedA;
+    std::unordered_set<int> clientsInSelectedB;
+
     for (int r = 0; r < nOfMovedRoutes; r++)
     {
-        // Insert the first
         clientsInSelectedA.insert(
             parents.first->chromR[(startA + r) % nOfRoutesA].begin(),
             parents.first->chromR[(startA + r) % nOfRoutesA].end());
-    }
 
-    std::unordered_set<int> clientsInSelectedB;
-    for (int r = 0; r < nOfMovedRoutes; r++)
-    {
         clientsInSelectedB.insert(
             parents.second->chromR[(startB + r) % nOfRoutesB].begin(),
             parents.second->chromR[(startB + r) % nOfRoutesB].end());
@@ -372,9 +362,7 @@ Individual *Genetic::crossoverSREX(
             }
         }
         else
-        {
             improved = false;
-        }
     }
 
     // Identify differences between route sets
@@ -541,16 +529,14 @@ void Genetic::insertUnplannedTasks(Individual *offspring,
     }
 }
 
-Individual *Genetic::bestOfSREXAndOXCrossovers(
-    std::pair<const Individual *, const Individual *> parents)
+Individual *Genetic::bestOfSREXAndOXCrossovers(Parents parents)
 {
     // Create two individuals, one with OX and one with SREX
     Individual *offspringOX = crossoverOX(parents);
     Individual *offspringSREX = crossoverSREX(parents);
 
     // Return the best individual, based on penalizedCost
-    return offspringOX->costs.penalizedCost
-                   < offspringSREX->costs.penalizedCost
+    return offspringOX->costs.penalizedCost < offspringSREX->costs.penalizedCost
                ? offspringOX
                : offspringSREX;
 }

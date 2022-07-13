@@ -13,7 +13,156 @@
 #include <string>
 #include <vector>
 
-Params::Params(Config &config) : config(config)
+Params::Params(Config &config) : config(config) { setup(); }
+
+Params::Params(std::string const &instancePath,
+               std::string const &solPath,
+               int nbIter,
+               int timeLimit,
+               int seed,
+               bool useWallClockTime,
+               double fractionGeneratedNearest,
+               double fractionGeneratedFurthest,
+               double fractionGeneratedSweep,
+               double fractionGeneratedRandomly,
+               int minSweepFillPercentage,
+               int maxToleratedCapacityViolation,
+               int maxToleratedTimeWarp,
+               double initialTimeWarpPenalty,
+               double penaltyBooster,
+               int minimumPopulationSize,
+               int generationSize,
+               int nbElite,
+               int nbClose,
+               double targetFeasible,
+               int repairProbability,
+               int growNbGranularAfterNonImprovementIterations,
+               int growNbGranularAfterIterations,
+               int growNbGranularSize,
+               int growPopulationAfterNonImprovementIterations,
+               int growPopulationAfterIterations,
+               int growPopulationSize,
+               double diversityWeight,
+               int nbVeh,
+               bool useDynamicParameters,
+               int nbGranular,
+               int intensificationProbabilityLS,
+               bool useSwapStarTW,
+               bool skipSwapStarDist,
+               int circleSectorOverlapToleranceDegrees,
+               int minCircleSectorSizeDegrees,
+               bool useSymmetricCorrelatedVertices,
+               bool doRepeatUntilTimeLimit)
+    : config({})
+{
+    config.pathInstance = instancePath;
+    config.pathSolution = solPath;
+    config.nbIter = nbIter;
+    config.timeLimit = timeLimit;
+    config.seed = seed;
+    config.useWallClockTime = useWallClockTime;
+    config.fractionGeneratedNearest = fractionGeneratedNearest;
+    config.fractionGeneratedFurthest = fractionGeneratedFurthest;
+    config.fractionGeneratedSweep = fractionGeneratedSweep;
+    config.fractionGeneratedRandomly = fractionGeneratedRandomly;
+    config.minSweepFillPercentage = minSweepFillPercentage;
+    config.maxToleratedCapacityViolation = maxToleratedCapacityViolation;
+    config.maxToleratedTimeWarp = maxToleratedTimeWarp;
+    config.initialTimeWarpPenalty = initialTimeWarpPenalty;
+    config.penaltyBooster = penaltyBooster;
+    config.minimumPopulationSize = minimumPopulationSize;
+    config.generationSize = generationSize;
+    config.nbElite = nbElite;
+    config.nbClose = nbClose;
+    config.targetFeasible = targetFeasible;
+    config.repairProbability = repairProbability;
+    config.growNbGranularAfterNonImprovementIterations
+        = growNbGranularAfterNonImprovementIterations;
+    config.growNbGranularAfterIterations = growNbGranularAfterIterations;
+    config.growNbGranularSize = growNbGranularSize;
+    config.growPopulationAfterNonImprovementIterations
+        = growPopulationAfterNonImprovementIterations;
+    config.growPopulationAfterIterations = growPopulationAfterIterations;
+    config.growPopulationSize = growPopulationSize;
+    config.diversityWeight = diversityWeight;
+    config.nbVeh = nbVeh;
+    config.useDynamicParameters = useDynamicParameters;
+    config.nbGranular = nbGranular;
+    config.intensificationProbabilityLS = intensificationProbabilityLS;
+    config.useSwapStarTW = useSwapStarTW;
+    config.skipSwapStarDist = skipSwapStarDist;
+    config.circleSectorOverlapToleranceDegrees
+        = circleSectorOverlapToleranceDegrees;
+    config.minCircleSectorSizeDegrees = minCircleSectorSizeDegrees;
+    config.useSymmetricCorrelatedVertices = useSymmetricCorrelatedVertices;
+    config.doRepeatUntilTimeLimit = doRepeatUntilTimeLimit;
+
+    setup();
+}
+
+double Params::getTimeElapsedSeconds()
+{
+    if (config.useWallClockTime)
+    {
+        std::chrono::duration<double> wctduration
+            = (std::chrono::system_clock::now() - startWallClockTime);
+        return wctduration.count();
+    }
+    return (std::clock() - startCPUTime) / (double)CLOCKS_PER_SEC;
+}
+
+bool Params::isTimeLimitExceeded()
+{
+    return getTimeElapsedSeconds() >= config.timeLimit;
+}
+
+void Params::SetCorrelatedVertices()
+{
+    // Calculation of the correlated vertices for each client (for the granular
+    // restriction)
+    correlatedVertices = std::vector<std::vector<int>>(nbClients + 1);
+
+    // First create a set of correlated vertices for each vertex (where the
+    // depot is not taken into account)
+    std::vector<std::set<int>> setCorrelatedVertices
+        = std::vector<std::set<int>>(nbClients + 1);
+
+    // Loop over all clients (excluding the depot)
+    for (int i = 1; i <= nbClients; i++)
+    {
+        auto &orderProximity = orderProximities[i];
+
+        // Loop over all clients (taking into account the max number of clients
+        // and the granular restriction)
+        for (int j = 0; j < std::min(config.nbGranular, nbClients - 1); j++)
+        {
+            // If i is correlated with j, then j should be correlated with i
+            // (unless we have asymmetric problem with time windows) Insert
+            // vertices in setCorrelatedVertices, in the order of
+            // orderProximity, where .second is used since the first index
+            // correponds to the depot
+            setCorrelatedVertices[i].insert(orderProximity[j].second);
+
+            // For symmetric problems, set the other entry to the same value
+            if (config.useSymmetricCorrelatedVertices)
+            {
+                setCorrelatedVertices[orderProximity[j].second].insert(i);
+            }
+        }
+    }
+
+    // Now, fill the vector of correlated vertices, using setCorrelatedVertices
+    for (int i = 1; i <= nbClients; i++)
+    {
+        for (int x : setCorrelatedVertices[i])
+        {
+            // Add x at the end of the vector
+            correlatedVertices[i].push_back(x);
+        }
+    }
+}
+
+void Params::setup()
 {
     nbVehicles = config.nbVeh;
     rng = XorShift128(config.seed);
@@ -58,9 +207,6 @@ Params::Params(Config &config) : config(config)
         // Check if the next line has "VEHICLE"
         if (content.substr(0, 7) == "VEHICLE")
         {
-            // VRPTW format
-            isTimeWindowConstraint = true;
-
             // Get the number of vehicles and the capacity of the vehicles
             getline(inputFile, content);  // NUMBER    CAPACITY
             inputFile >> nbVehicles >> vehicleCapacity;
@@ -318,7 +464,6 @@ Params::Params(Config &config) : config(config)
                 // have a time window from 0 to max)
                 else if (content == "TIME_WINDOW_SECTION")
                 {
-                    isTimeWindowConstraint = true;
                     for (int i = 0; i <= nbClients; i++)
                     {
                         int clientNr = 0;
@@ -561,66 +706,4 @@ Params::Params(Config &config) : config(config)
     // See Vidal 2012, HGS for VRPTW
     proximityWeightWaitTime = 0.2;
     proximityWeightTimeWarp = 1;
-}
-
-double Params::getTimeElapsedSeconds()
-{
-    if (config.useWallClockTime)
-    {
-        std::chrono::duration<double> wctduration
-            = (std::chrono::system_clock::now() - startWallClockTime);
-        return wctduration.count();
-    }
-    return (std::clock() - startCPUTime) / (double)CLOCKS_PER_SEC;
-}
-
-bool Params::isTimeLimitExceeded()
-{
-    return getTimeElapsedSeconds() >= config.timeLimit;
-}
-
-void Params::SetCorrelatedVertices()
-{
-    // Calculation of the correlated vertices for each client (for the granular
-    // restriction)
-    correlatedVertices = std::vector<std::vector<int>>(nbClients + 1);
-
-    // First create a set of correlated vertices for each vertex (where the
-    // depot is not taken into account)
-    std::vector<std::set<int>> setCorrelatedVertices
-        = std::vector<std::set<int>>(nbClients + 1);
-
-    // Loop over all clients (excluding the depot)
-    for (int i = 1; i <= nbClients; i++)
-    {
-        auto &orderProximity = orderProximities[i];
-
-        // Loop over all clients (taking into account the max number of clients
-        // and the granular restriction)
-        for (int j = 0; j < std::min(config.nbGranular, nbClients - 1); j++)
-        {
-            // If i is correlated with j, then j should be correlated with i
-            // (unless we have asymmetric problem with time windows) Insert
-            // vertices in setCorrelatedVertices, in the order of
-            // orderProximity, where .second is used since the first index
-            // correponds to the depot
-            setCorrelatedVertices[i].insert(orderProximity[j].second);
-
-            // For symmetric problems, set the other entry to the same value
-            if (config.useSymmetricCorrelatedVertices)
-            {
-                setCorrelatedVertices[orderProximity[j].second].insert(i);
-            }
-        }
-    }
-
-    // Now, fill the vector of correlated vertices, using setCorrelatedVertices
-    for (int i = 1; i <= nbClients; i++)
-    {
-        for (int x : setCorrelatedVertices[i])
-        {
-            // Add x at the end of the vector
-            correlatedVertices[i].push_back(x);
-        }
-    }
 }

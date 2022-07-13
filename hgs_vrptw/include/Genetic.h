@@ -38,21 +38,8 @@ SOFTWARE.*/
 // population management, doing crossovers and updating parameters.
 class Genetic
 {
-public:
-    // Running the genetic algorithm until maxIterNonProd consecutive iterations
-    // without improvement or a time limit (in seconds) is reached
-    Result const run(int maxIterNonProd, int timeLimit);
+    using Parents = std::pair<Individual const *, Individual const *>;
 
-    // Constructor
-    Genetic(Params *params,
-            Split *split,
-            Population *population,
-            LocalSearch *localSearch);
-
-    // Destructor
-    ~Genetic();
-
-private:
     // The number of new potential offspring created from one individual
     static const int numberOfCandidateOffsprings = 4;
 
@@ -67,21 +54,20 @@ private:
 
     // Function to do two OX Crossovers for a pair of individuals (the two
     // parents) and return the best individual based on penalizedCost
-    Individual *
-    crossoverOX(std::pair<const Individual *, const Individual *> parents);
+    Individual *crossoverOX(Parents parents);
+
     // Function to do one (in place) OX Crossover for one individual 'result',
     // given the two parents and the beginning and end (inclusive) of the
     // crossover zone
-    void
-    doOXcrossover(Individual *result,
-                  std::pair<const Individual *, const Individual *> parents,
-                  int start,
-                  int end);
+    void doOXcrossover(Individual *result,
+                       Parents parents,
+                       size_t start,
+                       size_t end);
 
     // Function to do two SREX Crossovers for a pair of individuals (the two
     // parents) and return the best individual based on penalizedCost
-    Individual *
-    crossoverSREX(std::pair<const Individual *, const Individual *> parents);
+    Individual *crossoverSREX(Parents parents);
+
     // Insert unplanned tasks (those that were in the removed routes of A but
     // not the inserted routes of B or vice versa)
     void insertUnplannedTasks(Individual *offspring,
@@ -89,8 +75,21 @@ private:
 
     // Function to do one OX and one SREX Crossover for a pair of individuals
     // (the two parents), and get the best result based on penalizedCost
-    Individual *bestOfSREXAndOXCrossovers(
-        std::pair<const Individual *, const Individual *> parents);
+    Individual *bestOfSREXAndOXCrossovers(Parents parents);
+
+public:
+    // Running the genetic algorithm until maxIterNonProd consecutive iterations
+    // without improvement or a time limit (in seconds) is reached
+    Result const run(int maxIterNonProd, int timeLimit);
+
+    // Constructor
+    Genetic(Params *params,
+            Split *split,
+            Population *population,
+            LocalSearch *localSearch);
+
+    // Destructor
+    ~Genetic();
 };
 
 #endif
