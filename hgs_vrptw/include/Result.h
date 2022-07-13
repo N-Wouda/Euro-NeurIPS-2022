@@ -20,9 +20,10 @@ public:
     /**
      * Returns the best observed solution.
      */
-    [[nodiscard]] Individual const *getBestFound() const
+    [[nodiscard]] Individual getBestFound() const
     {
-        return feasible[0];  // since they are sorted by increasing cost
+        // TODO why not allowed to pass pointer?
+        return *feasible[0];  // since they are sorted by increasing cost
     }
 };
 

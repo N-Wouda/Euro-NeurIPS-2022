@@ -148,8 +148,7 @@ void Population::generatePopulation()
 
 bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
 {
-    // Update the feasibility if needed
-    if (updateFeasible)
+    if (updateFeasible)  // update feasibility if needed
     {
         listFeasibilityLoad.push_back(indiv->costs.capacityExcess < MY_EPSILON);
         listFeasibilityTimeWarp.push_back(indiv->costs.timeWarp < MY_EPSILON);
@@ -157,13 +156,13 @@ bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
         listFeasibilityTimeWarp.pop_front();
     }
 
-    // Find the adequate subpopulation in relation to the individual feasibility
-    SubPopulation &pop
+    SubPopulation &pop  // where to insert?
         = indiv->isFeasible ? feasibleSubpopulation : infeasibleSubpopulation;
 
     // Create a copy of the individual and update the proximity structures
     // calculating inter-individual distances
     auto *myIndividual = new Individual(*indiv);
+
     for (Individual *myIndividual2 : pop)
     {
         double myDistance = myIndividual->brokenPairsDistance(myIndividual2);
@@ -183,15 +182,12 @@ bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
     pop.emplace(pop.begin() + place, myIndividual);
 
     // Trigger a survivor selection if the maximimum population size is exceeded
-    if (static_cast<int>(pop.size())
-        > params->config.minimumPopulationSize + params->config.generationSize)
-    {
-        while (static_cast<int>(pop.size())
-               > params->config.minimumPopulationSize)
-        {
+    size_t maxPopSize
+        = params->config.minimumPopulationSize + params->config.generationSize;
+
+    if (pop.size() > maxPopSize)
+        while (pop.size() > params->config.minimumPopulationSize)
             removeWorstBiasedFitness(pop);
-        }
-    }
 
     // Track best solution
     if (indiv->isFeasible
@@ -207,6 +203,7 @@ bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
                 params->getTimeElapsedSeconds(),
                 bestSolutionOverall.costs.penalizedCost);
         }
+
         return true;
     }
 
@@ -245,7 +242,7 @@ void Population::updateBiasedFitnesses(SubPopulation &pop)
                 = ranking[i].second / static_cast<double>(pop.size() - 1);
 
             // Elite individuals cannot be smaller than population size
-            if (static_cast<int>(pop.size()) <= params->config.nbElite)
+            if (pop.size() <= params->config.nbElite)
             {
                 pop[ranking[i].second]->biasedFitness = fitRank;
             }
@@ -306,7 +303,7 @@ void Population::removeWorstBiasedFitness(SubPopulation &pop)
     // Cleaning its distances from the other individuals in the population
     for (Individual *myIndividual2 : pop)
         myIndividual2->removeProximity(worstIndividual);
-    
+
     // Freeing memory
     delete worstIndividual;
 }
@@ -450,65 +447,6 @@ Population::getNonIdenticalParentsBinaryTournament()
         par2 = getBinaryTournament();
 
     return std::make_pair(par1, par2);
-}
-
-Individual *Population::getBestFeasible()
-{
-    return feasibleSubpopulation.empty() ? nullptr : feasibleSubpopulation[0];
-}
-
-Individual *Population::getBestInfeasible()
-{
-    return infeasibleSubpopulation.empty() ? nullptr
-                                           : infeasibleSubpopulation[0];
-}
-
-Individual *Population::getBestFound()
-{
-    // Return the best overall solution if a solution exists
-    if (bestSolutionOverall.costs.penalizedCost < 1.e29)
-    {
-        return &bestSolutionOverall;
-    }
-    else
-        return nullptr;
-}
-
-double Population::getDiversity(SubPopulation const &pop)
-{
-    // The diversity of the population: The average of the
-    // averageBrokenPairsDistanceClosest over the best "mu" individuals of the
-    // population
-    double average = 0.;
-
-    // Sum all the averageBrokenPairsDistanceClosest of the individuals
-    // Only monitoring the "mu" best solutions to avoid too much noise in the
-    // measurements
-    int size = std::min(params->config.minimumPopulationSize,
-                        static_cast<int>(pop.size()));
-
-    for (int i = 0; i < size; i++)
-        average += pop[i]->averageBrokenPairsDistanceClosest(size);
-
-    return size > 0 ? average / size : -1;
-}
-
-double Population::getAverageCost(SubPopulation const &pop)
-{
-    // The average cost of the population: The average of the penalizedCost over
-    // the best "mu" individuals of the population
-    double average = 0.;
-
-    // Sum all the penalizedCost of the individuals
-    // Only monitoring the "mu" best solutions to avoid too much noise in the
-    // measurements
-    int size = std::min(params->config.minimumPopulationSize,
-                        static_cast<int>(pop.size()));
-
-    for (int i = 0; i < size; i++)
-        average += pop[i]->costs.penalizedCost;
-
-    return size > 0 ? average / size : -1;
 }
 
 Population::Population(Params *params, Split *split, LocalSearch *localSearch)

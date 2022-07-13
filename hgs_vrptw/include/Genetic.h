@@ -71,7 +71,7 @@ class Genetic
     // Insert unplanned tasks (those that were in the removed routes of A but
     // not the inserted routes of B or vice versa)
     void insertUnplannedTasks(Individual *offspring,
-                              std::unordered_set<int> unplanned);
+                              std::unordered_set<int> const &unplanned);
 
     // Function to do one OX and one SREX Crossover for a pair of individuals
     // (the two parents), and get the best result based on penalizedCost

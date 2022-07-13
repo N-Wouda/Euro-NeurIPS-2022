@@ -21,19 +21,19 @@ void Split::generalSplit(Individual *indiv, int nbMaxVehicles)
     // the depot
     for (int i = 1; i <= params->nbClients; i++)
     {
-        // Store all information on clientSplits (use chromT[i-1] since the
-        // depot is not included in chromT)
-        cliSplit[i].demand = params->cli[indiv->chromT[i - 1]].demand;
+        // Store all information on clientSplits (use tourChrom[i-1] since the
+        // depot is not included in tourChrom)
+        cliSplit[i].demand = params->cli[indiv->tourChrom[i - 1]].demand;
         cliSplit[i].serviceTime
-            = params->cli[indiv->chromT[i - 1]].serviceDuration;
-        cliSplit[i].d0_x = params->timeCost.get(0, indiv->chromT[i - 1]);
-        cliSplit[i].dx_0 = params->timeCost.get(indiv->chromT[i - 1], 0);
+            = params->cli[indiv->tourChrom[i - 1]].serviceDuration;
+        cliSplit[i].d0_x = params->timeCost.get(0, indiv->tourChrom[i - 1]);
+        cliSplit[i].dx_0 = params->timeCost.get(indiv->tourChrom[i - 1], 0);
 
         // The distance to the next client is INT_MIN for the last client
         if (i < params->nbClients)
         {
             cliSplit[i].dnext
-                = params->timeCost.get(indiv->chromT[i - 1], indiv->chromT[i]);
+                = params->timeCost.get(indiv->tourChrom[i - 1], indiv->tourChrom[i]);
         }
         else
         {
@@ -171,29 +171,29 @@ int Split::splitSimple(Individual *indiv)
                           "the last node");
     }
 
-    // Filling the chromR structure
-    // First clear some chromR vectors. In practice, maxVehicles equals
+    // Filling the routeChrom structure
+    // First clear some routeChrom vectors. In practice, maxVehicles equals
     // nbVehicles. Then, this loop is not needed and the next loop starts at the
-    // last index of chromR
+    // last index of routeChrom
     for (int k = params->nbVehicles - 1; k >= maxVehicles; k--)
     {
-        indiv->chromR[k].clear();
+        indiv->routeChrom[k].clear();
     }
 
     // Loop over all vehicles, clear the route, get the predecessor and create a
-    // new chromR for that route
+    // new routeChrom for that route
     int end = params->nbClients;
     for (int k = maxVehicles - 1; k >= 0; k--)
     {
-        // Clear the corresponding chromR
-        indiv->chromR[k].clear();
+        // Clear the corresponding routeChrom
+        indiv->routeChrom[k].clear();
 
         // Loop from the begin to the end of the route corresponding to this
         // vehicle
         int begin = pred[0][end];
         for (int ii = begin; ii < end; ii++)
         {
-            indiv->chromR[k].push_back(indiv->chromT[ii]);
+            indiv->routeChrom[k].push_back(indiv->tourChrom[ii]);
         }
         end = begin;
     }
@@ -307,17 +307,17 @@ int Split::splitLF(Individual *indiv)
             nbRoutes = k;
         }
 
-    // Filling the chromR structure
+    // Filling the routeChrom structure
     for (int k = params->nbVehicles - 1; k >= nbRoutes; k--)
-        indiv->chromR[k].clear();
+        indiv->routeChrom[k].clear();
 
     int end = params->nbClients;
     for (int k = nbRoutes - 1; k >= 0; k--)
     {
-        indiv->chromR[k].clear();
+        indiv->routeChrom[k].clear();
         int begin = pred[k + 1][end];
         for (int ii = begin; ii < end; ii++)
-            indiv->chromR[k].push_back(indiv->chromT[ii]);
+            indiv->routeChrom[k].push_back(indiv->tourChrom[ii]);
         end = begin;
     }
 

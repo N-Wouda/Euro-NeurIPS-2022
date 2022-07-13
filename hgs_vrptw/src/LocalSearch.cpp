@@ -96,9 +96,8 @@ void LocalSearch::constructIndividualBySweep(int fillPercentage,
     // Sort nodes according to angle with depot.
     std::sort(std::begin(nodesToInsert),
               std::end(nodesToInsert),
-              [](NodeToInsert a, NodeToInsert b) {
-                  return a.angleFromDepot < b.angleFromDepot;
-              });
+              [](NodeToInsert a, NodeToInsert b)
+              { return a.angleFromDepot < b.angleFromDepot; });
 
     // Distribute clients over routes.
     int load = 0;
@@ -144,19 +143,17 @@ void LocalSearch::constructIndividualBySweep(int fillPercentage,
         // Sort routes with short time window in increasing end of time window.
         std::sort(std::begin(nodeIndicesToInsertShortTw),
                   std::end(nodeIndicesToInsertShortTw),
-                  [&nodesToInsert](int a, int b) {
+                  [&nodesToInsert](int a, int b)
+                  {
                       return nodesToInsert[a].twData.latestArrival
                              < nodesToInsert[b].twData.latestArrival;
                   });
 
         // Insert nodes with short time window in order in the route.
         Node *prev = routes[r].depot;
-        for (int i = 0; i < static_cast<int>(nodeIndicesToInsertShortTw.size());
-             i++)
+        for (int idx : nodeIndicesToInsertShortTw)
         {
-            Node *toInsert
-                = &clients[nodesToInsert[nodeIndicesToInsertShortTw[i]]
-                               .clientIdx];
+            Node *toInsert = &clients[nodesToInsert[idx].clientIdx];
             Node *insertionPoint = prev;
             toInsert->prev = insertionPoint;
             toInsert->next = insertionPoint->next;
@@ -168,8 +165,7 @@ void LocalSearch::constructIndividualBySweep(int fillPercentage,
         updateRouteData(&routes[r]);
 
         // Insert remaining nodes according to best distance
-        for (int i = 0; i < static_cast<int>(nodeIndicesToInsertLongTw.size());
-             i++)
+        for (int idx : nodeIndicesToInsertLongTw)
         {
             double bestCost = std::numeric_limits<double>::max();
             Node *bestPred = nullptr;
@@ -178,12 +174,10 @@ void LocalSearch::constructIndividualBySweep(int fillPercentage,
             {
                 // Compute insertion cost
                 double insertionCost
-                    = params->timeCost.get(
-                          prev->cour,
-                          nodesToInsert[nodeIndicesToInsertLongTw[i]].clientIdx)
-                      + params->timeCost.get(
-                          nodesToInsert[nodeIndicesToInsertLongTw[i]].clientIdx,
-                          prev->next->cour)
+                    = params->timeCost.get(prev->cour,
+                                           nodesToInsert[idx].clientIdx)
+                      + params->timeCost.get(nodesToInsert[idx].clientIdx,
+                                             prev->next->cour)
                       - params->timeCost.get(prev->cour, prev->next->cour);
 
                 if (insertionCost < bestCost)
@@ -195,9 +189,7 @@ void LocalSearch::constructIndividualBySweep(int fillPercentage,
                 prev = prev->next;
             }
 
-            Node *toInsert
-                = &clients[nodesToInsert[nodeIndicesToInsertLongTw[i]]
-                               .clientIdx];
+            Node *toInsert = &clients[nodesToInsert[idx].clientIdx];
             Node *insertionPoint = bestPred;
             toInsert->prev = insertionPoint;
             toInsert->next = insertionPoint->next;
@@ -228,9 +220,7 @@ void LocalSearch::constructIndividualWithSeedOrder(
     }
 
     // Construct routes
-    for (int r = 0; r < static_cast<int>(routes.size())
-                    && unassignedNodeIndices.size() > 0;
-         r++)
+    for (size_t r = 0; r < routes.size() && !unassignedNodeIndices.empty(); r++)
     {
         // Note that if the seed client is the unassigned client closest to the
         // depot, we do not have to do any initialization and can just start
@@ -331,14 +321,12 @@ void LocalSearch::constructIndividualWithSeedOrder(
     // Insert all unassigned nodes at the back of the last route. We assume that
     // typically there are no unassigned nodes left, because there are plenty
     // routes, but we have to make sure that all nodes are assigned.
-    if (unassignedNodeIndices.size() > 0)
+    if (!unassignedNodeIndices.empty())
     {
-        int lastRouteIdx = routes.size() - 1;
-        Node *prevNode
-            = depotsEnd[lastRouteIdx]
-                  .prev;  // Last node before finish depot in last route.
+        size_t lastRouteIdx = routes.size() - 1;
+        Node *prevNode = depotsEnd[lastRouteIdx].prev;  // node before depot
 
-        while (unassignedNodeIndices.size() > 0)
+        while (!unassignedNodeIndices.empty())
         {
             int idx = *unassignedNodeIndices.begin();
             Node *toInsert = &clients[nodesToInsert[idx].clientIdx];
@@ -542,9 +530,7 @@ void LocalSearch::setLocalVariablesRouteU()
     nodeUPrevIndex = nodeU->prev->cour;
     nodeXIndex = nodeX->cour;
     loadU = params->cli[nodeUIndex].demand;
-    serviceU = params->cli[nodeUIndex].serviceDuration;
     loadX = params->cli[nodeXIndex].demand;
-    serviceX = params->cli[nodeXIndex].serviceDuration;
     routeUTimeWarp = routeU->twData.timeWarp > 0;
     routeULoadPenalty = routeU->load > params->vehicleCapacity;
 }
@@ -558,9 +544,7 @@ void LocalSearch::setLocalVariablesRouteV()
     nodeVPrevIndex = nodeV->prev->cour;
     nodeYIndex = nodeY->cour;
     loadV = params->cli[nodeVIndex].demand;
-    serviceV = params->cli[nodeVIndex].serviceDuration;
     loadY = params->cli[nodeYIndex].demand;
-    serviceY = params->cli[nodeYIndex].serviceDuration;
     routeVTimeWarp = routeV->twData.timeWarp > 0;
     routeVLoadPenalty = routeV->load > params->vehicleCapacity;
 }
@@ -1342,7 +1326,6 @@ bool LocalSearch::swapStar(const bool withTW)
                                       myBestSwapStar.V->next->cour)
                - params->timeCost.get(myBestSwapStar.bestPositionU->cour,
                                       myBestSwapStar.bestPositionU->next->cour);
-        ;
     }
 
     TimeWindowData routeUTwData, routeVTwData;
@@ -1666,7 +1649,7 @@ TimeWindowData LocalSearch::getRouteSegmentTwData(Node *U, Node *V)
 
     Node *mynode = U;
     const int targetPos = V->position;
-    while (!(mynode == V))
+    while (mynode != V)
     {
         if (mynode->isSeed && mynode->position + 4 <= targetPos)
         {
@@ -1867,45 +1850,6 @@ void LocalSearch::updateRouteData(Route *myRoute)
     }
 }
 
-CostSol LocalSearch::getCostSol(bool usePenaltiesLS)
-{
-    CostSol myCostSol;
-
-    myCostSol.nbRoutes = 0;  // TODO
-    for (int r = 0; r < params->nbVehicles; r++)
-    {
-        Route *myRoute = &routes[r];
-        myCostSol.distance += myRoute->duration;
-        myCostSol.capacityExcess
-            += std::max(0, myRoute->load - params->vehicleCapacity);
-        myCostSol.waitTime += 0;  // TODO
-        myCostSol.timeWarp += myRoute->twData.timeWarp;
-    }
-
-    // Subtract service durations which are not part of distance
-    for (int i = 1; i <= params->nbClients; i++)
-    {
-        myCostSol.distance -= params->cli[i].serviceDuration;
-    }
-
-    if (usePenaltiesLS)
-    {
-        myCostSol.penalizedCost
-            = myCostSol.distance + myCostSol.capacityExcess * penaltyCapacityLS
-              + myCostSol.timeWarp * penaltyTimeWarpLS
-              + myCostSol.waitTime * params->penaltyWaitTime;
-    }
-    else
-    {
-        myCostSol.penalizedCost
-            = myCostSol.distance
-              + myCostSol.capacityExcess * params->penaltyCapacity
-              + myCostSol.timeWarp * params->penaltyTimeWarp
-              + myCostSol.waitTime * params->penaltyWaitTime;
-    }
-    return myCostSol;
-}
-
 void LocalSearch::loadIndividual(Individual *indiv)
 {
     emptyRoutes.clear();
@@ -1940,16 +1884,17 @@ void LocalSearch::loadIndividual(Individual *indiv)
         Route *myRoute = &routes[r];
         myDepot->prev = myDepotFin;
         myDepotFin->next = myDepot;
-        if (!indiv->chromR[r].empty())
+        if (!indiv->routeChrom[r].empty())
         {
-            Node *myClient = &clients[indiv->chromR[r][0]];
+            Node *myClient = &clients[indiv->routeChrom[r][0]];
             myClient->route = myRoute;
             myClient->prev = myDepot;
             myDepot->next = myClient;
-            for (int i = 1; i < static_cast<int>(indiv->chromR[r].size()); i++)
+            for (int i = 1; i < static_cast<int>(indiv->routeChrom[r].size());
+                 i++)
             {
                 Node *myClientPred = myClient;
-                myClient = &clients[indiv->chromR[r][i]];
+                myClient = &clients[indiv->routeChrom[r][i]];
                 myClient->prev = myClientPred;
                 myClientPred->next = myClient;
                 myClient->route = myRoute;
@@ -1987,22 +1932,21 @@ void LocalSearch::exportIndividual(Individual *indiv)
 {
     std::vector<std::pair<double, int>> routePolarAngles;
     for (int r = 0; r < params->nbVehicles; r++)
-        routePolarAngles.push_back(
-            std::pair<double, int>(routes[r].polarAngleBarycenter, r));
-    std::sort(
-        routePolarAngles.begin(),
-        routePolarAngles.end());  // empty routes have a polar angle of 1.e30,
-                                  // and therefore will always appear at the end
+        routePolarAngles.emplace_back(routes[r].polarAngleBarycenter, r);
+
+    // empty routes have a polar angle of 1.e30, and therefore will always
+    // appear at the end
+    std::sort(routePolarAngles.begin(), routePolarAngles.end());
 
     int pos = 0;
     for (int r = 0; r < params->nbVehicles; r++)
     {
-        indiv->chromR[r].clear();
+        indiv->routeChrom[r].clear();
         Node *node = depots[routePolarAngles[r].second].next;
         while (!node->isDepot)
         {
-            indiv->chromT[pos] = node->cour;
-            indiv->chromR[r].push_back(node->cour);
+            indiv->tourChrom[pos] = node->cour;
+            indiv->routeChrom[r].push_back(node->cour);
             node = node->next;
             pos++;
         }

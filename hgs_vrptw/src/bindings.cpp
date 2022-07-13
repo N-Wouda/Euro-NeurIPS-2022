@@ -1,21 +1,20 @@
 #include "Genetic.h"
+#include "Individual.h"
 #include "LocalSearch.h"
 #include "Params.h"
 #include "Population.h"
 #include "Result.h"
 #include "Split.h"
-#include "Individual.h"
 
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 namespace py = pybind11;
 
 PYBIND11_MODULE(hgspy, m)
 {
     py::class_<Individual>(m, "Individual")
-        .def("export_cvrplib_format",
-             &Individual::exportCVRPLibFormat,
-             py::arg("path"));
+        .def("get_routes", &Individual::getRoutes);
 
     py::class_<LocalSearch>(m, "LocalSearch")
         .def(py::init<Params *>(), py::arg("params"));
@@ -36,10 +35,10 @@ PYBIND11_MODULE(hgspy, m)
                       int,
                       double,
                       double,
-                      int,
-                      int,
-                      int,
-                      int,
+                      size_t,
+                      size_t,
+                      size_t,
+                      size_t,
                       double,
                       int,
                       int,
@@ -120,24 +119,4 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("population"),
              py::arg("local_search"))
         .def("run", &Genetic::run);
-
-    //    py::class_<MasterProblem>(m, "MasterProblem")
-    //        .def(py::init<ProblemData &, double, double>(),
-    //             py::arg("problem_data"),
-    //             py::arg("lower_bound") = 0.,
-    //             py::arg("upper_bound") = arma::datum::inf)
-    //        .def(
-    //            "solve_with",
-    //            [](MasterProblem &master, CutFamily &cutFamily, double
-    //            tol) {
-    //                auto res = master.solveWith(cutFamily, tol);
-    //                return carma::col_to_arr(*res);
-    //            },
-    //            py::arg("cut_family"),
-    //            py::arg("tol") = 1e-4)
-    //        .def("first_stage_objective",
-    //        &MasterProblem::firstStageObjective)
-    //        .def("second_stage_objective",
-    //        &MasterProblem::secondStageObjective) .def("objective",
-    //        &MasterProblem::objective);
 }

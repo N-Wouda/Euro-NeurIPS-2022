@@ -3,7 +3,6 @@ import argparse
 import importlib.machinery
 import importlib.util
 import os
-import subprocess
 import sys
 import uuid
 
@@ -58,31 +57,13 @@ def solve_static_vrptw(instance, time_limit=3600, tmp_dir="tmp", seed=1):
     pop = Population(params, split, ls)
     algo = Genetic(params, split, pop, ls)
 
-    res = algo.run(1_000, 60)
+    res = algo.run(1_000, 60)  # TODO strange parameters
     best = res.get_best_found()
 
-    best.export_cvrplib_format(out_filename)
+    routes = [route for route in best.get_routes() if route]
+    cost = tools.validate_static_solution(instance, routes)
 
-    routes = []
-    with open(out_filename, 'r') as fh:
-        for line in fh:
-            line = line.strip()
-            # Parse only lines which contain a route
-            if line.startswith('Route'):
-                label, route = line.split(": ")
-                route_nr = int(label.split("#")[-1])
-                assert route_nr == len(routes) + 1, "Route number should be strictly increasing"
-                routes.append([int(node) for node in route.split(" ")])
-            elif line.startswith('Cost'):
-                # End of solution
-                solution = routes
-                cost = int(line.split(" ")[-1].strip())
-                check_cost = tools.validate_static_solution(instance, solution)
-                assert cost == check_cost, "Cost of HGS VRPTW solution could not be validated"
-                yield solution, cost
-                # Start next solution
-                routes = []
-    assert len(routes) == 0, "HGS has terminated with imcomplete solution (is the line with Cost missing?)"
+    yield routes, cost
 
 
 def run_oracle(args, env):
@@ -100,10 +81,8 @@ def run_oracle(args, env):
         observation, reward, done, info = env.step(epoch_solution)
     hindsight_problem = env.get_hindsight_problem()
 
-    log(f"Start computing oracle solution with {len(hindsight_problem['coords'])} requests...")
     oracle_solution = min(solve_static_vrptw(hindsight_problem, time_limit=epoch_tlim, tmp_dir=args.tmp_dir), key=lambda x: x[1])[0]
     oracle_cost = tools.validate_static_solution(hindsight_problem, oracle_solution)
-    log(f"Found oracle solution with cost {oracle_cost}")
 
     total_reward = run_baseline(args, env, oracle_solution=oracle_solution)
     assert -total_reward == oracle_cost, "Oracle solution does not match cost according to environment"
@@ -111,7 +90,6 @@ def run_oracle(args, env):
 
 
 def run_baseline(args, env, oracle_solution=None):
-
     rng = np.random.default_rng(args.solver_seed)
 
     total_reward = 0
@@ -119,16 +97,9 @@ def run_baseline(args, env, oracle_solution=None):
     # Note: info contains additional info that can be used by your solver
     observation, static_info = env.reset()
     epoch_tlim = static_info['epoch_tlim']
-    num_requests_postponed = 0
+
     while not done:
         epoch_instance = observation['epoch_instance']
-
-        if args.verbose:
-            log(f"Epoch {static_info['start_epoch']} <= {observation['current_epoch']} <= {static_info['end_epoch']}", newline=False)
-            num_requests_open = len(epoch_instance['request_idx']) - 1
-            num_new_requests = num_requests_open - num_requests_postponed
-            log(f" | Requests: +{num_new_requests:3d} = {num_requests_open:3d}, {epoch_instance['must_dispatch'].sum():3d}/{num_requests_open:3d} must-go...", newline=False, flush=True)
-
 
         if oracle_solution is not None:
             request_idx = set(epoch_instance['request_idx'])
@@ -149,21 +120,12 @@ def run_baseline(args, env, oracle_solution=None):
             # Map HGS solution to indices of corresponding requests
             epoch_solution = [epoch_instance_dispatch['request_idx'][route] for route in epoch_solution]
 
-        if args.verbose:
-            num_requests_dispatched = sum([len(route) for route in epoch_solution])
-            num_requests_open = len(epoch_instance['request_idx']) - 1
-            num_requests_postponed = num_requests_open - num_requests_dispatched
-            log(f" {num_requests_dispatched:3d}/{num_requests_open:3d} dispatched and {num_requests_postponed:3d}/{num_requests_open:3d} postponed | Routes: {len(epoch_solution):2d} with cost {cost:6d}")
-
         # Submit solution to environment
         observation, reward, done, info = env.step(epoch_solution)
         assert cost is None or reward == -cost, "Reward should be negative cost of solution"
         assert not info['error'], f"Environment error: {info['error']}"
 
         total_reward += reward
-
-    if args.verbose:
-        log(f"Cost of solution: {-total_reward}")
 
     return total_reward
 
@@ -178,7 +140,6 @@ if __name__ == "__main__":
     parser.add_argument("--static", action='store_true', help="Add this flag to solve the static variant of the problem (by default dynamic)")
     parser.add_argument("--epoch_tlim", type=int, default=120, help="Time limit per epoch")
     parser.add_argument("--tmp_dir", type=str, default=None, help="Provide a specific directory to use as tmp directory (useful for debugging)")
-    parser.add_argument("--verbose", action='store_true', help="Show verbose output")
     args = parser.parse_args()
 
     if args.tmp_dir is None:

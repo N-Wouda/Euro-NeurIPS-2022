@@ -109,13 +109,14 @@ public:
             else if (std::string(argv[i]) == "-doRepeatUntilTimeLimit")
                 config.doRepeatUntilTimeLimit = atoi(argv[i + 1]) != 0;
             else if (std::string(argv[i]) == "-minimumPopulationSize")
-                config.minimumPopulationSize = atoi(argv[i + 1]);
+                config.minimumPopulationSize
+                    = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-generationSize")
-                config.generationSize = atoi(argv[i + 1]);
+                config.generationSize = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-nbElite")
-                config.nbElite = atoi(argv[i + 1]);
+                config.nbElite = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-nbClose")
-                config.nbClose = atoi(argv[i + 1]);
+                config.nbClose = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-targetFeasible")
                 config.targetFeasible = atof(argv[i + 1]);
             else if (std::string(argv[i]) == "-repairProbability")

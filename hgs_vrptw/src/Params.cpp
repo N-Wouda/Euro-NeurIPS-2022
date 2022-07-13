@@ -30,10 +30,10 @@ Params::Params(std::string const &instancePath,
                int maxToleratedTimeWarp,
                double initialTimeWarpPenalty,
                double penaltyBooster,
-               int minimumPopulationSize,
-               int generationSize,
-               int nbElite,
-               int nbClose,
+               size_t minimumPopulationSize,
+               size_t generationSize,
+               size_t nbElite,
+               size_t nbClose,
                double targetFeasible,
                int repairProbability,
                int growNbGranularAfterNonImprovementIterations,
@@ -100,18 +100,19 @@ Params::Params(std::string const &instancePath,
     setup();
 }
 
-double Params::getTimeElapsedSeconds()
+double Params::getTimeElapsedSeconds() const
 {
     if (config.useWallClockTime)
     {
-        std::chrono::duration<double> wctduration
-            = (std::chrono::system_clock::now() - startWallClockTime);
-        return wctduration.count();
+        auto now = std::chrono::system_clock::now();
+        std::chrono::duration<double> duration = now - startWallClockTime;
+        return duration.count();
     }
-    return (std::clock() - startCPUTime) / (double)CLOCKS_PER_SEC;
+
+    return static_cast<double>(std::clock() - startCPUTime) / CLOCKS_PER_SEC;
 }
 
-bool Params::isTimeLimitExceeded()
+bool Params::isTimeLimitExceeded() const
 {
     return getTimeElapsedSeconds() >= config.timeLimit;
 }

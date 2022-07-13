@@ -81,7 +81,7 @@ struct Trivial_Deque
     }
 
     // Returns the size of the queue
-    inline int size() { return indexBack - indexFront + 1; }
+    [[nodiscard]] inline int size() const { return indexBack - indexFront + 1; }
 
     // Constructor, to creata a queue with place for nbElements elements, where
     // firstNode is the first node
@@ -165,7 +165,7 @@ public:
     void generalSplit(Individual *indiv, int nbMaxVehicles);
 
     // Constructor
-    Split(Params *params);
+    explicit Split(Params *params);
 };
 
 #endif

@@ -225,7 +225,6 @@ private:
     int nodeUPrevIndex, nodeUIndex, nodeXIndex, nodeXNextIndex;
     int nodeVPrevIndex, nodeVIndex, nodeYIndex, nodeYNextIndex;
     int loadU, loadX, loadV, loadY;
-    int serviceU, serviceX, serviceV, serviceY;
     bool routeUTimeWarp, routeULoadPenalty, routeVTimeWarp, routeVLoadPenalty;
     double penaltyCapacityLS, penaltyTimeWarpLS;
 
@@ -239,17 +238,19 @@ private:
                                      // distance matrix
 
     // Functions in charge of excess load penalty calculations
-    inline double penaltyExcessLoad(double myLoad)
+    inline double penaltyExcessLoad(double load)
     {
-        return std::max(0., myLoad - params->vehicleCapacity)
-               * penaltyCapacityLS;
+        return std::max(0., load - params->vehicleCapacity) * penaltyCapacityLS;
     }
-    inline double penaltyTimeWindows(const TimeWindowData &twData)
+
+    [[nodiscard]] inline double
+    penaltyTimeWindows(const TimeWindowData &twData) const
     {
         return (twData.timeWarp
                 + std::max(twData.latestReleaseTime - twData.latestArrival, 0))
                * penaltyTimeWarpLS;
     }
+
     inline double deltaPenaltyTimeWindows(const TimeWindowData &twDataAdd,
                                           const TimeWindowData &twDataSubtract)
     {
@@ -258,63 +259,73 @@ private:
     }
 
     /* RELOCATE MOVES */
-    // (Legacy notations: move1...move9 from Prins 2004)
-    bool MoveSingleClient();  // If U is a client node, remove U and insert it
-                              // after V
-    bool MoveTwoClients();    // If U and X are client nodes, remove them and
-                              // insert (U,X) after V
-    bool MoveTwoClientsReversed();  // If U and X are client nodes, remove them
-                                    // and insert (X,U) after V
+
+    // If U is a client node, remove U and insert it after V
+    bool MoveSingleClient();
+
+    // If U and X are client nodes, remove them and insert (U,X) after V
+    bool MoveTwoClients();
+
+    // If U and X are client nodes, remove them and insert (X,U) after V
+    bool MoveTwoClientsReversed();
 
     /* SWAP MOVES */
-    bool SwapTwoSingleClients();  // If U and V are client nodes, swap U and V
-    bool
-    SwapTwoClientsForOne();  // If U, X and V are client nodes, swap (U,X) and V
-    bool SwapTwoClientPairs();  // If (U,X) and (V,Y) are client nodes, swap
-                                // (U,X) and (V,Y)
+
+    // If U and V are client nodes, swap U and V
+    bool SwapTwoSingleClients();
+
+    // If U, X and V are client nodes, swap (U,X) and V
+    bool SwapTwoClientsForOne();
+
+    // If (U,X) and (V,Y) are client nodes, swap  (U,X) and (V,Y)
+    bool SwapTwoClientPairs();
 
     /* 2-OPT and 2-OPT* MOVES */
-    bool TwoOptWithinTrip();    // If route(U) == route(V), replace (U,X) and
-                                // (V,Y) by (U,V) and (X,Y)
-    bool TwoOptBetweenTrips();  // If route(U) != route(V), replace (U,X) and
-                                // (V,Y) by (U,Y) and (V,X)
+
+    // If route(U) == route(V), replace (U,X) and (V,Y) by (U,V) and (X,Y)
+    bool TwoOptWithinTrip();
+
+    // If route(U) != route(V), replace (U,X) and  (V,Y) by (U,Y) and (V,X)
+    bool TwoOptBetweenTrips();
 
     /*TW based operators*/
     bool ReorderTWsIfNeeded();  // For the current route try to order all TWs
 
     /* SUB-ROUTINES FOR EFFICIENT SWAP* EVALUATIONS */
-    bool swapStar(bool withTW);  // Calculates all SWAP* between routeU and
-                                 // routeV and apply the best improving move
-    int getCheapestInsertSimultRemoval(
-        Node *U,
-        Node *V,
-        Node *&bestPosition);  // Calculates the insertion cost and position in
-                               // the route of V, where V is omitted
-    int getCheapestInsertSimultRemovalWithTW(
-        Node *U,
-        Node *V,
-        Node *&bestPosition);  // Calculates the insertion cost and position in
-                               // the route of V, where V is omitted
-    void preprocessInsertions(Route *R1,
-                              Route *R2);  // Preprocess all insertion costs of
-                                           // nodes of route R1 in route R2
-    void
-    preprocessInsertionsWithTW(Route *R1,
-                               Route *R2);  // Preprocess all insertion costs of
-                                            // nodes of route R1 in route R2
+
+    // Calculates all SWAP* between routeU and routeV and apply the best
+    // improving move
+    bool swapStar(bool withTW);
+
+    // Calculates the insertion cost and position in the route of V, where V is
+    // omitted
+    int getCheapestInsertSimultRemoval(Node *U, Node *V, Node *&bestPosition);
+
+    // Calculates the insertion cost and position in the route of V, where V is
+    // omitted
+    int
+    getCheapestInsertSimultRemovalWithTW(Node *U, Node *V, Node *&bestPosition);
+
+    // Preprocess all insertion costs of nodes of route R1 in route R2
+    void preprocessInsertions(Route *R1, Route *R2);
+
+    // Preprocess all insertion costs of nodes of route R1 in route R2
+    void preprocessInsertionsWithTW(Route *R1, Route *R2);
 
     /* RELOCATE MOVES BETWEEN TRIPS*/
-    bool RelocateStar();  // Calculates all SWAP* between nodeU and all routes
-                          // recently changed
+
+    // Calculates all SWAP* between nodeU and all routes recently changed
+    bool RelocateStar();
 
     /* SUB-ROUTINES FOR TIME WINDOWS */
-    TimeWindowData
-    getEdgeTwData(Node *U,
-                  Node *V);  // Calculates time window data for edge between U
-                             // and V, does not have to be currently adjacent
-    TimeWindowData getRouteSegmentTwData(
-        Node *U,
-        Node *V);  // Calculates time window data for segment in single route
+
+    // Calculates time window data for edge between U and V, does not have to be
+    // currently adjacent
+    TimeWindowData getEdgeTwData(Node *U, Node *V);
+
+    // Calculates time window data for segment in single route
+    TimeWindowData getRouteSegmentTwData(Node *U, Node *V);
+
     TimeWindowData MergeTWDataRecursive(const TimeWindowData &twData1,
                                         const TimeWindowData &twData2);
 
@@ -328,14 +339,15 @@ private:
     }
 
     /* ROUTINES TO UPDATE THE SOLUTIONS */
-    static void insertNode(Node *U,
-                           Node *V);  // Solution update: Insert U after V
-    static void swapNode(Node *U, Node *V);  // Solution update: Swap U and V
-    void updateRouteData(
-        Route *myRoute);  // Updates the preprocessed data of a route
-    CostSol getCostSol(bool usePenaltiesLS
-                       = true);  // Computes cost and penalties for solutions,
-                                 // only used for additional (debug) checks
+
+    // Solution update: Insert U after V
+    static void insertNode(Node *U, Node *V);
+
+    // Solution update: Swap U and V
+    static void swapNode(Node *U, Node *V);
+
+    // Updates the preprocessed data of a route
+    void updateRouteData(Route *myRoute);
 
 public:
     // Run the local search with the specified penalty values
@@ -371,7 +383,7 @@ public:
     void exportIndividual(Individual *indiv);
 
     // Constructor
-    LocalSearch(Params *params);
+    explicit LocalSearch(Params *params);
 };
 
 #endif
