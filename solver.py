@@ -1,5 +1,5 @@
-# Solver for Dynamic VRPTW, baseline strategy is to use the static solver HGS-VRPTW repeatedly
 import argparse
+import glob
 import importlib.machinery
 import importlib.util
 import os
@@ -11,6 +11,20 @@ import numpy as np
 import tools
 from baselines.strategies import STRATEGIES
 from environment import ControllerEnvironment, VRPEnvironment
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("--strategy", type=str, default='greedy')
+    parser.add_argument("--instance")
+    parser.add_argument("--instance_seed", type=int, default=1)
+    parser.add_argument("--solver_seed", type=int, default=1)
+    parser.add_argument("--static", action='store_true')
+    parser.add_argument("--epoch_tlim", type=int, default=120)
+    parser.add_argument("--tmp_dir", type=str, default=None)
+
+    return parser.parse_args()
 
 
 def solve_static_vrptw(instance, time_limit=3600, tmp_dir="tmp", seed=1):
@@ -34,7 +48,7 @@ def solve_static_vrptw(instance, time_limit=3600, tmp_dir="tmp", seed=1):
     tools.write_vrplib(instance_filename, instance, is_vrptw=True)
     out_filename = os.path.join(tmp_dir, "problem.sol")
 
-    lib_path = f'release/lib/hgspy.cpython-39-x86_64-linux-gnu.so'
+    lib_path = next(glob.iglob(f'release/lib/hgspy*.so'))
     loader = importlib.machinery.ExtensionFileLoader('hgspy', lib_path)
     spec = importlib.util.spec_from_loader(loader.name, loader)
     hgspy = importlib.util.module_from_spec(spec)
@@ -130,17 +144,8 @@ def run_baseline(args, env, oracle_solution=None):
     return total_reward
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--strategy", type=str, default='greedy', help="Baseline strategy used to decide whether to dispatch routes")
-    # Note: these arguments are only for convenience during development, during testing you should use controller.py
-    parser.add_argument("--instance", help="Instance to solve")
-    parser.add_argument("--instance_seed", type=int, default=1, help="Seed to use for the dynamic instance")
-    parser.add_argument("--solver_seed", type=int, default=1, help="Seed to use for the solver")
-    parser.add_argument("--static", action='store_true', help="Add this flag to solve the static variant of the problem (by default dynamic)")
-    parser.add_argument("--epoch_tlim", type=int, default=120, help="Time limit per epoch")
-    parser.add_argument("--tmp_dir", type=str, default=None, help="Provide a specific directory to use as tmp directory (useful for debugging)")
-    args = parser.parse_args()
+def main():
+    args = parse_args()
 
     if args.tmp_dir is None:
         # Generate random tmp directory
@@ -163,3 +168,7 @@ if __name__ == "__main__":
         run_oracle(args, env)
     else:
         run_baseline(args, env)
+
+
+if __name__ == "__main__":
+    main()
