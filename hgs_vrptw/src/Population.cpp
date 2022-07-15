@@ -200,7 +200,7 @@ bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
         {
             bestSolutionOverall = *indiv;
             searchProgress.emplace_back(
-                params->getTimeElapsedSeconds(),
+                params->getElapsedTime(),
                 bestSolutionOverall.costs.penalizedCost);
         }
 

@@ -190,7 +190,7 @@ void Individual::exportCVRPLibFormat(std::string const &path) const
         }
 
     out << "Cost " << costs.penalizedCost << '\n';
-    out << "Time " << params->getTimeElapsedSeconds() << '\n';
+    out << "Time " << params->getElapsedTime() << '\n';
 }
 
 bool Individual::operator==(Individual const &other) const

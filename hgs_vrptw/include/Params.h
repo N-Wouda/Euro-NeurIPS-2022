@@ -289,7 +289,7 @@ public:
            bool doRepeatUntilTimeLimit = true);
 
     // Get time elapsed since start of program
-    [[nodiscard]] double getTimeElapsedSeconds() const;
+    [[nodiscard]] double getElapsedTime() const;
 
     // Whether time limit is exceeded
     [[nodiscard]] bool isTimeLimitExceeded() const;

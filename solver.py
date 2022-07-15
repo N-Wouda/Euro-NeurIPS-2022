@@ -81,10 +81,10 @@ def solve_static_vrptw(instance, time_limit=3600, tmp_dir="tmp", seed=1):
     res = algo.run(1_000, 60)  # TODO strange parameters
     best = res.get_best_found()
 
-    # TODO get cost/time from C++
-
     routes = [route for route in best.get_routes() if route]
-    cost = tools.validate_static_solution(instance, routes)
+    cost = best.cost
+
+    assert np.isclose(tools.validate_static_solution(instance, routes), cost)
 
     yield routes, cost
 

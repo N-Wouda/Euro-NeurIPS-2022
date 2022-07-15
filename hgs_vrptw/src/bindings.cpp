@@ -14,7 +14,10 @@ namespace py = pybind11;
 PYBIND11_MODULE(hgspy, m)
 {
     py::class_<Individual>(m, "Individual")
-        .def("get_routes", &Individual::getRoutes);
+        .def("get_routes", &Individual::getRoutes)
+        .def_property_readonly("cost",
+                               [](Individual &indiv)
+                               { return indiv.costs.penalizedCost; });
 
     py::class_<LocalSearch>(m, "LocalSearch")
         .def(py::init<Params *>(), py::arg("params"));
@@ -95,7 +98,8 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
              py::arg("minCircleSectorSizeDegrees") = 15,
              py::arg("useSymmetricCorrelatedVertices") = false,
-             py::arg("doRepeatUntilTimeLimit") = true);
+             py::arg("doRepeatUntilTimeLimit") = true)
+        .def("get_elapsed_time", &Params::getElapsedTime);
 
     py::class_<Population>(m, "Population")
         .def(py::init<Params *, Split *, LocalSearch *>(),

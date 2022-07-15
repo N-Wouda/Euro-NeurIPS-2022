@@ -100,7 +100,7 @@ Params::Params(std::string const &instancePath,
     setup();
 }
 
-double Params::getTimeElapsedSeconds() const
+double Params::getElapsedTime() const
 {
     if (config.useWallClockTime)
     {
@@ -114,7 +114,7 @@ double Params::getTimeElapsedSeconds() const
 
 bool Params::isTimeLimitExceeded() const
 {
-    return getTimeElapsedSeconds() >= config.timeLimit;
+    return getElapsedTime() >= config.timeLimit;
 }
 
 void Params::SetCorrelatedVertices()
