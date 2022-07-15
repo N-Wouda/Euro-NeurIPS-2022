@@ -24,8 +24,7 @@ void Individual::makeRoutes()
     auto cumServ = std::vector<int>(params->nbClients + 1, 0);
 
     // Computes the cost of propagating label i to j
-    auto propagate = [&](int i, int j)
-    {
+    auto propagate = [&](int i, int j) {
         assert(i < j);
         auto const excessCapacity
             = std::max(cumLoad[j] - cumLoad[i] - params->vehicleCapacity, 0);
@@ -35,8 +34,7 @@ void Individual::makeRoutes()
     };
 
     // Tests if i dominates j as a predecessor for all nodes x >= j+1
-    auto dominates = [&](int i, int j)
-    {
+    auto dominates = [&](int i, int j) {
         auto const lhs = pathCosts[j] + cliSplit[j + 1].d0_x;
         auto const rhs = pathCosts[i] + cliSplit[i + 1].d0_x + cumDist[j + 1]
                          - cumDist[i + 1]
