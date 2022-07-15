@@ -22,9 +22,8 @@ void Population::doLocalSearchAndAddIndividual(Individual *indiv)
     if (!indiv->isFeasible()
         && params.rng() % 100 < (unsigned int)params.config.repairProbability)
     {
-        localSearch.run(indiv,
-                         params.penaltyCapacity * 10.,
-                         params.penaltyTimeWarp * 10.);
+        localSearch.run(
+            indiv, params.penaltyCapacity * 10., params.penaltyTimeWarp * 10.);
 
         // Add the individual only when feasible
         if (indiv->isFeasible())

@@ -35,12 +35,23 @@ void Individual::makeRoutes()
 
     // Tests if i dominates j as a predecessor for all nodes x >= j+1
     auto dominates = [&](int i, int j) {
+        assert(i < j);
         auto const lhs = pathCosts[j] + cliSplit[j + 1].d0_x;
         auto const rhs = pathCosts[i] + cliSplit[i + 1].d0_x + cumDist[j + 1]
                          - cumDist[i + 1]
                          + params->penaltyCapacity * (cumLoad[j] - cumLoad[i]);
 
         return lhs + MY_EPSILON > rhs;
+    };
+
+    // Tests if j dominates i as a predecessor for all nodes x >= j+1
+    auto dominatesRight = [&](int i, int j) {
+        assert(i < j);
+        auto const lhs = pathCosts[j] + cliSplit[j + 1].d0_x;
+        auto const rhs = pathCosts[i] + cliSplit[i + 1].d0_x + cumDist[j + 1]
+                         - cumDist[i + 1];
+
+        return lhs < rhs + MY_EPSILON;
     };
 
     // Loop over all clients, excluding the depot
@@ -80,7 +91,7 @@ void Individual::makeRoutes()
             {
                 // Then i will be inserted, need to remove whoever is
                 // dominated by i
-                while (!deq.empty() && dominates(i, deq.back()))
+                while (!deq.empty() && dominatesRight(deq.back(), i))
                     deq.pop_back();
 
                 deq.push_back(i);

@@ -48,16 +48,16 @@ Result const Genetic::run()
             // Run the Local Search again, but with penalties for
             // infeasibilities multiplied by 10
             localSearch.run(offspring,
-                             params.penaltyCapacity * 10.,
-                             params.penaltyTimeWarp * 10.);
+                            params.penaltyCapacity * 10.,
+                            params.penaltyTimeWarp * 10.);
             // If the individual is feasible now, check if it is the best
             // feasible individual of the population, based on penalizedCost and
             // add it to the population If the individual is not feasible now,
             // it is not added to the population
             if (offspring->isFeasible())
             {
-                isNewBest = (population.addIndividual(offspring, false)
-                             || isNewBest);
+                isNewBest
+                    = (population.addIndividual(offspring, false) || isNewBest);
             }
         }
 
@@ -505,10 +505,10 @@ void Genetic::insertUnplannedTasks(
                            < params.cli[offspring->routeChrom[r][i]]
                                  .latestArrival)
                 {
-                    distanceDelta = newDistanceToInsert + newDistanceFromInsert
-                                    - params.timeCost.get(
-                                        offspring->routeChrom[r][i - 1],
-                                        offspring->routeChrom[r][i]);
+                    distanceDelta
+                        = newDistanceToInsert + newDistanceFromInsert
+                          - params.timeCost.get(offspring->routeChrom[r][i - 1],
+                                                offspring->routeChrom[r][i]);
                     if (distanceDelta < bestDistance)
                     {
                         bestDistance = distanceDelta;
@@ -523,9 +523,9 @@ void Genetic::insertUnplannedTasks(
                     + newDistanceToInsert
                 < latestArrival)
             {
-                distanceDelta = newDistanceToInsert + params.timeCost.get(c, 0)
-                                - params.timeCost.get(
-                                    offspring->routeChrom[r].back(), 0);
+                distanceDelta
+                    = newDistanceToInsert + params.timeCost.get(c, 0)
+                      - params.timeCost.get(offspring->routeChrom[r].back(), 0);
                 if (distanceDelta < bestDistance)
                 {
                     bestDistance = distanceDelta;

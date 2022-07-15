@@ -106,9 +106,9 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("params"),
              py::arg("local_search"));
 
-    py::class_<Result>(m, "Result")
-        .def("get_best_found",
-             [](Result &result) { return *result.getBestFound(); });
+    py::class_<Result>(m, "Result").def("get_best_found", [](Result &result) {
+        return *result.getBestFound();
+    });
 
     py::class_<Genetic>(m, "Genetic")
         .def(py::init<Params &, Population &, LocalSearch &>(),
