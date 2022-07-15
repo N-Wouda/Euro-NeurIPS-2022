@@ -3,7 +3,6 @@
 #include "LocalSearch.h"
 #include "Params.h"
 #include "Population.h"
-#include "Split.h"
 
 #include <iostream>
 
@@ -13,11 +12,10 @@ try
     CommandLine args(argc, argv);
     Params params = args.parse();
 
-    Split split(&params);
     LocalSearch ls(&params);
-    Population pop(&params, &split, &ls);
+    Population pop(&params, &ls);
 
-    Genetic solver(&params, &split, &pop, &ls);
+    Genetic solver(&params, &pop, &ls);
     auto const res = solver.run(params.config.nbIter, params.config.timeLimit);
 
     if (res.getBestFound() != nullptr)
