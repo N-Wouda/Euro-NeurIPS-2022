@@ -13,6 +13,21 @@ from baselines.strategies import STRATEGIES
 from environment import ControllerEnvironment, VRPEnvironment
 
 
+def get_hgspy_module(where: str = 'release/lib/hgspy*.so'):
+    lib_path = next(glob.iglob(where))
+    loader = importlib.machinery.ExtensionFileLoader('hgspy', lib_path)
+    spec = importlib.util.spec_from_loader(loader.name, loader)
+    hgspy = importlib.util.module_from_spec(spec)
+    loader.exec_module(hgspy)
+
+
+try:
+    from hgspy import Genetic, Params, Split, Population, LocalSearch
+except ImportError:
+    get_hgspy_module()
+    from hgspy import Genetic, Params, Split, Population, LocalSearch  # noqa
+
+
 def parse_args():
     parser = argparse.ArgumentParser()
 
@@ -28,9 +43,6 @@ def parse_args():
 
 
 def solve_static_vrptw(instance, time_limit=3600, tmp_dir="tmp", seed=1):
-    # TODO all this works, but it is not pretty. Clean this up in tandem with
-    #  the C++ implementation.
-
     # Prevent passing empty instances to the static solver, e.g. when
     # strategy decides to not dispatch any requests for the current epoch
     if instance['coords'].shape[0] <= 1:
@@ -48,13 +60,8 @@ def solve_static_vrptw(instance, time_limit=3600, tmp_dir="tmp", seed=1):
     tools.write_vrplib(instance_filename, instance, is_vrptw=True)
     out_filename = os.path.join(tmp_dir, "problem.sol")
 
-    lib_path = next(glob.iglob(f'release/lib/hgspy*.so'))
-    loader = importlib.machinery.ExtensionFileLoader('hgspy', lib_path)
-    spec = importlib.util.spec_from_loader(loader.name, loader)
-    hgspy = importlib.util.module_from_spec(spec)
-    loader.exec_module(hgspy)
-
-    from hgspy import Genetic, Params, Split, Population, LocalSearch
+    # TODO all this works, but it is not pretty. Clean this up in tandem with
+    #  the C++ implementation.
 
     params = Params(
         instance_filename,
@@ -73,6 +80,8 @@ def solve_static_vrptw(instance, time_limit=3600, tmp_dir="tmp", seed=1):
 
     res = algo.run(1_000, 60)  # TODO strange parameters
     best = res.get_best_found()
+
+    # TODO get cost/time from C++
 
     routes = [route for route in best.get_routes() if route]
     cost = tools.validate_static_solution(instance, routes)
