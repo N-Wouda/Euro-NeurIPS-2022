@@ -47,9 +47,8 @@ void Individual::makeRoutes()
     for (int idx = 1; idx <= params->nbClients; idx++)
     {
         auto const curr = tourChrom[idx - 1];
-        auto const next = tourChrom[idx];
         auto const dist = idx < params->nbClients  // INT_MIN for last client
-                              ? params->timeCost.get(curr, next)
+                              ? params->timeCost.get(curr, tourChrom[idx])
                               : INT_MIN;
 
         cliSplit[idx] = {params->cli[curr].demand,
