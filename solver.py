@@ -22,10 +22,10 @@ def get_hgspy_module(where: str = 'release/lib/hgspy*.so'):
 
 
 try:
-    from hgspy import Genetic, Params, Split, Population, LocalSearch
+    from hgspy import Genetic, Params, Population, LocalSearch
 except (ImportError, ModuleNotFoundError):
     get_hgspy_module()
-    from hgspy import Genetic, Params, Split, Population, LocalSearch  # noqa
+    from hgspy import Genetic, Params, Population, LocalSearch  # noqa
 
 
 def parse_args():
@@ -72,11 +72,10 @@ def solve_static_vrptw(instance, time_limit=3600, tmp_dir="tmp", seed=1):
         useWallClockTime=True
     )
 
-    split = Split(params)
     ls = LocalSearch(params)
-    pop = Population(params, split, ls)
+    pop = Population(params, ls)
 
-    algo = Genetic(params, split, pop, ls)
+    algo = Genetic(params, pop, ls)
     res = algo.run(1_000, 60)  # TODO strange parameters
 
     best = res.get_best_found()
