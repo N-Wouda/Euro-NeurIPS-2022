@@ -23,6 +23,7 @@ public:
      */
     [[nodiscard]] Individual const *getBestFound() const
     {
+        // TODO is this the best? See population members
         return feasible[0];  // since they are sorted by increasing cost
     }
 };

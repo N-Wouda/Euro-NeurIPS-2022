@@ -4,7 +4,6 @@
 #include "LocalSearch.h"
 #include "Params.h"
 
-#include <algorithm>
 #include <cmath>
 #include <list>
 #include <vector>
@@ -12,7 +11,7 @@
 void Population::doLocalSearchAndAddIndividual(Individual *indiv)
 {
     // Do a Local Search
-    localSearch->run(indiv, params->penaltyCapacity, params->penaltyTimeWarp);
+    localSearch.run(indiv, params.penaltyCapacity, params.penaltyTimeWarp);
 
     // Add an individual
     addIndividual(indiv, true);
@@ -21,52 +20,50 @@ void Population::doLocalSearchAndAddIndividual(Individual *indiv)
     // the penalties for infeasibilities (w.r.t. capacities and time warps) in a
     // new Local Search in case of infeasibility
     if (!indiv->isFeasible()
-        && params->rng() % 100 < (unsigned int)params->config.repairProbability)
+        && params.rng() % 100 < (unsigned int)params.config.repairProbability)
     {
-        localSearch->run(indiv,
-                         params->penaltyCapacity * 10.,
-                         params->penaltyTimeWarp * 10.);
+        localSearch.run(indiv,
+                         params.penaltyCapacity * 10.,
+                         params.penaltyTimeWarp * 10.);
 
         // Add the individual only when feasible
         if (indiv->isFeasible())
-        {
             addIndividual(indiv, false);
-        }
     }
 }
 
 void Population::generatePopulation()
 {
-    if (params->nbClients == 1)
+    if (params.nbClients == 1)
     {
         // Quickly generate the one solution
-        Individual randomIndiv(params);
+        Individual randomIndiv(&params);
         addIndividual(&randomIndiv, true);
         return;
     }
 
     // ------- The below parameters are configurable through command line
     // arguments ---------
-    double fractionGeneratedNearest = params->config.fractionGeneratedNearest;
-    double fractionGeneratedFurthest = params->config.fractionGeneratedFurthest;
-    double fractionGeneratedSweep = params->config.fractionGeneratedSweep;
-    double fractionGeneratedRandomly = params->config.fractionGeneratedRandomly;
-    int minSweepFillPercentage = params->config.minSweepFillPercentage;
+    double fractionGeneratedNearest = params.config.fractionGeneratedNearest;
+    double fractionGeneratedFurthest = params.config.fractionGeneratedFurthest;
+    double fractionGeneratedSweep = params.config.fractionGeneratedSweep;
+    double fractionGeneratedRandomly = params.config.fractionGeneratedRandomly;
+    int minSweepFillPercentage = params.config.minSweepFillPercentage;
     int maxToleratedCapacityViolation
-        = params->config.maxToleratedCapacityViolation;
-    int maxToleratedTimeWarp = params->config.maxToleratedTimeWarp;
-    double initialTimeWarpPenalty = params->config.initialTimeWarpPenalty;
+        = params.config.maxToleratedCapacityViolation;
+    int maxToleratedTimeWarp = params.config.maxToleratedTimeWarp;
+    double initialTimeWarpPenalty = params.config.initialTimeWarpPenalty;
     // ------- End of configurable parameters
     // -----------------------------------------------------
 
     // Generate same number of individuals as in original solution.
-    int nofIndividuals = 4 * params->config.minimumPopulationSize;
+    int nofIndividuals = 4 * params.config.minimumPopulationSize;
 
     // TODO: Change next comment?
     // Note we actually set initial penalty in Params.cpp but by setting it here
     // we also reset it when resetting the population (probably not ideal but
     // test before changing)
-    params->penaltyTimeWarp = initialTimeWarpPenalty;
+    params.penaltyTimeWarp = initialTimeWarpPenalty;
 
     // Too low fill percentage may cause that not all clients are planned
     minSweepFillPercentage = std::max(minSweepFillPercentage, 30);
@@ -82,17 +79,17 @@ void Population::generatePopulation()
     // Generate some individuals using the NEAREST construction heuristic
     for (int i = 0; i < nofNearestIndividualsToGenerate; i++)
     {
-        if (params->isTimeLimitExceeded())
+        if (params.isTimeLimitExceeded())
             throw std::runtime_error(
                 "Time limit exceeded generating population.");
 
         // Create the first individual without violations
         int toleratedCapacityViolation
-            = i == 0 ? 0 : params->rng() % (maxToleratedCapacityViolation + 1);
+            = i == 0 ? 0 : params.rng() % (maxToleratedCapacityViolation + 1);
         int toleratedTimeWarp
-            = i == 0 ? 0 : params->rng() % (maxToleratedTimeWarp + 1);
-        Individual indiv(params, false);
-        localSearch->constructIndividualWithSeedOrder(
+            = i == 0 ? 0 : params.rng() % (maxToleratedTimeWarp + 1);
+        Individual indiv(&params, false);
+        localSearch.constructIndividualWithSeedOrder(
             toleratedCapacityViolation, toleratedTimeWarp, false, &indiv);
         doLocalSearchAndAddIndividual(&indiv);
     }
@@ -100,17 +97,17 @@ void Population::generatePopulation()
     // Generate some individuals using the FURHEST construction heuristic
     for (int i = 0; i < nofFurthestIndividualsToGenerate; i++)
     {
-        if (params->isTimeLimitExceeded())
+        if (params.isTimeLimitExceeded())
             throw std::runtime_error(
                 "Time limit exceeded generating population.");
 
         // Create the first individual without violations
         int toleratedCapacityViolation
-            = i == 0 ? 0 : params->rng() % (maxToleratedCapacityViolation + 1);
+            = i == 0 ? 0 : params.rng() % (maxToleratedCapacityViolation + 1);
         int toleratedTimeWarp
-            = i == 0 ? 0 : params->rng() % (maxToleratedTimeWarp + 1);
-        Individual indiv(params, false);
-        localSearch->constructIndividualWithSeedOrder(
+            = i == 0 ? 0 : params.rng() % (maxToleratedTimeWarp + 1);
+        Individual indiv(&params, false);
+        localSearch.constructIndividualWithSeedOrder(
             toleratedCapacityViolation, toleratedTimeWarp, true, &indiv);
         doLocalSearchAndAddIndividual(&indiv);
     }
@@ -118,7 +115,7 @@ void Population::generatePopulation()
     // Generate some individuals using the SWEEP construction heuristic
     for (int i = 0; i < nofSweepIndividualsToGenerate; i++)
     {
-        if (params->isTimeLimitExceeded())
+        if (params.isTimeLimitExceeded())
             throw std::runtime_error(
                 "Time limit exceeded generating population.");
 
@@ -126,20 +123,20 @@ void Population::generatePopulation()
         int fillPercentage
             = i == 0 ? 100
                      : minSweepFillPercentage
-                           + params->rng() % (100 - minSweepFillPercentage + 1);
-        Individual indiv(params, false);
-        localSearch->constructIndividualBySweep(fillPercentage, &indiv);
+                           + params.rng() % (100 - minSweepFillPercentage + 1);
+        Individual indiv(&params, false);
+        localSearch.constructIndividualBySweep(fillPercentage, &indiv);
         doLocalSearchAndAddIndividual(&indiv);
     }
 
     // Generate some individuals using a RANDOM strategy
     for (int i = 0; i < nofRandomIndividualsToGenerate; i++)
     {
-        if (params->isTimeLimitExceeded())
+        if (params.isTimeLimitExceeded())
             throw std::runtime_error(
                 "Time limit exceeded generating population.");
 
-        Individual randomIndiv(params);
+        Individual randomIndiv(&params);
         doLocalSearchAndAddIndividual(&randomIndiv);
     }
 }
@@ -181,10 +178,10 @@ bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
 
     // Trigger a survivor selection if the maximimum population size is exceeded
     size_t maxPopSize
-        = params->config.minimumPopulationSize + params->config.generationSize;
+        = params.config.minimumPopulationSize + params.config.generationSize;
 
     if (pop.size() > maxPopSize)
-        while (pop.size() > params->config.minimumPopulationSize)
+        while (pop.size() > params.config.minimumPopulationSize)
             removeWorstBiasedFitness(pop);
 
     // Track best solution
@@ -198,7 +195,7 @@ bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
         {
             bestSolutionOverall = *indiv;
             searchProgress.emplace_back(
-                params->getElapsedTime(),
+                params.getElapsedTime(),
                 bestSolutionOverall.costs.penalizedCost);
         }
 
@@ -224,7 +221,7 @@ void Population::updateBiasedFitnesses(SubPopulation &pop)
     for (size_t idx = 0; idx != pop.size(); idx++)
     {
         auto const dist
-            = pop[idx]->avgBrokenPairsDistanceClosest(params->config.nbClose);
+            = pop[idx]->avgBrokenPairsDistanceClosest(params.config.nbClose);
         ranking.emplace_back(-dist, idx);
     }
 
@@ -240,14 +237,14 @@ void Population::updateBiasedFitnesses(SubPopulation &pop)
         double fitRank = ranking[idx].second / (popSize - 1);
 
         // Elite individuals cannot be smaller than population size
-        if (pop.size() <= params->config.nbElite)
+        if (pop.size() <= params.config.nbElite)
             pop[ranking[idx].second]->biasedFitness = fitRank;
-        else if (params->config.diversityWeight > 0)
+        else if (params.config.diversityWeight > 0)
             pop[ranking[idx].second]->biasedFitness
-                = fitRank + params->config.diversityWeight * divRank;
+                = fitRank + params.config.diversityWeight * divRank;
         else
             pop[ranking[idx].second]->biasedFitness
-                = fitRank + (1.0 - params->config.nbElite / popSize) * divRank;
+                = fitRank + (1.0 - params.config.nbElite / popSize) * divRank;
     }
 }
 
@@ -320,22 +317,22 @@ void Population::managePenalties()
         = static_cast<double>(std::count(
               listFeasibilityLoad.begin(), listFeasibilityLoad.end(), true))
           / static_cast<double>(listFeasibilityLoad.size());
-    if (fractionFeasibleLoad <= 0.01 && params->config.penaltyBooster > 0.
-        && params->penaltyCapacity < 100000.)
+    if (fractionFeasibleLoad <= 0.01 && params.config.penaltyBooster > 0.
+        && params.penaltyCapacity < 100000.)
     {
-        params->penaltyCapacity = std::min(
-            params->penaltyCapacity * params->config.penaltyBooster, 100000.);
+        params.penaltyCapacity = std::min(
+            params.penaltyCapacity * params.config.penaltyBooster, 100000.);
     }
-    else if (fractionFeasibleLoad < params->config.targetFeasible - 0.05
-             && params->penaltyCapacity < 100000.)
+    else if (fractionFeasibleLoad < params.config.targetFeasible - 0.05
+             && params.penaltyCapacity < 100000.)
     {
-        params->penaltyCapacity
-            = std::min(params->penaltyCapacity * 1.2, 100000.);
+        params.penaltyCapacity
+            = std::min(params.penaltyCapacity * 1.2, 100000.);
     }
-    else if (fractionFeasibleLoad > params->config.targetFeasible + 0.05
-             && params->penaltyCapacity > 0.1)
+    else if (fractionFeasibleLoad > params.config.targetFeasible + 0.05
+             && params.penaltyCapacity > 0.1)
     {
-        params->penaltyCapacity = std::max(params->penaltyCapacity * 0.85, 0.1);
+        params.penaltyCapacity = std::max(params.penaltyCapacity * 0.85, 0.1);
     }
 
     // Setting some bounds [0.1,100000] to the penalty values for safety
@@ -344,22 +341,22 @@ void Population::managePenalties()
                                          listFeasibilityTimeWarp.end(),
                                          true))
           / static_cast<double>(listFeasibilityTimeWarp.size());
-    if (fractionFeasibleTimeWarp <= 0.01 && params->config.penaltyBooster > 0.
-        && params->penaltyTimeWarp < 100000.)
+    if (fractionFeasibleTimeWarp <= 0.01 && params.config.penaltyBooster > 0.
+        && params.penaltyTimeWarp < 100000.)
     {
-        params->penaltyTimeWarp = std::min(
-            params->penaltyTimeWarp * params->config.penaltyBooster, 100000.);
+        params.penaltyTimeWarp = std::min(
+            params.penaltyTimeWarp * params.config.penaltyBooster, 100000.);
     }
-    else if (fractionFeasibleTimeWarp < params->config.targetFeasible - 0.05
-             && params->penaltyTimeWarp < 100000.)
+    else if (fractionFeasibleTimeWarp < params.config.targetFeasible - 0.05
+             && params.penaltyTimeWarp < 100000.)
     {
-        params->penaltyTimeWarp
-            = std::min(params->penaltyTimeWarp * 1.2, 100000.);
+        params.penaltyTimeWarp
+            = std::min(params.penaltyTimeWarp * 1.2, 100000.);
     }
-    else if (fractionFeasibleTimeWarp > params->config.targetFeasible + 0.05
-             && params->penaltyTimeWarp > 0.1)
+    else if (fractionFeasibleTimeWarp > params.config.targetFeasible + 0.05
+             && params.penaltyTimeWarp > 0.1)
     {
-        params->penaltyTimeWarp = std::max(params->penaltyTimeWarp * 0.85, 0.1);
+        params.penaltyTimeWarp = std::max(params.penaltyTimeWarp * 0.85, 0.1);
     }
 
     // Update the evaluations
@@ -367,9 +364,9 @@ void Population::managePenalties()
     {
         infeasibleSubpopulation[i]->costs.penalizedCost
             = infeasibleSubpopulation[i]->costs.distance
-              + params->penaltyCapacity
+              + params.penaltyCapacity
                     * infeasibleSubpopulation[i]->costs.capacityExcess
-              + params->penaltyTimeWarp
+              + params.penaltyTimeWarp
                     * infeasibleSubpopulation[i]->costs.timeWarp;
     }
 
@@ -403,14 +400,14 @@ Individual *Population::getBinaryTournament()
 
     // Pick a first random number individual from the total population (of both
     // feasible and infeasible individuals)
-    size_t idx1 = params->rng() % (feasSize + infeasSize);
+    size_t idx1 = params.rng() % (feasSize + infeasSize);
     auto *individual1 = idx1 >= feasSize
                             ? infeasibleSubpopulation[idx1 - feasSize]
                             : feasibleSubpopulation[idx1];
 
     // Pick a second random number individual from the total population (of both
     // feasible and infeasible individuals)
-    size_t idx2 = params->rng() % (feasSize + infeasSize);
+    size_t idx2 = params.rng() % (feasSize + infeasSize);
     auto *individual2 = idx2 >= feasSize
                             ? infeasibleSubpopulation[idx2 - feasSize]
                             : feasibleSubpopulation[idx2];
@@ -435,7 +432,7 @@ Population::getNonIdenticalParentsBinaryTournament()
     return std::make_pair(par1, par2);
 }
 
-Population::Population(Params *params, LocalSearch *localSearch)
+Population::Population(Params &params, LocalSearch &localSearch)
     : params(params), localSearch(localSearch)
 {
     // Create lists for the load feasibility of the last 100 individuals

@@ -47,10 +47,10 @@ public:
     //         their value (counted as 2 per argument in argc)
     CommandLine(int argc, char **argv) : argc(argc), argv(argv)
     {
-        // Check if the number of arguments is odd and at least three, since the
-        // three paths should at least be given
+        // Check if the number of arguments is odd and at least three, since
+        // the two paths (+program name) should at least be given
         if (argc % 2 != 1 || argc < 3)
-            throw std::string("Incorrect number of arguments");
+            throw std::invalid_argument("Incorrect number of arguments");
     }
 
     // Extracts run configurations from command line arguments

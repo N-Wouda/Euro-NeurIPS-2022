@@ -76,7 +76,7 @@ def solve_static_vrptw(instance, time_limit=3600, tmp_dir="tmp", seed=1):
     pop = Population(params, ls)
 
     algo = Genetic(params, pop, ls)
-    res = algo.run(1_000, 60)  # TODO strange parameters
+    res = algo.run()
 
     best = res.get_best_found()
     routes = [route for route in best.get_routes() if route]

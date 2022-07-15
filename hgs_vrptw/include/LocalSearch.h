@@ -185,7 +185,7 @@ struct SwapStarElement
 class LocalSearch
 {
 private:
-    Params *params;        // Problem parameters
+    Params &params;        // Problem parameters
     bool searchCompleted;  // Tells whether all moves have been evaluated
                            // without success
     int nbMoves;  // Total number of moves (RI and SWAP*) applied during the
@@ -238,9 +238,9 @@ private:
                                      // distance matrix
 
     // Functions in charge of excess load penalty calculations
-    inline double penaltyExcessLoad(double load)
+    [[nodiscard]] inline double penaltyExcessLoad(double load) const
     {
-        return std::max(0., load - params->vehicleCapacity) * penaltyCapacityLS;
+        return std::max(0., load - params.vehicleCapacity) * penaltyCapacityLS;
     }
 
     [[nodiscard]] inline double
@@ -383,7 +383,7 @@ public:
     void exportIndividual(Individual *indiv);
 
     // Constructor
-    explicit LocalSearch(Params *params);
+    explicit LocalSearch(Params &params);
 };
 
 #endif

@@ -20,7 +20,7 @@ PYBIND11_MODULE(hgspy, m)
         });
 
     py::class_<LocalSearch>(m, "LocalSearch")
-        .def(py::init<Params *>(), py::arg("params"));
+        .def(py::init<Params &>(), py::arg("params"));
 
     py::class_<Params>(m, "Params")
         .def(py::init<std::string const &,
@@ -102,20 +102,16 @@ PYBIND11_MODULE(hgspy, m)
         .def("get_elapsed_time", &Params::getElapsedTime);
 
     py::class_<Population>(m, "Population")
-        .def(py::init<Params *, LocalSearch *>(),
+        .def(py::init<Params &, LocalSearch &>(),
              py::arg("params"),
              py::arg("local_search"));
 
     py::class_<Result>(m, "Result")
-        .def(py::init<std::vector<Individual *> const &,
-                      std::vector<Individual *> const &>(),
-             py::arg("feasible"),
-             py::arg("infeasible"))
         .def("get_best_found",
              [](Result &result) { return *result.getBestFound(); });
 
     py::class_<Genetic>(m, "Genetic")
-        .def(py::init<Params *, Population *, LocalSearch *>(),
+        .def(py::init<Params &, Population &, LocalSearch &>(),
              py::arg("params"),
              py::arg("population"),
              py::arg("local_search"))

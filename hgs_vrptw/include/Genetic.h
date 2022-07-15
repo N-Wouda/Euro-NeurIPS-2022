@@ -42,9 +42,9 @@ class Genetic
     // The number of new potential offspring created from one individual
     static const int numberOfCandidateOffsprings = 4;
 
-    Params *params;            // Problem parameters
-    Population *population;    // Population
-    LocalSearch *localSearch;  // Local Search structure
+    Params &params;            // Problem parameters
+    Population &population;    // Population
+    LocalSearch &localSearch;  // Local Search structure
 
     // Pointers for offspring to edit new offspring in place:
     // 0 and 1 are reserved for SREX, 2 and 3 are reserved for OX
@@ -78,10 +78,10 @@ class Genetic
 public:
     // Running the genetic algorithm until maxIterNonProd consecutive iterations
     // without improvement or a time limit (in seconds) is reached
-    Result const run(int maxIterNonProd, int timeLimit);
+    Result const run();
 
     // Constructor
-    Genetic(Params *params, Population *population, LocalSearch *localSearch);
+    Genetic(Params &params, Population &population, LocalSearch &localSearch);
 
     // Destructor
     ~Genetic();

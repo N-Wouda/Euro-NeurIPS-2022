@@ -12,11 +12,11 @@ try
     CommandLine args(argc, argv);
     Params params = args.parse();
 
-    LocalSearch ls(&params);
-    Population pop(&params, &ls);
+    LocalSearch ls(params);
+    Population pop(params, ls);
 
-    Genetic solver(&params, &pop, &ls);
-    auto const res = solver.run(params.config.nbIter, params.config.timeLimit);
+    Genetic solver(params, pop, ls);
+    auto const res = solver.run();
 
     if (res.getBestFound() != nullptr)
     {

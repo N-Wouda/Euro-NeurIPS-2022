@@ -39,8 +39,8 @@ class Population
 {
     using SubPopulation = std::vector<Individual *>;
 
-    Params *params;            // Problem parameters
-    LocalSearch *localSearch;  // Local search structure
+    Params &params;            // Problem parameters
+    LocalSearch &localSearch;  // Local search structure
 
     // Feasible subpopulation kept ordered by increasing penalized cost
     SubPopulation feasibleSubpopulation;
@@ -113,7 +113,7 @@ public:
     }
 
     // Constructor
-    Population(Params *params, LocalSearch *localSearch);
+    Population(Params &params, LocalSearch &localSearch);
 
     // Destructor
     ~Population();
