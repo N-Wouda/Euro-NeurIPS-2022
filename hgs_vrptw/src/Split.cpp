@@ -32,8 +32,8 @@ void Split::generalSplit(Individual *indiv, int nbMaxVehicles)
         // The distance to the next client is INT_MIN for the last client
         if (i < params->nbClients)
         {
-            cliSplit[i].dnext
-                = params->timeCost.get(indiv->tourChrom[i - 1], indiv->tourChrom[i]);
+            cliSplit[i].dnext = params->timeCost.get(indiv->tourChrom[i - 1],
+                                                     indiv->tourChrom[i]);
         }
         else
         {

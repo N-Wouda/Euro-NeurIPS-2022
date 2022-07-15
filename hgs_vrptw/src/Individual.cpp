@@ -20,8 +20,9 @@ void Individual::evaluateCompleteCost()
             int latestReleaseTime = params->cli[routeChrom[r][0]].releaseTime;
             for (int i = 1; i < static_cast<int>(routeChrom[r].size()); i++)
             {
-                latestReleaseTime = std::max(
-                    latestReleaseTime, params->cli[routeChrom[r][i]].releaseTime);
+                latestReleaseTime
+                    = std::max(latestReleaseTime,
+                               params->cli[routeChrom[r][i]].releaseTime);
             }
             // Get the distance, load, serviceDuration and time associated with
             // the vehicle traveling from the depot to the first client Assume
@@ -41,7 +42,8 @@ void Individual::evaluateCompleteCost()
             {
                 // Don't add wait time since we can start route later
                 // (doesn't really matter since there is no penalty anyway)
-                // waitTime += params->cli[routeChrom[r][0]].earliestArrival - time;
+                // waitTime += params->cli[routeChrom[r][0]].earliestArrival -
+                // time;
                 time = params->cli[routeChrom[r][0]].earliestArrival;
             }
             // Add possible time warp
@@ -57,8 +59,7 @@ void Individual::evaluateCompleteCost()
             {
                 // Sum the distance, load, serviceDuration and time associated
                 // with the vehicle traveling from the depot to the next client
-                distance
-                    += params->timeCost.get(routeChrom[r][i - 1],
+                distance += params->timeCost.get(routeChrom[r][i - 1],
                                                  routeChrom[r][i]);
                 load += params->cli[routeChrom[r][i]].demand;
 
@@ -76,7 +77,8 @@ void Individual::evaluateCompleteCost()
                 // Add possible time warp
                 else if (time > params->cli[routeChrom[r][i]].latestArrival)
                 {
-                    timeWarp += time - params->cli[routeChrom[r][i]].latestArrival;
+                    timeWarp
+                        += time - params->cli[routeChrom[r][i]].latestArrival;
                     time = params->cli[routeChrom[r][i]].latestArrival;
                 }
 
@@ -88,13 +90,12 @@ void Individual::evaluateCompleteCost()
             // For the last client, the successors is the depot. Also update the
             // distance and time
             successors[routeChrom[r][routeChrom[r].size() - 1]] = 0;
-            distance
-                += params->timeCost.get(
+            distance += params->timeCost.get(
                 routeChrom[r][routeChrom[r].size() - 1], 0);
-            time
-                = time
-                  + params->cli[routeChrom[r][routeChrom[r].size() - 1]].serviceDuration
-                  + params->timeCost.get(
+            time = time
+                   + params->cli[routeChrom[r][routeChrom[r].size() - 1]]
+                         .serviceDuration
+                   + params->timeCost.get(
                        routeChrom[r][routeChrom[r].size() - 1], 0);
 
             // For the depot, we only need to check the end of the time window

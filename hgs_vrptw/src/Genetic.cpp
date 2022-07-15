@@ -216,9 +216,11 @@ Individual *Genetic::crossoverSREX(Parents parents)
         // Difference for moving 'left' in parent A
         const int differenceALeft
             = static_cast<int>(std::count_if(
-                  parents.first->routeChrom[(startA - 1 + nOfRoutesA) % nOfRoutesA]
+                  parents.first
+                      ->routeChrom[(startA - 1 + nOfRoutesA) % nOfRoutesA]
                       .begin(),
-                  parents.first->routeChrom[(startA - 1 + nOfRoutesA) % nOfRoutesA]
+                  parents.first
+                      ->routeChrom[(startA - 1 + nOfRoutesA) % nOfRoutesA]
                       .end(),
                   [&clientsInSelectedB](int c) {
                       return clientsInSelectedB.find(c)
@@ -239,9 +241,11 @@ Individual *Genetic::crossoverSREX(Parents parents)
         // Difference for moving 'right' in parent A
         const int differenceARight
             = static_cast<int>(std::count_if(
-                  parents.first->routeChrom[(startA + nOfMovedRoutes) % nOfRoutesA]
+                  parents.first
+                      ->routeChrom[(startA + nOfMovedRoutes) % nOfRoutesA]
                       .begin(),
-                  parents.first->routeChrom[(startA + nOfMovedRoutes) % nOfRoutesA]
+                  parents.first
+                      ->routeChrom[(startA + nOfMovedRoutes) % nOfRoutesA]
                       .end(),
                   [&clientsInSelectedB](int c) {
                       return clientsInSelectedB.find(c)
@@ -269,9 +273,11 @@ Individual *Genetic::crossoverSREX(Parents parents)
                              != clientsInSelectedA.end();
                   }))
               - static_cast<int>(std::count_if(
-                  parents.second->routeChrom[(startB - 1 + nOfRoutesB) % nOfRoutesB]
+                  parents.second
+                      ->routeChrom[(startB - 1 + nOfRoutesB) % nOfRoutesB]
                       .begin(),
-                  parents.second->routeChrom[(startB - 1 + nOfRoutesB) % nOfRoutesB]
+                  parents.second
+                      ->routeChrom[(startB - 1 + nOfRoutesB) % nOfRoutesB]
                       .end(),
                   [&clientsInSelectedA](int c) {
                       return clientsInSelectedA.find(c)
@@ -288,9 +294,11 @@ Individual *Genetic::crossoverSREX(Parents parents)
                                            != clientsInSelectedA.end();
                                 }))
               - static_cast<int>(std::count_if(
-                  parents.second->routeChrom[(startB + nOfMovedRoutes) % nOfRoutesB]
+                  parents.second
+                      ->routeChrom[(startB + nOfMovedRoutes) % nOfRoutesB]
                       .begin(),
-                  parents.second->routeChrom[(startB + nOfMovedRoutes) % nOfRoutesB]
+                  parents.second
+                      ->routeChrom[(startB + nOfMovedRoutes) % nOfRoutesB]
                       .end(),
                   [&clientsInSelectedA](int c) {
                       return clientsInSelectedA.find(c)
@@ -307,8 +315,8 @@ Individual *Genetic::crossoverSREX(Parents parents)
             if (bestDifference == differenceALeft)
             {
                 for (int c :
-                     parents.first
-                         ->routeChrom[(startA + nOfMovedRoutes - 1) % nOfRoutesA])
+                     parents.first->routeChrom[(startA + nOfMovedRoutes - 1)
+                                               % nOfRoutesA])
                 {
                     clientsInSelectedA.erase(clientsInSelectedA.find(c));
                 }
@@ -326,8 +334,8 @@ Individual *Genetic::crossoverSREX(Parents parents)
                 }
                 startA = (startA + 1) % nOfRoutesA;
                 for (int c :
-                     parents.first
-                         ->routeChrom[(startA + nOfMovedRoutes - 1) % nOfRoutesA])
+                     parents.first->routeChrom[(startA + nOfMovedRoutes - 1)
+                                               % nOfRoutesA])
                 {
                     clientsInSelectedA.insert(c);
                 }
@@ -335,8 +343,8 @@ Individual *Genetic::crossoverSREX(Parents parents)
             else if (bestDifference == differenceBLeft)
             {
                 for (int c :
-                     parents.second
-                         ->routeChrom[(startB + nOfMovedRoutes - 1) % nOfRoutesB])
+                     parents.second->routeChrom[(startB + nOfMovedRoutes - 1)
+                                                % nOfRoutesB])
                 {
                     clientsInSelectedB.erase(clientsInSelectedB.find(c));
                 }
@@ -354,8 +362,8 @@ Individual *Genetic::crossoverSREX(Parents parents)
                 }
                 startB = (startB + 1) % nOfRoutesB;
                 for (int c :
-                     parents.second
-                         ->routeChrom[(startB + nOfMovedRoutes - 1) % nOfRoutesB])
+                     parents.second->routeChrom[(startB + nOfMovedRoutes - 1)
+                                                % nOfRoutesB])
                 {
                     clientsInSelectedB.insert(c);
                 }
@@ -480,7 +488,8 @@ void Genetic::insertUnplannedTasks(
                 }
             }
 
-            for (int i = 1; i < static_cast<int>(offspring->routeChrom[r].size());
+            for (int i = 1;
+                 i < static_cast<int>(offspring->routeChrom[r].size());
                  i++)
             {
                 newDistanceToInsert
@@ -491,12 +500,13 @@ void Genetic::insertUnplannedTasks(
                             + newDistanceToInsert
                         < latestArrival
                     && earliestArrival + newDistanceFromInsert
-                           < params->cli[offspring->routeChrom[r][i]].latestArrival)
+                           < params->cli[offspring->routeChrom[r][i]]
+                                 .latestArrival)
                 {
-                    distanceDelta
-                        = newDistanceToInsert + newDistanceFromInsert
-                          - params->timeCost.get(offspring->routeChrom[r][i - 1],
-                                                 offspring->routeChrom[r][i]);
+                    distanceDelta = newDistanceToInsert + newDistanceFromInsert
+                                    - params->timeCost.get(
+                                        offspring->routeChrom[r][i - 1],
+                                        offspring->routeChrom[r][i]);
                     if (distanceDelta < bestDistance)
                     {
                         bestDistance = distanceDelta;
@@ -511,20 +521,21 @@ void Genetic::insertUnplannedTasks(
                     + newDistanceToInsert
                 < latestArrival)
             {
-                distanceDelta
-                    = newDistanceToInsert + params->timeCost.get(c, 0)
-                      - params->timeCost.get(offspring->routeChrom[r].back(), 0);
+                distanceDelta = newDistanceToInsert + params->timeCost.get(c, 0)
+                                - params->timeCost.get(
+                                    offspring->routeChrom[r].back(), 0);
                 if (distanceDelta < bestDistance)
                 {
                     bestDistance = distanceDelta;
-                    bestLocation
-                        = {r, static_cast<int>(offspring->routeChrom[r].size())};
+                    bestLocation = {
+                        r, static_cast<int>(offspring->routeChrom[r].size())};
                 }
             }
         }
 
         offspring->routeChrom[bestLocation.first].insert(
-            offspring->routeChrom[bestLocation.first].begin() + bestLocation.second,
+            offspring->routeChrom[bestLocation.first].begin()
+                + bestLocation.second,
             c);
     }
 }
