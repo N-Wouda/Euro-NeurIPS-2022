@@ -24,11 +24,11 @@ try
         bestSol->exportCVRPLibFormat(params.config.pathSolution);
     }
 }
-catch (std::string const &e)
-{
-    std::cerr << "EXCEPTION | " << e << '\n';
-}
 catch (std::exception const &e)
 {
     std::cerr << "EXCEPTION | " << e.what() << '\n';
+}
+catch (...)
+{
+    std::cerr << "UNKNOWN EXCEPTION\n";
 }

@@ -255,11 +255,11 @@ void Params::setup()
             // the depot are both zero
             if (cli[0].earliestArrival != 0)
             {
-                throw std::string("Time window for depot should start at 0");
+                throw std::runtime_error("Depot time window should start at 0");
             }
             if (cli[0].serviceDuration != 0)
             {
-                throw std::string("Service duration for depot should be 0");
+                throw std::runtime_error("Depot service duration should be 0");
             }
         }
         else
@@ -288,13 +288,14 @@ void Params::setup()
                     inputFile >> content2 >> content3;
                     if (!isExplicitDistanceMatrix)
                     {
-                        throw std::string("EDGE_WEIGHT_FORMAT can only be used "
-                                          "with EDGE_WEIGHT_TYPE : EXPLICIT");
+                        throw std::runtime_error(
+                            "EDGE_WEIGHT_FORMAT can only be used "
+                            "with EDGE_WEIGHT_TYPE : EXPLICIT");
                     }
 
                     if (content3 != "FULL_MATRIX")
                     {
-                        throw std::string(
+                        throw std::runtime_error(
                             "EDGE_WEIGHT_FORMAT only supports FULL_MATRIX");
                     }
                 }
@@ -317,7 +318,7 @@ void Params::setup()
                 {
                     if (!isExplicitDistanceMatrix)
                     {
-                        throw std::string(
+                        throw std::runtime_error(
                             "EDGE_WEIGHT_SECTION can only be used with "
                             "EDGE_WEIGHT_TYPE : EXPLICIT");
                     }
@@ -351,8 +352,8 @@ void Params::setup()
                         // Check if the clients are in order
                         if (cli[i].custNum != i + 1)
                         {
-                            throw std::string("Clients are not in order in the "
-                                              "list of coordinates");
+                            throw std::runtime_error("Coordinates are not in "
+                                                     "order of clients");
                         }
 
                         cli[i].custNum--;
@@ -376,8 +377,8 @@ void Params::setup()
                         // Check if the clients are in order
                         if (clientNr != i + 1)
                         {
-                            throw std::string("Clients are not in order in the "
-                                              "list of demands");
+                            throw std::runtime_error("Clients are not in order"
+                                                     " in the list of demands");
                         }
 
                         // Keep track of the max and total demand
@@ -390,7 +391,7 @@ void Params::setup()
                     // Check if the depot has demand 0
                     if (cli[0].demand != 0)
                     {
-                        throw std::string(
+                        throw std::runtime_error(
                             "Depot demand is not zero, but is instead: "
                             + std::to_string(cli[0].serviceDuration));
                     }
@@ -400,8 +401,9 @@ void Params::setup()
                     inputFile >> content2 >> content3;
                     if (content2 != "1")
                     {
-                        throw std::string("Expected depot index 1 instead of "
-                                          + content2);
+                        throw std::runtime_error("Expected depot index 1 "
+                                                 "instead of "
+                                                 + content2);
                     }
                 }
                 else if (content == "SERVICE_TIME_SECTION")
@@ -414,14 +416,14 @@ void Params::setup()
                         // Check if the clients are in order
                         if (clientNr != i + 1)
                         {
-                            throw std::string("Clients are not in order in the "
-                                              "list of service times");
+                            throw std::runtime_error("Service times are not "
+                                                     "in client order");
                         }
                     }
                     // Check if the service duration of the depot is 0
                     if (cli[0].serviceDuration != 0)
                     {
-                        throw std::string(
+                        throw std::runtime_error(
                             "Service duration for depot should be 0");
                     }
                     hasServiceTimeSection = true;
@@ -436,14 +438,15 @@ void Params::setup()
                         // Check if the clients are in order
                         if (clientNr != i + 1)
                         {
-                            throw std::string("Clients are not in order in the "
-                                              "list of release times");
+                            throw std::runtime_error("Release times are not in"
+                                                     " client order");
                         }
                     }
                     // Check if the service duration of the depot is 0
                     if (cli[0].releaseTime != 0)
                     {
-                        throw std::string("Release time for depot should be 0");
+                        throw std::runtime_error(
+                            "Release time for depot should be 0");
                     }
                 }
                 // Read the time windows of all the clients (the depot should
@@ -459,22 +462,22 @@ void Params::setup()
                         // Check if the clients are in order
                         if (clientNr != i + 1)
                         {
-                            throw std::string("Clients are not in order in the "
-                                              "list of time windows");
+                            throw std::runtime_error("Time windows are not in "
+                                                     "client order");
                         }
                     }
 
                     // Check the start of the time window of the depot
                     if (cli[0].earliestArrival != 0)
                     {
-                        throw std::string(
+                        throw std::runtime_error(
                             "Time window for depot should start at 0");
                     }
                 }
                 else
                 {
-                    throw std::string("Unexpected data in input file: "
-                                      + content);
+                    throw std::runtime_error("Unexpected data in input file: "
+                                             + content);
                 }
             }
 
@@ -488,19 +491,15 @@ void Params::setup()
 
             if (nbClients <= 0)
             {
-                throw std::string("Number of nodes is undefined");
+                throw std::runtime_error("Number of nodes is undefined");
             }
             if (vehicleCapacity == INT_MAX)
-            {
-                throw std::string("Vehicle capacity is undefined");
-            }
+                throw std::runtime_error("Vehicle capacity is undefined");
         }
     }
     else
-    {
         throw std::invalid_argument("Impossible to open instance file: "
                                     + config.pathInstance);
-    }
 
     // Default initialization if the number of vehicles has not been provided by
     // the user
@@ -664,20 +663,20 @@ void Params::setup()
     // containing arbitrarily small or large numerical values
     if (maxDist < 0.1 || maxDist > 100000)
     {
-        throw std::string("The distances are of very small or large scale. "
-                          "This could impact numerical stability. "
-                          "Please rescale the dataset and run again.");
+        throw std::runtime_error(
+            "The distances are of very small or large scale. This could impact "
+            "numerical stability. Please rescale the dataset and run again.");
     }
     if (maxDemand < 0.1 || maxDemand > 100000)
     {
-        throw std::string(
+        throw std::runtime_error(
             "The demand quantities are of very small or large scale. This "
-            "could impact numerical "
-            "stability. Please rescale the dataset and run again.");
+            "could impact numerical stability. Please rescale the dataset and "
+            "run again.");
     }
     if (nbVehicles < std::ceil(totalDemand / vehicleCapacity))
     {
-        throw std::string(
+        throw std::runtime_error(
             "Fleet size is insufficient to service the considered clients.");
     }
 

@@ -44,6 +44,7 @@ void Population::generatePopulation()
         addIndividual(&randomIndiv, true);
         return;
     }
+
     // ------- The below parameters are configurable through command line
     // arguments ---------
     double fractionGeneratedNearest = params->config.fractionGeneratedNearest;
@@ -256,7 +257,7 @@ void Population::removeWorstBiasedFitness(SubPopulation &pop)
 
     // Throw an error of the population has at most one individual
     if (pop.size() <= 1)
-        throw std::string("Eliminating the best individual");
+        throw std::runtime_error("Eliminating the best individual");
 
     Individual *worstIndividual = nullptr;
     int worstIndividualPosition = -1;
