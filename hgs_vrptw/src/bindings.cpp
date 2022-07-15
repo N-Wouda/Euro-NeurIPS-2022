@@ -4,7 +4,6 @@
 #include "Params.h"
 #include "Population.h"
 #include "Result.h"
-#include "Split.h"
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -102,12 +101,9 @@ PYBIND11_MODULE(hgspy, m)
         .def("get_elapsed_time", &Params::getElapsedTime);
 
     py::class_<Population>(m, "Population")
-        .def(py::init<Params *, Split *, LocalSearch *>(),
+        .def(py::init<Params *, LocalSearch *>(),
              py::arg("params"),
-             py::arg("split"),
              py::arg("local_search"));
-
-    py::class_<Split>(m, "Split").def(py::init<Params *>(), py::arg("params"));
 
     py::class_<Result>(m, "Result")
         .def(py::init<std::vector<Individual *> const &,
@@ -118,9 +114,8 @@ PYBIND11_MODULE(hgspy, m)
              [](Result &result) { return *result.getBestFound(); });
 
     py::class_<Genetic>(m, "Genetic")
-        .def(py::init<Params *, Split *, Population *, LocalSearch *>(),
+        .def(py::init<Params *, Population *, LocalSearch *>(),
              py::arg("params"),
-             py::arg("split"),
              py::arg("population"),
              py::arg("local_search"))
         .def("run", &Genetic::run);

@@ -29,7 +29,6 @@ SOFTWARE.*/
 #include "Params.h"
 #include "Population.h"
 #include "Result.h"
-#include "Split.h"
 
 #include <array>
 #include <unordered_set>
@@ -44,7 +43,6 @@ class Genetic
     static const int numberOfCandidateOffsprings = 4;
 
     Params *params;            // Problem parameters
-    Split *split;              // Split algorithm
     Population *population;    // Population
     LocalSearch *localSearch;  // Local Search structure
 
@@ -83,10 +81,7 @@ public:
     Result const run(int maxIterNonProd, int timeLimit);
 
     // Constructor
-    Genetic(Params *params,
-            Split *split,
-            Population *population,
-            LocalSearch *localSearch);
+    Genetic(Params *params, Population *population, LocalSearch *localSearch);
 
     // Destructor
     ~Genetic();

@@ -3,10 +3,155 @@
 #include "Params.h"
 
 #include <algorithm>
+#include <cassert>
+#include <deque>
 #include <fstream>
 #include <iostream>
 #include <numeric>
 #include <vector>
+
+void Individual::makeRoutes()
+{
+    // TODO clean this up
+    int maxVehicles = params->nbVehicles;
+
+    auto cliSplit = std::vector<ClientSplit>(params->nbClients + 1);
+
+    // potential[0][t] is the shortest path cost from 0 to t
+    auto potential = std::vector<std::vector<double>>(
+        params->nbVehicles + 1,
+        std::vector<double>(params->nbClients + 1, 1.e30));
+
+    // The next variable pred stores the client starting the route of a given
+    // client. So pred[k] is the client starting the route where k is also in.
+    // Index of the predecessor in an optimal path
+    auto pred = std::vector<std::vector<int>>(
+        params->nbVehicles + 1, std::vector<int>(params->nbClients + 1, 0));
+
+    // Cumulative distance. sumDistance[i] for i > 1 contains the sum of
+    // distances : sum_{k=1}^{i-1} d_{k,k+1}
+    auto sumDistance = std::vector<int>(params->nbClients + 1, 0);
+
+    // Cumulative demand. sumLoad[i] for i >= 1 contains the sum of loads :
+    // sum_{k=1}^{i} q_k
+    auto sumLoad = std::vector<int>(params->nbClients + 1, 0);
+
+    // Cumulative service time. sumService[i] for i >= 1 contains the sum of
+    // service time : sum_{k=1}^{i} s_k
+    auto sumService = std::vector<int>(params->nbClients + 1, 0);
+
+    // To be called with i < j only
+    // Computes the cost of propagating the label i until j
+    auto propagate = [&](int i, int j, int k) {
+        assert(i < j);
+        return potential[k][i] + sumDistance[j] - sumDistance[i + 1]
+               + cliSplit[i + 1].d0_x + cliSplit[j].dx_0
+               + params->penaltyCapacity
+                     * std::max(
+                         sumLoad[j] - sumLoad[i] - params->vehicleCapacity, 0);
+    };
+
+    // Tests if i dominates j as a predecessor for all nodes x >= j+1
+    // We assume that i < j
+    auto dominates = [&](int i, int j, int k) {
+        assert(i < j);
+        return potential[k][j] + cliSplit[j + 1].d0_x
+               > potential[k][i] + cliSplit[i + 1].d0_x + sumDistance[j + 1]
+                     - sumDistance[i + 1]
+                     + params->penaltyCapacity * (sumLoad[j] - sumLoad[i]);
+    };
+
+    // Tests if j dominates i as a predecessor for all nodes x >= j+1
+    // We assume that i < j
+    auto dominatesRight = [&](int i, int j, int k) {
+        assert(i < j);
+        return potential[k][j] + cliSplit[j + 1].d0_x
+               < potential[k][i] + cliSplit[i + 1].d0_x + sumDistance[j + 1]
+                     - sumDistance[i + 1] + MY_EPSILON;
+    };
+
+    // Loop over all clients, excluding the depot
+    for (int idx = 1; idx <= params->nbClients; idx++)
+    {
+        auto const curr = tourChrom[idx - 1];
+        auto const next = tourChrom[idx];
+
+        cliSplit[idx].demand = params->cli[curr].demand;
+        cliSplit[idx].serviceTime = params->cli[curr].serviceDuration;
+        cliSplit[idx].d0_x = params->timeCost.get(0, curr);
+        cliSplit[idx].dx_0 = params->timeCost.get(curr, 0);
+
+        // The distance to the next client is INT_MIN for the last client
+        auto const dist = params->timeCost.get(curr, next);
+        cliSplit[idx].dnext = idx < params->nbClients ? dist : INT_MIN;
+
+        // Store cumulative data on the demand, service time, and distance
+        sumLoad[idx] = sumLoad[idx - 1] + cliSplit[idx].demand;
+        sumService[idx] = sumService[idx - 1] + cliSplit[idx].serviceTime;
+        sumDistance[idx] = sumDistance[idx - 1] + cliSplit[idx - 1].dnext;
+    }
+
+    // Reinitialize the potential structure
+    std::fill(potential[0].begin(), potential[0].end(), 1.e30);
+
+    auto deq = std::deque<int>(params->nbClients + 1);
+    deq.push_front(0);  // depot
+
+    // Loop over all clients, excluding the depot
+    for (int i = 1; i <= params->nbClients; i++)
+    {
+        // The front (which is the depot in the first loop) is the best
+        // predecessor for i
+        potential[0][i] = propagate(deq.front(), i, 0);
+        pred[0][i] = deq.front();
+
+        // Check if i is not the last client
+        if (i < params->nbClients)
+        {
+            // If i is not dominated by the last of the pile
+            if (!dominates(deq.back(), i, 0))
+            {
+                // Then i will be inserted, need to remove whoever is
+                // dominated by i
+                while (!deq.empty() && dominatesRight(deq.back(), i, 0))
+                    deq.pop_back();
+
+                deq.push_back(i);
+            }
+
+            // Check iteratively if front is dominated by the next front
+            while (deq.size() > 1
+                   && propagate(deq.front(), i + 1, 0)
+                          > propagate(deq[1], i + 1, 0) - MY_EPSILON)
+            {
+                deq.pop_front();
+            }
+        }
+    }
+
+    // Check if the cost of the last client is still very large. In that case,
+    // the Split algorithm did not reach the last client
+    if (potential[0][params->nbClients] > 1.e29)
+        throw std::string("No split has been propagated to the last node");
+
+    // Loop over all vehicles, clear the route, get the predecessor and create a
+    // new routeChrom for that route
+    int end = params->nbClients;
+    for (int k = maxVehicles - 1; k >= 0; k--)
+    {
+        routeChrom[k].clear();  // clear route and re-insert nodes
+
+        // Loop from the begin to the end of the route corresponding to this
+        // vehicle
+        int begin = pred[0][end];
+        for (int ii = begin; ii < end; ii++)
+            routeChrom[k].push_back(tourChrom[ii]);
+
+        end = begin;
+    }
+
+    evaluateCompleteCost();
+}
 
 void Individual::evaluateCompleteCost()
 {
@@ -123,8 +268,6 @@ void Individual::evaluateCompleteCost()
                           + costs.capacityExcess * params->penaltyCapacity
                           + costs.timeWarp * params->penaltyTimeWarp
                           + costs.waitTime * params->penaltyWaitTime;
-
-    isFeasible = costs.capacityExcess == 0 && costs.timeWarp == 0;
 }
 
 void Individual::removeProximity(Individual *other)
@@ -194,6 +337,11 @@ void Individual::exportCVRPLibFormat(std::string const &path) const
     out << "Time " << params->getElapsedTime() << '\n';
 }
 
+bool Individual::isFeasible() const
+{
+    return costs.capacityExcess == 0 && costs.timeWarp == 0;
+}
+
 bool Individual::operator==(Individual const &other) const
 {
     auto diff = std::abs(costs.penalizedCost - other.costs.penalizedCost);
@@ -202,7 +350,7 @@ bool Individual::operator==(Individual const &other) const
 }
 
 Individual::Individual(Params *params, bool initializeChromTAndShuffle)
-    : params(params), isFeasible(false), biasedFitness(0)
+    : params(params), biasedFitness(0)
 {
     successors = std::vector<int>(params->nbClients + 1);
     predecessors = std::vector<int>(params->nbClients + 1);
@@ -213,10 +361,12 @@ Individual::Individual(Params *params, bool initializeChromTAndShuffle)
     {
         std::iota(tourChrom.begin(), tourChrom.end(), 1);
         std::shuffle(tourChrom.begin(), tourChrom.end(), params->rng);
+
+        makeRoutes();
     }
 }
 
-Individual::Individual() : params(nullptr), isFeasible(false), biasedFitness(0)
+Individual::Individual() : params(nullptr), biasedFitness(0)
 {
     costs.penalizedCost = 1.e30;
 }

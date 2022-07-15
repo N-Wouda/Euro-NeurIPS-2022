@@ -5,9 +5,7 @@
 #include "Params.h"
 #include "Population.h"
 #include "Result.h"
-#include "Split.h"
 
-#include <algorithm>
 #include <unordered_set>
 
 Result const Genetic::run(int maxIterNonProd, int timeLimit)
@@ -40,7 +38,7 @@ Result const Genetic::run(int maxIterNonProd, int timeLimit)
         bool isNewBest = population->addIndividual(offspring, true);
         // In case of infeasibility, repair the individual with a certain
         // probability
-        if (!offspring->isFeasible
+        if (!offspring->isFeasible()
             && params->rng() % 100
                    < (unsigned int)params->config.repairProbability)
         {
@@ -53,7 +51,7 @@ Result const Genetic::run(int maxIterNonProd, int timeLimit)
             // feasible individual of the population, based on penalizedCost and
             // add it to the population If the individual is not feasible now,
             // it is not added to the population
-            if (offspring->isFeasible)
+            if (offspring->isFeasible())
             {
                 isNewBest = (population->addIndividual(offspring, false)
                              || isNewBest);
@@ -175,8 +173,7 @@ void Genetic::doOXcrossover(Individual *result,
         }
     }
 
-    // Completing the individual with the Split algorithm
-    split->generalSplit(result, params->nbVehicles);
+    result->makeRoutes();  // turn tour chromosome into routes
 }
 
 Individual *Genetic::crossoverSREX(Parents parents)
@@ -555,13 +552,9 @@ Individual *Genetic::bestOfSREXAndOXCrossovers(Parents parents)
 }
 
 Genetic::Genetic(Params *params,
-                 Split *split,
                  Population *population,
                  LocalSearch *localSearch)
-    : params(params),
-      split(split),
-      population(population),
-      localSearch(localSearch)
+    : params(params), population(population), localSearch(localSearch)
 {
     // After initializing the parameters of the Genetic object, also generate
     // new individuals in the array candidateOffsprings

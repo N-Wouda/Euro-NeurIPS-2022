@@ -44,18 +44,36 @@ struct CostSol
                        // possible arrival) over all routes
 };
 
+// Structure representing a client when making routes
+struct ClientSplit
+{
+    int demand = 0;       // The demand of the client
+    int serviceTime = 0;  // The service duration of the client
+    int d0_x = 0;         // The distance from the depot to the client
+    int dx_0 = 0;         // The distance from the client to the depot
+    int dnext = 0;        // The distance from the client to the next client
+};
+
 // Object to represent one individual/solution of a population.
 class Individual
 {
     using Client = int;
     using Clients = std::vector<Client>;
 
-public:
-    // TODO make data members private
+    Params *params;  // Problem parameters
 
-    Params *params;        // Problem parameters
+    // For each node, the successor in the solution (can be the depot 0). Size
+    // is nbClients + 1.
+    Clients successors;
+
+    // For each node, the predecessor in the solution (can be the depot 0). Size
+    // is nbClients + 1.
+    Clients predecessors;
+
+public:
+    // TODO make members private
+
     CostSol costs;         // Information on the cost of the solution
-    bool isFeasible;       // Feasibility status of the individual
     double biasedFitness;  // Biased fitness of the solution
 
     // Giant tour representing the individual: list of integers representing
@@ -66,14 +84,6 @@ public:
     // solution). Size is nbVehicles. Routes are stored starting index
     // maxVehicles - 1, so the first indices will likely be empty.
     std::vector<Clients> routeChrom;
-
-    // For each node, the successor in the solution (can be the depot 0). Size
-    // is nbClients + 1.
-    Clients successors;
-
-    // For each node, the predecessor in the solution (can be the depot 0). Size
-    // is nbClients + 1.
-    Clients predecessors;
 
     // The other individuals in the population (cannot be the depot 0), ordered
     // by increasing proximity (the set container follows a natural ordering
@@ -105,6 +115,14 @@ public:
     // Exports a solution in CVRPLib format (adds a final line with the
     // computational time)
     void exportCVRPLibFormat(std::string const &path) const;
+
+    // Makes routes from the tour chromosome (using the linear split algorithm)
+    void makeRoutes();
+
+    /**
+     * Returns true when this solution is feasible; false otherwise.
+     */
+    bool isFeasible() const;
 
     bool operator==(Individual const &other) const;
 

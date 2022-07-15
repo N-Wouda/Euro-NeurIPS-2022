@@ -27,7 +27,6 @@ SOFTWARE.*/
 #include "Individual.h"
 #include "LocalSearch.h"
 #include "Params.h"
-#include "Split.h"
 
 #include <ctime>
 #include <list>
@@ -41,7 +40,6 @@ class Population
     using SubPopulation = std::vector<Individual *>;
 
     Params *params;            // Problem parameters
-    Split *split;              // Split algorithm
     LocalSearch *localSearch;  // Local search structure
 
     // Feasible subpopulation kept ordered by increasing penalized cost
@@ -115,7 +113,7 @@ public:
     }
 
     // Constructor
-    Population(Params *params, Split *split, LocalSearch *localSearch);
+    Population(Params *params, LocalSearch *localSearch);
 
     // Destructor
     ~Population();

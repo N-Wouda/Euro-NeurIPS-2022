@@ -15,9 +15,6 @@ set(paramsSources
 set(populationSources
         Population.cpp)
 
-set(splitSources
-        Split.cpp)
-
 set(resultSources
         Result.cpp)
 
@@ -28,12 +25,7 @@ add_library(hgs
         ${localSearchSources}
         ${paramsSources}
         ${populationSources}
-        ${splitSources}
         ${resultSources})
-
-# Executable
-add_executable(genvrp main.cpp)
-target_link_libraries(genvrp PRIVATE hgs)
 
 # Python bindings
 pybind11_add_module(hgspy bindings.cpp)
