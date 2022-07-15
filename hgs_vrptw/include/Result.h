@@ -2,7 +2,8 @@
 #define RESULT_H
 
 #include "Individual.h"
-#include <iosfwd>
+
+#include <vector>
 
 class Result
 {

@@ -30,9 +30,7 @@ SOFTWARE.*/
 #include "Split.h"
 
 #include <ctime>
-#include <iosfwd>
 #include <list>
-#include <string>
 #include <vector>
 
 // Class representing the population of a Genetic Algorithm with functionality
@@ -59,7 +57,7 @@ class Population
     std::list<bool> listFeasibilityTimeWarp;
 
     // Tracks the time stamps of successive best solutions
-    std::vector<std::pair<clock_t, double>> searchProgress;
+    std::vector<std::pair<std::clock_t, double>> searchProgress;
 
     // Best solution found during the current restart of the algorithm
     Individual bestSolutionRestart;

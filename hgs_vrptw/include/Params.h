@@ -25,13 +25,11 @@ SOFTWARE.*/
 #define PARAMS_H
 
 #include "Matrix.h"
-#include "xorshift128.h"
+#include "XorShift128.h"
 
-#include <cassert>
 #include <chrono>
 #include <climits>
 #include <ctime>
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -49,11 +47,14 @@ struct Client
     int demand;           // Demand
     int earliestArrival;  // Earliest arrival (when using time windows)
     int latestArrival;    // Latest arrival (when using time windows)
-    int releaseTime;  // Release time (when using time windows, route containing
-                      // this customer cannot depart before this time)
-    int polarAngle;   // Polar angle of the client around the depot (starting at
-                     // east, moving counter-clockwise), measured in degrees and
-                     // truncated for convenience
+
+    // Release time (when using time windows, route containing this customer
+    // cannot depart before this time)
+    int releaseTime;
+
+    // Polar angle of the client around the depot (starting at east, moving
+    // counter-clockwise), measured in degrees and truncated for convenience
+    int polarAngle;
 };
 
 // Class that stores all the parameters (from the command line) (in Config) and
@@ -199,54 +200,52 @@ public:
 
     Config config;    // Stores all the parameter values
     XorShift128 rng;  // Fast random number generator
-    std::chrono::system_clock::time_point
-        startWallClockTime;  // Start wall clock time of this object (should be
-                             // constructed at start of program)
+
+    // Start wall clock time of this object (should be constructed at start of
+    // program)
+    std::chrono::system_clock::time_point startWallClockTime;
     std::clock_t startCPUTime;  // Start CPU time of this object
 
-    // Adaptive penalty coefficients
-    double penaltyCapacity;  // Penalty for one unit of capacity excess (adapted
-                             // through the search)
-    double penaltyWaitTime;  // Penalty for one unit waiting time (adapted
-                             // through the search)
-    double penaltyTimeWarp;  // Penalty for one unit time warp (adapted through
-                             // the search)
+    // Penalty for one unit of capacity excess (adapted through the search)
+    double penaltyCapacity;
 
-    double proximityWeightWaitTime;  // Weight for waiting time in defining the
-                                     // neighbourhood proximities
-    double proximityWeightTimeWarp;  // Weight for time warp in defining the
-                                     // neighbourhood proximities
+    // Penalty for one unit waiting time (adapted through the search)
+    double penaltyWaitTime;
 
-    // Data of the problem instance
+    // Penalty for one unit time warp (adapted through the search)
+    double penaltyTimeWarp;
+
+    // Weight for waiting time in defining the neighbourhood proximities
+    double proximityWeightWaitTime;
+
+    // Weight for time warp in defining the neighbourhood proximities
+    double proximityWeightTimeWarp;
+
     std::string instanceName;
-    bool isDurationConstraint;  // Indicates if the problem includes duration
-                                // constraints
-    bool isExplicitDistanceMatrix;  // Indicates if the problem is with explicit
-                                    // distances (non-euclidean)
+    bool isExplicitDistanceMatrix;  // Has explicit distances (non-euclidean)
     int nbClients;                  // Number of clients (excluding the depot)
     int nbVehicles;                 // Number of vehicles
-    int durationLimit;              // Route duration limit
     int vehicleCapacity;            // Capacity limit
     int totalDemand;                // Total demand required by the clients
     int maxDemand;                  // Maximum demand of a client
     int maxDist;                    // Maximum distance between two clients
-    std::vector<Client> cli;  // Vector containing information on each client
-                              // (including the depot!)
-    Matrix timeCost;          // Distance matrix (including the depot!)
-    std::vector<std::vector<std::pair<double, int>>>
-        orderProximities;  // For each client, other clients sorted by proximity
-                           // (size nbClients + 1, but nothing stored for the
-                           // depot!)
-    std::vector<std::vector<int>>
-        correlatedVertices;  // Neighborhood restrictions: For each client, list
-                             // of nearby clients (size nbClients + 1, but
-                             // nothing stored for the depot!)
-    int circleSectorOverlapTolerance;  // Tolerance when determining circle
-                                       // sector overlap (0 - 65536)
-    int minCircleSectorSize;  // Minimum circle sector size to enforce (for
-                              // nonempty routes) (0 - 65536)
+    std::vector<Client> cli;        // Client (+depot) information
+    Matrix timeCost;                // Distance matrix (+depot)
 
-    // Initialization from a given data set
+    // For each client, other clients sorted by proximity (size nbClients + 1,
+    // but nothing stored for the depot!)
+    std::vector<std::vector<std::pair<double, int>>> orderProximities;
+
+    // Neighborhood restrictions: For each client, list of nearby clients (size
+    // nbClients + 1, but nothing stored for the depot!)
+    std::vector<std::vector<int>> correlatedVertices;
+
+    // Tolerance when determining circle sector overlap (0 - 65536)
+    int circleSectorOverlapTolerance;
+
+    // Minimum circle sector size to enforce (for nonempty routes) (0 - 65536)
+    int minCircleSectorSize;
+
     explicit Params(Config &config);
 
     Params(std::string const &instancePath,

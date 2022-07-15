@@ -26,8 +26,7 @@ SOFTWARE.*/
 
 #include "Params.h"
 
-#include <climits>
-#include <iostream>
+#include <iostream>  // needed for parse() below
 #include <string>
 
 // Class interacting with the command line

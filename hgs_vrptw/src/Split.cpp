@@ -4,6 +4,7 @@
 #include "Params.h"
 
 #include <cmath>
+#include <deque>
 #include <string>
 #include <vector>
 
@@ -30,15 +31,9 @@ void Split::generalSplit(Individual *indiv, int nbMaxVehicles)
         cliSplit[i].dx_0 = params->timeCost.get(indiv->tourChrom[i - 1], 0);
 
         // The distance to the next client is INT_MIN for the last client
-        if (i < params->nbClients)
-        {
-            cliSplit[i].dnext = params->timeCost.get(indiv->tourChrom[i - 1],
-                                                     indiv->tourChrom[i]);
-        }
-        else
-        {
-            cliSplit[i].dnext = INT_MIN;
-        }
+        auto const dist = params->timeCost.get(indiv->tourChrom[i - 1],
+                                               indiv->tourChrom[i]);
+        cliSplit[i].dnext = i < params->nbClients ? dist : INT_MIN;
 
         // Store cumulative data on the demand, service time, and distance
         sumLoad[i] = sumLoad[i - 1] + cliSplit[i].demand;
@@ -46,119 +41,50 @@ void Split::generalSplit(Individual *indiv, int nbMaxVehicles)
         sumDistance[i] = sumDistance[i - 1] + cliSplit[i - 1].dnext;
     }
 
-    // We first try the Simple Split, and then the Split with Limited Fleet if
-    // this is not successful
-    if (splitSimple(indiv) == 0)
-    {
-        splitLF(indiv);
-    }
-
     // Build up the rest of the Individual structure
+    splitSimple(indiv);
     indiv->evaluateCompleteCost();
 }
 
 int Split::splitSimple(Individual *indiv)
 {
     // Reinitialize the potential structure
-    potential[0][0] = 0;
+    std::fill(potential[0].begin(), potential[0].end(), 1.e30);
+
+    // The duration is not constrained here. This runs in O(n)
+    // Create a queue of size nbClients + 1, where the first node is 0 (the
+    // depot)
+    auto deq = std::deque<int>(params->nbClients + 1);
+    deq.push_front(0);
+
+    // Loop over all clients, excluding the depot
     for (int i = 1; i <= params->nbClients; i++)
     {
-        potential[0][i] = 1.e30;
-    }
+        // The front (which is the depot in the first loop) is the best
+        // predecessor for i
+        potential[0][i] = propagate(deq.front(), i, 0);
+        pred[0][i] = deq.front();
 
-    // MAIN SIMPLE SPLIT ALGORITHM -- Simple Split using Bellman's algorithm in
-    // topological order This code has been maintained as it is very simple and
-    // can be easily adapted to a variety of constraints, whereas the O(n) Split
-    // has a more restricted application scope
-    if (params->isDurationConstraint)
-    {
-        // If the duration is constrained, loop over all clients (excluding the
-        // depot). This runs in O(nB).
-        for (int i = 0; i < params->nbClients; i++)
+        // Check if i is not the last client
+        if (i < params->nbClients)
         {
-            // Initialize some variables
-            int load = 0;
-            int distance = 0;
-            int serviceDuration = 0;
-
-            // Loop over the next clients, as long as the total load is smaller
-            // than 1.5 * vehicleCapacity
-            for (int j = i + 1; j <= params->nbClients
-                                && load <= 1.5 * params->vehicleCapacity;
-                 j++)
+            // If i is not dominated by the last of the pile
+            if (!dominates(deq.back(), i, 0))
             {
-                // Keep track of the cumulative load and service duration
-                load += cliSplit[j].demand;
-                serviceDuration += cliSplit[j].serviceTime;
+                // Then i will be inserted, need to remove whoever is
+                // dominated by i
+                while (!deq.empty() && dominatesRight(deq.back(), i, 0))
+                    deq.pop_back();
 
-                // Keep track of the cumulative distance
-                // The start of each vehicle is from the depot to the client
-                // Otherwise use the distance from the previous client to this
-                // client
-                if (j == i + 1)
-                {
-                    distance += cliSplit[j].d0_x;
-                }
-                else
-                {
-                    distance += cliSplit[j - 1].dnext;
-                }
-
-                // Calculate the cost when this client returns to the depot,
-                // including a penalty for possible capacity violations
-                double cost
-                    = distance + cliSplit[j].dx_0
-                      + params->penaltyCapacity
-                            * std::max(load - params->vehicleCapacity, 0);
-
-                // If this leads to lower potential, update to this lower
-                // potential, and set the predecessor of j to be i
-                if (potential[0][i] + cost < potential[0][j])
-                {
-                    potential[0][j] = potential[0][i] + cost;
-                    pred[0][j] = i;
-                }
+                deq.push_back(i);
             }
-        }
-    }
-    else
-    {
-        // The duration is not constrained here. This runs in O(n)
-        // Create a queue of size nbClients + 1, where the first node is 0 (the
-        // depot)
-        Trivial_Deque queue = Trivial_Deque(params->nbClients + 1, 0);
 
-        // Loop over all clients, excluding the depot
-        for (int i = 1; i <= params->nbClients; i++)
-        {
-            // The front (which is the depot in the first loop) is the best
-            // predecessor for i
-            potential[0][i] = propagate(queue.get_front(), i, 0);
-            pred[0][i] = queue.get_front();
-
-            // Check if i is not the last client
-            if (i < params->nbClients)
+            // Check iteratively if front is dominated by the next front
+            while (deq.size() > 1
+                   && propagate(deq.front(), i + 1, 0)
+                          > propagate(deq[1], i + 1, 0) - MY_EPSILON)
             {
-                // If i is not dominated by the last of the pile
-                if (!dominates(queue.get_back(), i, 0))
-                {
-                    // Then i will be inserted, need to remove whoever is
-                    // dominated by i
-                    while (queue.size() > 0
-                           && dominatesRight(queue.get_back(), i, 0))
-                    {
-                        queue.pop_back();
-                    }
-                    queue.push_back(i);
-                }
-                // Check iteratively if front is dominated by the next front
-                while (queue.size() > 1
-                       && propagate(queue.get_front(), i + 1, 0)
-                              > propagate(queue.get_next_front(), i + 1, 0)
-                                    - MY_EPSILON)
-                {
-                    queue.pop_front();
-                }
+                deq.pop_front();
             }
         }
     }
@@ -166,19 +92,15 @@ int Split::splitSimple(Individual *indiv)
     // Check if the cost of the last client is still very large. In that case,
     // the Split algorithm did not reach the last client
     if (potential[0][params->nbClients] > 1.e29)
-    {
         throw std::string("ERROR : no Split solution has been propagated until "
                           "the last node");
-    }
 
     // Filling the routeChrom structure
     // First clear some routeChrom vectors. In practice, maxVehicles equals
     // nbVehicles. Then, this loop is not needed and the next loop starts at the
     // last index of routeChrom
     for (int k = params->nbVehicles - 1; k >= maxVehicles; k--)
-    {
         indiv->routeChrom[k].clear();
-    }
 
     // Loop over all vehicles, clear the route, get the predecessor and create a
     // new routeChrom for that route
@@ -192,132 +114,8 @@ int Split::splitSimple(Individual *indiv)
         // vehicle
         int begin = pred[0][end];
         for (int ii = begin; ii < end; ii++)
-        {
             indiv->routeChrom[k].push_back(indiv->tourChrom[ii]);
-        }
-        end = begin;
-    }
 
-    // Return OK in case the Split algorithm reached the beginning of the routes
-    return (end == 0);
-}
-
-// Split for problems with limited fleet
-int Split::splitLF(Individual *indiv)
-{
-    // Initialize the potential structures
-    potential[0][0] = 0;
-    for (int k = 0; k <= maxVehicles; k++)
-        for (int i = 1; i <= params->nbClients; i++)
-            potential[k][i] = 1.e30;
-
-    // MAIN ALGORITHM -- Simple Split using Bellman's algorithm in topological
-    // order This code has been maintained as it is very simple and can be
-    // easily adapted to a variety of constraints, whereas the O(n) Split has a
-    // more restricted application scope
-    if (params->isDurationConstraint)
-    {
-        for (int k = 0; k < maxVehicles; k++)
-        {
-            for (int i = k; i < params->nbClients && potential[k][i] < 1.e29;
-                 i++)
-            {
-                int load = 0;
-                int serviceDuration = 0;
-                int distance = 0;
-                for (int j = i + 1; j <= params->nbClients
-                                    && load <= 1.5 * params->vehicleCapacity;
-                     j++)  // Setting a maximum limit on load infeasibility to
-                           // accelerate the algorithm
-                {
-                    load += cliSplit[j].demand;
-                    serviceDuration += cliSplit[j].serviceTime;
-                    if (j == i + 1)
-                        distance += cliSplit[j].d0_x;
-                    else
-                        distance += cliSplit[j - 1].dnext;
-                    double cost
-                        = distance + cliSplit[j].dx_0
-                          + params->penaltyCapacity
-                                * std::max(load - params->vehicleCapacity, 0);
-                    if (potential[k][i] + cost < potential[k + 1][j])
-                    {
-                        potential[k + 1][j] = potential[k][i] + cost;
-                        pred[k + 1][j] = i;
-                    }
-                }
-            }
-        }
-    }
-    else  // MAIN ALGORITHM -- Without duration constraints in O(n), from
-          // "Vidal, T. (2016). Split algorithm in O(n) for the capacitated
-          // vehicle routing problem. C&OR"
-    {
-        Trivial_Deque queue = Trivial_Deque(params->nbClients + 1, 0);
-        for (int k = 0; k < maxVehicles; k++)
-        {
-            // in the Split problem there is always one feasible solution with k
-            // routes that reaches the index k in the tour.
-            queue.reset(k);
-
-            // The range of potentials < 1.29 is always an interval.
-            // The size of the queue will stay >= 1 until we reach the end of
-            // this interval.
-            for (int i = k + 1; i <= params->nbClients && queue.size() > 0; i++)
-            {
-                // The front is the best predecessor for i
-                potential[k + 1][i] = propagate(queue.get_front(), i, k);
-                pred[k + 1][i] = queue.get_front();
-
-                if (i < params->nbClients)
-                {
-                    // If i is not dominated by the last of the pile
-                    if (!dominates(queue.get_back(), i, k))
-                    {
-                        // then i will be inserted, need to remove whoever he
-                        // dominates
-                        while (queue.size() > 0
-                               && dominatesRight(queue.get_back(), i, k))
-                            queue.pop_back();
-                        queue.push_back(i);
-                    }
-
-                    // Check iteratively if front is dominated by the next front
-                    while (queue.size() > 1
-                           && propagate(queue.get_front(), i + 1, k)
-                                  > propagate(queue.get_next_front(), i + 1, k)
-                                        - MY_EPSILON)
-                        queue.pop_front();
-                }
-            }
-        }
-    }
-
-    if (potential[maxVehicles][params->nbClients] > 1.e29)
-        throw std::string("ERROR : no Split solution has been propagated until "
-                          "the last node");
-
-    // It could be cheaper to use a smaller number of vehicles
-    double minCost = potential[maxVehicles][params->nbClients];
-    int nbRoutes = maxVehicles;
-    for (int k = 1; k < maxVehicles; k++)
-        if (potential[k][params->nbClients] < minCost)
-        {
-            minCost = potential[k][params->nbClients];
-            nbRoutes = k;
-        }
-
-    // Filling the routeChrom structure
-    for (int k = params->nbVehicles - 1; k >= nbRoutes; k--)
-        indiv->routeChrom[k].clear();
-
-    int end = params->nbClients;
-    for (int k = nbRoutes - 1; k >= 0; k--)
-    {
-        indiv->routeChrom[k].clear();
-        int begin = pred[k + 1][end];
-        for (int ii = begin; ii < end; ii++)
-            indiv->routeChrom[k].push_back(indiv->tourChrom[ii]);
         end = begin;
     }
 

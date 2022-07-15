@@ -15,9 +15,9 @@ PYBIND11_MODULE(hgspy, m)
 {
     py::class_<Individual>(m, "Individual")
         .def("get_routes", &Individual::getRoutes)
-        .def_property_readonly("cost",
-                               [](Individual &indiv)
-                               { return indiv.costs.penalizedCost; });
+        .def_property_readonly("cost", [](Individual &indiv) {
+            return indiv.costs.penalizedCost;
+        });
 
     py::class_<LocalSearch>(m, "LocalSearch")
         .def(py::init<Params *>(), py::arg("params"));

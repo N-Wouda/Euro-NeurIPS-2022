@@ -1,9 +1,8 @@
 #include "Params.h"
 
 #include "CircleSector.h"
-#include "CommandLine.h"
 #include "Matrix.h"
-#include "xorshift128.h"
+#include "XorShift128.h"
 
 #include <algorithm>
 #include <cmath>
@@ -146,21 +145,14 @@ void Params::SetCorrelatedVertices()
 
             // For symmetric problems, set the other entry to the same value
             if (config.useSymmetricCorrelatedVertices)
-            {
                 setCorrelatedVertices[orderProximity[j].second].insert(i);
-            }
         }
     }
 
     // Now, fill the vector of correlated vertices, using setCorrelatedVertices
     for (int i = 1; i <= nbClients; i++)
-    {
         for (int x : setCorrelatedVertices[i])
-        {
-            // Add x at the end of the vector
             correlatedVertices[i].push_back(x);
-        }
-    }
 }
 
 void Params::setup()
@@ -185,9 +177,7 @@ void Params::setup()
     nbClients = 0;
     totalDemand = 0;
     maxDemand = 0;
-    durationLimit = INT_MAX;
     vehicleCapacity = INT_MAX;
-    isDurationConstraint = false;
 
     // Read INPUT dataset
     std::ifstream inputFile(config.pathInstance);
@@ -315,11 +305,6 @@ void Params::setup()
                 else if (content == "VEHICLES" || content == "SALESMAN")
                 {
                     inputFile >> content2 >> nbVehicles;
-                }
-                else if (content == "DISTANCE")
-                {
-                    inputFile >> content2 >> durationLimit;
-                    isDurationConstraint = true;
                 }
                 // Read the data on the service time (used when the service time
                 // is constant for all clients)

@@ -26,7 +26,7 @@ SOFTWARE.*/
 #include "Individual.h"
 #include "Params.h"
 
-#include <utility>
+#include <cassert>
 #include <vector>
 
 // Structure representing a client used in the Split algorithm
@@ -42,90 +42,41 @@ struct ClientSplit
     ClientSplit() : demand(0), serviceTime(0), d0_x(0), dx_0(0), dnext(0) {}
 };
 
-// Simple Deque which is used for all Linear Split algorithms
-struct Trivial_Deque
-{
-    std::vector<int>
-        myDeque;     // Vector structure to keep the elements of the queue
-    int indexFront;  // Index of the front element
-    int indexBack;   // Index of the back element
-
-    // Removes the front element of the queue
-    inline void pop_front() { indexFront++; }
-
-    // Removes the back element of the queue D
-    inline void pop_back() { indexBack--; }
-
-    // Appends a new element to the back of the queue D
-    inline void push_back(int i)
-    {
-        indexBack++;
-        myDeque[indexBack] = i;
-    }
-
-    // Returns the front element of the queue
-    inline int get_front() { return myDeque[indexFront]; }
-
-    // Returns the second-front element of the queue
-    inline int get_next_front() { return myDeque[indexFront + 1]; }
-
-    // Returns the back element of the queue
-    inline int get_back() { return myDeque[indexBack]; }
-
-    // Resets the queue
-    void reset(int firstNode)
-    {
-        myDeque[0] = firstNode;
-        indexBack = 0;
-        indexFront = 0;
-    }
-
-    // Returns the size of the queue
-    [[nodiscard]] inline int size() const { return indexBack - indexFront + 1; }
-
-    // Constructor, to creata a queue with place for nbElements elements, where
-    // firstNode is the first node
-    Trivial_Deque(int nbElements, int firstNode)
-    {
-        myDeque = std::vector<int>(nbElements);
-        myDeque[0] = firstNode;
-        indexBack = 0;
-        indexFront = 0;
-    }
-};
-
 class Split
 {
-private:
-    Params *params;   // Problem parameters
-    int maxVehicles;  // Maximum number of vehicles (not lower than the trivial
-                      // (LP) Bin Packing Bound)
+    Params *params;
+    int maxVehicles;
 
-    // Auxiliary data structures to run the Linear Split algorithm (all of size
-    // nbClients + 1)
-    std::vector<ClientSplit>
-        cliSplit;  // Vector of all clientSplits (size nbClients + 1, but
-                   // nothing stored for the depot!)
-    std::vector<std::vector<double>>
-        potential;  // potential[0][t] is the costs of a shortest path from 0 to
-                    // t (so we want to minimize the potential)
+    // Used by the linear split algorithm (size nbClients + 1); vector of all
+    // client splits.
+    std::vector<ClientSplit> cliSplit;
+
+    // potential[0][t] is the shortest path cost from 0 to t;  goal is to
+    // minimise the potential
+    std::vector<std::vector<double>> potential;
+
     // The next variable pred stores the client starting the route of a given
     // client. So pred[k] is the client starting the route where k is also in.
-    std::vector<std::vector<int>>
-        pred;  // Indice of the predecessor in an optimal path
-    std::vector<int>
-        sumDistance;  // Cumulative distance. sumDistance[i] for i > 1 contains
-                      // the sum of distances : sum_{k=1}^{i-1} d_{k,k+1}
-    std::vector<int> sumLoad;  // Cumulative demand. sumLoad[i] for i >= 1
-                               // contains the sum of loads : sum_{k=1}^{i} q_k
-    std::vector<int>
-        sumService;  // Cumulative service time. sumService[i] for i >= 1
-                     // contains the sum of service time : sum_{k=1}^{i} s_k
+    // Index of the predecessor in an optimal path
+    std::vector<std::vector<int>> pred;
+
+    // Cumulative distance. sumDistance[i] for i > 1 contains the sum of
+    // distances : sum_{k=1}^{i-1} d_{k,k+1}
+    std::vector<int> sumDistance;
+
+    // Cumulative demand. sumLoad[i] for i >= 1 contains the sum of loads :
+    // sum_{k=1}^{i} q_k
+    std::vector<int> sumLoad;
+
+    // Cumulative service time. sumService[i] for i >= 1 contains the sum of
+    // service time : sum_{k=1}^{i} s_k
+    std::vector<int> sumService;
 
     // To be called with i < j only
     // Computes the cost of propagating the label i until j
     inline double propagate(int i, int j, int k)
     {
+        assert(i < j);
         return potential[k][i] + sumDistance[j] - sumDistance[i + 1]
                + cliSplit[i + 1].d0_x + cliSplit[j].dx_0
                + params->penaltyCapacity
@@ -137,6 +88,7 @@ private:
     // We assume that i < j
     inline bool dominates(int i, int j, int k)
     {
+        assert(i < j);
         return potential[k][j] + cliSplit[j + 1].d0_x
                > potential[k][i] + cliSplit[i + 1].d0_x + sumDistance[j + 1]
                      - sumDistance[i + 1]
@@ -147,6 +99,7 @@ private:
     // We assume that i < j
     inline bool dominatesRight(int i, int j, int k)
     {
+        assert(i < j);
         return potential[k][j] + cliSplit[j + 1].d0_x
                < potential[k][i] + cliSplit[i + 1].d0_x + sumDistance[j + 1]
                      - sumDistance[i + 1] + MY_EPSILON;
@@ -155,13 +108,7 @@ private:
     // Split for unlimited fleet
     int splitSimple(Individual *indiv);
 
-    // Split for limited fleet
-    int splitLF(Individual *indiv);
-
 public:
-    // General Split function (tests the unlimited fleet, and only if it does
-    // not produce a feasible solution, runs the Split algorithm for limited
-    // fleet)
     void generalSplit(Individual *indiv, int nbMaxVehicles);
 
     // Constructor

@@ -379,16 +379,18 @@ Individual *Genetic::crossoverSREX(Parents parents)
         clientsInSelectedA.begin(),
         clientsInSelectedA.end(),
         std::inserter(clientsInSelectedANotB, clientsInSelectedANotB.end()),
-        [&clientsInSelectedB](int c)
-        { return clientsInSelectedB.find(c) == clientsInSelectedB.end(); });
+        [&clientsInSelectedB](int c) {
+            return clientsInSelectedB.find(c) == clientsInSelectedB.end();
+        });
 
     std::unordered_set<int> clientsInSelectedBNotA;
     std::copy_if(
         clientsInSelectedB.begin(),
         clientsInSelectedB.end(),
         std::inserter(clientsInSelectedBNotA, clientsInSelectedBNotA.end()),
-        [&clientsInSelectedA](int c)
-        { return clientsInSelectedA.find(c) == clientsInSelectedA.end(); });
+        [&clientsInSelectedA](int c) {
+            return clientsInSelectedA.find(c) == clientsInSelectedA.end();
+        });
 
     // Replace selected routes from parent A with routes from parent B
     for (int r = 0; r < nOfMovedRoutes; r++)
@@ -563,9 +565,9 @@ Genetic::Genetic(Params *params,
 {
     // After initializing the parameters of the Genetic object, also generate
     // new individuals in the array candidateOffsprings
-    std::generate(candidateOffsprings.begin(),
-                  candidateOffsprings.end(),
-                  [&] { return new Individual(params); });
+    std::generate(candidateOffsprings.begin(), candidateOffsprings.end(), [&] {
+        return new Individual(params);
+    });
 }
 
 Genetic::~Genetic()
