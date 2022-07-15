@@ -23,7 +23,7 @@ def get_hgspy_module(where: str = 'release/lib/hgspy*.so'):
 
 try:
     from hgspy import Genetic, Params, Split, Population, LocalSearch
-except ImportError:
+except (ImportError, ModuleNotFoundError):
     get_hgspy_module()
     from hgspy import Genetic, Params, Split, Population, LocalSearch  # noqa
 

@@ -38,10 +38,9 @@ struct CostSol
     int nbRoutes = 0;           // Number of routes
     int distance = 0;           // Total Distance
     int capacityExcess = 0;     // Total excess load over all routes
-    int waitTime = 0;  // Total wait time (time to wait to meet earliest
-                       // possible arrival) over all routes
-    int timeWarp = 0;  // Total time warp (going back in time to meet latest
-                       // possible arrival) over all routes
+    int waitTime = 0;           // All route wait time of early arrivals
+    int timeWarp = 0;           // All route time warp (going back in time to
+                                // meet latest possible arrival)
 };
 
 // Structure representing a client when making routes
@@ -90,12 +89,26 @@ public:
     // based on the value of the first pair)
     std::multiset<std::pair<double, Individual *>> indivsPerProximity;
 
+    /**
+     * Returns this individual's routing decisions.
+     */
     [[nodiscard]] std::vector<Clients> const &getRoutes() const
     {
         return routeChrom;
     }
 
+    /**
+     * Returns this individual's giant tour chromosome.
+     */
     [[nodiscard]] Clients const &getTour() const { return tourChrom; }
+
+    /**
+     * Returns true when this solution is feasible; false otherwise.
+     */
+    [[nodiscard]] inline bool isFeasible() const
+    {
+        return costs.capacityExcess == 0 && costs.timeWarp == 0;
+    }
 
     // Measuring cost of a solution from the information of routeChrom
     void evaluateCompleteCost();
@@ -109,8 +122,7 @@ public:
 
     // Returns the average distance of this individual with the nbClosest
     // individuals
-    [[nodiscard]] double
-    averageBrokenPairsDistanceClosest(size_t nbClosest) const;
+    [[nodiscard]] double avgBrokenPairsDistanceClosest(size_t nbClosest) const;
 
     // Exports a solution in CVRPLib format (adds a final line with the
     // computational time)
@@ -118,11 +130,6 @@ public:
 
     // Makes routes from the tour chromosome (using the linear split algorithm)
     void makeRoutes();
-
-    /**
-     * Returns true when this solution is feasible; false otherwise.
-     */
-    bool isFeasible() const;
 
     bool operator==(Individual const &other) const;
 

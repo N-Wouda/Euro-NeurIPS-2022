@@ -254,6 +254,7 @@ void Individual::evaluateCompleteCost()
             costs.waitTime += waitTime;
             costs.timeWarp += timeWarp;
             costs.nbRoutes++;
+
             if (load > params->vehicleCapacity)
             {
                 costs.capacityExcess += load - params->vehicleCapacity;
@@ -299,7 +300,7 @@ double Individual::brokenPairsDistance(Individual *other)
     return static_cast<double>(diffs) / params->nbClients;
 }
 
-double Individual::averageBrokenPairsDistanceClosest(size_t nbClosest) const
+double Individual::avgBrokenPairsDistanceClosest(size_t nbClosest) const
 {
     double result = 0;
     size_t maxSize = std::min(nbClosest, indivsPerProximity.size());
@@ -335,11 +336,6 @@ void Individual::exportCVRPLibFormat(std::string const &path) const
 
     out << "Cost " << costs.penalizedCost << '\n';
     out << "Time " << params->getElapsedTime() << '\n';
-}
-
-bool Individual::isFeasible() const
-{
-    return costs.capacityExcess == 0 && costs.timeWarp == 0;
 }
 
 bool Individual::operator==(Individual const &other) const

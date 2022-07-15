@@ -14,6 +14,7 @@ PYBIND11_MODULE(hgspy, m)
 {
     py::class_<Individual>(m, "Individual")
         .def("get_routes", &Individual::getRoutes)
+        .def("get_tour", &Individual::getTour)
         .def_property_readonly("cost", [](Individual &indiv) {
             return indiv.costs.penalizedCost;
         });

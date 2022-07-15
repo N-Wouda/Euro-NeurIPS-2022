@@ -209,81 +209,66 @@ bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
 
 void Population::updateBiasedFitnesses(SubPopulation &pop)
 {
-    // Ranking the individuals based on their diversity contribution (decreasing
-    // order of averageBrokenPairsDistanceClosest)
-    std::vector<std::pair<double, size_t>> ranking;
-    for (size_t i = 0; i < pop.size(); i++)
-    {
-        ranking.emplace_back(
-            -pop[i]->averageBrokenPairsDistanceClosest(params->config.nbClose),
-            i);
-    }
-    std::sort(ranking.begin(), ranking.end());
-
     // Updating the biased fitness values. If there is only one individual, its
     // biasedFitness is 0
     if (pop.size() == 1)
     {
         pop[0]->biasedFitness = 0;
+        return;
     }
-    else
-    {
-        // Loop over all individuals
-        for (int i = 0; i < static_cast<int>(pop.size()); i++)
-        {
-            // Ranking the individuals based on the diversity rank and diversity
-            // measure from 0 to 1
-            double divRank
-                = static_cast<double>(i) / static_cast<double>(pop.size() - 1);
-            double fitRank
-                = ranking[i].second / static_cast<double>(pop.size() - 1);
 
-            // Elite individuals cannot be smaller than population size
-            if (pop.size() <= params->config.nbElite)
-            {
-                pop[ranking[i].second]->biasedFitness = fitRank;
-            }
-            else if (params->config.diversityWeight > 0)
-            {
-                pop[ranking[i].second]->biasedFitness
-                    = fitRank + params->config.diversityWeight * divRank;
-            }
-            else
-            {
-                pop[ranking[i].second]->biasedFitness
-                    = fitRank
-                      + (1.0
-                         - static_cast<double>(params->config.nbElite)
-                               / static_cast<double>(pop.size()))
-                            * divRank;
-            }
-        }
+    // Ranking the individuals based on their diversity contribution (decreasing
+    // order of avgBrokenPairsDistanceClosest)
+    std::vector<std::pair<double, size_t>> ranking;
+    for (size_t idx = 0; idx != pop.size(); idx++)
+    {
+        auto const dist
+            = pop[idx]->avgBrokenPairsDistanceClosest(params->config.nbClose);
+        ranking.emplace_back(-dist, idx);
+    }
+
+    std::sort(ranking.begin(), ranking.end());
+
+    auto const popSize = static_cast<double>(pop.size());
+
+    for (size_t idx = 0; idx != pop.size(); idx++)
+    {
+        // Ranking the individuals based on the diversity rank and diversity
+        // measure from 0 to 1
+        double divRank = idx / (popSize - 1);
+        double fitRank = ranking[idx].second / (popSize - 1);
+
+        // Elite individuals cannot be smaller than population size
+        if (pop.size() <= params->config.nbElite)
+            pop[ranking[idx].second]->biasedFitness = fitRank;
+        else if (params->config.diversityWeight > 0)
+            pop[ranking[idx].second]->biasedFitness
+                = fitRank + params->config.diversityWeight * divRank;
+        else
+            pop[ranking[idx].second]->biasedFitness
+                = fitRank + (1.0 - params->config.nbElite / popSize) * divRank;
     }
 }
 
 void Population::removeWorstBiasedFitness(SubPopulation &pop)
 {
-    // Update the fitness values
     updateBiasedFitnesses(pop);
 
     // Throw an error of the population has at most one individual
     if (pop.size() <= 1)
-    {
-        throw std::string(
-            "Eliminating the best individual: this should not occur in HGS");
-    }
+        throw std::string("Eliminating the best individual");
 
     Individual *worstIndividual = nullptr;
     int worstIndividualPosition = -1;
     bool isWorstIndividualClone = false;
     double worstIndividualBiasedFitness = -1.e30;
-    // Loop over all individuals and save the wordt individual
+
+    // Loop over all individuals and save the worst individual
     for (int i = 1; i < static_cast<int>(pop.size()); i++)
     {
-        // An averageBrokenPairsDistanceClosest equal to 0 indicates that a
+        // An avgBrokenPairsDistanceClosest equal to 0 indicates that a
         // clone exists
-        bool isClone
-            = (pop[i]->averageBrokenPairsDistanceClosest(1) < MY_EPSILON);
+        bool isClone = (pop[i]->avgBrokenPairsDistanceClosest(1) < MY_EPSILON);
         if ((isClone && !isWorstIndividualClone)
             || (isClone == isWorstIndividualClone
                 && pop[i]->biasedFitness > worstIndividualBiasedFitness))
@@ -295,8 +280,11 @@ void Population::removeWorstBiasedFitness(SubPopulation &pop)
         }
     }
 
+    // TODO this could be very slow
+
     // Remove the worst individual from the population
     pop.erase(pop.begin() + worstIndividualPosition);
+
     // Cleaning its distances from the other individuals in the population
     for (Individual *myIndividual2 : pop)
         myIndividual2->removeProximity(worstIndividual);
