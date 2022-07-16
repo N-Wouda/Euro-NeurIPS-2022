@@ -32,6 +32,7 @@ SOFTWARE.*/
 #include "XorShift128.h"
 
 #include <array>
+#include <chrono>
 #include <unordered_set>
 
 // Class to run the genetic algorithm, which incorporates functionality of
@@ -39,6 +40,7 @@ SOFTWARE.*/
 class Genetic
 {
     using Parents = std::pair<Individual const *, Individual const *>;
+    using timePoint = std::chrono::system_clock::time_point;
 
     // The number of new potential offspring created from one individual
     static const int numberOfCandidateOffsprings = 4;
@@ -78,9 +80,14 @@ class Genetic
     Individual *bestOfSREXAndOXCrossovers(Parents parents);
 
 public:
-    // Running the genetic algorithm until maxIterNonProd consecutive iterations
-    // without improvement or a time limit (in seconds) is reached
-    Result const run();
+    /**
+     * Runs the genetic algorithm until just after the passed-in time point.
+     *
+     * @param timePoint Time point in the future.
+     * @return          Result object contained the best solution, and current
+     *                  population composition.
+     */
+    Result const runUntil(timePoint const &timePoint);
 
     // Constructor
     Genetic(Params &params,

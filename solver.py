@@ -2,9 +2,8 @@ import argparse
 import glob
 import importlib.machinery
 import importlib.util
-import os
 import sys
-import uuid
+from datetime import datetime, timedelta
 
 import numpy as np
 
@@ -52,6 +51,7 @@ def solve_static_vrptw(instance, time_limit=3600, seed=1):
     # - 'time_windows': np.array of [l, u] time windows per client (incl. depot)
     # - 'service_times': np.array of service times at each client (incl. depot)
     # - 'duration_matrix': distance matrix between clients (incl. depot)
+    start = datetime.now()
 
     # Prevent passing empty instances to the static solver, e.g. when
     # strategy decides to not dispatch any requests for the current epoch
@@ -68,10 +68,7 @@ def solve_static_vrptw(instance, time_limit=3600, seed=1):
     # TODO all this works, but it is not pretty. Clean this up in tandem with
     #  the C++ implementation.
 
-    config = Config(timeLimit=max(time_limit - 1, 1),
-                    seed=seed,
-                    nbVeh=-1,
-                    useWallClockTime=True)
+    config = Config(seed=seed, nbVeh=-1)
 
     coords = [(x, y) for x, y in instance['coords'].tolist()]
     demands = instance['demands'].tolist()
@@ -88,7 +85,7 @@ def solve_static_vrptw(instance, time_limit=3600, seed=1):
     pop = Population(params, rng, ls)
 
     algo = Genetic(params, rng, pop, ls)
-    res = algo.run()
+    res = algo.run_until(start + timedelta(seconds=time_limit))
 
     best = res.get_best_found()
     routes = [route for route in best.get_routes() if route]

@@ -11,10 +11,9 @@ struct Config
 {
     // TODO make fields const
 
-    int seed = 0;                   // Random seed
-    int nbIter = 20'000;            // iters without improvement
-    int timeLimit = INT_MAX;        // time limit in seconds
-    bool useWallClockTime = false;  // wall clock time rather than CPU time?
+    int seed = 0;             // Random seed
+    int nbIter = 20'000;      // iters without improvement
+    int timeLimit = INT_MAX;  // time limit in seconds
 
     double fractionGeneratedNearest = 0.05;   // frac by nearest-first
     double fractionGeneratedFurthest = 0.05;  // frac by furthest-first
@@ -98,14 +97,9 @@ struct Config
     // Whether correlation matrix is symmetric
     bool useSymmetricCorrelatedVertices = false;
 
-    // Whether to repeat the algorithm when max nr of iter is reached, but
-    // time limit is not
-    bool doRepeatUntilTimeLimit = true;
-
     Config(int nbIter = 20'000,
            int timeLimit = INT_MAX,
            int seed = 0,
-           bool useWallClockTime = false,
            double fractionGeneratedNearest = 0.05,
            double fractionGeneratedFurthest = 0.05,
            double fractionGeneratedSweep = 0.05,
@@ -136,12 +130,10 @@ struct Config
            bool skipSwapStarDist = false,
            int circleSectorOverlapToleranceDegrees = 0,
            int minCircleSectorSizeDegrees = 15,
-           bool useSymmetricCorrelatedVertices = false,
-           bool doRepeatUntilTimeLimit = true)
+           bool useSymmetricCorrelatedVertices = false)
         : seed(seed),
           nbIter(nbIter),
           timeLimit(timeLimit),
-          useWallClockTime(useWallClockTime),
           fractionGeneratedNearest(fractionGeneratedNearest),
           fractionGeneratedFurthest(fractionGeneratedFurthest),
           fractionGeneratedSweep(fractionGeneratedSweep),
@@ -175,8 +167,7 @@ struct Config
           circleSectorOverlapToleranceDegrees(
               circleSectorOverlapToleranceDegrees),
           minCircleSectorSizeDegrees(minCircleSectorSizeDegrees),
-          useSymmetricCorrelatedVertices(useSymmetricCorrelatedVertices),
-          doRepeatUntilTimeLimit(doRepeatUntilTimeLimit)
+          useSymmetricCorrelatedVertices(useSymmetricCorrelatedVertices)
     {
     }
 };

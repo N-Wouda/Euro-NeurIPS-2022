@@ -15,8 +15,6 @@
 Params::Params(Config &config, std::string const &instPath) : config(config)
 {
     nbVehicles = config.nbVeh;
-    startWallClockTime = std::chrono::system_clock::now();
-    startCPUTime = std::clock();
 
     // Convert the circle sector parameters from degrees ([0,359]) to [0,65535]
     // to allow for faster calculations
@@ -474,9 +472,6 @@ Params::Params(Config &config,
     proximityWeightWaitTime = 0.2;
     proximityWeightTimeWarp = 1;
 
-    startWallClockTime = std::chrono::system_clock::now();
-    startCPUTime = std::clock();
-
     // Convert the circle sector parameters from degrees ([0,359]) to [0,65535]
     // to allow for faster calculations
     circleSectorOverlapTolerance = static_cast<int>(
@@ -506,23 +501,6 @@ Params::Params(Config &config,
     }
 
     SetCorrelatedVertices();
-}
-
-double Params::getElapsedTime() const
-{
-    if (config.useWallClockTime)
-    {
-        auto now = std::chrono::system_clock::now();
-        std::chrono::duration<double> duration = now - startWallClockTime;
-        return duration.count();
-    }
-
-    return static_cast<double>(std::clock() - startCPUTime) / CLOCKS_PER_SEC;
-}
-
-bool Params::isTimeLimitExceeded() const
-{
-    return getElapsedTime() >= config.timeLimit;
 }
 
 void Params::SetCorrelatedVertices()

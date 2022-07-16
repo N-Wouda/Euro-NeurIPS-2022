@@ -7,6 +7,7 @@
 #include "Result.h"
 #include "XorShift128.h"
 
+#include <pybind11/chrono.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -33,7 +34,6 @@ PYBIND11_MODULE(hgspy, m)
         .def(py::init<int,
                       int,
                       int,
-                      bool,
                       double,
                       double,
                       double,
@@ -64,12 +64,10 @@ PYBIND11_MODULE(hgspy, m)
                       bool,
                       int,
                       int,
-                      bool,
                       bool>(),
              py::arg("nbIter") = 20'000,
              py::arg("timeLimit") = INT_MAX,
              py::arg("seed") = 0,
-             py::arg("useWallClockTime") = false,
              py::arg("fractionGeneratedNearest") = 0.05,
              py::arg("fractionGeneratedFurthest") = 0.05,
              py::arg("fractionGeneratedSweep") = 0.05,
@@ -100,8 +98,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("skipSwapStarDist") = false,
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
              py::arg("minCircleSectorSizeDegrees") = 15,
-             py::arg("useSymmetricCorrelatedVertices") = false,
-             py::arg("doRepeatUntilTimeLimit") = true);
+             py::arg("useSymmetricCorrelatedVertices") = false);
 
     py::class_<Params>(m, "Params")
         .def(py::init<Config &,
@@ -117,8 +114,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("vehicle_cap"),
              py::arg("time_windows"),
              py::arg("service_durations"),
-             py::arg("distance_matrix"))
-        .def("get_elapsed_time", &Params::getElapsedTime);
+             py::arg("distance_matrix"));
 
     py::class_<Population>(m, "Population")
         .def(py::init<Params &, XorShift128 &, LocalSearch &>(),
@@ -136,5 +132,5 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("rng"),
              py::arg("population"),
              py::arg("local_search"))
-        .def("run", &Genetic::run);
+        .def("run_until", &Genetic::runUntil, py::arg("time_point"));
 }

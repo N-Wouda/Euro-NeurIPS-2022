@@ -5,11 +5,15 @@
 #include "Population.h"
 #include "XorShift128.h"
 
+#include <chrono>
 #include <iostream>
 
 int main(int argc, char *argv[])
 try
 {
+    using clock = std::chrono::system_clock;
+    auto start = clock::now();
+
     CommandLine args(argc, argv);
     auto config = args.parse();
     auto rng = XorShift128(config.seed);
@@ -19,12 +23,15 @@ try
     Population pop(params, rng, ls);
 
     Genetic solver(params, rng, pop, ls);
-    auto const res = solver.run();
+
+    auto until = start + std::chrono::seconds(config.timeLimit);
+    auto const res = solver.runUntil(until);
 
     if (res.getBestFound() != nullptr)
     {
+        std::chrono::duration<double> const timeDelta = clock::now() - start;
         auto const *bestSol = res.getBestFound();
-        bestSol->exportCVRPLibFormat(args.solPath());
+        bestSol->exportCVRPLibFormat(args.solPath(), timeDelta.count());
     }
 }
 catch (std::exception const &e)

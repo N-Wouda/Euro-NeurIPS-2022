@@ -117,10 +117,6 @@ void Population::generatePopulation()
     // Generate some individuals using a RANDOM strategy
     for (int i = 0; i < nofRandomIndividualsToGenerate; i++)
     {
-        if (params.isTimeLimitExceeded())
-            throw std::runtime_error(
-                "Time limit exceeded generating population.");
-
         Individual randomIndiv(&params, &rng);
         doLocalSearchAndAddIndividual(&randomIndiv);
     }
@@ -175,16 +171,13 @@ bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
             < bestSolutionOverall.costs.penalizedCost - MY_EPSILON))
     {
         bestSolutionOverall = *indiv;
-        searchProgress.emplace_back(params.getElapsedTime(),
-                                    indiv->costs.penalizedCost);
-
         return true;
     }
 
     return false;
 }
 
-void Population::updateBiasedFitnesses(SubPopulation &pop)
+void Population::updateBiasedFitnesses(SubPopulation &pop) const
 {
     // Updating the biased fitness values. If there is only one individual, its
     // biasedFitness is 0

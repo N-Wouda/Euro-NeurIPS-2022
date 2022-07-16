@@ -114,7 +114,7 @@ public:
 
     // Exports a solution in CVRPLib format (adds a final line with the
     // computational time)
-    void exportCVRPLibFormat(std::string const &path) const;
+    void exportCVRPLibFormat(std::string const &path, double time) const;
 
     // Makes routes from the tour chromosome (using the linear split algorithm)
     void makeRoutes();

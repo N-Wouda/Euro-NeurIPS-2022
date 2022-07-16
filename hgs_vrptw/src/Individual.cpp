@@ -299,7 +299,7 @@ double Individual::avgBrokenPairsDistanceClosest(size_t nbClosest) const
     return result / static_cast<double>(maxSize);
 }
 
-void Individual::exportCVRPLibFormat(std::string const &path) const
+void Individual::exportCVRPLibFormat(std::string const &path, double time) const
 {
     std::ofstream out(path);
 
@@ -315,7 +315,7 @@ void Individual::exportCVRPLibFormat(std::string const &path) const
     }
 
     out << "Cost " << costs.penalizedCost << '\n';
-    out << "Time " << params->getElapsedTime() << '\n';
+    out << "Time " << time << '\n';
 }
 
 bool Individual::operator==(Individual const &other) const

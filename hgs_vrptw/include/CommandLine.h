@@ -69,8 +69,6 @@ public:
         {
             if (std::string(argv[i]) == "-t")
                 config.timeLimit = atoi(argv[i + 1]);
-            else if (std::string(argv[i]) == "-useWallClockTime")
-                config.useWallClockTime = atoi(argv[i + 1]) != 0;
             else if (std::string(argv[i]) == "-it")
                 config.nbIter = atoi(argv[i + 1]);
             else if (std::string(argv[i]) == "-seed")
@@ -101,8 +99,6 @@ public:
                 config.penaltyBooster = atof(argv[i + 1]);
             else if (std::string(argv[i]) == "-useSymmetricCorrelatedVertices")
                 config.useSymmetricCorrelatedVertices = atoi(argv[i + 1]) != 0;
-            else if (std::string(argv[i]) == "-doRepeatUntilTimeLimit")
-                config.doRepeatUntilTimeLimit = atoi(argv[i + 1]) != 0;
             else if (std::string(argv[i]) == "-minimumPopulationSize")
                 config.minimumPopulationSize
                     = static_cast<size_t>(atoi(argv[i + 1]));

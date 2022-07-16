@@ -28,10 +28,7 @@ SOFTWARE.*/
 #include "Matrix.h"
 #include "XorShift128.h"
 
-#include <chrono>
-#include <climits>
-#include <ctime>
-#include <string>
+#include <iosfwd>
 #include <vector>
 
 #define MY_EPSILON 0.00001  // Used to avoid numerical instabilities
@@ -64,10 +61,8 @@ class Params
     // TODO get rid of this object; turn it into ProblemData (and then have
     //  Config as a separate object)
 
-    // Start wall clock time of this object (should be constructed at start of
-    // program)
-    std::chrono::system_clock::time_point startWallClockTime;
-    std::clock_t startCPUTime;  // Start CPU time of this object
+    double proximityWeightWaitTime;
+    double proximityWeightTimeWarp;
 
 public:
     // TODO make members private
@@ -82,12 +77,6 @@ public:
 
     // Penalty for one unit time warp (adapted through the search)
     double penaltyTimeWarp;
-
-    // Weight for waiting time in defining the neighbourhood proximities
-    double proximityWeightWaitTime;
-
-    // Weight for time warp in defining the neighbourhood proximities
-    double proximityWeightTimeWarp;
 
     int nbClients;        // Number of clients (excluding the depot)
     int nbVehicles;       // Number of vehicles
@@ -135,12 +124,6 @@ public:
            std::vector<std::pair<int, int>> const &timeWindows,
            std::vector<int> const &servDurs,
            std::vector<std::vector<int>> const &dist);
-
-    // Get time elapsed since start of program
-    [[nodiscard]] double getElapsedTime() const;
-
-    // Whether time limit is exceeded
-    [[nodiscard]] bool isTimeLimitExceeded() const;
 
     // Calculate, for all vertices, the correlation for the nbGranular closest
     // vertices

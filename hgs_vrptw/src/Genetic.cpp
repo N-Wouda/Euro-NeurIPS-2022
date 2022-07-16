@@ -8,22 +8,25 @@
 
 #include <unordered_set>
 
-Result const Genetic::run()
+Result const Genetic::runUntil(timePoint const &timePoint)
 {
-    auto const maxIterNonProd = params.config.nbIter;
-    auto const timeLimit = params.config.timeLimit;
-
     if (params.nbClients == 1)
         throw std::runtime_error("Cannot run genetic algorithm with one node.");
 
-    // Do iterations of the Genetic Algorithm, until more then maxIterNonProd
-    // consecutive iterations without improvement or a time limit (in seconds)
-    // is reached
     int nbIterNonProd = 1;
-    for (int nbIter = 0;
-         nbIterNonProd <= maxIterNonProd && !params.isTimeLimitExceeded();
-         nbIter++)
+    int iter = 0;
+
+    while (std::chrono::system_clock::now() < timePoint)
     {
+        iter++;
+
+        if (nbIterNonProd == params.config.nbIter)  // restart population after
+        {                                           // this number of useless
+            population.restart();                   // iterations
+            iter = 0;
+            nbIterNonProd = 1;
+        }
+
         /* SELECTION AND CROSSOVER */
         // First select parents using getNonIdenticalParentsBinaryTournament
         // Then use the selected parents to create new individuals using OX and
@@ -36,9 +39,11 @@ Result const Genetic::run()
         // Run the Local Search on the new individual
         localSearch.run(
             offspring, params.penaltyCapacity, params.penaltyTimeWarp);
+
         // Check if the new individual is the best feasible individual of the
         // population, based on penalizedCost
         bool isNewBest = population.addIndividual(offspring, true);
+
         // In case of infeasibility, repair the individual with a certain
         // probability
         if (!offspring->isFeasible()
@@ -68,25 +73,16 @@ Result const Genetic::run()
 
         /* DIVERSIFICATION, PENALTY MANAGEMENT AND TRACES */
         // Update the penaltyTimeWarp and penaltyCapacity every 100 iterations
-        if (nbIter % 100 == 0)
+        if (iter % 100 == 0)
             population.managePenalties();
-
-        /* FOR TESTS INVOLVING SUCCESSIVE RUNS UNTIL A TIME LIMIT: WE RESET THE
-         * ALGORITHM/POPULATION EACH TIME maxIterNonProd IS ATTAINED*/
-        if (timeLimit != INT_MAX && nbIterNonProd == maxIterNonProd
-            && params.config.doRepeatUntilTimeLimit)
-        {
-            population.restart();
-            nbIterNonProd = 1;
-        }
 
         /* OTHER PARAMETER CHANGES*/
         // Increase the nbGranular by growNbGranularSize (and set the correlated
         // vertices again) every certain number of iterations, if
         // growNbGranularSize is greater than 0
-        if (nbIter > 0 && params.config.growNbGranularSize != 0
+        if (iter > 0 && params.config.growNbGranularSize != 0
             && ((params.config.growNbGranularAfterIterations > 0
-                 && nbIter % params.config.growNbGranularAfterIterations == 0)
+                 && iter % params.config.growNbGranularAfterIterations == 0)
                 || (params.config.growNbGranularAfterNonImprovementIterations
                         > 0
                     && nbIterNonProd
@@ -102,9 +98,9 @@ Result const Genetic::run()
 
         // Increase the minimumPopulationSize by growPopulationSize every
         // certain number of iterations, if growPopulationSize is greater than 0
-        if (nbIter > 0 && params.config.growPopulationSize != 0
+        if (iter > 0 && params.config.growPopulationSize != 0
             && ((params.config.growPopulationAfterIterations > 0
-                 && nbIter % params.config.growPopulationAfterIterations == 0)
+                 && iter % params.config.growPopulationAfterIterations == 0)
                 || (params.config.growPopulationAfterNonImprovementIterations
                         > 0
                     && nbIterNonProd
