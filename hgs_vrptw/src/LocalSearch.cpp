@@ -354,7 +354,7 @@ void LocalSearch::run(Individual *indiv,
     static const bool alwaysIntensify
         = params.config.intensificationProbabilityLS == 100;
     const bool runLS_INT
-        = params.rng() % 100
+        = rng() % 100
           < (unsigned int)params.config.intensificationProbabilityLS;
 
     this->penaltyCapacityLS = penaltyCapacityLS;
@@ -363,15 +363,15 @@ void LocalSearch::run(Individual *indiv,
 
     // Shuffling the order of the nodes explored by the LS to allow for more
     // diversity in the search
-    std::shuffle(orderNodes.begin(), orderNodes.end(), params.rng);
-    std::shuffle(orderRoutes.begin(), orderRoutes.end(), params.rng);
+    std::shuffle(orderNodes.begin(), orderNodes.end(), rng);
+    std::shuffle(orderRoutes.begin(), orderRoutes.end(), rng);
     for (int i = 1; i <= params.nbClients; i++)
-        if (params.rng() % params.config.nbGranular
+        if (rng() % params.config.nbGranular
             == 0)  // Designed to use O(nbGranular x n) time overall to avoid
                    // possible bottlenecks
             std::shuffle(params.correlatedVertices[i].begin(),
                          params.correlatedVertices[i].end(),
-                         params.rng);
+                         rng);
 
     searchCompleted = false;
     for (loopID = 0; !searchCompleted; loopID++)
@@ -1956,7 +1956,8 @@ void LocalSearch::exportIndividual(Individual *indiv)
     indiv->evaluateCompleteCost();
 }
 
-LocalSearch::LocalSearch(Params &params) : params(params)
+LocalSearch::LocalSearch(Params &params, XorShift128 &rng)
+    : params(params), rng(rng)
 {
     clients = std::vector<Node>(params.nbClients + 1);
     routes = std::vector<Route>(params.nbVehicles);

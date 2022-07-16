@@ -25,6 +25,7 @@ SOFTWARE.*/
 #define INDIVIDUAL_H
 
 #include "Params.h"
+#include "XorShift128.h"
 
 #include <set>
 #include <string>
@@ -120,11 +121,12 @@ public:
 
     bool operator==(Individual const &other) const;
 
-    // Constructor: create a random individual
-    explicit Individual(Params *params, bool initAndShuffle = true);
+    explicit Individual(Params *params,  // create a random individual
+                        XorShift128 *rng,
+                        bool initAndShuffle = true);
 
-    // Constructor: create an empty individual
-    Individual();
+    // Constructor:
+    Individual();  // create an empty individual
 };
 
 #endif

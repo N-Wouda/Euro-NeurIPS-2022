@@ -7,158 +7,13 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
-#include <iostream>
 #include <set>
 #include <string>
 #include <vector>
 
-Params::Params(Config &config) : config(config) { setup(); }
-
-Params::Params(std::string const &instancePath,
-               std::string const &solPath,
-               int nbIter,
-               int timeLimit,
-               int seed,
-               bool useWallClockTime,
-               double fractionGeneratedNearest,
-               double fractionGeneratedFurthest,
-               double fractionGeneratedSweep,
-               double fractionGeneratedRandomly,
-               int minSweepFillPercentage,
-               int maxToleratedCapacityViolation,
-               int maxToleratedTimeWarp,
-               double initialTimeWarpPenalty,
-               double penaltyBooster,
-               size_t minimumPopulationSize,
-               size_t generationSize,
-               size_t nbElite,
-               size_t nbClose,
-               double targetFeasible,
-               int repairProbability,
-               int growNbGranularAfterNonImprovementIterations,
-               int growNbGranularAfterIterations,
-               int growNbGranularSize,
-               int growPopulationAfterNonImprovementIterations,
-               int growPopulationAfterIterations,
-               int growPopulationSize,
-               double diversityWeight,
-               int nbVeh,
-               bool useDynamicParameters,
-               int nbGranular,
-               int intensificationProbabilityLS,
-               bool useSwapStarTW,
-               bool skipSwapStarDist,
-               int circleSectorOverlapToleranceDegrees,
-               int minCircleSectorSizeDegrees,
-               bool useSymmetricCorrelatedVertices,
-               bool doRepeatUntilTimeLimit)
-    : config({})
-{
-    config.pathInstance = instancePath;
-    config.pathSolution = solPath;
-    config.nbIter = nbIter;
-    config.timeLimit = timeLimit;
-    config.seed = seed;
-    config.useWallClockTime = useWallClockTime;
-    config.fractionGeneratedNearest = fractionGeneratedNearest;
-    config.fractionGeneratedFurthest = fractionGeneratedFurthest;
-    config.fractionGeneratedSweep = fractionGeneratedSweep;
-    config.fractionGeneratedRandomly = fractionGeneratedRandomly;
-    config.minSweepFillPercentage = minSweepFillPercentage;
-    config.maxToleratedCapacityViolation = maxToleratedCapacityViolation;
-    config.maxToleratedTimeWarp = maxToleratedTimeWarp;
-    config.initialTimeWarpPenalty = initialTimeWarpPenalty;
-    config.penaltyBooster = penaltyBooster;
-    config.minimumPopulationSize = minimumPopulationSize;
-    config.generationSize = generationSize;
-    config.nbElite = nbElite;
-    config.nbClose = nbClose;
-    config.targetFeasible = targetFeasible;
-    config.repairProbability = repairProbability;
-    config.growNbGranularAfterNonImprovementIterations
-        = growNbGranularAfterNonImprovementIterations;
-    config.growNbGranularAfterIterations = growNbGranularAfterIterations;
-    config.growNbGranularSize = growNbGranularSize;
-    config.growPopulationAfterNonImprovementIterations
-        = growPopulationAfterNonImprovementIterations;
-    config.growPopulationAfterIterations = growPopulationAfterIterations;
-    config.growPopulationSize = growPopulationSize;
-    config.diversityWeight = diversityWeight;
-    config.nbVeh = nbVeh;
-    config.useDynamicParameters = useDynamicParameters;
-    config.nbGranular = nbGranular;
-    config.intensificationProbabilityLS = intensificationProbabilityLS;
-    config.useSwapStarTW = useSwapStarTW;
-    config.skipSwapStarDist = skipSwapStarDist;
-    config.circleSectorOverlapToleranceDegrees
-        = circleSectorOverlapToleranceDegrees;
-    config.minCircleSectorSizeDegrees = minCircleSectorSizeDegrees;
-    config.useSymmetricCorrelatedVertices = useSymmetricCorrelatedVertices;
-    config.doRepeatUntilTimeLimit = doRepeatUntilTimeLimit;
-
-    setup();
-}
-
-double Params::getElapsedTime() const
-{
-    if (config.useWallClockTime)
-    {
-        auto now = std::chrono::system_clock::now();
-        std::chrono::duration<double> duration = now - startWallClockTime;
-        return duration.count();
-    }
-
-    return static_cast<double>(std::clock() - startCPUTime) / CLOCKS_PER_SEC;
-}
-
-bool Params::isTimeLimitExceeded() const
-{
-    return getElapsedTime() >= config.timeLimit;
-}
-
-void Params::SetCorrelatedVertices()
-{
-    // Calculation of the correlated vertices for each client (for the granular
-    // restriction)
-    correlatedVertices = std::vector<std::vector<int>>(nbClients + 1);
-
-    // First create a set of correlated vertices for each vertex (where the
-    // depot is not taken into account)
-    std::vector<std::set<int>> setCorrelatedVertices
-        = std::vector<std::set<int>>(nbClients + 1);
-
-    // Loop over all clients (excluding the depot)
-    for (int i = 1; i <= nbClients; i++)
-    {
-        auto &orderProximity = orderProximities[i];
-
-        // Loop over all clients (taking into account the max number of clients
-        // and the granular restriction)
-        for (int j = 0; j < std::min(config.nbGranular, nbClients - 1); j++)
-        {
-            // If i is correlated with j, then j should be correlated with i
-            // (unless we have asymmetric problem with time windows) Insert
-            // vertices in setCorrelatedVertices, in the order of
-            // orderProximity, where .second is used since the first index
-            // correponds to the depot
-            setCorrelatedVertices[i].insert(orderProximity[j].second);
-
-            // For symmetric problems, set the other entry to the same value
-            if (config.useSymmetricCorrelatedVertices)
-                setCorrelatedVertices[orderProximity[j].second].insert(i);
-        }
-    }
-
-    // Now, fill the vector of correlated vertices, using setCorrelatedVertices
-    for (int i = 1; i <= nbClients; i++)
-        for (int x : setCorrelatedVertices[i])
-            correlatedVertices[i].push_back(x);
-}
-
-void Params::setup()
+Params::Params(Config &config) : config(config)
 {
     nbVehicles = config.nbVeh;
-    rng = XorShift128(config.seed);
     startWallClockTime = std::chrono::system_clock::now();
     startCPUTime = std::clock();
 
@@ -180,326 +35,323 @@ void Params::setup()
     vehicleCapacity = INT_MAX;
 
     // Read INPUT dataset
-    std::ifstream inputFile(config.pathInstance);
-    if (inputFile.is_open())
+    std::ifstream inputFile(config.instPath);
+
+    if (!inputFile)
+        throw std::invalid_argument("Impossible to open instance file: "
+                                    + config.instPath);
+
+    // Read the instance name from the first line and remove \r
+    getline(inputFile, content);
+    instanceName = content;
+    instanceName.erase(
+        std::remove(instanceName.begin(), instanceName.end(), '\r'),
+        instanceName.end());
+
+    // Read the next lines
+    getline(inputFile,
+            content);             // "Empty line" or "NAME : {instance_name}"
+    getline(inputFile, content);  // VEHICLE or "COMMENT: {}"
+
+    // Check if the next line has "VEHICLE"
+    if (content.substr(0, 7) == "VEHICLE")
     {
-        // Read the instance name from the first line and remove \r
+        // Get the number of vehicles and the capacity of the vehicles
+        getline(inputFile, content);  // NUMBER    CAPACITY
+        inputFile >> nbVehicles >> vehicleCapacity;
+
+        // Skip the next four lines
         getline(inputFile, content);
-        instanceName = content;
-        instanceName.erase(
-            std::remove(instanceName.begin(), instanceName.end(), '\r'),
-            instanceName.end());
+        getline(inputFile, content);
+        getline(inputFile, content);
+        getline(inputFile, content);
 
-        // Read the next lines
-        getline(inputFile,
-                content);  // "Empty line" or "NAME : {instance_name}"
-        getline(inputFile, content);  // VEHICLE or "COMMENT: {}"
-
-        // Check if the next line has "VEHICLE"
-        if (content.substr(0, 7) == "VEHICLE")
+        // Create a vector where all information on the Clients can be
+        // stored and loop over all information in the file
+        cli = std::vector<Client>(1001);
+        nbClients = 0;
+        while (inputFile >> node)
         {
-            // Get the number of vehicles and the capacity of the vehicles
-            getline(inputFile, content);  // NUMBER    CAPACITY
-            inputFile >> nbVehicles >> vehicleCapacity;
+            // Store all the information of the next client
+            cli[nbClients].custNum = node;
+            inputFile >> cli[nbClients].coordX >> cli[nbClients].coordY
+                >> cli[nbClients].demand >> cli[nbClients].earliestArrival
+                >> cli[nbClients].latestArrival
+                >> cli[nbClients].serviceDuration;
 
-            // Skip the next four lines
-            getline(inputFile, content);
-            getline(inputFile, content);
-            getline(inputFile, content);
-            getline(inputFile, content);
+            // Scale coordinates by factor 10, later the distances will be
+            // rounded so we optimize with 1 decimal distances
+            cli[nbClients].coordX *= 10;
+            cli[nbClients].coordY *= 10;
+            cli[nbClients].earliestArrival *= 10;
+            cli[nbClients].latestArrival *= 10;
+            cli[nbClients].serviceDuration *= 10;
+            cli[nbClients].polarAngle = CircleSector::positive_mod(
+                static_cast<int>(32768.
+                                 * atan2(cli[nbClients].coordY - cli[0].coordY,
+                                         cli[nbClients].coordX - cli[0].coordX)
+                                 / M_PI));
 
-            // Create a vector where all information on the Clients can be
-            // stored and loop over all information in the file
-            cli = std::vector<Client>(1001);
-            nbClients = 0;
-            while (inputFile >> node)
+            // Keep track of the max demand, the total demand, and the
+            // number of clients
+            if (cli[nbClients].demand > maxDemand)
             {
-                // Store all the information of the next client
-                cli[nbClients].custNum = node;
-                inputFile >> cli[nbClients].coordX >> cli[nbClients].coordY
-                    >> cli[nbClients].demand >> cli[nbClients].earliestArrival
-                    >> cli[nbClients].latestArrival
-                    >> cli[nbClients].serviceDuration;
-
-                // Scale coordinates by factor 10, later the distances will be
-                // rounded so we optimize with 1 decimal distances
-                cli[nbClients].coordX *= 10;
-                cli[nbClients].coordY *= 10;
-                cli[nbClients].earliestArrival *= 10;
-                cli[nbClients].latestArrival *= 10;
-                cli[nbClients].serviceDuration *= 10;
-                cli[nbClients].polarAngle
-                    = CircleSector::positive_mod(static_cast<int>(
-                        32768.
-                        * atan2(cli[nbClients].coordY - cli[0].coordY,
-                                cli[nbClients].coordX - cli[0].coordX)
-                        / PI));
-
-                // Keep track of the max demand, the total demand, and the
-                // number of clients
-                if (cli[nbClients].demand > maxDemand)
-                {
-                    maxDemand = cli[nbClients].demand;
-                }
-                totalDemand += cli[nbClients].demand;
-                nbClients++;
+                maxDemand = cli[nbClients].demand;
             }
-
-            // Reduce the size of the vector of clients if possible
-            cli.resize(nbClients);
-
-            // Don't count depot as client
-            nbClients--;
-
-            // Check if the required service and the start of the time window of
-            // the depot are both zero
-            if (cli[0].earliestArrival != 0)
-            {
-                throw std::runtime_error("Depot time window should start at 0");
-            }
-            if (cli[0].serviceDuration != 0)
-            {
-                throw std::runtime_error("Depot service duration should be 0");
-            }
+            totalDemand += cli[nbClients].demand;
+            nbClients++;
         }
-        else
+
+        // Reduce the size of the vector of clients if possible
+        cli.resize(nbClients);
+
+        // Don't count depot as client
+        nbClients--;
+
+        // Check if the required service and the start of the time window of
+        // the depot are both zero
+        if (cli[0].earliestArrival != 0)
         {
-            // CVRP or VRPTW according to VRPLib format
-            for (inputFile >> content; content != "EOF"; inputFile >> content)
-            {
-                // Read the dimension of the problem (the number of clients)
-                if (content == "DIMENSION")
-                {
-                    // Need to substract the depot from the number of nodes
-                    inputFile >> content2 >> nbClients;
-                    nbClients--;
-                }
-                // Read the type of edge weights
-                else if (content == "EDGE_WEIGHT_TYPE")
-                {
-                    inputFile >> content2 >> content3;
-                    if (content3 == "EXPLICIT")
-                    {
-                        isExplicitDistanceMatrix = true;
-                    }
-                }
-                else if (content == "EDGE_WEIGHT_FORMAT")
-                {
-                    inputFile >> content2 >> content3;
-                    if (!isExplicitDistanceMatrix)
-                    {
-                        throw std::runtime_error(
-                            "EDGE_WEIGHT_FORMAT can only be used "
-                            "with EDGE_WEIGHT_TYPE : EXPLICIT");
-                    }
-
-                    if (content3 != "FULL_MATRIX")
-                    {
-                        throw std::runtime_error(
-                            "EDGE_WEIGHT_FORMAT only supports FULL_MATRIX");
-                    }
-                }
-                else if (content == "CAPACITY")
-                {
-                    inputFile >> content2 >> vehicleCapacity;
-                }
-                else if (content == "VEHICLES" || content == "SALESMAN")
-                {
-                    inputFile >> content2 >> nbVehicles;
-                }
-                // Read the data on the service time (used when the service time
-                // is constant for all clients)
-                else if (content == "SERVICE_TIME")
-                {
-                    inputFile >> content2 >> serviceTimeData;
-                }
-                // Read the edge weights of an explicit distance matrix
-                else if (content == "EDGE_WEIGHT_SECTION")
-                {
-                    if (!isExplicitDistanceMatrix)
-                    {
-                        throw std::runtime_error(
-                            "EDGE_WEIGHT_SECTION can only be used with "
-                            "EDGE_WEIGHT_TYPE : EXPLICIT");
-                    }
-                    maxDist = 0;
-                    timeCost = Matrix(nbClients + 1);
-                    for (int i = 0; i <= nbClients; i++)
-                    {
-                        for (int j = 0; j <= nbClients; j++)
-                        {
-                            // Keep track of the largest distance between two
-                            // clients (or the depot)
-                            int cost;
-                            inputFile >> cost;
-                            if (cost > maxDist)
-                            {
-                                maxDist = cost;
-                            }
-                            timeCost.set(i, j, cost);
-                        }
-                    }
-                }
-                else if (content == "NODE_COORD_SECTION")
-                {
-                    // Reading client coordinates
-                    cli = std::vector<Client>(nbClients + 1);
-                    for (int i = 0; i <= nbClients; i++)
-                    {
-                        inputFile >> cli[i].custNum >> cli[i].coordX
-                            >> cli[i].coordY;
-
-                        // Check if the clients are in order
-                        if (cli[i].custNum != i + 1)
-                        {
-                            throw std::runtime_error("Coordinates are not in "
-                                                     "order of clients");
-                        }
-
-                        cli[i].custNum--;
-                        cli[i].polarAngle
-                            = CircleSector::positive_mod(static_cast<int>(
-                                32768.
-                                * atan2(cli[i].coordY - cli[0].coordY,
-                                        cli[i].coordX - cli[0].coordX)
-                                / PI));
-                    }
-                }
-                // Read the demand of each client (including the depot, which
-                // should have demand 0)
-                else if (content == "DEMAND_SECTION")
-                {
-                    for (int i = 0; i <= nbClients; i++)
-                    {
-                        int clientNr = 0;
-                        inputFile >> clientNr >> cli[i].demand;
-
-                        // Check if the clients are in order
-                        if (clientNr != i + 1)
-                        {
-                            throw std::runtime_error("Clients are not in order"
-                                                     " in the list of demands");
-                        }
-
-                        // Keep track of the max and total demand
-                        if (cli[i].demand > maxDemand)
-                        {
-                            maxDemand = cli[i].demand;
-                        }
-                        totalDemand += cli[i].demand;
-                    }
-                    // Check if the depot has demand 0
-                    if (cli[0].demand != 0)
-                    {
-                        throw std::runtime_error(
-                            "Depot demand is not zero, but is instead: "
-                            + std::to_string(cli[0].serviceDuration));
-                    }
-                }
-                else if (content == "DEPOT_SECTION")
-                {
-                    inputFile >> content2 >> content3;
-                    if (content2 != "1")
-                    {
-                        throw std::runtime_error("Expected depot index 1 "
-                                                 "instead of "
-                                                 + content2);
-                    }
-                }
-                else if (content == "SERVICE_TIME_SECTION")
-                {
-                    for (int i = 0; i <= nbClients; i++)
-                    {
-                        int clientNr = 0;
-                        inputFile >> clientNr >> cli[i].serviceDuration;
-
-                        // Check if the clients are in order
-                        if (clientNr != i + 1)
-                        {
-                            throw std::runtime_error("Service times are not "
-                                                     "in client order");
-                        }
-                    }
-                    // Check if the service duration of the depot is 0
-                    if (cli[0].serviceDuration != 0)
-                    {
-                        throw std::runtime_error(
-                            "Service duration for depot should be 0");
-                    }
-                    hasServiceTimeSection = true;
-                }
-                else if (content == "RELEASE_TIME_SECTION")
-                {
-                    for (int i = 0; i <= nbClients; i++)
-                    {
-                        int clientNr = 0;
-                        inputFile >> clientNr >> cli[i].releaseTime;
-
-                        // Check if the clients are in order
-                        if (clientNr != i + 1)
-                        {
-                            throw std::runtime_error("Release times are not in"
-                                                     " client order");
-                        }
-                    }
-                    // Check if the service duration of the depot is 0
-                    if (cli[0].releaseTime != 0)
-                    {
-                        throw std::runtime_error(
-                            "Release time for depot should be 0");
-                    }
-                }
-                // Read the time windows of all the clients (the depot should
-                // have a time window from 0 to max)
-                else if (content == "TIME_WINDOW_SECTION")
-                {
-                    for (int i = 0; i <= nbClients; i++)
-                    {
-                        int clientNr = 0;
-                        inputFile >> clientNr >> cli[i].earliestArrival
-                            >> cli[i].latestArrival;
-
-                        // Check if the clients are in order
-                        if (clientNr != i + 1)
-                        {
-                            throw std::runtime_error("Time windows are not in "
-                                                     "client order");
-                        }
-                    }
-
-                    // Check the start of the time window of the depot
-                    if (cli[0].earliestArrival != 0)
-                    {
-                        throw std::runtime_error(
-                            "Time window for depot should start at 0");
-                    }
-                }
-                else
-                {
-                    throw std::runtime_error("Unexpected data in input file: "
-                                             + content);
-                }
-            }
-
-            if (!hasServiceTimeSection)
-            {
-                for (int i = 0; i <= nbClients; i++)
-                {
-                    cli[i].serviceDuration = (i == 0) ? 0 : serviceTimeData;
-                }
-            }
-
-            if (nbClients <= 0)
-            {
-                throw std::runtime_error("Number of nodes is undefined");
-            }
-            if (vehicleCapacity == INT_MAX)
-                throw std::runtime_error("Vehicle capacity is undefined");
+            throw std::runtime_error("Depot time window should start at 0");
+        }
+        if (cli[0].serviceDuration != 0)
+        {
+            throw std::runtime_error("Depot service duration should be 0");
         }
     }
     else
-        throw std::invalid_argument("Impossible to open instance file: "
-                                    + config.pathInstance);
+    {
+        // CVRP or VRPTW according to VRPLib format
+        for (inputFile >> content; content != "EOF"; inputFile >> content)
+        {
+            // Read the dimension of the problem (the number of clients)
+            if (content == "DIMENSION")
+            {
+                // Need to substract the depot from the number of nodes
+                inputFile >> content2 >> nbClients;
+                nbClients--;
+            }
+            // Read the type of edge weights
+            else if (content == "EDGE_WEIGHT_TYPE")
+            {
+                inputFile >> content2 >> content3;
+                if (content3 == "EXPLICIT")
+                {
+                    isExplicitDistanceMatrix = true;
+                }
+            }
+            else if (content == "EDGE_WEIGHT_FORMAT")
+            {
+                inputFile >> content2 >> content3;
+                if (!isExplicitDistanceMatrix)
+                {
+                    throw std::runtime_error(
+                        "EDGE_WEIGHT_FORMAT can only be used "
+                        "with EDGE_WEIGHT_TYPE : EXPLICIT");
+                }
+
+                if (content3 != "FULL_MATRIX")
+                {
+                    throw std::runtime_error(
+                        "EDGE_WEIGHT_FORMAT only supports FULL_MATRIX");
+                }
+            }
+            else if (content == "CAPACITY")
+            {
+                inputFile >> content2 >> vehicleCapacity;
+            }
+            else if (content == "VEHICLES" || content == "SALESMAN")
+            {
+                inputFile >> content2 >> nbVehicles;
+            }
+            // Read the data on the service time (used when the service time
+            // is constant for all clients)
+            else if (content == "SERVICE_TIME")
+            {
+                inputFile >> content2 >> serviceTimeData;
+            }
+            // Read the edge weights of an explicit distance matrix
+            else if (content == "EDGE_WEIGHT_SECTION")
+            {
+                if (!isExplicitDistanceMatrix)
+                {
+                    throw std::runtime_error(
+                        "EDGE_WEIGHT_SECTION can only be used with "
+                        "EDGE_WEIGHT_TYPE : EXPLICIT");
+                }
+                maxDist = 0;
+                timeCost = Matrix(nbClients + 1);
+                for (int i = 0; i <= nbClients; i++)
+                {
+                    for (int j = 0; j <= nbClients; j++)
+                    {
+                        // Keep track of the largest distance between two
+                        // clients (or the depot)
+                        int cost;
+                        inputFile >> cost;
+                        if (cost > maxDist)
+                        {
+                            maxDist = cost;
+                        }
+                        timeCost.set(i, j, cost);
+                    }
+                }
+            }
+            else if (content == "NODE_COORD_SECTION")
+            {
+                // Reading client coordinates
+                cli = std::vector<Client>(nbClients + 1);
+                for (int i = 0; i <= nbClients; i++)
+                {
+                    inputFile >> cli[i].custNum >> cli[i].coordX
+                        >> cli[i].coordY;
+
+                    // Check if the clients are in order
+                    if (cli[i].custNum != i + 1)
+                    {
+                        throw std::runtime_error("Coordinates are not in "
+                                                 "order of clients");
+                    }
+
+                    cli[i].custNum--;
+                    cli[i].polarAngle = CircleSector::positive_mod(
+                        static_cast<int>(32768.
+                                         * atan2(cli[i].coordY - cli[0].coordY,
+                                                 cli[i].coordX - cli[0].coordX)
+                                         / M_PI));
+                }
+            }
+            // Read the demand of each client (including the depot, which
+            // should have demand 0)
+            else if (content == "DEMAND_SECTION")
+            {
+                for (int i = 0; i <= nbClients; i++)
+                {
+                    int clientNr = 0;
+                    inputFile >> clientNr >> cli[i].demand;
+
+                    // Check if the clients are in order
+                    if (clientNr != i + 1)
+                    {
+                        throw std::runtime_error("Clients are not in order"
+                                                 " in the list of demands");
+                    }
+
+                    // Keep track of the max and total demand
+                    if (cli[i].demand > maxDemand)
+                    {
+                        maxDemand = cli[i].demand;
+                    }
+                    totalDemand += cli[i].demand;
+                }
+                // Check if the depot has demand 0
+                if (cli[0].demand != 0)
+                {
+                    throw std::runtime_error(
+                        "Depot demand is not zero, but is instead: "
+                        + std::to_string(cli[0].serviceDuration));
+                }
+            }
+            else if (content == "DEPOT_SECTION")
+            {
+                inputFile >> content2 >> content3;
+                if (content2 != "1")
+                {
+                    throw std::runtime_error("Expected depot index 1 "
+                                             "instead of "
+                                             + content2);
+                }
+            }
+            else if (content == "SERVICE_TIME_SECTION")
+            {
+                for (int i = 0; i <= nbClients; i++)
+                {
+                    int clientNr = 0;
+                    inputFile >> clientNr >> cli[i].serviceDuration;
+
+                    // Check if the clients are in order
+                    if (clientNr != i + 1)
+                    {
+                        throw std::runtime_error("Service times are not "
+                                                 "in client order");
+                    }
+                }
+                // Check if the service duration of the depot is 0
+                if (cli[0].serviceDuration != 0)
+                {
+                    throw std::runtime_error(
+                        "Service duration for depot should be 0");
+                }
+                hasServiceTimeSection = true;
+            }
+            else if (content == "RELEASE_TIME_SECTION")
+            {
+                for (int i = 0; i <= nbClients; i++)
+                {
+                    int clientNr = 0;
+                    inputFile >> clientNr >> cli[i].releaseTime;
+
+                    // Check if the clients are in order
+                    if (clientNr != i + 1)
+                    {
+                        throw std::runtime_error("Release times are not in"
+                                                 " client order");
+                    }
+                }
+                // Check if the service duration of the depot is 0
+                if (cli[0].releaseTime != 0)
+                {
+                    throw std::runtime_error(
+                        "Release time for depot should be 0");
+                }
+            }
+            // Read the time windows of all the clients (the depot should
+            // have a time window from 0 to max)
+            else if (content == "TIME_WINDOW_SECTION")
+            {
+                for (int i = 0; i <= nbClients; i++)
+                {
+                    int clientNr = 0;
+                    inputFile >> clientNr >> cli[i].earliestArrival
+                        >> cli[i].latestArrival;
+
+                    // Check if the clients are in order
+                    if (clientNr != i + 1)
+                    {
+                        throw std::runtime_error("Time windows are not in "
+                                                 "client order");
+                    }
+                }
+
+                // Check the start of the time window of the depot
+                if (cli[0].earliestArrival != 0)
+                {
+                    throw std::runtime_error(
+                        "Time window for depot should start at 0");
+                }
+            }
+            else
+            {
+                throw std::runtime_error("Unexpected data in input file: "
+                                         + content);
+            }
+        }
+
+        if (!hasServiceTimeSection)
+        {
+            for (int i = 0; i <= nbClients; i++)
+            {
+                cli[i].serviceDuration = (i == 0) ? 0 : serviceTimeData;
+            }
+        }
+
+        if (nbClients <= 0)
+        {
+            throw std::runtime_error("Number of nodes is undefined");
+        }
+        if (vehicleCapacity == INT_MAX)
+            throw std::runtime_error("Vehicle capacity is undefined");
+    }
 
     // Default initialization if the number of vehicles has not been provided by
     // the user
@@ -691,4 +543,60 @@ void Params::setup()
     // See Vidal 2012, HGS for VRPTW
     proximityWeightWaitTime = 0.2;
     proximityWeightTimeWarp = 1;
+}
+
+double Params::getElapsedTime() const
+{
+    if (config.useWallClockTime)
+    {
+        auto now = std::chrono::system_clock::now();
+        std::chrono::duration<double> duration = now - startWallClockTime;
+        return duration.count();
+    }
+
+    return static_cast<double>(std::clock() - startCPUTime) / CLOCKS_PER_SEC;
+}
+
+bool Params::isTimeLimitExceeded() const
+{
+    return getElapsedTime() >= config.timeLimit;
+}
+
+void Params::SetCorrelatedVertices()
+{
+    // Calculation of the correlated vertices for each client (for the granular
+    // restriction)
+    correlatedVertices = std::vector<std::vector<int>>(nbClients + 1);
+
+    // First create a set of correlated vertices for each vertex (where the
+    // depot is not taken into account)
+    std::vector<std::set<int>> setCorrelatedVertices
+        = std::vector<std::set<int>>(nbClients + 1);
+
+    // Loop over all clients (excluding the depot)
+    for (int i = 1; i <= nbClients; i++)
+    {
+        auto &orderProximity = orderProximities[i];
+
+        // Loop over all clients (taking into account the max number of clients
+        // and the granular restriction)
+        for (int j = 0; j < std::min(config.nbGranular, nbClients - 1); j++)
+        {
+            // If i is correlated with j, then j should be correlated with i
+            // (unless we have asymmetric problem with time windows) Insert
+            // vertices in setCorrelatedVertices, in the order of
+            // orderProximity, where .second is used since the first index
+            // correponds to the depot
+            setCorrelatedVertices[i].insert(orderProximity[j].second);
+
+            // For symmetric problems, set the other entry to the same value
+            if (config.useSymmetricCorrelatedVertices)
+                setCorrelatedVertices[orderProximity[j].second].insert(i);
+        }
+    }
+
+    // Now, fill the vector of correlated vertices, using setCorrelatedVertices
+    for (int i = 1; i <= nbClients; i++)
+        for (int x : setCorrelatedVertices[i])
+            correlatedVertices[i].push_back(x);
 }

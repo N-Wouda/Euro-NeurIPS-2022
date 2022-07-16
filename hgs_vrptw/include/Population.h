@@ -27,6 +27,7 @@ SOFTWARE.*/
 #include "Individual.h"
 #include "LocalSearch.h"
 #include "Params.h"
+#include "XorShift128.h"
 
 #include <ctime>
 #include <list>
@@ -40,6 +41,7 @@ class Population
     using SubPopulation = std::vector<Individual *>;
 
     Params &params;            // Problem parameters
+    XorShift128 &rng;          // Random number generator
     LocalSearch &localSearch;  // Local search structure
 
     // Feasible subpopulation kept ordered by increasing penalized cost
@@ -112,10 +114,8 @@ public:
         return infeasibleSubpopulation;
     }
 
-    // Constructor
-    Population(Params &params, LocalSearch &localSearch);
+    Population(Params &params, XorShift128 &rng, LocalSearch &localSearch);
 
-    // Destructor
     ~Population();
 };
 

@@ -29,6 +29,7 @@ SOFTWARE.*/
 #include "Params.h"
 #include "Population.h"
 #include "Result.h"
+#include "XorShift128.h"
 
 #include <array>
 #include <unordered_set>
@@ -43,6 +44,7 @@ class Genetic
     static const int numberOfCandidateOffsprings = 4;
 
     Params &params;            // Problem parameters
+    XorShift128 &rng;          // Random number generator
     Population &population;    // Population
     LocalSearch &localSearch;  // Local Search structure
 
@@ -81,7 +83,10 @@ public:
     Result const run();
 
     // Constructor
-    Genetic(Params &params, Population &population, LocalSearch &localSearch);
+    Genetic(Params &params,
+            XorShift128 &rng,
+            Population &population,
+            LocalSearch &localSearch);
 
     // Destructor
     ~Genetic();

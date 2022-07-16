@@ -1,9 +1,11 @@
+#include "Config.h"
 #include "Genetic.h"
 #include "Individual.h"
 #include "LocalSearch.h"
 #include "Params.h"
 #include "Population.h"
 #include "Result.h"
+#include "XorShift128.h"
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -12,6 +14,9 @@ namespace py = pybind11;
 
 PYBIND11_MODULE(hgspy, m)
 {
+    py::class_<XorShift128>(m, "XorShift128")
+        .def(py::init<int>(), py::arg("seed"));
+
     py::class_<Individual>(m, "Individual")
         .def("get_routes", &Individual::getRoutes)
         .def("get_tour", &Individual::getTour)
@@ -20,11 +25,13 @@ PYBIND11_MODULE(hgspy, m)
         });
 
     py::class_<LocalSearch>(m, "LocalSearch")
-        .def(py::init<Params &>(), py::arg("params"));
+        .def(py::init<Params &, XorShift128 &>(),
+             py::arg("params"),
+             py::arg("rng"));
 
-    py::class_<Params>(m, "Params")
-        .def(py::init<std::string const &,
-                      std::string const &,
+    py::class_<Config>(m, "Config")
+        .def(py::init<std::string,
+                      std::string,
                       int,
                       int,
                       int,
@@ -61,7 +68,7 @@ PYBIND11_MODULE(hgspy, m)
                       int,
                       bool,
                       bool>(),
-             py::arg("instancePath"),
+             py::arg("instPath"),
              py::arg("solPath"),
              py::arg("nbIter") = 20'000,
              py::arg("timeLimit") = INT_MAX,
@@ -98,12 +105,16 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
              py::arg("minCircleSectorSizeDegrees") = 15,
              py::arg("useSymmetricCorrelatedVertices") = false,
-             py::arg("doRepeatUntilTimeLimit") = true)
+             py::arg("doRepeatUntilTimeLimit") = true);
+
+    py::class_<Params>(m, "Params")
+        .def(py::init<Config &>(), py::arg("config"))
         .def("get_elapsed_time", &Params::getElapsedTime);
 
     py::class_<Population>(m, "Population")
-        .def(py::init<Params &, LocalSearch &>(),
+        .def(py::init<Params &, XorShift128 &, LocalSearch &>(),
              py::arg("params"),
+             py::arg("rng"),
              py::arg("local_search"));
 
     py::class_<Result>(m, "Result").def("get_best_found", [](Result &result) {
@@ -111,8 +122,9 @@ PYBIND11_MODULE(hgspy, m)
     });
 
     py::class_<Genetic>(m, "Genetic")
-        .def(py::init<Params &, Population &, LocalSearch &>(),
+        .def(py::init<Params &, XorShift128 &, Population &, LocalSearch &>(),
              py::arg("params"),
+             py::arg("rng"),
              py::arg("population"),
              py::arg("local_search"))
         .def("run", &Genetic::run);

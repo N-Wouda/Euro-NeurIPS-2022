@@ -162,10 +162,10 @@ void Individual::evaluateCompleteCost()
 
     for (auto const &route : routeChrom)
     {
-        costs.nbRoutes++;
-
         if (route.empty())  // First empty route. Due to makeRoutes() all
             break;          // subsequent routes are empty as well
+
+        costs.nbRoutes++;
 
         int maxReleaseTime = 0;
         for (auto const idx : route)
@@ -327,7 +327,7 @@ bool Individual::operator==(Individual const &other) const
            && routeChrom == other.routeChrom;
 }
 
-Individual::Individual(Params *params, bool initAndShuffle)
+Individual::Individual(Params *params, XorShift128 *rng, bool initAndShuffle)
     : params(params),
       successors(params->nbClients + 1),
       predecessors(params->nbClients + 1),
@@ -338,7 +338,7 @@ Individual::Individual(Params *params, bool initAndShuffle)
     if (initAndShuffle)
     {
         std::iota(tourChrom.begin(), tourChrom.end(), 1);
-        std::shuffle(tourChrom.begin(), tourChrom.end(), params->rng);
+        std::shuffle(tourChrom.begin(), tourChrom.end(), *rng);
 
         makeRoutes();
     }

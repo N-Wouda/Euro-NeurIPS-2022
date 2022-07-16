@@ -42,8 +42,7 @@ Result const Genetic::run()
         // In case of infeasibility, repair the individual with a certain
         // probability
         if (!offspring->isFeasible()
-            && params.rng() % 100
-                   < (unsigned int)params.config.repairProbability)
+            && rng() % 100 < (unsigned int)params.config.repairProbability)
         {
             // Run the Local Search again, but with penalties for
             // infeasibilities multiplied by 10
@@ -125,12 +124,12 @@ Result const Genetic::run()
 Individual *Genetic::crossoverOX(Parents parents)
 {
     // Picking the start and end of the crossover zone
-    size_t start = params.rng() % params.nbClients;
-    size_t end = params.rng() % params.nbClients;
+    size_t start = rng() % params.nbClients;
+    size_t end = rng() % params.nbClients;
 
     // If the start and end overlap, change the end of the crossover zone
     while (end == start)
-        end = params.rng() % params.nbClients;
+        end = rng() % params.nbClients;
 
     doOXcrossover(candidateOffsprings[2], parents, start, end);
     doOXcrossover(candidateOffsprings[3], parents, start, end);
@@ -188,13 +187,13 @@ Individual *Genetic::crossoverSREX(Parents parents)
     // Picking the start index of routes to replace of parent A
     // We like to replace routes with a large overlap of tasks, so we choose
     // adjacent routes (they are sorted on polar angle)
-    int startA = params.rng() % nOfRoutesA;
+    int startA = rng() % nOfRoutesA;
     int startB = startA < nOfRoutesB ? startA : 0;
 
     int nOfMovedRoutes
         = std::min(nOfRoutesA, nOfRoutesB) == 1
               ? 1
-              : params.rng() % (std::min(nOfRoutesA - 1, nOfRoutesB - 1)) + 1;
+              : rng() % (std::min(nOfRoutesA - 1, nOfRoutesB - 1)) + 1;
 
     std::unordered_set<int> clientsInSelectedA;
     std::unordered_set<int> clientsInSelectedB;
@@ -555,14 +554,15 @@ Individual *Genetic::bestOfSREXAndOXCrossovers(Parents parents)
 }
 
 Genetic::Genetic(Params &params,
+                 XorShift128 &rng,
                  Population &population,
                  LocalSearch &localSearch)
-    : params(params), population(population), localSearch(localSearch)
+    : params(params), rng(rng), population(population), localSearch(localSearch)
 {
     // After initializing the parameters of the Genetic object, also generate
     // new individuals in the array candidateOffsprings
     std::generate(candidateOffsprings.begin(), candidateOffsprings.end(), [&] {
-        return new Individual(&params);
+        return new Individual(&params, &rng);
     });
 }
 

@@ -27,6 +27,7 @@ SOFTWARE.*/
 #include "CircleSector.h"
 #include "Individual.h"
 #include "Params.h"
+#include "XorShift128.h"
 
 #include <set>
 #include <vector>
@@ -186,6 +187,7 @@ class LocalSearch
 {
 private:
     Params &params;        // Problem parameters
+    XorShift128 &rng;      // Random number generator
     bool searchCompleted;  // Tells whether all moves have been evaluated
                            // without success
     int nbMoves;  // Total number of moves (RI and SWAP*) applied during the
@@ -382,8 +384,7 @@ public:
     // penalized cost according to the original penalty weights from Params
     void exportIndividual(Individual *indiv);
 
-    // Constructor
-    explicit LocalSearch(Params &params);
+    explicit LocalSearch(Params &params, XorShift128 &rng);
 };
 
 #endif

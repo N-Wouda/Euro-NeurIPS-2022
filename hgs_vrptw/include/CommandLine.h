@@ -24,7 +24,7 @@ SOFTWARE.*/
 #ifndef COMMANDLINE_H
 #define COMMANDLINE_H
 
-#include "Params.h"
+#include "Config.h"
 
 #include <iostream>  // needed for parse() below
 #include <string>
@@ -54,13 +54,9 @@ public:
     }
 
     // Extracts run configurations from command line arguments
-    Params parse()
+    Config parse()
     {
-        Params::Config config;
-
-        // Get the paths of the instance and the solution
-        config.pathInstance = std::string(argv[1]);
-        config.pathSolution = std::string(argv[2]);
+        Config config(argv[1], argv[2]);
 
         // Go over all possible command line arguments and store their
         // values Explanations per command line argument can be found at
@@ -147,7 +143,7 @@ public:
                 config.minCircleSectorSizeDegrees = atoi(argv[i + 1]);
         }
 
-        return Params(config);
+        return config;
     }
 };
 
