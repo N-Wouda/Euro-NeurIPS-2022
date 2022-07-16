@@ -138,9 +138,15 @@ public:
                 config.skipSwapStarDist = atoi(argv[i + 1]) != 0;
             else if (std::string(argv[i])
                      == "-circleSectorOverlapToleranceDegrees")
-                config.circleSectorOverlapToleranceDegrees = atoi(argv[i + 1]);
+            {
+                auto const overlap = atoi(argv[i + 1]) / 360. * 65536;
+                config.circleSectorOverlapTolerance = static_cast<int>(overlap);
+            }
             else if (std::string(argv[i]) == "-minCircleSectorSizeDegrees")
-                config.minCircleSectorSizeDegrees = atoi(argv[i + 1]);
+            {
+                auto const minCircleSize = atoi(argv[i + 1]) / 360. * 65536;
+                config.minCircleSectorSize = static_cast<int>(minCircleSize);
+            }
         }
 
         return config;

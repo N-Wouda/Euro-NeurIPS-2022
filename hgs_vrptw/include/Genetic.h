@@ -42,9 +42,6 @@ class Genetic
     using Parents = std::pair<Individual const *, Individual const *>;
     using timePoint = std::chrono::system_clock::time_point;
 
-    // The number of new potential offspring created from one individual
-    static const int numberOfCandidateOffsprings = 4;
-
     Params &params;            // Problem parameters
     XorShift128 &rng;          // Random number generator
     Population &population;    // Population
@@ -52,7 +49,7 @@ class Genetic
 
     // Pointers for offspring to edit new offspring in place:
     // 0 and 1 are reserved for SREX, 2 and 3 are reserved for OX
-    std::array<Individual *, numberOfCandidateOffsprings> candidateOffsprings;
+    std::array<Individual *, 4> candOffspring;
 
     // Function to do two OX Crossovers for a pair of individuals (the two
     // parents) and return the best individual based on penalizedCost
@@ -64,7 +61,7 @@ class Genetic
     void doOXcrossover(Individual *result,
                        Parents parents,
                        size_t start,
-                       size_t end);
+                       size_t end) const;
 
     // Function to do two SREX Crossovers for a pair of individuals (the two
     // parents) and return the best individual based on penalizedCost
@@ -87,7 +84,7 @@ public:
      * @return          Result object contained the best solution, and current
      *                  population composition.
      */
-    Result const runUntil(timePoint const &timePoint);
+    Result runUntil(timePoint const &timePoint);
 
     // Constructor
     Genetic(Params &params,

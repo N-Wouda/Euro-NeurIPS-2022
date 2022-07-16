@@ -497,7 +497,7 @@ void LocalSearch::run(Individual *indiv,
                     if (!CircleSector::overlap(
                             routeU->sector,
                             routeV->sector,
-                            params.circleSectorOverlapTolerance))
+                            params.config.circleSectorOverlapTolerance))
                     {
                         continue;
                     }
@@ -1831,10 +1831,10 @@ void LocalSearch::updateRouteData(Route *myRoute)
                     cumulatedX / static_cast<double>(myRoute->nbCustomers)
                         - params.cli[0].coordX);
         // Enforce minimum size of circle sector
-        if (params.minCircleSectorSize > 0)
+        if (params.config.minCircleSectorSize > 0)
         {
             const int growSectorBy
-                = (params.minCircleSectorSize
+                = (params.config.minCircleSectorSize
                    - myRoute->sector.positive_mod(myRoute->sector.end
                                                   - myRoute->sector.start)
                    + 1)

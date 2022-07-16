@@ -16,13 +16,6 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
 {
     nbVehicles = config.nbVeh;
 
-    // Convert the circle sector parameters from degrees ([0,359]) to [0,65535]
-    // to allow for faster calculations
-    circleSectorOverlapTolerance = static_cast<int>(
-        config.circleSectorOverlapToleranceDegrees / 360. * 65536);
-    minCircleSectorSize
-        = static_cast<int>(config.minCircleSectorSizeDegrees / 360. * 65536);
-
     // Initialize some parameter values
     std::string content, content2, content3;
     int serviceTimeData = 0;
@@ -471,13 +464,6 @@ Params::Params(Config &config,
     // See Vidal 2012, HGS for VRPTW
     proximityWeightWaitTime = 0.2;
     proximityWeightTimeWarp = 1;
-
-    // Convert the circle sector parameters from degrees ([0,359]) to [0,65535]
-    // to allow for faster calculations
-    circleSectorOverlapTolerance = static_cast<int>(
-        config.circleSectorOverlapToleranceDegrees / 360. * 65536);
-    minCircleSectorSize
-        = static_cast<int>(config.minCircleSectorSizeDegrees / 360. * 65536);
 
     cli = std::vector<Client>(nbClients + 1);
 

@@ -8,7 +8,7 @@
 
 #include <unordered_set>
 
-Result const Genetic::runUntil(timePoint const &timePoint)
+Result Genetic::runUntil(timePoint const &timePoint)
 {
     if (params.nbClients == 1)
         throw std::runtime_error("Cannot run genetic algorithm with one node.");
@@ -50,10 +50,11 @@ Result const Genetic::runUntil(timePoint const &timePoint)
             && rng() % 100 < (unsigned int)params.config.repairProbability)
         {
             // Run the Local Search again, but with penalties for
-            // infeasibilities multiplied by 10
+            // infeasibility multiplied by 10
             localSearch.run(offspring,
                             params.penaltyCapacity * 10.,
                             params.penaltyTimeWarp * 10.);
+
             // If the individual is feasible now, check if it is the best
             // feasible individual of the population, based on penalizedCost and
             // add it to the population If the individual is not feasible now,
@@ -114,7 +115,7 @@ Result const Genetic::runUntil(timePoint const &timePoint)
         }
     }
 
-    return Result(population.getFeasible(), population.getInfeasible());
+    return {population.getFeasible(), population.getInfeasible()};
 }
 
 Individual *Genetic::crossoverOX(Parents parents)
@@ -127,20 +128,19 @@ Individual *Genetic::crossoverOX(Parents parents)
     while (end == start)
         end = rng() % params.nbClients;
 
-    doOXcrossover(candidateOffsprings[2], parents, start, end);
-    doOXcrossover(candidateOffsprings[3], parents, start, end);
+    doOXcrossover(candOffspring[2], parents, start, end);
+    doOXcrossover(candOffspring[3], parents, start, end);
 
-    auto cand1Cost = candidateOffsprings[2]->costs.penalizedCost;
-    auto cand2Cost = candidateOffsprings[3]->costs.penalizedCost;
+    auto cand1Cost = candOffspring[2]->costs.penalizedCost;
+    auto cand2Cost = candOffspring[3]->costs.penalizedCost;
 
-    return cand1Cost < cand2Cost ? candidateOffsprings[2]
-                                 : candidateOffsprings[3];
+    return cand1Cost < cand2Cost ? candOffspring[2] : candOffspring[3];
 }
 
 void Genetic::doOXcrossover(Individual *result,
                             Parents parents,
                             size_t start,
-                            size_t end)
+                            size_t end) const
 {
     // Frequency vector to track the clients which have been inserted already
     std::vector<bool> freqClient
@@ -177,45 +177,41 @@ void Genetic::doOXcrossover(Individual *result,
 Individual *Genetic::crossoverSREX(Parents parents)
 {
     // Get the number of routes of both parents
-    int nOfRoutesA = parents.first->costs.nbRoutes;
-    int nOfRoutesB = parents.second->costs.nbRoutes;
+    size_t nbRoutesA = parents.first->costs.nbRoutes;
+    size_t nbRoutesB = parents.second->costs.nbRoutes;
 
     // Picking the start index of routes to replace of parent A
     // We like to replace routes with a large overlap of tasks, so we choose
     // adjacent routes (they are sorted on polar angle)
-    int startA = rng() % nOfRoutesA;
-    int startB = startA < nOfRoutesB ? startA : 0;
-
-    int nOfMovedRoutes
-        = std::min(nOfRoutesA, nOfRoutesB) == 1
-              ? 1
-              : rng() % (std::min(nOfRoutesA - 1, nOfRoutesB - 1)) + 1;
+    size_t startA = rng() % nbRoutesA;
+    size_t startB = startA < nbRoutesB ? startA : 0;
+    size_t minRoutes = std::min(nbRoutesA, nbRoutesB);
+    size_t nMovedRoutes = minRoutes == 1 ? 1 : rng() % (minRoutes - 1) + 1;
 
     std::unordered_set<int> clientsInSelectedA;
     std::unordered_set<int> clientsInSelectedB;
 
-    for (int r = 0; r < nOfMovedRoutes; r++)
+    for (size_t r = 0; r < nMovedRoutes; r++)
     {
         clientsInSelectedA.insert(
-            parents.first->routeChrom[(startA + r) % nOfRoutesA].begin(),
-            parents.first->routeChrom[(startA + r) % nOfRoutesA].end());
+            parents.first->routeChrom[(startA + r) % nbRoutesA].begin(),
+            parents.first->routeChrom[(startA + r) % nbRoutesA].end());
 
         clientsInSelectedB.insert(
-            parents.second->routeChrom[(startB + r) % nOfRoutesB].begin(),
-            parents.second->routeChrom[(startB + r) % nOfRoutesB].end());
+            parents.second->routeChrom[(startB + r) % nbRoutesB].begin(),
+            parents.second->routeChrom[(startB + r) % nbRoutesB].end());
     }
 
-    bool improved = true;
-    while (improved)
+    while (true)
     {
         // Difference for moving 'left' in parent A
         const int differenceALeft
             = static_cast<int>(std::count_if(
                   parents.first
-                      ->routeChrom[(startA - 1 + nOfRoutesA) % nOfRoutesA]
+                      ->routeChrom[(startA - 1 + nbRoutesA) % nbRoutesA]
                       .begin(),
                   parents.first
-                      ->routeChrom[(startA - 1 + nOfRoutesA) % nOfRoutesA]
+                      ->routeChrom[(startA - 1 + nbRoutesA) % nbRoutesA]
                       .end(),
                   [&clientsInSelectedB](int c) {
                       return clientsInSelectedB.find(c)
@@ -223,10 +219,10 @@ Individual *Genetic::crossoverSREX(Parents parents)
                   }))
               - static_cast<int>(std::count_if(
                   parents.first
-                      ->routeChrom[(startA + nOfMovedRoutes - 1) % nOfRoutesA]
+                      ->routeChrom[(startA + nMovedRoutes - 1) % nbRoutesA]
                       .begin(),
                   parents.first
-                      ->routeChrom[(startA + nOfMovedRoutes - 1) % nOfRoutesA]
+                      ->routeChrom[(startA + nMovedRoutes - 1) % nbRoutesA]
                       .end(),
                   [&clientsInSelectedB](int c) {
                       return clientsInSelectedB.find(c)
@@ -236,11 +232,9 @@ Individual *Genetic::crossoverSREX(Parents parents)
         // Difference for moving 'right' in parent A
         const int differenceARight
             = static_cast<int>(std::count_if(
-                  parents.first
-                      ->routeChrom[(startA + nOfMovedRoutes) % nOfRoutesA]
+                  parents.first->routeChrom[(startA + nMovedRoutes) % nbRoutesA]
                       .begin(),
-                  parents.first
-                      ->routeChrom[(startA + nOfMovedRoutes) % nOfRoutesA]
+                  parents.first->routeChrom[(startA + nMovedRoutes) % nbRoutesA]
                       .end(),
                   [&clientsInSelectedB](int c) {
                       return clientsInSelectedB.find(c)
@@ -258,10 +252,10 @@ Individual *Genetic::crossoverSREX(Parents parents)
         const int differenceBLeft
             = static_cast<int>(std::count_if(
                   parents.second
-                      ->routeChrom[(startB - 1 + nOfMovedRoutes) % nOfRoutesB]
+                      ->routeChrom[(startB - 1 + nMovedRoutes) % nbRoutesB]
                       .begin(),
                   parents.second
-                      ->routeChrom[(startB - 1 + nOfMovedRoutes) % nOfRoutesB]
+                      ->routeChrom[(startB - 1 + nMovedRoutes) % nbRoutesB]
                       .end(),
                   [&clientsInSelectedA](int c) {
                       return clientsInSelectedA.find(c)
@@ -269,10 +263,10 @@ Individual *Genetic::crossoverSREX(Parents parents)
                   }))
               - static_cast<int>(std::count_if(
                   parents.second
-                      ->routeChrom[(startB - 1 + nOfRoutesB) % nOfRoutesB]
+                      ->routeChrom[(startB - 1 + nbRoutesB) % nbRoutesB]
                       .begin(),
                   parents.second
-                      ->routeChrom[(startB - 1 + nOfRoutesB) % nOfRoutesB]
+                      ->routeChrom[(startB - 1 + nbRoutesB) % nbRoutesB]
                       .end(),
                   [&clientsInSelectedA](int c) {
                       return clientsInSelectedA.find(c)
@@ -290,10 +284,10 @@ Individual *Genetic::crossoverSREX(Parents parents)
                                 }))
               - static_cast<int>(std::count_if(
                   parents.second
-                      ->routeChrom[(startB + nOfMovedRoutes) % nOfRoutesB]
+                      ->routeChrom[(startB + nMovedRoutes) % nbRoutesB]
                       .begin(),
                   parents.second
-                      ->routeChrom[(startB + nOfMovedRoutes) % nOfRoutesB]
+                      ->routeChrom[(startB + nMovedRoutes) % nbRoutesB]
                       .end(),
                   [&clientsInSelectedA](int c) {
                       return clientsInSelectedA.find(c)
@@ -305,67 +299,65 @@ Individual *Genetic::crossoverSREX(Parents parents)
                                              differenceBLeft,
                                              differenceBRight});
 
-        if (bestDifference < 0)
+        if (bestDifference >= 0)
+            break;
+
+        if (bestDifference == differenceALeft)
         {
-            if (bestDifference == differenceALeft)
+            for (int c :
+                 parents.first
+                     ->routeChrom[(startA + nMovedRoutes - 1) % nbRoutesA])
             {
-                for (int c :
-                     parents.first->routeChrom[(startA + nOfMovedRoutes - 1)
-                                               % nOfRoutesA])
-                {
-                    clientsInSelectedA.erase(clientsInSelectedA.find(c));
-                }
-                startA = (startA - 1 + nOfRoutesA) % nOfRoutesA;
-                for (int c : parents.first->routeChrom[startA])
-                {
-                    clientsInSelectedA.insert(c);
-                }
+                clientsInSelectedA.erase(clientsInSelectedA.find(c));
             }
-            else if (bestDifference == differenceARight)
+            startA = (startA - 1 + nbRoutesA) % nbRoutesA;
+            for (int c : parents.first->routeChrom[startA])
             {
-                for (int c : parents.first->routeChrom[startA])
-                {
-                    clientsInSelectedA.erase(clientsInSelectedA.find(c));
-                }
-                startA = (startA + 1) % nOfRoutesA;
-                for (int c :
-                     parents.first->routeChrom[(startA + nOfMovedRoutes - 1)
-                                               % nOfRoutesA])
-                {
-                    clientsInSelectedA.insert(c);
-                }
-            }
-            else if (bestDifference == differenceBLeft)
-            {
-                for (int c :
-                     parents.second->routeChrom[(startB + nOfMovedRoutes - 1)
-                                                % nOfRoutesB])
-                {
-                    clientsInSelectedB.erase(clientsInSelectedB.find(c));
-                }
-                startB = (startB - 1 + nOfRoutesB) % nOfRoutesB;
-                for (int c : parents.second->routeChrom[startB])
-                {
-                    clientsInSelectedB.insert(c);
-                }
-            }
-            else if (bestDifference == differenceBRight)
-            {
-                for (int c : parents.second->routeChrom[startB])
-                {
-                    clientsInSelectedB.erase(clientsInSelectedB.find(c));
-                }
-                startB = (startB + 1) % nOfRoutesB;
-                for (int c :
-                     parents.second->routeChrom[(startB + nOfMovedRoutes - 1)
-                                                % nOfRoutesB])
-                {
-                    clientsInSelectedB.insert(c);
-                }
+                clientsInSelectedA.insert(c);
             }
         }
-        else
-            improved = false;
+        else if (bestDifference == differenceARight)
+        {
+            for (int c : parents.first->routeChrom[startA])
+            {
+                clientsInSelectedA.erase(clientsInSelectedA.find(c));
+            }
+            startA = (startA + 1) % nbRoutesA;
+            for (int c :
+                 parents.first
+                     ->routeChrom[(startA + nMovedRoutes - 1) % nbRoutesA])
+            {
+                clientsInSelectedA.insert(c);
+            }
+        }
+        else if (bestDifference == differenceBLeft)
+        {
+            for (int c :
+                 parents.second
+                     ->routeChrom[(startB + nMovedRoutes - 1) % nbRoutesB])
+            {
+                clientsInSelectedB.erase(clientsInSelectedB.find(c));
+            }
+            startB = (startB - 1 + nbRoutesB) % nbRoutesB;
+            for (int c : parents.second->routeChrom[startB])
+            {
+                clientsInSelectedB.insert(c);
+            }
+        }
+        else if (bestDifference == differenceBRight)
+        {
+            for (int c : parents.second->routeChrom[startB])
+            {
+                clientsInSelectedB.erase(clientsInSelectedB.find(c));
+            }
+            startB = (startB + 1) % nbRoutesB;
+            for (int c :
+                 parents.second
+                     ->routeChrom[(startB + nMovedRoutes - 1) % nbRoutesB])
+            {
+                clientsInSelectedB.insert(c);
+            }
+        }
     }
 
     // Identify differences between route sets
@@ -388,59 +380,58 @@ Individual *Genetic::crossoverSREX(Parents parents)
         });
 
     // Replace selected routes from parent A with routes from parent B
-    for (int r = 0; r < nOfMovedRoutes; r++)
+    for (size_t r = 0; r < nMovedRoutes; r++)
     {
-        int indexA = (startA + r) % nOfRoutesA;
-        int indexB = (startB + r) % nOfRoutesB;
-        candidateOffsprings[0]->routeChrom[indexA].clear();
-        candidateOffsprings[1]->routeChrom[indexA].clear();
+        size_t indexA = (startA + r) % nbRoutesA;
+        size_t indexB = (startB + r) % nbRoutesB;
+        candOffspring[0]->routeChrom[indexA].clear();
+        candOffspring[1]->routeChrom[indexA].clear();
 
         for (int c : parents.second->routeChrom[indexB])
         {
-            candidateOffsprings[0]->routeChrom[indexA].push_back(c);
+            candOffspring[0]->routeChrom[indexA].push_back(c);
+
             if (clientsInSelectedBNotA.find(c) == clientsInSelectedBNotA.end())
-            {
-                candidateOffsprings[1]->routeChrom[indexA].push_back(c);
-            }
+                candOffspring[1]->routeChrom[indexA].push_back(c);
         }
     }
 
     // Move routes from parent A that are kept
-    for (int r = nOfMovedRoutes; r < nOfRoutesA; r++)
+    for (size_t r = nMovedRoutes; r < nbRoutesA; r++)
     {
-        int indexA = (startA + r) % nOfRoutesA;
-        candidateOffsprings[0]->routeChrom[indexA].clear();
-        candidateOffsprings[1]->routeChrom[indexA].clear();
+        size_t indexA = (startA + r) % nbRoutesA;
+        candOffspring[0]->routeChrom[indexA].clear();
+        candOffspring[1]->routeChrom[indexA].clear();
 
         for (int c : parents.first->routeChrom[indexA])
         {
             if (clientsInSelectedBNotA.find(c) == clientsInSelectedBNotA.end())
             {
-                candidateOffsprings[0]->routeChrom[indexA].push_back(c);
+                candOffspring[0]->routeChrom[indexA].push_back(c);
             }
-            candidateOffsprings[1]->routeChrom[indexA].push_back(c);
+            candOffspring[1]->routeChrom[indexA].push_back(c);
         }
     }
 
     // Delete any remaining routes that still lived in offspring
-    for (int r = nOfRoutesA; r < params.nbVehicles; r++)
+    for (size_t r = nbRoutesA; r < static_cast<size_t>(params.nbVehicles); r++)
     {
-        candidateOffsprings[0]->routeChrom[r].clear();
-        candidateOffsprings[1]->routeChrom[r].clear();
+        candOffspring[0]->routeChrom[r].clear();
+        candOffspring[1]->routeChrom[r].clear();
     }
 
     // Step 3: Insert unplanned clients (those that were in the removed routes
     // of A but not the inserted routes of B)
-    insertUnplannedTasks(candidateOffsprings[0], clientsInSelectedANotB);
-    insertUnplannedTasks(candidateOffsprings[1], clientsInSelectedANotB);
+    insertUnplannedTasks(candOffspring[0], clientsInSelectedANotB);
+    insertUnplannedTasks(candOffspring[1], clientsInSelectedANotB);
 
-    candidateOffsprings[0]->evaluateCompleteCost();
-    candidateOffsprings[1]->evaluateCompleteCost();
+    candOffspring[0]->evaluateCompleteCost();
+    candOffspring[1]->evaluateCompleteCost();
 
-    return candidateOffsprings[0]->costs.penalizedCost
-                   < candidateOffsprings[1]->costs.penalizedCost
-               ? candidateOffsprings[0]
-               : candidateOffsprings[1];
+    return candOffspring[0]->costs.penalizedCost
+                   < candOffspring[1]->costs.penalizedCost
+               ? candOffspring[0]
+               : candOffspring[1];
 }
 
 void Genetic::insertUnplannedTasks(
@@ -553,17 +544,19 @@ Genetic::Genetic(Params &params,
                  XorShift128 &rng,
                  Population &population,
                  LocalSearch &localSearch)
-    : params(params), rng(rng), population(population), localSearch(localSearch)
+    : params(params),
+      rng(rng),
+      population(population),
+      localSearch(localSearch),
+      candOffspring()
 {
-    // After initializing the parameters of the Genetic object, also generate
-    // new individuals in the array candidateOffsprings
-    std::generate(candidateOffsprings.begin(), candidateOffsprings.end(), [&] {
+    std::generate(candOffspring.begin(), candOffspring.end(), [&] {
         return new Individual(&params, &rng);
     });
 }
 
 Genetic::~Genetic()
 {
-    for (Individual *candidateOffspring : candidateOffsprings)
+    for (Individual *candidateOffspring : candOffspring)
         delete candidateOffspring;
 }

@@ -37,6 +37,7 @@ SOFTWARE.*/
 // etc.
 class Population
 {
+    using Parents = std::pair<Individual const *, Individual const *>;
     using SubPopulation = std::vector<Individual *>;
 
     Params &params;            // Problem parameters
@@ -90,12 +91,11 @@ public:
     void managePenalties();
 
     // Selects an individal by binary tournament
-    Individual *getBinaryTournament();
+    Individual const *getBinaryTournament();
 
     // Selects two non-identical parents by binary tournament and return as a
     // pair
-    std::pair<Individual *, Individual *>
-    getNonIdenticalParentsBinaryTournament();
+    Parents getNonIdenticalParentsBinaryTournament();
 
     [[nodiscard]] SubPopulation const &getFeasible() const
     {

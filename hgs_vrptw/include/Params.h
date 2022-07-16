@@ -89,12 +89,6 @@ public:
     // nbClients + 1, but nothing stored for the depot!)
     std::vector<std::vector<int>> correlatedVertices;
 
-    // Tolerance when determining circle sector overlap (0 - 65536)
-    int circleSectorOverlapTolerance;
-
-    // Minimum circle sector size to enforce (for nonempty routes) (0 - 65536)
-    int minCircleSectorSize;
-
     /**
      * Constructs a Params object with the given configuration, and data read
      * from the given instance path.

@@ -86,51 +86,51 @@ struct Config
     // Skip normal swap star based on distance
     bool skipSwapStarDist = false;
 
-    // Margin to take (in degrees 0 - 359) to determine overlap of circle
-    // sectors for SWAP*
-    int circleSectorOverlapToleranceDegrees = 0;
+    // Margin to take (in degrees 0 - 359 as ints [0 - 65536]) to determine
+    // overlap of circle sectors for SWAP*
+    int circleSectorOverlapTolerance = 0;
 
-    // Minimum size (in degrees) for circle sectors such that even small
-    // circle sectors have 'overlap'
-    int minCircleSectorSizeDegrees = 15;
+    // Minimum size (in degrees as ints [0 - 65536]) for circle sectors such
+    // that even small circle sectors have 'overlap'
+    int minCircleSectorSize = static_cast<int>(15 / 360. * 65536);
 
     // Whether correlation matrix is symmetric
     bool useSymmetricCorrelatedVertices = false;
 
-    Config(int nbIter = 20'000,
-           int timeLimit = INT_MAX,
-           int seed = 0,
-           double fractionGeneratedNearest = 0.05,
-           double fractionGeneratedFurthest = 0.05,
-           double fractionGeneratedSweep = 0.05,
-           double fractionGeneratedRandomly = 0.85,
-           int minSweepFillPercentage = 60,
-           int maxToleratedCapacityViolation = 50,
-           int maxToleratedTimeWarp = 100,
-           double initialTimeWarpPenalty = 1.0,
-           double penaltyBooster = 2.,
-           size_t minimumPopulationSize = 25,
-           size_t generationSize = 40,
-           size_t nbElite = 4,
-           size_t nbClose = 5,
-           double targetFeasible = 0.2,
-           int repairProbability = 50,
-           int growNbGranularAfterNonImprovementIterations = 5'000,
-           int growNbGranularAfterIterations = 0,
-           int growNbGranularSize = 0,
-           int growPopulationAfterNonImprovementIterations = 5'000,
-           int growPopulationAfterIterations = 0,
-           int growPopulationSize = 0,
-           double diversityWeight = 0.,
-           int nbVeh = INT_MAX,
-           bool useDynamicParameters = false,
-           int nbGranular = 40,
-           int intensificationProbabilityLS = 15,
-           bool useSwapStarTW = true,
-           bool skipSwapStarDist = false,
-           int circleSectorOverlapToleranceDegrees = 0,
-           int minCircleSectorSizeDegrees = 15,
-           bool useSymmetricCorrelatedVertices = false)
+    explicit Config(int nbIter = 20'000,
+                    int timeLimit = INT_MAX,
+                    int seed = 0,
+                    double fractionGeneratedNearest = 0.05,
+                    double fractionGeneratedFurthest = 0.05,
+                    double fractionGeneratedSweep = 0.05,
+                    double fractionGeneratedRandomly = 0.85,
+                    int minSweepFillPercentage = 60,
+                    int maxToleratedCapacityViolation = 50,
+                    int maxToleratedTimeWarp = 100,
+                    double initialTimeWarpPenalty = 1.0,
+                    double penaltyBooster = 2.,
+                    size_t minimumPopulationSize = 25,
+                    size_t generationSize = 40,
+                    size_t nbElite = 4,
+                    size_t nbClose = 5,
+                    double targetFeasible = 0.2,
+                    int repairProbability = 50,
+                    int growNbGranularAfterNonImprovementIterations = 5'000,
+                    int growNbGranularAfterIterations = 0,
+                    int growNbGranularSize = 0,
+                    int growPopulationAfterNonImprovementIterations = 5'000,
+                    int growPopulationAfterIterations = 0,
+                    int growPopulationSize = 0,
+                    double diversityWeight = 0.,
+                    int nbVeh = INT_MAX,
+                    bool useDynamicParameters = false,
+                    int nbGranular = 40,
+                    int intensificationProbabilityLS = 15,
+                    bool useSwapStarTW = true,
+                    bool skipSwapStarDist = false,
+                    int circleSectorOverlapToleranceDegrees = 0,
+                    int minCircleSectorSizeDegrees = 15,
+                    bool useSymmetricCorrelatedVertices = false)
         : seed(seed),
           nbIter(nbIter),
           timeLimit(timeLimit),
@@ -164,11 +164,14 @@ struct Config
           intensificationProbabilityLS(intensificationProbabilityLS),
           useSwapStarTW(useSwapStarTW),
           skipSwapStarDist(skipSwapStarDist),
-          circleSectorOverlapToleranceDegrees(
-              circleSectorOverlapToleranceDegrees),
-          minCircleSectorSizeDegrees(minCircleSectorSizeDegrees),
+          circleSectorOverlapTolerance(circleSectorOverlapToleranceDegrees),
           useSymmetricCorrelatedVertices(useSymmetricCorrelatedVertices)
     {
+        auto const overlap = circleSectorOverlapToleranceDegrees / 360. * 65536;
+        circleSectorOverlapTolerance = static_cast<int>(overlap);
+
+        auto const minCircleSize = minCircleSectorSizeDegrees / 360. * 65536;
+        minCircleSectorSize = static_cast<int>(minCircleSize);
     }
 };
 

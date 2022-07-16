@@ -41,8 +41,6 @@ void Population::generatePopulation()
         return;
     }
 
-    // ------- The below parameters are configurable through command line
-    // arguments ---------
     double fractionGeneratedNearest = params.config.fractionGeneratedNearest;
     double fractionGeneratedFurthest = params.config.fractionGeneratedFurthest;
     double fractionGeneratedSweep = params.config.fractionGeneratedSweep;
@@ -51,18 +49,9 @@ void Population::generatePopulation()
     int maxToleratedCapacityViolation
         = params.config.maxToleratedCapacityViolation;
     int maxToleratedTimeWarp = params.config.maxToleratedTimeWarp;
-    double initialTimeWarpPenalty = params.config.initialTimeWarpPenalty;
-    // ------- End of configurable parameters
-    // -----------------------------------------------------
 
     // Generate same number of individuals as in original solution.
     int nofIndividuals = 4 * params.config.minimumPopulationSize;
-
-    // TODO: Change next comment?
-    // Note we actually set initial penalty in Params.cpp but by setting it here
-    // we also reset it when resetting the population (probably not ideal but
-    // test before changing)
-    params.penaltyTimeWarp = initialTimeWarpPenalty;
 
     // Too low fill percentage may cause that not all clients are planned
     minSweepFillPercentage = std::max(minSweepFillPercentage, 30);
@@ -359,7 +348,7 @@ void Population::managePenalties()
     }
 }
 
-Individual *Population::getBinaryTournament()
+Individual const *Population::getBinaryTournament()
 {
     // TODO only compute updated biased fitness of selected individuals?
     updateBiasedFitnesses(feasibleSubpopulation);
@@ -387,12 +376,12 @@ Individual *Population::getBinaryTournament()
                : individual2;
 }
 
-std::pair<Individual *, Individual *>
+std::pair<Individual const *, Individual const *>
 Population::getNonIdenticalParentsBinaryTournament()
 {
     // Pick two individual using a binary tournament
-    Individual *par1 = getBinaryTournament();
-    Individual *par2 = getBinaryTournament();
+    Individual const *par1 = getBinaryTournament();
+    Individual const *par2 = getBinaryTournament();
 
     // If same parent, try a few more times to get some diversity
     size_t numTries = 1;
