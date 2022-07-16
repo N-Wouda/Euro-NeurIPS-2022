@@ -30,34 +30,21 @@ SOFTWARE.*/
 #include <string>
 #include <vector>
 
-// Object to store all relevant information that may be needed to calculate some
-// cost corresponding to a solution
-struct CostSol
-{
-    double penalizedCost = 0.;  // Penalized cost of the solution
-    int nbRoutes = 0;           // Number of routes
-    int distance = 0;           // Total Distance
-    int capacityExcess = 0;     // Total excess load over all routes
-    int waitTime = 0;           // All route wait time of early arrivals
-    int timeWarp = 0;           // All route time warp (going back in time to
-                                // meet latest possible arrival)
-};
-
-// Structure representing a client when making routes
-struct ClientSplit
-{
-    int demand = 0;       // The demand of the client
-    int serviceTime = 0;  // The service duration of the client
-    int d0_x = 0;         // The distance from the depot to the client
-    int dx_0 = 0;         // The distance from the client to the depot
-    int dnext = 0;        // The distance from the client to the next client
-};
-
-// Object to represent one individual/solution of a population.
+// Object to represent one individual of a population.
 class Individual
 {
     using Client = int;
     using Clients = std::vector<Client>;
+
+    struct CostSol
+    {
+        double penalizedCost = 0.;  // Penalized cost of the solution
+        size_t nbRoutes = 0;        // Number of routes
+        size_t distance = 0;        // Total Distance
+        size_t capacityExcess = 0;  // Total excess load over all routes
+        size_t waitTime = 0;        // All route wait time of early arrivals
+        size_t timeWarp = 0;        // All route time warp of late arrivals
+    };
 
     Params *params;  // Problem parameters
 
@@ -134,7 +121,7 @@ public:
     bool operator==(Individual const &other) const;
 
     // Constructor: create a random individual
-    explicit Individual(Params *params, bool initializeChromTAndShuffle = true);
+    explicit Individual(Params *params, bool initAndShuffle = true);
 
     // Constructor: create an empty individual
     Individual();

@@ -1930,6 +1930,8 @@ void LocalSearch::loadIndividual(Individual *indiv)
 void LocalSearch::exportIndividual(Individual *indiv)
 {
     std::vector<std::pair<double, int>> routePolarAngles;
+    routePolarAngles.reserve(params.nbVehicles);
+
     for (int r = 0; r < params.nbVehicles; r++)
         routePolarAngles.emplace_back(routes[r].polarAngleBarycenter, r);
 
