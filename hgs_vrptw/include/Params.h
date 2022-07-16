@@ -86,7 +86,6 @@ public:
     // Weight for time warp in defining the neighbourhood proximities
     double proximityWeightTimeWarp;
 
-    std::string instanceName;
     bool isExplicitDistanceMatrix;  // Has explicit distances (non-euclidean)
     int nbClients;                  // Number of clients (excluding the depot)
     int nbVehicles;                 // Number of vehicles
@@ -111,7 +110,35 @@ public:
     // Minimum circle sector size to enforce (for nonempty routes) (0 - 65536)
     int minCircleSectorSize;
 
-    explicit Params(Config &config);
+    /**
+     * Constructs a Params object with the given configuration, and data read
+     * from the given instance path.
+     *
+     * @param config   Configuration object.
+     * @param instPath Path to the instance data.
+     */
+    Params(Config &config, std::string const &instPath);
+
+    /**
+     * Constructs a Params object with the given configuration, and passed-in
+     * data. Assumes the data contains the depot, such that each vector is one
+     * longer than the number of clients.
+     *
+     * @param config       Configuration object.
+     * @param coords       Coordinates as pairs of [x, y].
+     * @param demands      Client demands.
+     * @param vehicleCap   Vehicle capacity.
+     * @param timeWindows  Time windows as pairs of [early, late].
+     * @param servDurs     Service durations.
+     * @param dist         Distance matrix.
+     */
+    Params(Config &config,
+           std::vector<std::pair<int, int>> const &coords,
+           std::vector<int> const &demands,
+           int vehicleCap,
+           std::vector<std::pair<int, int>> const &timeWindows,
+           std::vector<int> const &servDurs,
+           std::vector<std::vector<int>> const &dist);
 
     // Get time elapsed since start of program
     [[nodiscard]] double getElapsedTime() const;

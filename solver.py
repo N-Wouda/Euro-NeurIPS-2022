@@ -45,6 +45,16 @@ def parse_args():
 
 
 def solve_static_vrptw(instance, time_limit=3600, tmp_dir="tmp", seed=1):
+    # Instance is a dict that has the following entries:
+    # - 'is_depot': boolean np.array. True for depot; False otherwise.
+    # - 'coords': np.array of locations (incl. depot)
+    # - 'demands': np.array of location demands (incl. depot with demand zero)
+    # - 'capacity': int of vehicle capacity
+    # - 'time_windows': np.array of [l, u] time windows per client (incl. depot)
+    # - 'service_times': np.array of service times at each client (incl. depot)
+    # - 'duration_matrix': distance matrix between clients (incl. depot)
+    # TODO possible release_times? Ask Wouter.
+
     # Prevent passing empty instances to the static solver, e.g. when
     # strategy decides to not dispatch any requests for the current epoch
     if instance['coords'].shape[0] <= 1:
@@ -57,22 +67,24 @@ def solve_static_vrptw(instance, time_limit=3600, tmp_dir="tmp", seed=1):
         yield solution, cost
         return
 
-    os.makedirs(tmp_dir, exist_ok=True)
-    instance_filename = os.path.join(tmp_dir, "problem.vrptw")
-    tools.write_vrplib(instance_filename, instance, is_vrptw=True)
-    out_filename = os.path.join(tmp_dir, "problem.sol")
-
     # TODO all this works, but it is not pretty. Clean this up in tandem with
     #  the C++ implementation.
 
-    config = Config(instance_filename,
-                    out_filename,
-                    timeLimit=max(time_limit - 2, 1),
+    config = Config(timeLimit=max(time_limit - 1, 1),
                     seed=seed,
                     nbVeh=-1,
                     useWallClockTime=True)
 
-    params = Params(config)
+    # TODO is depot always at idx 0? Ask Wouter
+    coords = [(x, y) for x, y in instance['coords'].tolist()]
+    demands = instance['demands'].tolist()
+    capacity = instance['capacity']
+    time_windows = [(l, u) for l, u in instance['time_windows'].tolist()]
+    service_times = instance['service_times'].tolist()
+    duration_matrix = instance['duration_matrix'].tolist()
+
+    params = Params(config, coords, demands, capacity, time_windows,
+                    service_times, duration_matrix)
 
     rng = XorShift128(seed=seed)
     ls = LocalSearch(params, rng)

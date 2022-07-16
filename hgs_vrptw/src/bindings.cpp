@@ -30,9 +30,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("rng"));
 
     py::class_<Config>(m, "Config")
-        .def(py::init<std::string,
-                      std::string,
-                      int,
+        .def(py::init<int,
                       int,
                       int,
                       bool,
@@ -68,8 +66,6 @@ PYBIND11_MODULE(hgspy, m)
                       int,
                       bool,
                       bool>(),
-             py::arg("instPath"),
-             py::arg("solPath"),
              py::arg("nbIter") = 20'000,
              py::arg("timeLimit") = INT_MAX,
              py::arg("seed") = 0,
@@ -108,7 +104,20 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("doRepeatUntilTimeLimit") = true);
 
     py::class_<Params>(m, "Params")
-        .def(py::init<Config &>(), py::arg("config"))
+        .def(py::init<Config &,
+                      std::vector<std::pair<int, int>> const &,
+                      std::vector<int> const &,
+                      int,
+                      std::vector<std::pair<int, int>> const &,
+                      std::vector<int> const &,
+                      std::vector<std::vector<int>> const &>(),
+             py::arg("config"),
+             py::arg("coords"),
+             py::arg("demands"),
+             py::arg("vehicle_cap"),
+             py::arg("time_windows"),
+             py::arg("service_durations"),
+             py::arg("distance_matrix"))
         .def("get_elapsed_time", &Params::getElapsedTime);
 
     py::class_<Population>(m, "Population")

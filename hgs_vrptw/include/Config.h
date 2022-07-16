@@ -11,8 +11,6 @@ struct Config
 {
     // TODO make fields const
 
-    std::string instPath;           // Instance file path
-    std::string solPath;            // Solution file path
     int seed = 0;                   // Random seed
     int nbIter = 20'000;            // iters without improvement
     int timeLimit = INT_MAX;        // time limit in seconds
@@ -104,9 +102,7 @@ struct Config
     // time limit is not
     bool doRepeatUntilTimeLimit = true;
 
-    Config(std::string instPath,
-           std::string solPath,
-           int nbIter = 20'000,
+    Config(int nbIter = 20'000,
            int timeLimit = INT_MAX,
            int seed = 0,
            bool useWallClockTime = false,
@@ -142,9 +138,7 @@ struct Config
            int minCircleSectorSizeDegrees = 15,
            bool useSymmetricCorrelatedVertices = false,
            bool doRepeatUntilTimeLimit = true)
-        : instPath(std::move(instPath)),
-          solPath(std::move(solPath)),
-          seed(seed),
+        : seed(seed),
           nbIter(nbIter),
           timeLimit(timeLimit),
           useWallClockTime(useWallClockTime),

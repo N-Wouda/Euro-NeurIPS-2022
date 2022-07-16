@@ -13,7 +13,7 @@ try
     CommandLine args(argc, argv);
     auto config = args.parse();
     auto rng = XorShift128(config.seed);
-    auto params = Params(config);
+    auto params = Params(config, args.instPath());
 
     LocalSearch ls(params, rng);
     Population pop(params, rng, ls);
@@ -24,7 +24,7 @@ try
     if (res.getBestFound() != nullptr)
     {
         auto const *bestSol = res.getBestFound();
-        bestSol->exportCVRPLibFormat(params.config.solPath);
+        bestSol->exportCVRPLibFormat(args.solPath());
     }
 }
 catch (std::exception const &e)

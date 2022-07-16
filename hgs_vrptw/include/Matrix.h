@@ -20,7 +20,7 @@ public:
 
     // Constructor: create a matrix of size dimension by dimension, using a C++
     // vector of size dimension * dimension
-    Matrix(const int dimension) : cols_(dimension)
+    explicit Matrix(const int dimension) : cols_(dimension)
     {
         data_ = std::vector<int>(dimension * dimension);
     }
@@ -32,9 +32,14 @@ public:
     }
 
     // Get the value at position (row, col) in the matrix
-    int get(const int row, const int col) const
+    [[nodiscard]] int get(const int row, const int col) const
     {
         return data_[cols_ * row + col];
+    }
+
+    [[nodiscard]] int max() const
+    {
+        return *std::max_element(data_.begin(), data_.end());
     }
 };
 
