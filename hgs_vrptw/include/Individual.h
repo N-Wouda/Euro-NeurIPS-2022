@@ -124,9 +124,6 @@ public:
     explicit Individual(Params *params,  // create a random individual
                         XorShift128 *rng,
                         bool initAndShuffle = true);
-
-    // Constructor:
-    Individual();  // create an empty individual
 };
 
 #endif

@@ -39,12 +39,11 @@ def parse_args():
     parser.add_argument("--solver_seed", type=int, default=1)
     parser.add_argument("--static", action='store_true')
     parser.add_argument("--epoch_tlim", type=int, default=120)
-    parser.add_argument("--tmp_dir", type=str, default=None)
 
     return parser.parse_args()
 
 
-def solve_static_vrptw(instance, time_limit=3600, tmp_dir="tmp", seed=1):
+def solve_static_vrptw(instance, time_limit=3600, seed=1):
     # Instance is a dict that has the following entries:
     # - 'is_depot': boolean np.array. True for depot; False otherwise.
     # - 'coords': np.array of locations (incl. depot)
@@ -53,7 +52,6 @@ def solve_static_vrptw(instance, time_limit=3600, tmp_dir="tmp", seed=1):
     # - 'time_windows': np.array of [l, u] time windows per client (incl. depot)
     # - 'service_times': np.array of service times at each client (incl. depot)
     # - 'duration_matrix': distance matrix between clients (incl. depot)
-    # TODO possible release_times? Ask Wouter.
 
     # Prevent passing empty instances to the static solver, e.g. when
     # strategy decides to not dispatch any requests for the current epoch
@@ -75,7 +73,6 @@ def solve_static_vrptw(instance, time_limit=3600, tmp_dir="tmp", seed=1):
                     nbVeh=-1,
                     useWallClockTime=True)
 
-    # TODO is depot always at idx 0? Ask Wouter
     coords = [(x, y) for x, y in instance['coords'].tolist()]
     demands = instance['demands'].tolist()
     capacity = instance['capacity']
@@ -119,8 +116,7 @@ def run_oracle(args, env):
     hindsight_problem = env.get_hindsight_problem()
 
     oracle_solution = \
-        min(solve_static_vrptw(hindsight_problem, time_limit=epoch_tlim,
-                               tmp_dir=args.tmp_dir), key=lambda x: x[1])[0]
+        min(solve_static_vrptw(hindsight_problem, time_limit=epoch_tlim), key=lambda x: x[1])[0]
     oracle_cost = tools.validate_static_solution(hindsight_problem,
                                                  oracle_solution)
 
@@ -159,7 +155,6 @@ def run_baseline(args, env, oracle_solution=None):
             # we will exactly use the solver_seed whereas in the dynamic problem randomness is in the instance
             solutions = list(solve_static_vrptw(epoch_instance_dispatch,
                                                 time_limit=epoch_tlim,
-                                                tmp_dir=args.tmp_dir,
                                                 seed=args.solver_seed))
             assert len(
                 solutions) > 0, f"No solution found during epoch {observation['current_epoch']}"
@@ -181,10 +176,6 @@ def run_baseline(args, env, oracle_solution=None):
 
 def main():
     args = parse_args()
-
-    if args.tmp_dir is None:
-        # Generate random tmp directory
-        args.tmp_dir = os.path.join("tmp", str(uuid.uuid4()))
 
     if args.instance is not None:
         env = VRPEnvironment(seed=args.instance_seed,

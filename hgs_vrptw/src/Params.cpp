@@ -31,8 +31,8 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
     int node;
     bool hasServiceTimeSection = false;
     nbClients = 0;
-    totalDemand = 0;
-    maxDemand = 0;
+    int totalDemand = 0;
+    int maxDemand = 0;
     vehicleCapacity = INT_MAX;
 
     // Read INPUT dataset
@@ -131,21 +131,10 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
             else if (content == "EDGE_WEIGHT_TYPE")
             {
                 inputFile >> content2 >> content3;
-                if (content3 == "EXPLICIT")
-                {
-                    isExplicitDistanceMatrix = true;
-                }
             }
             else if (content == "EDGE_WEIGHT_FORMAT")
             {
                 inputFile >> content2 >> content3;
-                if (!isExplicitDistanceMatrix)
-                {
-                    throw std::runtime_error(
-                        "EDGE_WEIGHT_FORMAT can only be used "
-                        "with EDGE_WEIGHT_TYPE : EXPLICIT");
-                }
-
                 if (content3 != "FULL_MATRIX")
                 {
                     throw std::runtime_error(
@@ -169,13 +158,6 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
             // Read the edge weights of an explicit distance matrix
             else if (content == "EDGE_WEIGHT_SECTION")
             {
-                if (!isExplicitDistanceMatrix)
-                {
-                    throw std::runtime_error(
-                        "EDGE_WEIGHT_SECTION can only be used with "
-                        "EDGE_WEIGHT_TYPE : EXPLICIT");
-                }
-
                 timeCost = Matrix(nbClients + 1);
                 for (int i = 0; i <= nbClients; i++)
                 {
@@ -415,86 +397,7 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
         }
     }
 
-    if (!isExplicitDistanceMatrix)
-    {
-        // Calculation of the distance matrix
-        timeCost = Matrix(nbClients + 1);
-        // Loop over all clients (including the depot)
-        for (int i = 0; i <= nbClients; i++)
-        {
-            // Set the diagonal element to zero (travel to itself)
-            timeCost.set(i, i, 0);
-            // Loop over all other clients
-            for (int j = i + 1; j <= nbClients; j++)
-            {
-                // Calculate Euclidian distance d
-                double d = std::sqrt((cli[i].coordX - cli[j].coordX)
-                                         * (cli[i].coordX - cli[j].coordX)
-                                     + (cli[i].coordY - cli[j].coordY)
-                                           * (cli[i].coordY - cli[j].coordY));
-                // Integer truncation
-                int cost = static_cast<int>(d);
-
-                // Save the distances in the matrix
-                timeCost.set(i, j, cost);
-                timeCost.set(j, i, cost);
-            }
-        }
-    }
-
-    maxDist = timeCost.max();
-
-    // Compute order proximities once
-    orderProximities
-        = std::vector<std::vector<std::pair<double, int>>>(nbClients + 1);
-    // Loop over all clients (excluding the depot)
-    for (int i = 1; i <= nbClients; i++)
-    {
-        // Remove all elements from the vector
-        auto &orderProximity = orderProximities[i];
-        orderProximity.clear();
-
-        // Loop over all clients (excluding the depot and the specific client
-        // itself)
-        for (int j = 1; j <= nbClients; j++)
-        {
-            if (i != j)
-            {
-                // Compute proximity using Eq. 4 in Vidal 2012, and append at
-                // the end of orderProximity
-                const int timeIJ = timeCost.get(i, j);
-                orderProximity.emplace_back(
-                    timeIJ
-                        + std::min(
-                            proximityWeightWaitTime
-                                    * std::max(cli[j].earliestArrival - timeIJ
-                                                   - cli[i].serviceDuration
-                                                   - cli[i].latestArrival,
-                                               0)
-                                + proximityWeightTimeWarp
-                                      * std::max(cli[i].earliestArrival
-                                                     + cli[i].serviceDuration
-                                                     + timeIJ
-                                                     - cli[j].latestArrival,
-                                                 0),
-                            proximityWeightWaitTime
-                                    * std::max(cli[i].earliestArrival - timeIJ
-                                                   - cli[j].serviceDuration
-                                                   - cli[j].latestArrival,
-                                               0)
-                                + proximityWeightTimeWarp
-                                      * std::max(cli[j].earliestArrival
-                                                     + cli[j].serviceDuration
-                                                     + timeIJ
-                                                     - cli[i].latestArrival,
-                                                 0)),
-                    j);
-            }
-        }
-
-        // Sort orderProximity (for the specific client)
-        std::sort(orderProximity.begin(), orderProximity.end());
-    }
+    int maxDist = timeCost.max();
 
     // Calculate, for all vertices, the correlation for the nbGranular closest
     // vertices
@@ -541,14 +444,15 @@ Params::Params(Config &config,
                std::vector<std::pair<int, int>> const &timeWindows,
                std::vector<int> const &servDurs,
                std::vector<std::vector<int>> const &dist)
-    : config(config),
-      isExplicitDistanceMatrix(true),
-      nbClients(coords.size() - 1),
-      nbVehicles(coords.size() - 1),  // TODO shrink?
-      vehicleCapacity(vehicleCap)
+    : config(config), nbClients(coords.size() - 1), vehicleCapacity(vehicleCap)
 {
-    totalDemand = std::accumulate(demands.begin(), demands.end(), 0);
-    maxDemand = *std::max_element(demands.begin(), demands.end());
+    int totalDemand = std::accumulate(demands.begin(), demands.end(), 0);
+    int maxDemand = *std::max_element(demands.begin(), demands.end());
+
+    // Number of vehicles: 30% above LP bin packing heuristic, and three more
+    // just in case.
+    auto const vehicleMargin = std::ceil(1.3 * totalDemand / vehicleCapacity);
+    nbVehicles = static_cast<int>(vehicleMargin) + 3;
 
     timeCost = Matrix(dist.size());
 
@@ -556,7 +460,7 @@ Params::Params(Config &config,
         for (size_t j = 0; j != dist[i].size(); ++j)
             timeCost.set(i, j, dist[i][j]);
 
-    maxDist = timeCost.max();
+    int maxDist = timeCost.max();
 
     // A reasonable scale for the initial values of the penalties
     penaltyCapacity = std::max(
@@ -601,15 +505,34 @@ Params::Params(Config &config,
                     angle};
     }
 
-    // Compute order proximities once
-    orderProximities
-        = std::vector<std::vector<std::pair<double, int>>>(nbClients + 1);
-    // Loop over all clients (excluding the depot)
-    for (int i = 1; i <= nbClients; i++)
+    SetCorrelatedVertices();
+}
+
+double Params::getElapsedTime() const
+{
+    if (config.useWallClockTime)
     {
-        // Remove all elements from the vector
+        auto now = std::chrono::system_clock::now();
+        std::chrono::duration<double> duration = now - startWallClockTime;
+        return duration.count();
+    }
+
+    return static_cast<double>(std::clock() - startCPUTime) / CLOCKS_PER_SEC;
+}
+
+bool Params::isTimeLimitExceeded() const
+{
+    return getElapsedTime() >= config.timeLimit;
+}
+
+void Params::SetCorrelatedVertices()
+{
+    auto orderProximities
+        = std::vector<std::vector<std::pair<double, int>>>(nbClients + 1);
+
+    for (int i = 1; i <= nbClients; i++)  // exclude depot
+    {
         auto &orderProximity = orderProximities[i];
-        orderProximity.clear();
 
         // Loop over all clients (excluding the depot and the specific client
         // itself)
@@ -653,28 +576,6 @@ Params::Params(Config &config,
         std::sort(orderProximity.begin(), orderProximity.end());
     }
 
-    SetCorrelatedVertices();
-}
-
-double Params::getElapsedTime() const
-{
-    if (config.useWallClockTime)
-    {
-        auto now = std::chrono::system_clock::now();
-        std::chrono::duration<double> duration = now - startWallClockTime;
-        return duration.count();
-    }
-
-    return static_cast<double>(std::clock() - startCPUTime) / CLOCKS_PER_SEC;
-}
-
-bool Params::isTimeLimitExceeded() const
-{
-    return getElapsedTime() >= config.timeLimit;
-}
-
-void Params::SetCorrelatedVertices()
-{
     // Calculation of the correlated vertices for each client (for the granular
     // restriction)
     correlatedVertices = std::vector<std::vector<int>>(nbClients + 1);

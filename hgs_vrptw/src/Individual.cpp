@@ -309,10 +309,8 @@ void Individual::exportCVRPLibFormat(std::string const &path) const
     for (size_t rIdx = 0; rIdx != costs.nbRoutes; ++rIdx)
     {
         out << "Route #" << rIdx + 1 << ":";  // route number
-
         for (int cIdx : routeChrom[rIdx])
             out << " " << cIdx;  // client index
-
         out << '\n';
     }
 
@@ -342,9 +340,4 @@ Individual::Individual(Params *params, XorShift128 *rng, bool initAndShuffle)
 
         makeRoutes();
     }
-}
-
-Individual::Individual() : params(nullptr), biasedFitness(0)
-{
-    costs.penalizedCost = 1.e30;
 }

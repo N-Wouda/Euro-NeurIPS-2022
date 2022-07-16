@@ -62,14 +62,17 @@ struct Client
 class Params
 {
     // TODO get rid of this object; turn it into ProblemData (and then have
-    //  config as a separate object)
-public:
-    Config config;  // Stores all the parameter values
+    //  Config as a separate object)
 
     // Start wall clock time of this object (should be constructed at start of
     // program)
     std::chrono::system_clock::time_point startWallClockTime;
     std::clock_t startCPUTime;  // Start CPU time of this object
+
+public:
+    // TODO make members private
+
+    Config config;  // Stores all the parameter values
 
     // Penalty for one unit of capacity excess (adapted through the search)
     double penaltyCapacity;
@@ -86,19 +89,12 @@ public:
     // Weight for time warp in defining the neighbourhood proximities
     double proximityWeightTimeWarp;
 
-    bool isExplicitDistanceMatrix;  // Has explicit distances (non-euclidean)
-    int nbClients;                  // Number of clients (excluding the depot)
-    int nbVehicles;                 // Number of vehicles
-    int vehicleCapacity;            // Capacity limit
-    int totalDemand;                // Total demand required by the clients
-    int maxDemand;                  // Maximum demand of a client
-    int maxDist;                    // Maximum distance between two clients
-    std::vector<Client> cli;        // Client (+depot) information
-    Matrix timeCost;                // Distance matrix (+depot)
+    int nbClients;        // Number of clients (excluding the depot)
+    int nbVehicles;       // Number of vehicles
+    int vehicleCapacity;  // Capacity limit
 
-    // For each client, other clients sorted by proximity (size nbClients + 1,
-    // but nothing stored for the depot!)
-    std::vector<std::vector<std::pair<double, int>>> orderProximities;
+    std::vector<Client> cli;  // Client (+depot) information
+    Matrix timeCost;          // Distance matrix (+depot)
 
     // Neighborhood restrictions: For each client, list of nearby clients (size
     // nbClients + 1, but nothing stored for the depot!)

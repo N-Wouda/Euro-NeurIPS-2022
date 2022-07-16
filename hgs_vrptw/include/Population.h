@@ -59,9 +59,6 @@ class Population
     // Tracks the time stamps of successive best solutions
     std::vector<std::pair<std::clock_t, double>> searchProgress;
 
-    // Best solution found during the current restart of the algorithm
-    Individual bestSolutionRestart;
-
     // Best solution found during the complete execution of the algorithm
     Individual bestSolutionOverall;
 
