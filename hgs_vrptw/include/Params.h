@@ -61,9 +61,6 @@ class Params
     // TODO get rid of this object; turn it into ProblemData (and then have
     //  Config as a separate object)
 
-    double proximityWeightWaitTime;
-    double proximityWeightTimeWarp;
-
 public:
     // TODO make members private
 
@@ -121,7 +118,7 @@ public:
 
     // Calculate, for all vertices, the correlation for the nbGranular closest
     // vertices
-    void SetCorrelatedVertices();
+    void setCorrelatedVertices();
 };
 
 #endif

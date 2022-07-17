@@ -392,7 +392,7 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
 
     // Calculate, for all vertices, the correlation for the nbGranular closest
     // vertices
-    SetCorrelatedVertices();
+    setCorrelatedVertices();
 
     // Safeguards to avoid possible numerical instability in case of instances
     // containing arbitrarily small or large numerical values
@@ -422,10 +422,6 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
     // Initial parameter values of these two parameters are not argued
     penaltyWaitTime = 0.;
     penaltyTimeWarp = config.initialTimeWarpPenalty;
-
-    // See Vidal 2012, HGS for VRPTW
-    proximityWeightWaitTime = 0.2;
-    proximityWeightTimeWarp = 1;
 }
 
 Params::Params(Config &config,
@@ -461,10 +457,6 @@ Params::Params(Config &config,
     penaltyWaitTime = 0.;
     penaltyTimeWarp = config.initialTimeWarpPenalty;
 
-    // See Vidal 2012, HGS for VRPTW
-    proximityWeightWaitTime = 0.2;
-    proximityWeightTimeWarp = 1;
-
     cli = std::vector<Client>(nbClients + 1);
 
     for (size_t idx = 0; idx <= static_cast<size_t>(nbClients); ++idx)
@@ -486,73 +478,69 @@ Params::Params(Config &config,
                     angle};
     }
 
-    SetCorrelatedVertices();
+    setCorrelatedVertices();
 }
 
-void Params::SetCorrelatedVertices()
+void Params::setCorrelatedVertices()
 {
-    auto orderProximities
-        = std::vector<std::vector<std::pair<double, int>>>(nbClients + 1);
+    // See Vidal 2012, HGS for VRPTW. Multiplied by 10 for integer arithmetic.
+    int const weightWaitTime = 2;
+    int const weightTimeWarp = 10;
+
+    auto proximities
+        = std::vector<std::vector<std::pair<int, int>>>(nbClients + 1);
 
     for (int i = 1; i <= nbClients; i++)  // exclude depot
     {
-        auto &orderProximity = orderProximities[i];
+        auto &proximity = proximities[i];
 
-        // Loop over all clients (excluding the depot and the specific client
-        // itself)
-        for (int j = 1; j <= nbClients; j++)
+        for (int j = 1; j <= nbClients; j++)  // exclude depot
         {
-            if (i != j)
-            {
-                // Compute proximity using Eq. 4 in Vidal 2012, and append at
-                // the end of orderProximity
-                const int timeIJ = timeCost.get(i, j);
-                orderProximity.emplace_back(
-                    timeIJ
-                        + std::min(
-                            proximityWeightWaitTime
-                                    * std::max(cli[j].earliestArrival - timeIJ
-                                                   - cli[i].serviceDuration
-                                                   - cli[i].latestArrival,
-                                               0)
-                                + proximityWeightTimeWarp
-                                      * std::max(cli[i].earliestArrival
-                                                     + cli[i].serviceDuration
-                                                     + timeIJ
-                                                     - cli[j].latestArrival,
-                                                 0),
-                            proximityWeightWaitTime
-                                    * std::max(cli[i].earliestArrival - timeIJ
-                                                   - cli[j].serviceDuration
-                                                   - cli[j].latestArrival,
-                                               0)
-                                + proximityWeightTimeWarp
-                                      * std::max(cli[j].earliestArrival
-                                                     + cli[j].serviceDuration
-                                                     + timeIJ
-                                                     - cli[i].latestArrival,
-                                                 0)),
-                    j);
-            }
+            if (i == j)  // exclude the current client
+                continue;
+
+            // Compute proximity using Eq. 4 in Vidal 2012
+            // TODO simplify
+            int const time = timeCost.get(i, j);
+
+            int const first
+                = weightWaitTime
+                      * std::max(cli[j].earliestArrival - time
+                                     - cli[i].serviceDuration
+                                     - cli[i].latestArrival,
+                                 0)
+                  + weightTimeWarp
+                        * std::max(cli[i].earliestArrival
+                                       + cli[i].serviceDuration + time
+                                       - cli[j].latestArrival,
+                                   0);
+            int const second
+                = weightWaitTime
+                      * std::max(cli[i].earliestArrival - time
+                                     - cli[j].serviceDuration
+                                     - cli[j].latestArrival,
+                                 0)
+                  + weightTimeWarp
+                        * std::max(cli[j].earliestArrival
+                                       + cli[j].serviceDuration + time
+                                       - cli[i].latestArrival,
+                                   0);
+
+            proximity.emplace_back(time + std::min(first, second), j);
         }
 
-        // Sort orderProximity (for the specific client)
-        std::sort(orderProximity.begin(), orderProximity.end());
+        std::sort(proximity.begin(), proximity.end());
     }
 
-    // Calculation of the correlated vertices for each client (for the granular
-    // restriction)
     correlatedVertices = std::vector<std::vector<int>>(nbClients + 1);
 
     // First create a set of correlated vertices for each vertex (where the
     // depot is not taken into account)
-    std::vector<std::set<int>> setCorrelatedVertices
-        = std::vector<std::set<int>>(nbClients + 1);
+    auto set = std::vector<std::set<int>>(nbClients + 1);
 
-    // Loop over all clients (excluding the depot)
-    for (int i = 1; i <= nbClients; i++)
+    for (int i = 1; i <= nbClients; i++)  // again exclude depot
     {
-        auto &orderProximity = orderProximities[i];
+        auto &orderProximity = proximities[i];
 
         // Loop over all clients (taking into account the max number of clients
         // and the granular restriction)
@@ -560,19 +548,19 @@ void Params::SetCorrelatedVertices()
         {
             // If i is correlated with j, then j should be correlated with i
             // (unless we have asymmetric problem with time windows) Insert
-            // vertices in setCorrelatedVertices, in the order of
+            // vertices in set, in the order of
             // orderProximity, where .second is used since the first index
             // correponds to the depot
-            setCorrelatedVertices[i].insert(orderProximity[j].second);
+            set[i].insert(orderProximity[j].second);
 
             // For symmetric problems, set the other entry to the same value
             if (config.useSymmetricCorrelatedVertices)
-                setCorrelatedVertices[orderProximity[j].second].insert(i);
+                set[orderProximity[j].second].insert(i);
         }
     }
 
-    // Now, fill the vector of correlated vertices, using setCorrelatedVertices
+    // Now, fill the vector of correlated vertices, using set
     for (int i = 1; i <= nbClients; i++)
-        for (int x : setCorrelatedVertices[i])
+        for (int x : set[i])
             correlatedVertices[i].push_back(x);
 }
