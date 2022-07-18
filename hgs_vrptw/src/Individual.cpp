@@ -314,13 +314,13 @@ void Individual::exportCVRPLibFormat(std::string const &path, double time) const
         out << '\n';
     }
 
-    out << "Cost " << costs.penalizedCost << '\n';
+    out << "Cost " << cost() << '\n';
     out << "Time " << time << '\n';
 }
 
 bool Individual::operator==(Individual const &other) const
 {
-    auto diff = std::abs(costs.penalizedCost - other.costs.penalizedCost);
+    auto diff = std::abs(cost() - other.cost());
     return diff < MY_EPSILON && tourChrom == other.tourChrom
            && routeChrom == other.routeChrom;
 }
@@ -329,7 +329,6 @@ Individual::Individual(Params *params, XorShift128 *rng, bool initAndShuffle)
     : params(params),
       successors(params->nbClients + 1),
       predecessors(params->nbClients + 1),
-      biasedFitness(0),
       tourChrom(params->nbClients),
       routeChrom(params->nbVehicles)
 {
@@ -340,4 +339,26 @@ Individual::Individual(Params *params, XorShift128 *rng, bool initAndShuffle)
 
         makeRoutes();
     }
+}
+
+Individual::Individual(Params *params, Clients tour)
+    : params(params),
+      successors(params->nbClients + 1),
+      predecessors(params->nbClients + 1),
+      tourChrom(std::move(tour)),
+      routeChrom(params->nbVehicles)
+{
+    makeRoutes();
+}
+
+Individual::Individual(Params *params,
+                       Clients tour,
+                       std::vector<Clients> routes)
+    : params(params),
+      successors(params->nbClients + 1),
+      predecessors(params->nbClients + 1),
+      tourChrom(std::move(tour)),
+      routeChrom(std::move(routes))
+{
+    evaluateCompleteCost();
 }

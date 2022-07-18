@@ -18,11 +18,6 @@ bool operator==(const TimeWindowData &twData1, const TimeWindowData &twData2)
            && twData1.latestArrival == twData2.latestArrival;
 }
 
-bool cmpd(double a, double b, double eps = 1e-5)
-{
-    return std::fabs(a - b) < eps;
-}
-
 void LocalSearch::initializeConstruction(
     std::vector<NodeToInsert> *nodesToInsert)
 {
@@ -1471,6 +1466,7 @@ int LocalSearch::getCheapestInsertSimultRemoval(Node *U,
 
     // Find best insertion in the route such that V is not next or pred (can
     // only belong to the top three locations)
+
     bestPosition = myBestInsert->bestLocation[0];
     int bestCost = myBestInsert->bestCost[0];
     found = (bestPosition != V && bestPosition->next != V);
@@ -1555,7 +1551,7 @@ void LocalSearch::preprocessInsertions(Route *R1, Route *R2)
         auto &currentOption = bestInsertClient[R2->cour][U->cour];
         if (R2->whenLastModified > currentOption.whenLastCalculated)
         {
-            currentOption.reset();
+            currentOption = ThreeBestInsert();
             currentOption.whenLastCalculated = nbMoves;
             currentOption.bestCost[0]
                 = params.timeCost.get(0, U->cour)
@@ -1567,7 +1563,7 @@ void LocalSearch::preprocessInsertions(Route *R1, Route *R2)
                 int deltaCost = params.timeCost.get(V->cour, U->cour)
                                 + params.timeCost.get(U->cour, V->next->cour)
                                 - params.timeCost.get(V->cour, V->next->cour);
-                currentOption.compareAndAdd(deltaCost, V);
+                currentOption.add(deltaCost, V);
             }
         }
     }
@@ -1598,7 +1594,7 @@ void LocalSearch::preprocessInsertionsWithTW(Route *R1, Route *R2)
         auto &currentOption = bestInsertClientTW[R2->cour][U->cour];
         if (R2->whenLastModified > currentOption.whenLastCalculated)
         {
-            currentOption.reset();
+            currentOption = ThreeBestInsert();
             currentOption.whenLastCalculated = nbMoves;
 
             // Compute additional timewarp we get when inserting U in R2, this
@@ -1608,22 +1604,24 @@ void LocalSearch::preprocessInsertionsWithTW(Route *R1, Route *R2)
                                           U->twData,
                                           R2->depot->next->postfixTwData);
 
-            currentOption.bestCost[0]
-                = params.timeCost.get(0, U->cour)
+            int cost = params.timeCost.get(0, U->cour)
                   + params.timeCost.get(U->cour, R2->depot->next->cour)
                   - params.timeCost.get(0, R2->depot->next->cour)
                   + deltaPenaltyTimeWindows(twData, R2->twData);
 
-            currentOption.bestLocation[0] = R2->depot;
+            currentOption.add(cost, R2->depot);
+
             for (Node *V = R2->depot->next; !V->isDepot; V = V->next)
             {
                 twData = MergeTWDataRecursive(
                     V->prefixTwData, U->twData, V->next->postfixTwData);
+
                 int deltaCost = params.timeCost.get(V->cour, U->cour)
                                 + params.timeCost.get(U->cour, V->next->cour)
                                 - params.timeCost.get(V->cour, V->next->cour)
                                 + deltaPenaltyTimeWindows(twData, R2->twData);
-                currentOption.compareAndAdd(deltaCost, V);
+
+                currentOption.add(deltaCost, V);
             }
         }
     }
@@ -1739,7 +1737,6 @@ void LocalSearch::updateRouteData(Route *myRoute)
     Node *mynode = myRoute->depot;
     mynode->position = 0;
     mynode->cumulatedLoad = 0;
-    mynode->cumulatedTime = 0;
     mynode->cumulatedReversalDistance = 0;
 
     bool firstIt = true;
@@ -1757,7 +1754,6 @@ void LocalSearch::updateRouteData(Route *myRoute)
             += params.timeCost.get(mynode->cour, mynode->prev->cour)
                - params.timeCost.get(mynode->prev->cour, mynode->cour);
         mynode->cumulatedLoad = myload;
-        mynode->cumulatedTime = mytime;
         mynode->cumulatedReversalDistance = myReversalDistance;
         mynode->prefixTwData
             = MergeTWDataRecursive(mynode->prev->prefixTwData, mynode->twData);
@@ -1794,14 +1790,11 @@ void LocalSearch::updateRouteData(Route *myRoute)
         firstIt = false;
     }
 
-    myRoute->duration = mytime;  // Driving duration + service duration,
-                                 // excluding waiting time / time warp
     myRoute->load = myload;
     myRoute->twData = mynode->prefixTwData;
     myRoute->penalty
         = penaltyExcessLoad(myload) + penaltyTimeWindows(myRoute->twData);
     myRoute->nbCustomers = myplace - 1;
-    myRoute->reversalDistance = myReversalDistance;
     // Remember "when" this route has been last modified (will be used to filter
     // unnecessary move evaluations)
     myRoute->whenLastModified = nbMoves;

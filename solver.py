@@ -89,7 +89,7 @@ def solve_static_vrptw(instance, time_limit=3600, seed=1):
 
     best = res.get_best_found()
     routes = [route for route in best.get_routes() if route]
-    cost = best.cost
+    cost = best.cost()
 
     assert np.isclose(tools.validate_static_solution(instance, routes), cost)
 

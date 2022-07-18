@@ -60,8 +60,8 @@ class Individual
 public:
     // TODO make members private
 
-    CostSol costs;         // Information on the cost of the solution
-    double biasedFitness;  // Biased fitness of the solution
+    CostSol costs;             // Information on the cost of the solution
+    double biasedFitness = 0;  // Biased fitness of the solution
 
     // Giant tour representing the individual: list of integers representing
     // clients (can not be the depot 0). Size is nbClients.
@@ -76,6 +76,11 @@ public:
     // by increasing proximity (the set container follows a natural ordering
     // based on the value of the first pair)
     std::multiset<std::pair<double, Individual *>> indivsPerProximity;
+
+    /**
+     * Returns this individual's objective (penalized cost).
+     */
+    [[nodiscard]] double cost() const { return costs.penalizedCost; }
 
     /**
      * Returns this individual's routing decisions.
@@ -121,9 +126,13 @@ public:
 
     bool operator==(Individual const &other) const;
 
-    explicit Individual(Params *params,  // create a random individual
-                        XorShift128 *rng,
-                        bool initAndShuffle = true);
+    Individual(Params *params,  // create a random individual
+               XorShift128 *rng,
+               bool initAndShuffle = true);
+
+    Individual(Params *params, Clients tour);
+
+    Individual(Params *params, Clients tour, std::vector<Clients> routes);
 };
 
 #endif

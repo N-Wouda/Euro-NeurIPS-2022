@@ -21,9 +21,7 @@ PYBIND11_MODULE(hgspy, m)
     py::class_<Individual>(m, "Individual")
         .def("get_routes", &Individual::getRoutes)
         .def("get_tour", &Individual::getTour)
-        .def_property_readonly("cost", [](Individual &indiv) {
-            return indiv.costs.penalizedCost;
-        });
+        .def("cost", &Individual::cost);
 
     py::class_<LocalSearch>(m, "LocalSearch")
         .def(py::init<Params &, XorShift128 &>(),
@@ -122,9 +120,9 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("rng"),
              py::arg("local_search"));
 
-    py::class_<Result>(m, "Result").def("get_best_found", [](Result &result) {
-        return *result.getBestFound();
-    });
+    py::class_<Result>(m, "Result")
+        .def("get_best_found",
+             [](Result &result) { return *result.getBestFound(); });
 
     py::class_<Genetic>(m, "Genetic")
         .def(py::init<Params &, XorShift128 &, Population &, LocalSearch &>(),

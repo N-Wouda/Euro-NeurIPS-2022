@@ -47,34 +47,22 @@ class Genetic
     Population &population;    // Population
     LocalSearch &localSearch;  // Local Search structure
 
-    // Pointers for offspring to edit new offspring in place:
-    // 0 and 1 are reserved for SREX, 2 and 3 are reserved for OX
-    std::array<Individual *, 4> candOffspring;
-
     // Function to do two OX Crossovers for a pair of individuals (the two
     // parents) and return the best individual based on penalizedCost
-    Individual *crossoverOX(Parents parents);
+    Individual crossoverOX(Parents parents);
 
-    // Function to do one (in place) OX Crossover for one individual 'result',
-    // given the two parents and the beginning and end (inclusive) of the
-    // crossover zone
-    void doOXcrossover(Individual *result,
-                       Parents parents,
-                       size_t start,
-                       size_t end) const;
+    // Function to do one (in place) OX Crossover, given the two parents and the
+    // beginning and end (inclusive) of the crossover zone.
+    Individual doOXcrossover(Parents parents, size_t start, size_t end) const;
 
     // Function to do two SREX Crossovers for a pair of individuals (the two
-    // parents) and return the best individual based on penalizedCost
-    Individual *crossoverSREX(Parents parents);
+    // parents) and return the best individual based on penalizedCost.
+    Individual crossoverSREX(Parents parents);
 
-    // Insert unplanned tasks (those that were in the removed routes of A but
+    // Insert unplanned tasks (those that were in the removed routes of A, but
     // not the inserted routes of B or vice versa)
     void insertUnplannedTasks(Individual *offspring,
                               std::unordered_set<int> const &unplanned);
-
-    // Function to do one OX and one SREX Crossover for a pair of individuals
-    // (the two parents), and get the best result based on penalizedCost
-    Individual *bestOfSREXAndOXCrossovers(Parents parents);
 
 public:
     /**
@@ -91,9 +79,6 @@ public:
             XorShift128 &rng,
             Population &population,
             LocalSearch &localSearch);
-
-    // Destructor
-    ~Genetic();
 };
 
 #endif

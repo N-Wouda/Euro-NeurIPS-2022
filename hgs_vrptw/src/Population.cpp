@@ -138,9 +138,7 @@ bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
     // Identify the correct location in the population and insert the individual
     // TODO binsearch?
     int place = static_cast<int>(pop.size());
-    while (place > 0
-           && pop[place - 1]->costs.penalizedCost
-                  > indiv->costs.penalizedCost - MY_EPSILON)
+    while (place > 0 && pop[place - 1]->cost() > indiv->cost() - MY_EPSILON)
     {
         place--;
     }
@@ -156,8 +154,7 @@ bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
 
     // Track best solution
     if (indiv->isFeasible()
-        && (indiv->costs.penalizedCost
-            < bestSolutionOverall.costs.penalizedCost - MY_EPSILON))
+        && (indiv->cost() < bestSolutionOverall.cost() - MY_EPSILON))
     {
         bestSolutionOverall = *indiv;
         return true;
@@ -319,14 +316,14 @@ void Population::managePenalties()
     }
 
     // Update the evaluations
-    for (int i = 0; i < static_cast<int>(infeasibleSubpopulation.size()); i++)
+    for (auto &indiv : infeasibleSubpopulation)
     {
-        infeasibleSubpopulation[i]->costs.penalizedCost
-            = infeasibleSubpopulation[i]->costs.distance
+        indiv->costs.penalizedCost
+            = indiv->costs.distance
               + params.penaltyCapacity
-                    * infeasibleSubpopulation[i]->costs.capacityExcess
+                    * indiv->costs.capacityExcess
               + params.penaltyTimeWarp
-                    * infeasibleSubpopulation[i]->costs.timeWarp;
+                    * indiv->costs.timeWarp;
     }
 
     // If needed, reorder the individuals in the infeasible subpopulation since
@@ -336,9 +333,8 @@ void Population::managePenalties()
     {
         for (size_t j = 0; j < infeasibleSubpopulation.size() - i - 1; j++)
         {
-            if (infeasibleSubpopulation[j]->costs.penalizedCost
-                > infeasibleSubpopulation[j + 1]->costs.penalizedCost
-                      + MY_EPSILON)
+            if (infeasibleSubpopulation[j]->cost()
+                > infeasibleSubpopulation[j + 1]->cost() + MY_EPSILON)
             {
                 Individual *indiv = infeasibleSubpopulation[j];
                 infeasibleSubpopulation[j] = infeasibleSubpopulation[j + 1];

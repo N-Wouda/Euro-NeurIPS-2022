@@ -29,6 +29,7 @@ SOFTWARE.*/
 #include "Params.h"
 #include "XorShift128.h"
 
+#include <array>
 #include <set>
 #include <vector>
 
@@ -65,11 +66,8 @@ struct Route
     bool isDeltaRemovalTWOutdated;  // Flag to indicate deltaRemovalTW data of
                                     // nodes is outdated
     Node *depot;                    // Pointer to the associated depot
-    int duration;  // Total time on the route (driving duration + service
-                   // duration, excluding waiting time)
-    int load;      // Total load on the route
-    int reversalDistance;   // Difference of cost if the route is reversed
-    TimeWindowData twData;  // Time window data of the route
+    int load;                       // Total load on the route
+    TimeWindowData twData;          // Time window data of the route
     double penalty;  // Current sum of load, duration and time window penalties
     double polarAngleBarycenter;  // Polar angle of the barycenter of the route
     CircleSector sector;  // Circle sector associated to the set of clients
@@ -86,8 +84,6 @@ struct Node
     Node *prev;            // Previous node in the route order
     Route *route;          // Pointer towards the associated route
     int cumulatedLoad;     // Cumulated load on this route until the client
-                           // (including itself)
-    int cumulatedTime;     // Cumulated time on this route until the client
                            // (including itself)
     int cumulatedReversalDistance;  // Difference of cost if the segment of
                                     // route (0...cour) is reversed (useful for
@@ -125,15 +121,16 @@ struct NodeToInsert
 // client in a given route
 struct ThreeBestInsert
 {
-    int whenLastCalculated;
-    int bestCost[3];
-    Node *bestLocation[3];
+    int whenLastCalculated = 0;
+    std::array<int, 3> bestCost = {INT_MAX, INT_MAX, INT_MAX};
+    std::array<Node *, 3> bestLocation = {nullptr, nullptr, nullptr};
 
-    void compareAndAdd(int costInsert, Node *placeInsert)
+    void add(int costInsert, Node *placeInsert)
     {
         if (costInsert >= bestCost[2])
             return;
-        else if (costInsert >= bestCost[1])
+
+        if (costInsert >= bestCost[1])
         {
             bestCost[2] = costInsert;
             bestLocation[2] = placeInsert;
@@ -155,19 +152,6 @@ struct ThreeBestInsert
             bestLocation[0] = placeInsert;
         }
     }
-
-    // Resets the structure (no insertion calculated)
-    void reset()
-    {
-        bestCost[0] = INT_MAX;
-        bestLocation[0] = nullptr;
-        bestCost[1] = INT_MAX;
-        bestLocation[1] = nullptr;
-        bestCost[2] = INT_MAX;
-        bestLocation[2] = nullptr;
-    }
-
-    ThreeBestInsert() { reset(); };
 };
 
 // Structured used to keep track of the best SWAP* move
@@ -351,6 +335,13 @@ private:
     // Updates the preprocessed data of a route
     void updateRouteData(Route *myRoute);
 
+    // Loading an initial solution into the local search
+    void loadIndividual(Individual *indiv);
+
+    // Exporting the LS solution into an individual and calculating the
+    // penalized cost according to the original penalty weights from Params
+    void exportIndividual(Individual *indiv);
+
 public:
     // Run the local search with the specified penalty values
     void
@@ -376,13 +367,6 @@ public:
     // search. Orders with short time window are added in order of time
     // latestArrival, other orders are inserted in best position.
     void constructIndividualBySweep(int fillPercentage, Individual *indiv);
-
-    // Loading an initial solution into the local search
-    void loadIndividual(Individual *indiv);
-
-    // Exporting the LS solution into an individual and calculating the
-    // penalized cost according to the original penalty weights from Params
-    void exportIndividual(Individual *indiv);
 
     explicit LocalSearch(Params &params, XorShift128 &rng);
 };
