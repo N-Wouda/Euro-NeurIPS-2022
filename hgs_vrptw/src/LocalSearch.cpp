@@ -4,7 +4,6 @@
 #include "Individual.h"
 #include "Params.h"
 
-#include <algorithm>
 #include <cmath>
 #include <set>
 #include <vector>
