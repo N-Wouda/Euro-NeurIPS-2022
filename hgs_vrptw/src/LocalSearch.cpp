@@ -1605,9 +1605,9 @@ void LocalSearch::preprocessInsertionsWithTW(Route *R1, Route *R2)
                                           R2->depot->next->postfixTwData);
 
             int cost = params.timeCost.get(0, U->cour)
-                  + params.timeCost.get(U->cour, R2->depot->next->cour)
-                  - params.timeCost.get(0, R2->depot->next->cour)
-                  + deltaPenaltyTimeWindows(twData, R2->twData);
+                       + params.timeCost.get(U->cour, R2->depot->next->cour)
+                       - params.timeCost.get(0, R2->depot->next->cour)
+                       + deltaPenaltyTimeWindows(twData, R2->twData);
 
             currentOption.add(cost, R2->depot);
 

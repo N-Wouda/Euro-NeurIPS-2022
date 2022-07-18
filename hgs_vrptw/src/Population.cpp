@@ -320,10 +320,8 @@ void Population::managePenalties()
     {
         indiv->costs.penalizedCost
             = indiv->costs.distance
-              + params.penaltyCapacity
-                    * indiv->costs.capacityExcess
-              + params.penaltyTimeWarp
-                    * indiv->costs.timeWarp;
+              + params.penaltyCapacity * indiv->costs.capacityExcess
+              + params.penaltyTimeWarp * indiv->costs.timeWarp;
     }
 
     // If needed, reorder the individuals in the infeasible subpopulation since

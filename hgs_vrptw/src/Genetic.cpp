@@ -175,7 +175,7 @@ Genetic::doOXcrossover(Parents parents, size_t start, size_t end) const
     return {&params, newTour};
 }
 
-Individual Genetic::crossoverSREX(Parents parents)
+Individual Genetic::crossoverSREX(Parents parents) const
 {
     // Get the number of routes of both parents
     size_t nbRoutesA = parents.first->costs.nbRoutes;
@@ -367,16 +367,18 @@ Individual Genetic::crossoverSREX(Parents parents)
         clientsInSelectedA.begin(),
         clientsInSelectedA.end(),
         std::inserter(clientsInSelectedANotB, clientsInSelectedANotB.end()),
-        [&clientsInSelectedB](int c)
-        { return clientsInSelectedB.find(c) == clientsInSelectedB.end(); });
+        [&clientsInSelectedB](int c) {
+            return clientsInSelectedB.find(c) == clientsInSelectedB.end();
+        });
 
     std::unordered_set<int> clientsInSelectedBNotA;
     std::copy_if(
         clientsInSelectedB.begin(),
         clientsInSelectedB.end(),
         std::inserter(clientsInSelectedBNotA, clientsInSelectedBNotA.end()),
-        [&clientsInSelectedA](int c)
-        { return clientsInSelectedA.find(c) == clientsInSelectedA.end(); });
+        [&clientsInSelectedA](int c) {
+            return clientsInSelectedA.find(c) == clientsInSelectedA.end();
+        });
 
     Individual candOffspring[]
         = {Individual(&params, &rng), Individual(&params, &rng)};
@@ -435,7 +437,7 @@ Individual Genetic::crossoverSREX(Parents parents)
 }
 
 void Genetic::insertUnplannedTasks(
-    Individual *offspring, std::unordered_set<int> const &unplannedTasks)
+    Individual *offspring, std::unordered_set<int> const &unplannedTasks) const
 {
     int newDistanceToInsert = INT_MAX;    // TODO:
     int newDistanceFromInsert = INT_MAX;  // TODO:

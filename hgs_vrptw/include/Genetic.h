@@ -53,16 +53,17 @@ class Genetic
 
     // Function to do one (in place) OX Crossover, given the two parents and the
     // beginning and end (inclusive) of the crossover zone.
-    Individual doOXcrossover(Parents parents, size_t start, size_t end) const;
+    [[nodiscard]] Individual
+    doOXcrossover(Parents parents, size_t start, size_t end) const;
 
     // Function to do two SREX Crossovers for a pair of individuals (the two
     // parents) and return the best individual based on penalizedCost.
-    Individual crossoverSREX(Parents parents);
+    [[nodiscard]] Individual crossoverSREX(Parents parents) const;
 
     // Insert unplanned tasks (those that were in the removed routes of A, but
     // not the inserted routes of B or vice versa)
     void insertUnplannedTasks(Individual *offspring,
-                              std::unordered_set<int> const &unplanned);
+                              std::unordered_set<int> const &unplanned) const;
 
 public:
     /**
