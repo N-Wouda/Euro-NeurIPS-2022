@@ -8,7 +8,6 @@
 #include "XorShift128.h"
 
 #include <pybind11/chrono.h>
-#include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
 namespace py = pybind11;
@@ -96,7 +95,52 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("skipSwapStarDist") = false,
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
              py::arg("minCircleSectorSizeDegrees") = 15,
-             py::arg("useSymmetricCorrelatedVertices") = false);
+             py::arg("useSymmetricCorrelatedVertices") = false)
+        .def_readonly("nbIter", &Config::nbIter)
+        .def_readonly("timeLimit", &Config::timeLimit)
+        .def_readonly("seed", &Config::seed)
+        .def_readonly("fractionGeneratedNearest",
+                      &Config::fractionGeneratedNearest)
+        .def_readonly("fractionGeneratedFurthest",
+                      &Config::fractionGeneratedFurthest)
+        .def_readonly("fractionGeneratedSweep", &Config::fractionGeneratedSweep)
+        .def_readonly("fractionGeneratedRandomly",
+                      &Config::fractionGeneratedRandomly)
+        .def_readonly("minSweepFillPercentage", &Config::minSweepFillPercentage)
+        .def_readonly("maxToleratedCapacityViolation",
+                      &Config::maxToleratedCapacityViolation)
+        .def_readonly("maxToleratedTimeWarp", &Config::maxToleratedTimeWarp)
+        .def_readonly("initialTimeWarpPenalty", &Config::initialTimeWarpPenalty)
+        .def_readonly("penaltyBooster", &Config::penaltyBooster)
+        .def_readonly("minimumPopulationSize", &Config::minimumPopulationSize)
+        .def_readonly("generationSize", &Config::generationSize)
+        .def_readonly("nbElite", &Config::nbElite)
+        .def_readonly("nbClose", &Config::nbClose)
+        .def_readonly("targetFeasible", &Config::targetFeasible)
+        .def_readonly("repairProbability", &Config::repairProbability)
+        .def_readonly("growNbGranularAfterNonImprovementIterations",
+                      &Config::growNbGranularAfterNonImprovementIterations)
+        .def_readonly("growNbGranularAfterIterations",
+                      &Config::growNbGranularAfterIterations)
+        .def_readonly("growNbGranularSize", &Config::growNbGranularSize)
+        .def_readonly("growPopulationAfterNonImprovementIterations",
+                      &Config::growPopulationAfterNonImprovementIterations)
+        .def_readonly("growPopulationAfterIterations",
+                      &Config::growPopulationAfterIterations)
+        .def_readonly("growPopulationSize", &Config::growPopulationSize)
+        .def_readonly("diversityWeight", &Config::diversityWeight)
+        .def_readonly("nbVeh", &Config::nbVeh)
+        .def_readonly("useDynamicParameters", &Config::useDynamicParameters)
+        .def_readonly("nbGranular", &Config::nbGranular)
+        .def_readonly("intensificationProbabilityLS",
+                      &Config::intensificationProbabilityLS)
+        .def_readonly("useSwapStarTW", &Config::useSwapStarTW)
+        .def_readonly("skipSwapStarDist", &Config::skipSwapStarDist)
+        .def_readonly("circleSectorOverlapTolerance",
+                      &Config::circleSectorOverlapTolerance)
+        .def_readonly("minCircleSectorSize", &Config::minCircleSectorSize)
+        .def_readonly("useSymmetricCorrelatedVertices",
+                      &Config::useSymmetricCorrelatedVertices);
 
     py::class_<Params>(m, "Params")
         .def(py::init<Config &,
