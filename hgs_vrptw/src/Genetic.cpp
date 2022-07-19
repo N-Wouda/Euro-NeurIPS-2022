@@ -98,16 +98,21 @@ Result Genetic::runUntil(timePoint const &timePoint)
 
 Individual Genetic::crossoverOX(Parents parents)
 {
-    // Picking the start and end of the crossover zone
-    size_t start = rng.randint(params.nbClients);
-    size_t end = rng.randint(params.nbClients);
+    // First OX crossover offspring
+    size_t const start1 = rng.randint(params.nbClients);
+    size_t end1 = rng.randint(params.nbClients);
+    while (end1 == start1)
+        end1 = rng.randint(params.nbClients);
 
-    // If the start and end overlap, change the end of the crossover zone
-    while (end == start)
-        end = rng.randint(params.nbClients);
+    auto const indiv1 = doOXcrossover(parents, start1, end1);
 
-    auto const indiv1 = doOXcrossover(parents, start, end);
-    auto const indiv2 = doOXcrossover(parents, start, end);
+    // Second OX crossover offspring
+    size_t const start2 = rng.randint(params.nbClients);
+    size_t end2 = rng.randint(params.nbClients);
+    while (end2 == start2)
+        end2 = rng.randint(params.nbClients);
+
+    auto const indiv2 = doOXcrossover(parents, start2, end2);
 
     return indiv1.cost() < indiv2.cost() ? indiv1 : indiv2;
 }
