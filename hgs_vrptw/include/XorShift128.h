@@ -35,9 +35,9 @@ public:
     // Return the max unsigned integer value
     static constexpr size_t max() { return UINT_MAX; }
 
-    // Defines the operator '()'. So a new random number will be returned when
-    // rng() is called on the XorShift128 instance rng.
-    unsigned operator()()
+    // A new random number will be returned when rng() is called on the
+    // XorShift128 instance.
+    result_type operator()()
     {
         // Algorithm "xor128" from p. 5 of Marsaglia, "Xorshift RNGs"
         unsigned t = state_[3];
@@ -54,6 +54,11 @@ public:
         // Return the new random number
         return state_[0] = t ^ s ^ (s >> 19);
     }
+
+    /**
+     * Returns a random integer in the range [0, high).
+     */
+    result_type inline randint(int high) { return operator()() % high; }
 };
 
 #endif

@@ -37,15 +37,12 @@ class Individual
     using Client = int;
     using Clients = std::vector<Client>;
 
-    struct CostSol
-    {
-        double penalizedCost = 0.;  // Penalized cost of the solution
-        size_t nbRoutes = 0;        // Number of routes
-        size_t distance = 0;        // Total Distance
-        size_t capacityExcess = 0;  // Total excess load over all routes
-        size_t waitTime = 0;        // All route wait time of early arrivals
-        size_t timeWarp = 0;        // All route time warp of late arrivals
-    };
+    double penalizedCost = 0.;  // Penalized cost of the solution
+    size_t nbRoutes = 0;        // Number of routes
+    size_t distance = 0;        // Total distance
+    size_t waitTime = 0;        // All route wait time of early arrivals
+    size_t capacityExcess = 0;  // Total excess load over all routes
+    size_t timeWarp = 0;        // All route time warp of late arrivals
 
     Params *params;  // Problem parameters
 
@@ -57,19 +54,20 @@ class Individual
     // is nbClients + 1.
     Clients predecessors;
 
-public:
-    // TODO make members private
-
-    CostSol costs;             // Information on the cost of the solution
-    double biasedFitness = 0;  // Biased fitness of the solution
-
     // Giant tour representing the individual: list of integers representing
     // clients (can not be the depot 0). Size is nbClients.
     Clients tourChrom;
 
+    // Makes routes from the tour chromosome (using the linear split algorithm)
+    void makeRoutes();
+
+public:
+    // TODO make members private
+    double biasedFitness = 0;  // Biased fitness of the solution
+
     // For each vehicle, the associated sequence of deliveries (complete
-    // solution). Size is nbVehicles. Routes are stored starting index
-    // maxVehicles - 1, so the first indices will likely be empty.
+    // solution). Size is nbVehicles, but quite a few routes are likely empty
+    // - the numRoutes() member indicates the number of nonempty routes.
     std::vector<Clients> routeChrom;
 
     // The other individuals in the population (cannot be the depot 0), ordered
@@ -80,28 +78,40 @@ public:
     /**
      * Returns this individual's objective (penalized cost).
      */
-    [[nodiscard]] double cost() const { return costs.penalizedCost; }
+    [[nodiscard]] inline double cost() const { return penalizedCost; }
 
     /**
      * Returns this individual's routing decisions.
      */
-    [[nodiscard]] std::vector<Clients> const &getRoutes() const
+    [[nodiscard]] inline std::vector<Clients> const &getRoutes() const
     {
         return routeChrom;
     }
 
     /**
+     * Number of non-empty routes in this solution.
+     */
+    [[nodiscard]] inline size_t numRoutes() const { return nbRoutes; }
+
+    /**
      * Returns this individual's giant tour chromosome.
      */
-    [[nodiscard]] Clients const &getTour() const { return tourChrom; }
+    [[nodiscard]] inline Clients const &getTour() const { return tourChrom; }
 
     /**
      * Returns true when this solution is feasible; false otherwise.
      */
     [[nodiscard]] inline bool isFeasible() const
     {
-        return costs.capacityExcess == 0 && costs.timeWarp == 0;
+        return !hasExcessCapacity() && !hasTimeWarp();
     }
+
+    [[nodiscard]] inline bool hasExcessCapacity() const
+    {
+        return capacityExcess > 0;
+    }
+
+    [[nodiscard]] inline bool hasTimeWarp() const { return timeWarp > 0; }
 
     // Measuring cost of a solution from the information of routeChrom
     void evaluateCompleteCost();
@@ -111,7 +121,7 @@ public:
 
     // Distance measure with another individual, based on the number of arcs
     // that differ between two solutions
-    double brokenPairsDistance(Individual *other);
+    [[nodiscard]] double brokenPairsDistance(Individual *other);
 
     // Returns the average distance of this individual with the nbClosest
     // individuals
@@ -121,18 +131,15 @@ public:
     // computational time)
     void exportCVRPLibFormat(std::string const &path, double time) const;
 
-    // Makes routes from the tour chromosome (using the linear split algorithm)
-    void makeRoutes();
-
     bool operator==(Individual const &other) const;
 
-    Individual(Params *params,  // create a random individual
-               XorShift128 *rng,
-               bool initAndShuffle = true);
+    Individual(Params *params, XorShift128 *rng);  // random individual
 
-    Individual(Params *params, Clients tour);
+    Individual(Params *params, Clients tour);  // from tour
 
-    Individual(Params *params, Clients tour, std::vector<Clients> routes);
+    Individual(Params *params,  // from tour and routes
+               Clients tour,
+               std::vector<Clients> routes);
 };
 
 #endif

@@ -79,8 +79,7 @@ void LocalSearch::initializeConstruction(
     }
 }
 
-void LocalSearch::constructIndividualBySweep(int fillPercentage,
-                                             Individual *indiv)
+Individual LocalSearch::constructIndividualBySweep(int fillPercentage)
 {
     std::vector<NodeToInsert> nodesToInsert;
     initializeConstruction(&nodesToInsert);
@@ -193,16 +192,13 @@ void LocalSearch::constructIndividualBySweep(int fillPercentage,
         }
     }
 
-    // Register the solution produced by the construction heuristic in the
-    // individual.
-    exportIndividual(indiv);
+    return exportIndividual();
 }
 
-void LocalSearch::constructIndividualWithSeedOrder(
+Individual LocalSearch::constructIndividualWithSeedOrder(
     int toleratedCapacityViolation,
     int toleratedTimeWarp,
-    bool useSeedClientFurthestFromDepot,
-    Individual *indiv)
+    bool useSeedClientFurthestFromDepot)
 {
     std::vector<NodeToInsert> nodesToInsert;
     initializeConstruction(&nodesToInsert);
@@ -334,9 +330,7 @@ void LocalSearch::constructIndividualWithSeedOrder(
         updateRouteData(&routes[lastRouteIdx]);
     }
 
-    // Register the solution produced by the construction heuristic in the
-    // individual.
-    exportIndividual(indiv);
+    return exportIndividual();
 }
 
 void LocalSearch::run(Individual *indiv,
@@ -348,7 +342,7 @@ void LocalSearch::run(Individual *indiv,
     static const bool alwaysIntensify
         = params.config.intensificationProbabilityLS == 100;
     const bool runLS_INT
-        = rng() % 100
+        = rng.randint(100)
           < (unsigned int)params.config.intensificationProbabilityLS;
 
     this->penaltyCapacityLS = penaltyCapacityLS;
@@ -360,7 +354,7 @@ void LocalSearch::run(Individual *indiv,
     std::shuffle(orderNodes.begin(), orderNodes.end(), rng);
     std::shuffle(orderRoutes.begin(), orderRoutes.end(), rng);
     for (int i = 1; i <= params.nbClients; i++)
-        if (rng() % params.config.nbGranular
+        if (rng.randint(params.config.nbGranular)
             == 0)  // Designed to use O(nbGranular x n) time overall to avoid
                    // possible bottlenecks
             std::shuffle(params.correlatedVertices[i].begin(),
@@ -512,7 +506,7 @@ void LocalSearch::run(Individual *indiv,
     }
 
     // Register the solution produced by the LS in the individual
-    exportIndividual(indiv);
+    *indiv = exportIndividual();
 }
 
 void LocalSearch::setLocalVariablesRouteU()
@@ -1919,7 +1913,7 @@ void LocalSearch::loadIndividual(Individual *indiv)
         clients[i].whenLastTestedRI = -1;
 }
 
-void LocalSearch::exportIndividual(Individual *indiv)
+Individual LocalSearch::exportIndividual()
 {
     std::vector<std::pair<double, int>> routePolarAngles;
     routePolarAngles.reserve(params.nbVehicles);
@@ -1931,21 +1925,24 @@ void LocalSearch::exportIndividual(Individual *indiv)
     // appear at the end
     std::sort(routePolarAngles.begin(), routePolarAngles.end());
 
+    std::vector<int> tour(params.nbClients);
+    std::vector<std::vector<int>> routes(params.nbVehicles);
+
     int pos = 0;
     for (int r = 0; r < params.nbVehicles; r++)
     {
-        indiv->routeChrom[r].clear();
         Node *node = depots[routePolarAngles[r].second].next;
+
         while (!node->isDepot)
         {
-            indiv->tourChrom[pos] = node->cour;
-            indiv->routeChrom[r].push_back(node->cour);
+            tour[pos] = node->cour;
+            routes[r].push_back(node->cour);
             node = node->next;
             pos++;
         }
     }
 
-    indiv->evaluateCompleteCost();
+    return {&params, tour, routes};
 }
 
 LocalSearch::LocalSearch(Params &params, XorShift128 &rng)

@@ -52,7 +52,7 @@ Result Genetic::runUntil(timePoint const &timePoint)
         // In case of infeasibility, repair the individual with a certain
         // probability
         if (!offspring.isFeasible()
-            && rng() % 100 < (unsigned int)params.config.repairProbability)
+            && rng.randint(100) < (unsigned int)params.config.repairProbability)
         {
             // Run the Local Search again, but with penalties for
             // infeasibility multiplied by 10
@@ -120,18 +120,18 @@ Result Genetic::runUntil(timePoint const &timePoint)
         }
     }
 
-    return {population.getFeasible(), population.getInfeasible()};
+    return {population.getBestFound()};
 }
 
 Individual Genetic::crossoverOX(Parents parents)
 {
     // Picking the start and end of the crossover zone
-    size_t start = rng() % params.nbClients;
-    size_t end = rng() % params.nbClients;
+    size_t start = rng.randint(params.nbClients);
+    size_t end = rng.randint(params.nbClients);
 
     // If the start and end overlap, change the end of the crossover zone
     while (end == start)
-        end = rng() % params.nbClients;
+        end = rng.randint(params.nbClients);
 
     auto const indiv1 = doOXcrossover(parents, start, end);
     auto const indiv2 = doOXcrossover(parents, start, end);
@@ -178,16 +178,16 @@ Genetic::doOXcrossover(Parents parents, size_t start, size_t end) const
 Individual Genetic::crossoverSREX(Parents parents) const
 {
     // Get the number of routes of both parents
-    size_t nbRoutesA = parents.first->costs.nbRoutes;
-    size_t nbRoutesB = parents.second->costs.nbRoutes;
+    size_t nbRoutesA = parents.first->numRoutes();
+    size_t nbRoutesB = parents.second->numRoutes();
 
     // Picking the start index of routes to replace of parent A
     // We like to replace routes with a large overlap of tasks, so we choose
     // adjacent routes (they are sorted on polar angle)
-    size_t startA = rng() % nbRoutesA;
+    size_t startA = rng.randint(nbRoutesA);
     size_t startB = startA < nbRoutesB ? startA : 0;
     size_t minRoutes = std::min(nbRoutesA, nbRoutesB);
-    size_t nMovedRoutes = minRoutes == 1 ? 1 : rng() % (minRoutes - 1) + 1;
+    size_t nMovedRoutes = minRoutes == 1 ? 1 : rng.randint(minRoutes - 1) + 1;
 
     std::unordered_set<int> clientsInSelectedA;
     std::unordered_set<int> clientsInSelectedB;

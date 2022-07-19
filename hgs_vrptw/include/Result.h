@@ -7,25 +7,15 @@
 
 class Result
 {
-    using SubPopulation = std::vector<Individual *>;
-
-    SubPopulation const &feasible;
-    SubPopulation const &infeasible;
+    Individual const &bestFound;
 
 public:
-    Result(SubPopulation const &feasible, SubPopulation const &infeasible)
-        : feasible(feasible), infeasible(infeasible)
-    {
-    }
+    Result(Individual const &bestFound) : bestFound(bestFound) {}
 
     /**
      * Returns the best observed solution.
      */
-    [[nodiscard]] Individual const *getBestFound() const
-    {
-        // TODO is this the best? See population members
-        return feasible[0];  // since they are sorted by increasing cost
-    }
+    [[nodiscard]] Individual const &getBestFound() const { return bestFound; }
 };
 
 #endif  // RESULT_H

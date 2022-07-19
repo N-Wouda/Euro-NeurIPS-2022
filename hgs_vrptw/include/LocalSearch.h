@@ -274,9 +274,6 @@ private:
     // If route(U) != route(V), replace (U,X) and  (V,Y) by (U,Y) and (V,X)
     bool TwoOptBetweenTrips();
 
-    /*TW based operators*/
-    bool ReorderTWsIfNeeded();  // For the current route try to order all TWs
-
     /* SUB-ROUTINES FOR EFFICIENT SWAP* EVALUATIONS */
 
     // Calculates all SWAP* between routeU and routeV and apply the best
@@ -340,7 +337,7 @@ private:
 
     // Exporting the LS solution into an individual and calculating the
     // penalized cost according to the original penalty weights from Params
-    void exportIndividual(Individual *indiv);
+    Individual exportIndividual();
 
 public:
     // Run the local search with the specified penalty values
@@ -357,16 +354,16 @@ public:
     // are plenty routes). Routes are created sequentially. The seed client in
     // the route can be either the unassigned client furthest from depot, or the
     // unassigned client closest to the depot.
-    void constructIndividualWithSeedOrder(int toleratedCapacityViolation,
-                                          int toleratedTimeWarp,
-                                          bool useSeedClientFurthestFromDepot,
-                                          Individual *indiv);
+    Individual
+    constructIndividualWithSeedOrder(int toleratedCapacityViolation,
+                                     int toleratedTimeWarp,
+                                     bool useSeedClientFurthestFromDepot);
 
     // Groups orders per route according to angle with depot. fillPercentage can
     // be configured to allow some room for repairing routes during local
     // search. Orders with short time window are added in order of time
     // latestArrival, other orders are inserted in best position.
-    void constructIndividualBySweep(int fillPercentage, Individual *indiv);
+    Individual constructIndividualBySweep(int fillPercentage);
 
     explicit LocalSearch(Params &params, XorShift128 &rng);
 };

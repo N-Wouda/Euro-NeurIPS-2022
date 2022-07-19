@@ -158,14 +158,20 @@ void Individual::makeRoutes()
 
 void Individual::evaluateCompleteCost()
 {
-    costs = CostSol();
+    // Reset fields before evaluating them again below.
+    penalizedCost = 0.;
+    nbRoutes = 0;
+    distance = 0;
+    waitTime = 0;
+    capacityExcess = 0;
+    timeWarp = 0;
 
     for (auto const &route : routeChrom)
     {
         if (route.empty())  // First empty route. Due to makeRoutes() all
             break;          // subsequent routes are empty as well
 
-        costs.nbRoutes++;
+        nbRoutes++;
 
         int maxReleaseTime = 0;
         for (auto const idx : route)
@@ -240,19 +246,19 @@ void Individual::evaluateCompleteCost()
         timeWarp += std::max(time - params->cli[0].latestArrival, 0);
 
         // Whole solution stats
-        costs.distance += distance;
-        costs.waitTime += waitTime;
-        costs.timeWarp += timeWarp;
-        costs.capacityExcess += std::max(load - params->vehicleCapacity, 0);
+        this->distance += distance;
+        this->waitTime += waitTime;
+        this->timeWarp += timeWarp;
+        this->capacityExcess += std::max(load - params->vehicleCapacity, 0);
     }
 
     // When all vehicles are dealt with, calculated total penalized cost and
     // check if the solution is feasible. (Wait time does not affect
     // feasibility)
-    costs.penalizedCost = static_cast<double>(
-        costs.distance + costs.capacityExcess * params->penaltyCapacity
-        + costs.timeWarp * params->penaltyTimeWarp
-        + costs.waitTime * params->penaltyWaitTime);
+    this->penalizedCost = static_cast<double>(
+        this->distance + this->capacityExcess * params->penaltyCapacity
+        + this->timeWarp * params->penaltyTimeWarp
+        + this->waitTime * params->penaltyWaitTime);
 }
 
 void Individual::removeProximity(Individual *other)
@@ -306,7 +312,7 @@ void Individual::exportCVRPLibFormat(std::string const &path, double time) const
     if (!out)
         throw std::runtime_error("Could not open " + path);
 
-    for (size_t rIdx = 0; rIdx != costs.nbRoutes; ++rIdx)
+    for (size_t rIdx = 0; rIdx != nbRoutes; ++rIdx)
     {
         out << "Route #" << rIdx + 1 << ":";  // route number
         for (int cIdx : routeChrom[rIdx])
@@ -325,20 +331,17 @@ bool Individual::operator==(Individual const &other) const
            && routeChrom == other.routeChrom;
 }
 
-Individual::Individual(Params *params, XorShift128 *rng, bool initAndShuffle)
+Individual::Individual(Params *params, XorShift128 *rng)
     : params(params),
       successors(params->nbClients + 1),
       predecessors(params->nbClients + 1),
       tourChrom(params->nbClients),
       routeChrom(params->nbVehicles)
 {
-    if (initAndShuffle)
-    {
-        std::iota(tourChrom.begin(), tourChrom.end(), 1);
-        std::shuffle(tourChrom.begin(), tourChrom.end(), *rng);
+    std::iota(tourChrom.begin(), tourChrom.end(), 1);
+    std::shuffle(tourChrom.begin(), tourChrom.end(), *rng);
 
-        makeRoutes();
-    }
+    makeRoutes();
 }
 
 Individual::Individual(Params *params, Clients tour)

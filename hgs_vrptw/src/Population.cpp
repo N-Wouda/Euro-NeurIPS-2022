@@ -20,7 +20,7 @@ void Population::doLocalSearchAndAddIndividual(Individual *indiv)
     // the penalties for infeasibilities (w.r.t. capacities and time warps) in a
     // new Local Search in case of infeasibility
     if (!indiv->isFeasible()
-        && rng() % 100 < (unsigned int)params.config.repairProbability)
+        && rng.randint(100) < (unsigned int)params.config.repairProbability)
     {
         localSearch.run(
             indiv, params.penaltyCapacity * 10., params.penaltyTimeWarp * 10.);
@@ -69,11 +69,12 @@ void Population::generatePopulation()
     {
         // Create the first individual without violations
         int toleratedCapacityViolation
-            = i == 0 ? 0 : rng() % (maxToleratedCapacityViolation + 1);
-        int toleratedTimeWarp = i == 0 ? 0 : rng() % (maxToleratedTimeWarp + 1);
-        Individual indiv(&params, &rng, false);
-        localSearch.constructIndividualWithSeedOrder(
-            toleratedCapacityViolation, toleratedTimeWarp, false, &indiv);
+            = i == 0 ? 0 : rng.randint(maxToleratedCapacityViolation + 1);
+        int toleratedTimeWarp
+            = i == 0 ? 0 : rng.randint(maxToleratedTimeWarp + 1);
+
+        auto indiv = localSearch.constructIndividualWithSeedOrder(
+            toleratedCapacityViolation, toleratedTimeWarp, false);
         doLocalSearchAndAddIndividual(&indiv);
     }
 
@@ -82,11 +83,12 @@ void Population::generatePopulation()
     {
         // Create the first individual without violations
         int toleratedCapacityViolation
-            = i == 0 ? 0 : rng() % (maxToleratedCapacityViolation + 1);
-        int toleratedTimeWarp = i == 0 ? 0 : rng() % (maxToleratedTimeWarp + 1);
-        Individual indiv(&params, &rng, false);
-        localSearch.constructIndividualWithSeedOrder(
-            toleratedCapacityViolation, toleratedTimeWarp, true, &indiv);
+            = i == 0 ? 0 : rng.randint(maxToleratedCapacityViolation + 1);
+        int toleratedTimeWarp
+            = i == 0 ? 0 : rng.randint(maxToleratedTimeWarp + 1);
+
+        auto indiv = localSearch.constructIndividualWithSeedOrder(
+            toleratedCapacityViolation, toleratedTimeWarp, true);
         doLocalSearchAndAddIndividual(&indiv);
     }
 
@@ -97,9 +99,9 @@ void Population::generatePopulation()
         int fillPercentage
             = i == 0 ? 100
                      : minSweepFillPercentage
-                           + rng() % (100 - minSweepFillPercentage + 1);
-        Individual indiv(&params, &rng, false);
-        localSearch.constructIndividualBySweep(fillPercentage, &indiv);
+                           + rng.randint(100 - minSweepFillPercentage + 1);
+
+        auto indiv = localSearch.constructIndividualBySweep(fillPercentage);
         doLocalSearchAndAddIndividual(&indiv);
     }
 
@@ -115,8 +117,8 @@ bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
 {
     if (updateFeasible)  // update feasibility if needed
     {
-        listFeasibilityLoad.push_back(indiv->costs.capacityExcess < MY_EPSILON);
-        listFeasibilityTimeWarp.push_back(indiv->costs.timeWarp < MY_EPSILON);
+        listFeasibilityLoad.push_back(!indiv->hasExcessCapacity());
+        listFeasibilityTimeWarp.push_back(!indiv->hasTimeWarp());
         listFeasibilityLoad.pop_front();
         listFeasibilityTimeWarp.pop_front();
     }
@@ -315,14 +317,8 @@ void Population::managePenalties()
         params.penaltyTimeWarp = std::max(params.penaltyTimeWarp * 0.85, 0.1);
     }
 
-    // Update the evaluations
     for (auto &indiv : infeasibleSubpopulation)
-    {
-        indiv->costs.penalizedCost
-            = indiv->costs.distance
-              + params.penaltyCapacity * indiv->costs.capacityExcess
-              + params.penaltyTimeWarp * indiv->costs.timeWarp;
-    }
+        indiv->evaluateCompleteCost();
 
     // If needed, reorder the individuals in the infeasible subpopulation since
     // the penalty values have changed (simple bubble sort for the sake of
@@ -353,14 +349,14 @@ Individual const *Population::getBinaryTournament()
 
     // Pick a first random number individual from the total population (of both
     // feasible and infeasible individuals)
-    size_t idx1 = rng() % (feasSize + infeasSize);
+    size_t idx1 = rng.randint(feasSize + infeasSize);
     auto *individual1 = idx1 >= feasSize
                             ? infeasibleSubpopulation[idx1 - feasSize]
                             : feasibleSubpopulation[idx1];
 
     // Pick a second random number individual from the total population (of both
     // feasible and infeasible individuals)
-    size_t idx2 = rng() % (feasSize + infeasSize);
+    size_t idx2 = rng.randint(feasSize + infeasSize);
     auto *individual2 = idx2 >= feasSize
                             ? infeasibleSubpopulation[idx2 - feasSize]
                             : feasibleSubpopulation[idx2];

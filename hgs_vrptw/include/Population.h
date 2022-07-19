@@ -97,14 +97,9 @@ public:
     // pair
     Parents getNonIdenticalParentsBinaryTournament();
 
-    [[nodiscard]] SubPopulation const &getFeasible() const
+    [[nodiscard]] Individual const &getBestFound() const
     {
-        return feasibleSubpopulation;
-    }
-
-    [[nodiscard]] SubPopulation const &getInfeasible() const
-    {
-        return infeasibleSubpopulation;
+        return bestSolutionOverall;
     }
 
     Population(Params &params, XorShift128 &rng, LocalSearch &localSearch);
