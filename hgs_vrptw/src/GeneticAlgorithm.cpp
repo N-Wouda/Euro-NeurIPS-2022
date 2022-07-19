@@ -13,8 +13,8 @@ Result GeneticAlgorithm::runUntil(timePoint const &timePoint)
     if (params.nbClients == 1)
         throw std::runtime_error("Cannot run genetic algorithm with one node.");
 
-    int nbIterNonProd = 1;
-    int iter = 0;
+    size_t iter = 0;
+    size_t nbIterNonProd = 1;
 
     while (std::chrono::system_clock::now() < timePoint)
     {
@@ -23,7 +23,6 @@ Result GeneticAlgorithm::runUntil(timePoint const &timePoint)
         if (nbIterNonProd == params.config.nbIter)  // restart population after
         {                                           // this number of useless
             population.restart();                   // iterations
-            iter = 0;
             nbIterNonProd = 1;
         }
 
@@ -92,7 +91,7 @@ Result GeneticAlgorithm::runUntil(timePoint const &timePoint)
         }
     }
 
-    return {population.getBestFound()};
+    return {population.getBestFound(), iter};
 }
 
 Individual GeneticAlgorithm::crossoverOX(Parents parents)

@@ -10,8 +10,8 @@
 
 bool operator==(const TimeWindowData &twData1, const TimeWindowData &twData2)
 {
-    return twData1.firstNodeIndex == twData2.firstNodeIndex
-           && twData1.lastNodeIndex == twData2.lastNodeIndex
+    return twData1.idxFirst == twData2.idxFirst
+           && twData1.idxLast == twData2.idxLast
            && twData1.duration == twData2.duration
            && twData1.timeWarp == twData2.timeWarp
            && twData1.twEarly == twData2.twEarly
@@ -25,8 +25,8 @@ void LocalSearch::initializeConstruction(
     // Local search-related data structures are not initialized.
     emptyRoutes.clear();
     TimeWindowData depotTwData;
-    depotTwData.firstNodeIndex = 0;
-    depotTwData.lastNodeIndex = 0;
+    depotTwData.idxFirst = 0;
+    depotTwData.idxLast = 0;
     depotTwData.duration = 0;
     depotTwData.timeWarp = 0;
     depotTwData.twEarly = params.cli[0].twEarly;
@@ -36,8 +36,8 @@ void LocalSearch::initializeConstruction(
     for (int i = 1; i <= params.nbClients; i++)
     {
         TimeWindowData *myTwData = &clients[i].twData;
-        myTwData->firstNodeIndex = i;
-        myTwData->lastNodeIndex = i;
+        myTwData->idxFirst = i;
+        myTwData->idxLast = i;
         myTwData->duration = params.cli[i].servDur;
         myTwData->twEarly = params.cli[i].twEarly;
         myTwData->twLate = params.cli[i].twLate;
@@ -88,9 +88,8 @@ Individual LocalSearch::constructIndividualBySweep(int fillPercentage)
     // Sort nodes according to angle with depot.
     std::sort(std::begin(nodesToInsert),
               std::end(nodesToInsert),
-              [](NodeToInsert a, NodeToInsert b) {
-                  return a.angleFromDepot < b.angleFromDepot;
-              });
+              [](NodeToInsert a, NodeToInsert b)
+              { return a.angleFromDepot < b.angleFromDepot; });
 
     // Distribute clients over routes.
     int load = 0;
@@ -265,7 +264,7 @@ Individual LocalSearch::constructIndividualWithSeedOrder(
                     // Do not allow insertions if time windows are violated more
                     // than tolerance
                     TimeWindowData routeTwData
-                        = MergeTWDataRecursive(prev->prefixTwData,
+                        = mergeTwDataRecursive(prev->prefixTwData,
                                                nodesToInsert[idx].twData,
                                                prev->next->postfixTwData);
                     if (routeTwData.timeWarp > toleratedTimeWarp)
@@ -548,7 +547,6 @@ bool LocalSearch::MoveSingleClient()
     double costSuppV = params.timeCost.get(nodeVIndex, nodeUIndex)
                        + params.timeCost.get(nodeUIndex, nodeYIndex)
                        - params.timeCost.get(nodeVIndex, nodeYIndex);
-    TimeWindowData routeUTwData, routeVTwData;
 
     if (routeU != routeV)
     {
@@ -558,9 +556,9 @@ bool LocalSearch::MoveSingleClient()
             return false;
         }
 
-        routeUTwData = MergeTWDataRecursive(nodeU->prev->prefixTwData,
-                                            nodeX->postfixTwData);
-        routeVTwData = MergeTWDataRecursive(
+        auto routeUTwData = mergeTwDataRecursive(nodeU->prev->prefixTwData,
+                                                 nodeX->postfixTwData);
+        auto routeVTwData = mergeTwDataRecursive(
             nodeV->prefixTwData, nodeU->twData, nodeY->postfixTwData);
 
         costSuppU += penaltyExcessLoad(routeU->load - loadU)
@@ -576,13 +574,15 @@ bool LocalSearch::MoveSingleClient()
             return false;
         }
 
+        TimeWindowData routeUTwData;
+
         // Move within the same route
         if (nodeU->position < nodeV->position)
         {
             // Edge case V directly after U, so X == V, this works
             // start - ... - UPrev - X - ... - V - U - Y - ... - end
             routeUTwData
-                = MergeTWDataRecursive(nodeU->prev->prefixTwData,
+                = mergeTwDataRecursive(nodeU->prev->prefixTwData,
                                        getRouteSegmentTwData(nodeX, nodeV),
                                        nodeU->twData,
                                        nodeY->postfixTwData);
@@ -591,7 +591,7 @@ bool LocalSearch::MoveSingleClient()
         {
             // Edge case U directly after V is excluded from beginning of
             // function start - ... - V - U - Y - ... - UPrev - X - ... - end
-            routeUTwData = MergeTWDataRecursive(
+            routeUTwData = mergeTwDataRecursive(
                 nodeV->prefixTwData,
                 nodeU->twData,
                 getRouteSegmentTwData(nodeY, nodeU->prev),
@@ -637,9 +637,9 @@ bool LocalSearch::MoveTwoClients()
             return false;
         }
 
-        routeUTwData = MergeTWDataRecursive(nodeU->prev->prefixTwData,
+        routeUTwData = mergeTwDataRecursive(nodeU->prev->prefixTwData,
                                             nodeX->next->postfixTwData);
-        routeVTwData = MergeTWDataRecursive(nodeV->prefixTwData,
+        routeVTwData = mergeTwDataRecursive(nodeV->prefixTwData,
                                             getEdgeTwData(nodeU, nodeX),
                                             nodeY->postfixTwData);
 
@@ -662,7 +662,7 @@ bool LocalSearch::MoveTwoClients()
             // Edge case V directly after U, so X == V is excluded, V directly
             // after X so XNext == V works start - ... - UPrev - XNext - ... - V
             // - U - X - Y - ... - end
-            routeUTwData = MergeTWDataRecursive(
+            routeUTwData = mergeTwDataRecursive(
                 nodeU->prev->prefixTwData,
                 getRouteSegmentTwData(nodeX->next, nodeV),
                 getEdgeTwData(nodeU, nodeX),
@@ -673,7 +673,7 @@ bool LocalSearch::MoveTwoClients()
             // Edge case U directly after V is excluded from beginning of
             // function start - ... - V - U - X - Y - ... - UPrev - XNext - ...
             // - end
-            routeUTwData = MergeTWDataRecursive(
+            routeUTwData = mergeTwDataRecursive(
                 nodeV->prefixTwData,
                 getEdgeTwData(nodeU, nodeX),
                 getRouteSegmentTwData(nodeY, nodeU->prev),
@@ -722,9 +722,9 @@ bool LocalSearch::MoveTwoClientsReversed()
             return false;
         }
 
-        routeUTwData = MergeTWDataRecursive(nodeU->prev->prefixTwData,
+        routeUTwData = mergeTwDataRecursive(nodeU->prev->prefixTwData,
                                             nodeX->next->postfixTwData);
-        routeVTwData = MergeTWDataRecursive(nodeV->prefixTwData,
+        routeVTwData = mergeTwDataRecursive(nodeV->prefixTwData,
                                             getEdgeTwData(nodeX, nodeU),
                                             nodeY->postfixTwData);
 
@@ -747,7 +747,7 @@ bool LocalSearch::MoveTwoClientsReversed()
             // Edge case V directly after U, so X == V is excluded, V directly
             // after X so XNext == V works start - ... - UPrev - XNext - ... - V
             // - X - U - Y - ... - end
-            routeUTwData = MergeTWDataRecursive(
+            routeUTwData = mergeTwDataRecursive(
                 nodeU->prev->prefixTwData,
                 getRouteSegmentTwData(nodeX->next, nodeV),
                 getEdgeTwData(nodeX, nodeU),
@@ -758,7 +758,7 @@ bool LocalSearch::MoveTwoClientsReversed()
             // Edge case U directly after V is excluded from beginning of
             // function start - ... - V - X - U - Y - ... - UPrev - XNext - ...
             // - end
-            routeUTwData = MergeTWDataRecursive(
+            routeUTwData = mergeTwDataRecursive(
                 nodeV->prefixTwData,
                 getEdgeTwData(nodeX, nodeU),
                 getRouteSegmentTwData(nodeY, nodeU->prev),
@@ -807,9 +807,9 @@ bool LocalSearch::SwapTwoSingleClients()
             return false;
         }
 
-        routeUTwData = MergeTWDataRecursive(
+        routeUTwData = mergeTwDataRecursive(
             nodeU->prev->prefixTwData, nodeV->twData, nodeX->postfixTwData);
-        routeVTwData = MergeTWDataRecursive(
+        routeVTwData = mergeTwDataRecursive(
             nodeV->prev->prefixTwData, nodeU->twData, nodeY->postfixTwData);
 
         costSuppU += penaltyExcessLoad(routeU->load + loadV - loadU)
@@ -831,7 +831,7 @@ bool LocalSearch::SwapTwoSingleClients()
             // Edge case V directly after U, so X == V is excluded, V directly
             // after X so XNext == V works start - ... - UPrev - V - X - ... -
             // VPrev - U - Y - ... - end
-            routeUTwData = MergeTWDataRecursive(
+            routeUTwData = mergeTwDataRecursive(
                 nodeU->prev->prefixTwData,
                 nodeV->twData,
                 getRouteSegmentTwData(nodeX, nodeV->prev),
@@ -843,7 +843,7 @@ bool LocalSearch::SwapTwoSingleClients()
             // Edge case U directly after V is excluded from beginning of
             // function start - ... - VPrev - U - Y - ... - UPrev - V - X - ...
             // - end
-            routeUTwData = MergeTWDataRecursive(
+            routeUTwData = mergeTwDataRecursive(
                 nodeV->prev->prefixTwData,
                 nodeU->twData,
                 getRouteSegmentTwData(nodeY, nodeU->prev),
@@ -893,10 +893,10 @@ bool LocalSearch::SwapTwoClientsForOne()
             return false;
         }
 
-        routeUTwData = MergeTWDataRecursive(nodeU->prev->prefixTwData,
+        routeUTwData = mergeTwDataRecursive(nodeU->prev->prefixTwData,
                                             nodeV->twData,
                                             nodeX->next->postfixTwData);
-        routeVTwData = MergeTWDataRecursive(nodeV->prev->prefixTwData,
+        routeVTwData = mergeTwDataRecursive(nodeV->prev->prefixTwData,
                                             getEdgeTwData(nodeU, nodeX),
                                             nodeY->postfixTwData);
 
@@ -918,7 +918,7 @@ bool LocalSearch::SwapTwoClientsForOne()
         {
             // start - ... - UPrev - V - XNext - ... - VPrev - U - X - Y - ... -
             // end
-            routeUTwData = MergeTWDataRecursive(
+            routeUTwData = mergeTwDataRecursive(
                 nodeU->prev->prefixTwData,
                 nodeV->twData,
                 getRouteSegmentTwData(nodeX->next, nodeV->prev),
@@ -929,7 +929,7 @@ bool LocalSearch::SwapTwoClientsForOne()
         {
             // start - ... - VPrev - U - X - Y - ... - UPrev - V - XNext - ... -
             // end
-            routeUTwData = MergeTWDataRecursive(
+            routeUTwData = mergeTwDataRecursive(
                 nodeV->prev->prefixTwData,
                 getEdgeTwData(nodeU, nodeX),
                 getRouteSegmentTwData(nodeY, nodeU->prev),
@@ -983,10 +983,10 @@ bool LocalSearch::SwapTwoClientPairs()
             return false;
         }
 
-        routeUTwData = MergeTWDataRecursive(nodeU->prev->prefixTwData,
+        routeUTwData = mergeTwDataRecursive(nodeU->prev->prefixTwData,
                                             getEdgeTwData(nodeV, nodeY),
                                             nodeX->next->postfixTwData);
-        routeVTwData = MergeTWDataRecursive(nodeV->prev->prefixTwData,
+        routeVTwData = mergeTwDataRecursive(nodeV->prev->prefixTwData,
                                             getEdgeTwData(nodeU, nodeX),
                                             nodeY->next->postfixTwData);
 
@@ -1010,7 +1010,7 @@ bool LocalSearch::SwapTwoClientPairs()
         {
             // start - ... - UPrev - V - Y - XNext - ... - VPrev - U - X - YNext
             // - ... - end
-            routeUTwData = MergeTWDataRecursive(
+            routeUTwData = mergeTwDataRecursive(
                 nodeU->prev->prefixTwData,
                 getEdgeTwData(nodeV, nodeY),
                 getRouteSegmentTwData(nodeX->next, nodeV->prev),
@@ -1021,7 +1021,7 @@ bool LocalSearch::SwapTwoClientPairs()
         {
             // start - ... - VPrev - U - X - YNext - ... - UPrev - V - Y - XNext
             // - ... - end
-            routeUTwData = MergeTWDataRecursive(
+            routeUTwData = mergeTwDataRecursive(
                 nodeV->prev->prefixTwData,
                 getEdgeTwData(nodeU, nodeX),
                 getRouteSegmentTwData(nodeY->next, nodeU->prev),
@@ -1069,10 +1069,10 @@ bool LocalSearch::TwoOptWithinTrip()
     Node *itRoute = nodeV;
     while (itRoute != nodeU)
     {
-        routeTwData = MergeTWDataRecursive(routeTwData, itRoute->twData);
+        routeTwData = mergeTwDataRecursive(routeTwData, itRoute->twData);
         itRoute = itRoute->prev;
     }
-    routeTwData = MergeTWDataRecursive(routeTwData, nodeY->postfixTwData);
+    routeTwData = mergeTwDataRecursive(routeTwData, nodeY->postfixTwData);
 
     // Compute new total penalty
     cost += penaltyExcessLoad(routeU->load) + penaltyTimeWindows(routeTwData)
@@ -1116,9 +1116,9 @@ bool LocalSearch::TwoOptBetweenTrips()
     TimeWindowData routeUTwData, routeVTwData;
 
     routeUTwData
-        = MergeTWDataRecursive(nodeU->prefixTwData, nodeY->postfixTwData);
+        = mergeTwDataRecursive(nodeU->prefixTwData, nodeY->postfixTwData);
     routeVTwData
-        = MergeTWDataRecursive(nodeV->prefixTwData, nodeX->postfixTwData);
+        = mergeTwDataRecursive(nodeV->prefixTwData, nodeX->postfixTwData);
 
     costSuppU += penaltyExcessLoad(nodeU->cumulatedLoad + routeV->load
                                    - nodeV->cumulatedLoad)
@@ -1323,14 +1323,14 @@ bool LocalSearch::swapStar(const bool withTW)
     {
         // Special case
         routeUTwData
-            = MergeTWDataRecursive(myBestSwapStar.bestPositionV->prefixTwData,
+            = mergeTwDataRecursive(myBestSwapStar.bestPositionV->prefixTwData,
                                    myBestSwapStar.V->twData,
                                    myBestSwapStar.U->next->postfixTwData);
     }
     else if (myBestSwapStar.bestPositionV->position
              < myBestSwapStar.U->position)
     {
-        routeUTwData = MergeTWDataRecursive(
+        routeUTwData = mergeTwDataRecursive(
             myBestSwapStar.bestPositionV->prefixTwData,
             myBestSwapStar.V->twData,
             getRouteSegmentTwData(myBestSwapStar.bestPositionV->next,
@@ -1339,7 +1339,7 @@ bool LocalSearch::swapStar(const bool withTW)
     }
     else
     {
-        routeUTwData = MergeTWDataRecursive(
+        routeUTwData = mergeTwDataRecursive(
             myBestSwapStar.U->prev->prefixTwData,
             getRouteSegmentTwData(myBestSwapStar.U->next,
                                   myBestSwapStar.bestPositionV),
@@ -1352,14 +1352,14 @@ bool LocalSearch::swapStar(const bool withTW)
     {
         // Special case
         routeVTwData
-            = MergeTWDataRecursive(myBestSwapStar.bestPositionU->prefixTwData,
+            = mergeTwDataRecursive(myBestSwapStar.bestPositionU->prefixTwData,
                                    myBestSwapStar.U->twData,
                                    myBestSwapStar.V->next->postfixTwData);
     }
     else if (myBestSwapStar.bestPositionU->position
              < myBestSwapStar.V->position)
     {
-        routeVTwData = MergeTWDataRecursive(
+        routeVTwData = mergeTwDataRecursive(
             myBestSwapStar.bestPositionU->prefixTwData,
             myBestSwapStar.U->twData,
             getRouteSegmentTwData(myBestSwapStar.bestPositionU->next,
@@ -1368,7 +1368,7 @@ bool LocalSearch::swapStar(const bool withTW)
     }
     else
     {
-        routeVTwData = MergeTWDataRecursive(
+        routeVTwData = mergeTwDataRecursive(
             myBestSwapStar.V->prev->prefixTwData,
             getRouteSegmentTwData(myBestSwapStar.V->next,
                                   myBestSwapStar.bestPositionU),
@@ -1407,7 +1407,7 @@ bool LocalSearch::RelocateStar()
     {
         setLocalVariablesRouteU();
 
-        const TimeWindowData routeUTwData = MergeTWDataRecursive(
+        const TimeWindowData routeUTwData = mergeTwDataRecursive(
             nodeU->prev->prefixTwData, nodeX->postfixTwData);
         const double costSuppU
             = params.timeCost.get(nodeUPrevIndex, nodeXIndex)
@@ -1418,7 +1418,7 @@ bool LocalSearch::RelocateStar()
 
         for (Node *V = routeV->depot->next; !V->isDepot; V = V->next)
         {
-            const TimeWindowData routeVTwData = MergeTWDataRecursive(
+            const TimeWindowData routeVTwData = mergeTwDataRecursive(
                 V->prefixTwData, nodeU->twData, V->next->postfixTwData);
             double costSuppV = params.timeCost.get(V->cour, nodeUIndex)
                                + params.timeCost.get(nodeUIndex, V->next->cour)
@@ -1518,7 +1518,7 @@ int LocalSearch::getCheapestInsertSimultRemovalWithTW(Node *U,
     }
 
     // Compute insertion in the place of V
-    TimeWindowData twData = MergeTWDataRecursive(
+    TimeWindowData twData = mergeTwDataRecursive(
         V->prev->prefixTwData, U->twData, V->next->postfixTwData);
     int deltaCost = params.timeCost.get(V->prev->cour, U->cour)
                     + params.timeCost.get(U->cour, V->next->cour)
@@ -1578,7 +1578,7 @@ void LocalSearch::preprocessInsertionsWithTW(Route *R1, Route *R2)
 
         if (R1->isDeltaRemovalTWOutdated)
         {
-            twData = MergeTWDataRecursive(U->prev->prefixTwData,
+            twData = mergeTwDataRecursive(U->prev->prefixTwData,
                                           U->next->postfixTwData);
             U->deltaRemovalTW
                 = params.timeCost.get(U->prev->cour, U->next->cour)
@@ -1595,7 +1595,7 @@ void LocalSearch::preprocessInsertionsWithTW(Route *R1, Route *R2)
             // Compute additional timewarp we get when inserting U in R2, this
             // may be actually less if we remove U but we ignore this to have a
             // conservative estimate
-            twData = MergeTWDataRecursive(R2->depot->prefixTwData,
+            twData = mergeTwDataRecursive(R2->depot->prefixTwData,
                                           U->twData,
                                           R2->depot->next->postfixTwData);
 
@@ -1609,7 +1609,7 @@ void LocalSearch::preprocessInsertionsWithTW(Route *R1, Route *R2)
 
             for (Node *V = R2->depot->next; !V->isDepot; V = V->next)
             {
-                twData = MergeTWDataRecursive(
+                twData = mergeTwDataRecursive(
                     V->prefixTwData, U->twData, V->next->postfixTwData);
 
                 int deltaCost = params.timeCost.get(V->cour, U->cour)
@@ -1629,7 +1629,7 @@ void LocalSearch::preprocessInsertionsWithTW(Route *R1, Route *R2)
 TimeWindowData LocalSearch::getEdgeTwData(Node *U, Node *V)
 {
     // TODO this could be cached?
-    return MergeTWDataRecursive(U->twData, V->twData);
+    return mergeTwDataRecursive(U->twData, V->twData);
 }
 
 TimeWindowData LocalSearch::getRouteSegmentTwData(Node *U, Node *V)
@@ -1648,41 +1648,34 @@ TimeWindowData LocalSearch::getRouteSegmentTwData(Node *U, Node *V)
     {
         if (mynode->isSeed && mynode->position + 4 <= targetPos)
         {
-            twData = MergeTWDataRecursive(twData, mynode->toNextSeedTwD);
+            twData = mergeTwDataRecursive(twData, mynode->toNextSeedTwD);
             mynode = mynode->nextSeed;
         }
         else
         {
             mynode = mynode->next;
-            twData = MergeTWDataRecursive(twData, mynode->twData);
+            twData = mergeTwDataRecursive(twData, mynode->twData);
         }
     }
     return twData;
 }
 
-TimeWindowData LocalSearch::MergeTWDataRecursive(const TimeWindowData &twData1,
-                                                 const TimeWindowData &twData2)
+TimeWindowData
+LocalSearch::mergeTwDataRecursive(TimeWindowData const &twData1,
+                                  TimeWindowData const &twData2) const
 {
-    TimeWindowData mergedTwData;
-    // Note, assume time equals cost
-    int deltaCost
-        = params.timeCost.get(twData1.lastNodeIndex, twData2.firstNodeIndex);
-    int deltaDuration = deltaCost;
-    int delta = twData1.duration - twData1.timeWarp + deltaDuration;
+    int dist = params.timeCost.get(twData1.idxLast, twData2.idxFirst);
+    int delta = twData1.duration - twData1.timeWarp + dist;
     int deltaWaitTime = std::max(twData2.twEarly - delta - twData1.twLate, 0);
     int deltaTimeWarp = std::max(twData1.twEarly + delta - twData2.twLate, 0);
-    mergedTwData.firstNodeIndex = twData1.firstNodeIndex;
-    mergedTwData.lastNodeIndex = twData2.lastNodeIndex;
-    mergedTwData.duration
-        = twData1.duration + twData2.duration + deltaDuration + deltaWaitTime;
-    mergedTwData.timeWarp = twData1.timeWarp + twData2.timeWarp + deltaTimeWarp;
-    mergedTwData.twEarly
-        = std::max(twData2.twEarly - delta, twData1.twEarly) - deltaWaitTime;
-    mergedTwData.twLate
-        = std::min(twData2.twLate - delta, twData1.twLate) + deltaTimeWarp;
-    mergedTwData.latestReleaseTime
-        = std::max(twData1.latestReleaseTime, twData2.latestReleaseTime);
-    return mergedTwData;
+
+    return {twData1.idxFirst,
+            twData2.idxLast,
+            twData1.duration + twData2.duration + dist + deltaWaitTime,
+            twData1.timeWarp + twData2.timeWarp + deltaTimeWarp,
+            std::max(twData2.twEarly - delta, twData1.twEarly) - deltaWaitTime,
+            std::min(twData2.twLate - delta, twData1.twLate) + deltaTimeWarp,
+            std::max(twData1.latestReleaseTime, twData2.latestReleaseTime)};
 }
 
 void LocalSearch::insertNode(Node *toInsert, Node *insertionPoint)
@@ -1747,7 +1740,7 @@ void LocalSearch::updateRouteData(Route *myRoute)
         mynode->cumulatedLoad = myload;
         mynode->cumulatedReversalDistance = myReversalDistance;
         mynode->prefixTwData
-            = MergeTWDataRecursive(mynode->prev->prefixTwData, mynode->twData);
+            = mergeTwDataRecursive(mynode->prev->prefixTwData, mynode->twData);
         mynode->isSeed = false;
         mynode->nextSeed = nullptr;
         if (!mynode->isDepot)
@@ -1765,7 +1758,7 @@ void LocalSearch::updateRouteData(Route *myRoute)
                 {
                     seedNode->isSeed = true;
                     seedNode->toNextSeedTwD
-                        = MergeTWDataRecursive(seedTwD, mynode->twData);
+                        = mergeTwDataRecursive(seedTwD, mynode->twData);
                     seedNode->nextSeed = mynode;
                 }
                 seedNode = mynode;
@@ -1773,7 +1766,7 @@ void LocalSearch::updateRouteData(Route *myRoute)
             else if (myplace % 4 == 1)
                 seedTwD = mynode->twData;
             else
-                seedTwD = MergeTWDataRecursive(seedTwD, mynode->twData);
+                seedTwD = mergeTwDataRecursive(seedTwD, mynode->twData);
         }
         firstIt = false;
     }
@@ -1793,7 +1786,7 @@ void LocalSearch::updateRouteData(Route *myRoute)
     {
         mynode = mynode->prev;
         mynode->postfixTwData
-            = MergeTWDataRecursive(mynode->twData, mynode->next->postfixTwData);
+            = mergeTwDataRecursive(mynode->twData, mynode->next->postfixTwData);
     } while (!mynode->isDepot);
 
     if (myRoute->nbCustomers == 0)
@@ -1833,8 +1826,8 @@ void LocalSearch::loadIndividual(Individual const &indiv)
     emptyRoutes.clear();
     nbMoves = 0;
     TimeWindowData depotTwData;
-    depotTwData.firstNodeIndex = 0;
-    depotTwData.lastNodeIndex = 0;
+    depotTwData.idxFirst = 0;
+    depotTwData.idxLast = 0;
     depotTwData.duration = 0;
     depotTwData.timeWarp = 0;
     depotTwData.twEarly = params.cli[0].twEarly;
@@ -1846,8 +1839,8 @@ void LocalSearch::loadIndividual(Individual const &indiv)
     for (int i = 1; i <= params.nbClients; i++)
     {
         TimeWindowData *myTwData = &clients[i].twData;
-        myTwData->firstNodeIndex = i;
-        myTwData->lastNodeIndex = i;
+        myTwData->idxFirst = i;
+        myTwData->idxLast = i;
         myTwData->duration = params.cli[i].servDur;
         myTwData->twEarly = params.cli[i].twEarly;
         myTwData->twLate = params.cli[i].twLate;

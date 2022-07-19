@@ -28,7 +28,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("rng"));
 
     py::class_<Config>(m, "Config")
-        .def(py::init<int,
+        .def(py::init<size_t,
                       int,
                       int,
                       double,
@@ -165,7 +165,8 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("local_search"));
 
     py::class_<Result>(m, "Result")
-        .def("get_best_found", &Result::getBestFound);
+        .def("get_best_found", &Result::getBestFound)
+        .def("get_num_iters", &Result::getNumIters);
 
     py::class_<GeneticAlgorithm>(m, "GeneticAlgorithm")
         .def(py::init<Params &, XorShift128 &, Population &>(),

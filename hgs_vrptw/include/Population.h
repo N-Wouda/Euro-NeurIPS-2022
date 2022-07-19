@@ -99,6 +99,9 @@ public:
     // Selects two (if possible non-identical) parents by binary tournament
     Parents selectParents();
 
+    /**
+     * Returns the best feasible solution that was observed during iteration.
+     */
     [[nodiscard]] Individual const &getBestFound() const
     {
         return bestSolutionOverall;

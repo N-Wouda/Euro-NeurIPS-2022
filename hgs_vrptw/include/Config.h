@@ -12,7 +12,7 @@ struct Config
     // TODO make fields const?
 
     int seed = 0;             // Random seed
-    int nbIter = 20'000;      // iters without improvement
+    size_t nbIter = 20'000;      // iters without improvement
     int timeLimit = INT_MAX;  // time limit in seconds
 
     double fractionGeneratedNearest = 0.05;   // frac by nearest-first
@@ -97,7 +97,7 @@ struct Config
     // Whether correlation matrix is symmetric
     bool useSymmetricCorrelatedVertices = false;
 
-    explicit Config(int nbIter = 20'000,
+    explicit Config(size_t nbIter = 20'000,
                     int timeLimit = INT_MAX,
                     int seed = 0,
                     double fractionGeneratedNearest = 0.05,

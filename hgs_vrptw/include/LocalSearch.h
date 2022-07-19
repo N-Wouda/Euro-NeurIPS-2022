@@ -38,8 +38,8 @@ struct Node;
 // Structure containing characterizations for a sequence
 struct TimeWindowData
 {
-    int firstNodeIndex;
-    int lastNodeIndex;
+    int idxFirst;
+    int idxLast;
     int duration;  // Cumulative duration, including waiting and servicing
     int timeWarp;  // Cumulative time warp
     int twEarly;   // Earliest start of servicing first node in sequence,
@@ -301,16 +301,18 @@ class LocalSearch
     // Calculates time window data for segment in single route
     TimeWindowData getRouteSegmentTwData(Node *U, Node *V);
 
-    TimeWindowData MergeTWDataRecursive(const TimeWindowData &twData1,
-                                        const TimeWindowData &twData2);
+    [[nodiscard]] inline TimeWindowData
+    mergeTwDataRecursive(TimeWindowData const &twData1,
+                         TimeWindowData const &twData2) const;
 
     template <typename... Args>
-    inline TimeWindowData MergeTWDataRecursive(const TimeWindowData &first,
-                                               const TimeWindowData &second,
-                                               Args... args)
+    [[nodiscard]] inline TimeWindowData
+    mergeTwDataRecursive(TimeWindowData const &first,
+                         TimeWindowData const &second,
+                         Args... args) const
     {
-        TimeWindowData result = MergeTWDataRecursive(first, second);
-        return MergeTWDataRecursive(result, args...);
+        TimeWindowData const result = mergeTwDataRecursive(first, second);
+        return mergeTwDataRecursive(result, args...);
     }
 
     /* ROUTINES TO UPDATE THE SOLUTIONS */

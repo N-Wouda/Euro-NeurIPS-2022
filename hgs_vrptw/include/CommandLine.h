@@ -70,7 +70,7 @@ public:
             if (std::string(argv[i]) == "-t")
                 config.timeLimit = atoi(argv[i + 1]);
             else if (std::string(argv[i]) == "-it")
-                config.nbIter = atoi(argv[i + 1]);
+                config.nbIter = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-seed")
                 config.seed = atoi(argv[i + 1]);
             else if (std::string(argv[i]) == "-veh")
