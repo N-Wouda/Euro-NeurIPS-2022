@@ -77,7 +77,7 @@ class Population
     // Add an individual in the population (survivor selection is automatically
     // triggered whenever the population reaches its maximum size), and possibly
     // update the current best candidate.
-    void addIndividual(const Individual *indiv, bool updateFeasible);
+    void addIndividual(Individual const &indiv, bool updateFeasible);
 
     // Selects an individual by binary tournament
     Individual const *getBinaryTournament();
@@ -86,7 +86,7 @@ public:
     // Performs local search and adds the individual. If the individual is
     // infeasible, with some probability we try to repair it and add it if this
     // succeeds.
-    void educate(Individual *indiv);
+    void educate(Individual &indiv);
 
     // Cleans all solutions and generates a new initial population (only used
     // when running HGS until a time limit, in which case the algorithm restarts

@@ -325,7 +325,7 @@ class LocalSearch
     void updateRouteData(Route *myRoute);
 
     // Loading an initial solution into the local search
-    void loadIndividual(Individual *indiv);
+    void loadIndividual(Individual const &indiv);
 
     // Exporting the LS solution into an individual and calculating the
     // penalized cost according to the original penalty weights from Params
@@ -334,7 +334,7 @@ class LocalSearch
 public:
     // Run the local search with the specified penalty values
     void
-    run(Individual *indiv, double penaltyCapacityLS, double penaltyTimeWarpLS);
+    run(Individual &indiv, double penaltyCapacityLS, double penaltyTimeWarpLS);
 
     // Initialize data for construction heuristics
     void initializeConstruction(std::vector<NodeToInsert> *nodesToInsert);

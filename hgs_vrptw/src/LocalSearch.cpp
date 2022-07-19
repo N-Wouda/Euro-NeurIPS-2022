@@ -332,7 +332,7 @@ Individual LocalSearch::constructIndividualWithSeedOrder(
     return exportIndividual();
 }
 
-void LocalSearch::run(Individual *indiv,
+void LocalSearch::run(Individual &indiv,
                       double penaltyCapacityLS,
                       double penaltyTimeWarpLS)
 {
@@ -505,7 +505,7 @@ void LocalSearch::run(Individual *indiv,
     }
 
     // Register the solution produced by the LS in the individual
-    *indiv = exportIndividual();
+    indiv = exportIndividual();
 }
 
 void LocalSearch::setLocalVariablesRouteU()
@@ -1828,7 +1828,7 @@ void LocalSearch::updateRouteData(Route *myRoute)
     }
 }
 
-void LocalSearch::loadIndividual(Individual *indiv)
+void LocalSearch::loadIndividual(Individual const &indiv)
 {
     emptyRoutes.clear();
     nbMoves = 0;
@@ -1855,7 +1855,7 @@ void LocalSearch::loadIndividual(Individual *indiv)
         // myTwData->load = params.cli[i].demand;
     }
 
-    auto const &routesIndiv = indiv->getRoutes();
+    auto const &routesIndiv = indiv.getRoutes();
 
     for (int r = 0; r < params.nbVehicles; r++)
     {
@@ -1957,6 +1957,7 @@ LocalSearch::LocalSearch(Params &params, XorShift128 &rng)
         clients[i].cour = i;
         clients[i].isDepot = false;
     }
+
     for (int i = 0; i < params.nbVehicles; i++)
     {
         routes[i].cour = i;

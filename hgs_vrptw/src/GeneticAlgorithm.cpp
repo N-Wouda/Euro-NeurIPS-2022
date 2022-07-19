@@ -41,7 +41,7 @@ Result GeneticAlgorithm::runUntil(timePoint const &timePoint)
 
         /* LOCAL SEARCH */
         auto const currBest = population.getBestFound().cost();
-        population.educate(&offspring);
+        population.educate(offspring);
 
         /* TRACKING THE NUMBER OF ITERATIONS SINCE LAST SOLUTION IMPROVEMENT */
         if (currBest > population.getBestFound().cost())

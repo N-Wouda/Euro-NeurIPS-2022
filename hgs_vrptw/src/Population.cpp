@@ -8,19 +8,19 @@
 #include <list>
 #include <vector>
 
-void Population::educate(Individual *indiv)
+void Population::educate(Individual &indiv)
 {
     localSearch.run(indiv, params.penaltyCapacity, params.penaltyTimeWarp);
     addIndividual(indiv, true);
 
-    if (!indiv->isFeasible()  // possibly repair if currently infeasible
+    if (!indiv.isFeasible()  // possibly repair if currently infeasible
         && rng.randint(100) < params.config.repairProbability)
     {
         localSearch.run(indiv,  // re-run, but penalise infeasibility more
                         params.penaltyCapacity * 10.,
                         params.penaltyTimeWarp * 10.);
 
-        if (indiv->isFeasible())
+        if (indiv.isFeasible())
             addIndividual(indiv, false);
     }
 }
@@ -31,7 +31,7 @@ void Population::generatePopulation()
     {
         // Quickly generate the one solution
         Individual randomIndiv(&params, &rng);
-        addIndividual(&randomIndiv, true);
+        addIndividual(randomIndiv, true);
         return;
     }
 
@@ -69,7 +69,7 @@ void Population::generatePopulation()
 
         auto indiv = localSearch.constructIndividualWithSeedOrder(
             toleratedCapacityViolation, toleratedTimeWarp, false);
-        educate(&indiv);
+        educate(indiv);
     }
 
     // Generate some individuals using the FURHEST construction heuristic
@@ -83,48 +83,51 @@ void Population::generatePopulation()
 
         auto indiv = localSearch.constructIndividualWithSeedOrder(
             toleratedCapacityViolation, toleratedTimeWarp, true);
-        educate(&indiv);
+        educate(indiv);
     }
 
     // Generate some individuals using the SWEEP construction heuristic
     for (int i = 0; i < nofSweepIndividualsToGenerate; i++)
     {
         // Create the first individual without load restrictions
-        int fillPercentage
-            = i == 0 ? 100
-                     : minSweepFillPercentage
-                           + rng.randint(100 - minSweepFillPercentage + 1);
+        unsigned int fillPct;
 
-        auto indiv = localSearch.constructIndividualBySweep(fillPercentage);
-        educate(&indiv);
+        if (i == 0)
+            fillPct = 100;
+        else
+            fillPct = minSweepFillPercentage
+                      + rng.randint(100 - minSweepFillPercentage + 1);
+
+        auto indiv = localSearch.constructIndividualBySweep(fillPct);
+        educate(indiv);
     }
 
     // Generate some individuals using a RANDOM strategy
     for (int i = 0; i < nofRandomIndividualsToGenerate; i++)
     {
         Individual randomIndiv(&params, &rng);
-        educate(&randomIndiv);
+        educate(randomIndiv);
     }
 }
 
-void Population::addIndividual(const Individual *indiv, bool updateFeasible)
+void Population::addIndividual(Individual const &indiv, bool updateFeasible)
 {
     if (updateFeasible)  // update feasibility if needed
     {
-        listFeasibilityLoad.push_back(!indiv->hasExcessCapacity());
-        listFeasibilityTimeWarp.push_back(!indiv->hasTimeWarp());
+        listFeasibilityLoad.push_back(!indiv.hasExcessCapacity());
+        listFeasibilityTimeWarp.push_back(!indiv.hasTimeWarp());
         listFeasibilityLoad.pop_front();
         listFeasibilityTimeWarp.pop_front();
     }
 
     SubPopulation &pop  // where to insert?
-        = indiv->isFeasible() ? feasibleSubpopulation : infeasibleSubpopulation;
+        = indiv.isFeasible() ? feasibleSubpopulation : infeasibleSubpopulation;
     std::vector<double> &fitness
-        = indiv->isFeasible() ? feasibleFitness : infeasibleFitness;
+        = indiv.isFeasible() ? feasibleFitness : infeasibleFitness;
 
     // Create a copy of the individual and update the proximity structures
     // calculating inter-individual distances
-    auto *myIndividual = new Individual(*indiv);
+    auto *myIndividual = new Individual(indiv);
 
     for (Individual *other : pop)
         myIndividual->brokenPairsDistance(other);
@@ -132,7 +135,7 @@ void Population::addIndividual(const Individual *indiv, bool updateFeasible)
     // Identify the correct location in the population and insert the individual
     // TODO binsearch?
     int place = static_cast<int>(pop.size());
-    while (place > 0 && pop[place - 1]->cost() > indiv->cost())
+    while (place > 0 && pop[place - 1]->cost() > indiv.cost())
         place--;
 
     pop.emplace(pop.begin() + place, myIndividual);
@@ -146,8 +149,8 @@ void Population::addIndividual(const Individual *indiv, bool updateFeasible)
         while (pop.size() > params.config.minimumPopulationSize)
             removeWorstBiasedFitness(pop, fitness);
 
-    if (indiv->isFeasible() && indiv->cost() < bestSolutionOverall.cost())
-        bestSolutionOverall = *indiv;
+    if (indiv.isFeasible() && indiv.cost() < bestSolutionOverall.cost())
+        bestSolutionOverall = indiv;
 }
 
 void Population::updateBiasedFitnesses(SubPopulation &pop,
