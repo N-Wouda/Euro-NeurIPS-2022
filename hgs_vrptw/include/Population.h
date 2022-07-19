@@ -69,7 +69,6 @@ class Population
     void removeWorstBiasedFitness(SubPopulation &subpop,
                                   std::vector<double> &fitness);
 
-public:
     // Generates the population. Part of the population is generated randomly
     // and the other part using several construction heuristics. There is
     // variety in the individuals that are constructed using the construction
@@ -81,6 +80,10 @@ public:
     // update the current best candidate.
     void addIndividual(const Individual *indiv, bool updateFeasible);
 
+    // Selects an individual by binary tournament
+    Individual const *getBinaryTournament();
+
+public:
     // Performs local search and adds the individual. If the individual is
     // infeasible, with some probability we try to repair it and add it if this
     // succeeds.
@@ -94,12 +97,8 @@ public:
     // Adaptation of the penalty parameters (this also updates the evaluations)
     void managePenalties();
 
-    // Selects an individal by binary tournament
-    Individual const *getBinaryTournament();
-
-    // Selects two non-identical parents by binary tournament and return as a
-    // pair
-    Parents getNonIdenticalParentsBinaryTournament();
+    // Selects two (if possible non-identical) parents by binary tournament
+    Parents selectParents();
 
     [[nodiscard]] Individual const &getBestFound() const
     {

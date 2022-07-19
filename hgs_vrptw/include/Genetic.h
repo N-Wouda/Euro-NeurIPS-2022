@@ -42,10 +42,9 @@ class Genetic
     using Parents = std::pair<Individual const *, Individual const *>;
     using timePoint = std::chrono::system_clock::time_point;
 
-    Params &params;            // Problem parameters
-    XorShift128 &rng;          // Random number generator
-    Population &population;    // Population
-    LocalSearch &localSearch;  // Local Search structure
+    Params &params;          // Problem parameters
+    XorShift128 &rng;        // Random number generator
+    Population &population;  // Population
 
     // Function to do two OX Crossovers for a pair of individuals (the two
     // parents) and return the best individual based on penalizedCost
@@ -75,11 +74,7 @@ public:
      */
     Result runUntil(timePoint const &timePoint);
 
-    // Constructor
-    Genetic(Params &params,
-            XorShift128 &rng,
-            Population &population,
-            LocalSearch &localSearch);
+    Genetic(Params &params, XorShift128 &rng, Population &population);
 };
 
 #endif

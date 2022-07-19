@@ -103,11 +103,17 @@ public:
         return !hasExcessCapacity() && !hasTimeWarp();
     }
 
+    /**
+     * If true, then the route exceeds vehicle capacity.
+     */
     [[nodiscard]] inline bool hasExcessCapacity() const
     {
         return capacityExcess > 0;
     }
 
+    /**
+     * If true, then the route violates time window constraints.
+     */
     [[nodiscard]] inline bool hasTimeWarp() const { return timeWarp > 0; }
 
     // Evaluates this solution's objective value.

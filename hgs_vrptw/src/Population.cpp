@@ -366,7 +366,7 @@ Individual const *Population::getBinaryTournament()
 }
 
 std::pair<Individual const *, Individual const *>
-Population::getNonIdenticalParentsBinaryTournament()
+Population::selectParents()
 {
     // Pick two individual using a binary tournament
     Individual const *par1 = getBinaryTournament();

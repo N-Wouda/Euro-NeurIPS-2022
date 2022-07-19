@@ -28,8 +28,7 @@ Result Genetic::runUntil(timePoint const &timePoint)
         }
 
         /* SELECTION AND CROSSOVER */
-        // First select parents using getNonIdenticalParentsBinaryTournament
-        auto parents = population.getNonIdenticalParentsBinaryTournament();
+        auto parents = population.selectParents();
 
         // Use the parents to create new individuals using OX and SREX
         Individual offspringOX = crossoverOX(parents);
@@ -403,10 +402,7 @@ void Genetic::insertUnplannedTasks(
     }
 }
 
-Genetic::Genetic(Params &params,
-                 XorShift128 &rng,
-                 Population &population,
-                 LocalSearch &localSearch)
-    : params(params), rng(rng), population(population), localSearch(localSearch)
+Genetic::Genetic(Params &params, XorShift128 &rng, Population &population)
+    : params(params), rng(rng), population(population)
 {
 }

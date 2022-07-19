@@ -168,10 +168,9 @@ PYBIND11_MODULE(hgspy, m)
         .def("get_best_found", &Result::getBestFound);
 
     py::class_<Genetic>(m, "Genetic")
-        .def(py::init<Params &, XorShift128 &, Population &, LocalSearch &>(),
+        .def(py::init<Params &, XorShift128 &, Population &>(),
              py::arg("params"),
              py::arg("rng"),
-             py::arg("population"),
-             py::arg("local_search"))
+             py::arg("population"))
         .def("run_until", &Genetic::runUntil, py::arg("time_point"));
 }

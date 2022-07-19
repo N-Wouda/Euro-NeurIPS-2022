@@ -8,7 +8,7 @@
 #include <chrono>
 #include <iostream>
 
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 try
 {
     using clock = std::chrono::system_clock;
@@ -16,13 +16,13 @@ try
 
     CommandLine args(argc, argv);
     auto config = args.parse();
-    auto rng = XorShift128(config.seed);
-    auto params = Params(config, args.instPath());
 
+    XorShift128 rng(config.seed);
+    Params params(config, args.instPath());
     LocalSearch ls(params, rng);
     Population pop(params, rng, ls);
 
-    Genetic solver(params, rng, pop, ls);
+    Genetic solver(params, rng, pop);
 
     auto const until = start + std::chrono::seconds(config.timeLimit);
     auto const res = solver.runUntil(until);

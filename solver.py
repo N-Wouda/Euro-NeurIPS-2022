@@ -84,7 +84,7 @@ def solve_static_vrptw(instance, time_limit=3600, seed=1):
     ls = LocalSearch(params, rng)
     pop = Population(params, rng, ls)
 
-    algo = Genetic(params, rng, pop, ls)
+    algo = Genetic(params, rng, pop)
     res = algo.run_until(start + timedelta(seconds=time_limit))
 
     best = res.get_best_found()

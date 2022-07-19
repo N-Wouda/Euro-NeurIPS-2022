@@ -364,7 +364,7 @@ public:
     // latestArrival, other orders are inserted in best position.
     Individual constructIndividualBySweep(int fillPercentage);
 
-    explicit LocalSearch(Params &params, XorShift128 &rng);
+    LocalSearch(Params &params, XorShift128 &rng);
 };
 
 #endif
