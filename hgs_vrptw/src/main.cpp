@@ -27,12 +27,9 @@ try
     auto until = start + std::chrono::seconds(config.timeLimit);
     auto const res = solver.runUntil(until);
 
-    if (res.getBestFound() != nullptr)
-    {
-        std::chrono::duration<double> const timeDelta = clock::now() - start;
-        auto const *bestSol = res.getBestFound();
-        bestSol->exportCVRPLibFormat(args.solPath(), timeDelta.count());
-    }
+    std::chrono::duration<double> const timeDelta = clock::now() - start;
+    auto const &bestSol = res.getBestFound();
+    bestSol.exportCVRPLibFormat(args.solPath(), timeDelta.count());
 }
 catch (std::exception const &e)
 {
