@@ -47,32 +47,23 @@ Result Genetic::runUntil(timePoint const &timePoint)
 
         // Check if the new individual is the best feasible individual of the
         // population, based on penalizedCost
-        bool isNewBest = population.addIndividual(&offspring, true);
+        auto const currBest = population.getBestFound().cost();
+        population.addIndividual(&offspring, true);
 
-        // In case of infeasibility, repair the individual with a certain
-        // probability
-        if (!offspring.isFeasible()
+        if (!offspring.isFeasible()  // possibly repair if currently infeasible
             && rng.randint(100) < (unsigned int)params.config.repairProbability)
         {
-            // Run the Local Search again, but with penalties for
-            // infeasibility multiplied by 10
+            // Re-run local search, but now penalise infeasibility more.
             localSearch.run(&offspring,
                             params.penaltyCapacity * 10.,
                             params.penaltyTimeWarp * 10.);
 
-            // If the individual is feasible now, check if it is the best
-            // feasible individual of the population, based on penalizedCost and
-            // add it to the population If the individual is not feasible now,
-            // it is not added to the population
             if (offspring.isFeasible())
-            {
-                isNewBest = (population.addIndividual(&offspring, false)
-                             || isNewBest);
-            }
+                population.addIndividual(&offspring, false);
         }
 
         /* TRACKING THE NUMBER OF ITERATIONS SINCE LAST SOLUTION IMPROVEMENT */
-        if (isNewBest)
+        if (currBest > population.getBestFound().cost())
             nbIterNonProd = 1;
         else
             nbIterNonProd++;
@@ -338,36 +329,32 @@ Individual Genetic::crossoverSREX(Parents parents) const
         clientsInSelectedA.begin(),
         clientsInSelectedA.end(),
         std::inserter(clientsInSelectedANotB, clientsInSelectedANotB.end()),
-        [&clientsInSelectedB](int c) {
-            return clientsInSelectedB.find(c) == clientsInSelectedB.end();
-        });
+        [&clientsInSelectedB](int c)
+        { return clientsInSelectedB.find(c) == clientsInSelectedB.end(); });
 
     std::unordered_set<int> clientsInSelectedBNotA;
     std::copy_if(
         clientsInSelectedB.begin(),
         clientsInSelectedB.end(),
         std::inserter(clientsInSelectedBNotA, clientsInSelectedBNotA.end()),
-        [&clientsInSelectedA](int c) {
-            return clientsInSelectedA.find(c) == clientsInSelectedA.end();
-        });
+        [&clientsInSelectedA](int c)
+        { return clientsInSelectedA.find(c) == clientsInSelectedA.end(); });
 
-    Individual indiv1(&params, &rng);
-    Individual indiv2(&params, &rng);
+    auto routes1 = std::vector<std::vector<int>>(params.nbVehicles);
+    auto routes2 = std::vector<std::vector<int>>(params.nbVehicles);
 
     // Replace selected routes from parent A with routes from parent B
     for (size_t r = 0; r < nMovedRoutes; r++)
     {
         size_t indexA = (startA + r) % nbRoutesA;
         size_t indexB = (startB + r) % nbRoutesB;
-        indiv1.routeChrom[indexA].clear();
-        indiv2.routeChrom[indexA].clear();
 
         for (int c : routesB[indexB])
         {
-            indiv1.routeChrom[indexA].push_back(c);
+            routes1[indexA].push_back(c);
 
             if (clientsInSelectedBNotA.find(c) == clientsInSelectedBNotA.end())
-                indiv2.routeChrom[indexA].push_back(c);
+                routes2[indexA].push_back(c);
         }
     }
 
@@ -375,44 +362,34 @@ Individual Genetic::crossoverSREX(Parents parents) const
     for (size_t r = nMovedRoutes; r < nbRoutesA; r++)
     {
         size_t indexA = (startA + r) % nbRoutesA;
-        indiv1.routeChrom[indexA].clear();
-        indiv2.routeChrom[indexA].clear();
 
         for (int c : routesA[indexA])
         {
             if (clientsInSelectedBNotA.find(c) == clientsInSelectedBNotA.end())
-                indiv1.routeChrom[indexA].push_back(c);
+                routes1[indexA].push_back(c);
 
-            indiv2.routeChrom[indexA].push_back(c);
+            routes2[indexA].push_back(c);
         }
-    }
-
-    // Delete any remaining routes that still lived in offspring
-    for (size_t r = nbRoutesA; r < static_cast<size_t>(params.nbVehicles); r++)
-    {
-        indiv1.routeChrom[r].clear();
-        indiv2.routeChrom[r].clear();
     }
 
     // Step 3: Insert unplanned clients (those that were in the removed routes
     // of A, but not the inserted routes of B)
-    insertUnplannedTasks(&indiv1, clientsInSelectedANotB);
-    insertUnplannedTasks(&indiv2, clientsInSelectedANotB);
+    insertUnplannedTasks(routes1, clientsInSelectedANotB);
+    insertUnplannedTasks(routes2, clientsInSelectedANotB);
 
-    indiv1.evaluateCompleteCost();
-    indiv2.evaluateCompleteCost();
+    auto const indiv1 = Individual(&params, parents.first->getTour(), routes1);
+    auto const indiv2 = Individual(&params, parents.second->getTour(), routes2);
 
     return indiv1.cost() < indiv2.cost() ? indiv1 : indiv2;
 }
 
 void Genetic::insertUnplannedTasks(
-    Individual *offspring, std::unordered_set<int> const &unplannedTasks) const
+    std::vector<std::vector<int>> &routes,
+    std::unordered_set<int> const &unplannedTasks) const
 {
     int newDistanceToInsert = INT_MAX;    // TODO:
     int newDistanceFromInsert = INT_MAX;  // TODO:
     int distanceDelta = INT_MAX;          // TODO:
-
-    auto const &routes = offspring->getRoutes();
 
     // Loop over all unplannedTasks
     for (int c : unplannedTasks)
@@ -480,10 +457,8 @@ void Genetic::insertUnplannedTasks(
             }
         }
 
-        offspring->routeChrom[bestLocation.first].insert(
-            offspring->routeChrom[bestLocation.first].begin()
-                + bestLocation.second,
-            c);
+        routes[bestLocation.first].insert(
+            routes[bestLocation.first].begin() + bestLocation.second, c);
     }
 }
 

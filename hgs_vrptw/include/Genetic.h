@@ -62,7 +62,7 @@ class Genetic
 
     // Insert unplanned tasks (those that were in the removed routes of A, but
     // not the inserted routes of B or vice versa)
-    void insertUnplannedTasks(Individual *offspring,
+    void insertUnplannedTasks(std::vector<std::vector<int>> &routes,
                               std::unordered_set<int> const &unplanned) const;
 
 public:

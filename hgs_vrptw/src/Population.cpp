@@ -113,7 +113,7 @@ void Population::generatePopulation()
     }
 }
 
-bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
+void Population::addIndividual(const Individual *indiv, bool updateFeasible)
 {
     if (updateFeasible)  // update feasibility if needed
     {
@@ -125,6 +125,8 @@ bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
 
     SubPopulation &pop  // where to insert?
         = indiv->isFeasible() ? feasibleSubpopulation : infeasibleSubpopulation;
+    std::vector<double> &fitness
+        = indiv->isFeasible() ? feasibleFitness : infeasibleFitness;
 
     // Create a copy of the individual and update the proximity structures
     // calculating inter-individual distances
@@ -136,11 +138,11 @@ bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
     // Identify the correct location in the population and insert the individual
     // TODO binsearch?
     int place = static_cast<int>(pop.size());
-    while (place > 0 && pop[place - 1]->cost() > indiv->cost() - MY_EPSILON)
-    {
+    while (place > 0 && pop[place - 1]->cost() > indiv->cost())
         place--;
-    }
+
     pop.emplace(pop.begin() + place, myIndividual);
+    fitness.emplace(fitness.begin() + place, 0);
 
     // Trigger a survivor selection if the maximum population size is exceeded
     size_t maxPopSize
@@ -148,26 +150,20 @@ bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
 
     if (pop.size() > maxPopSize)
         while (pop.size() > params.config.minimumPopulationSize)
-            removeWorstBiasedFitness(pop);
+            removeWorstBiasedFitness(pop, fitness);
 
-    // Track best solution
-    if (indiv->isFeasible()
-        && (indiv->cost() < bestSolutionOverall.cost() - MY_EPSILON))
-    {
+    if (indiv->isFeasible() && indiv->cost() < bestSolutionOverall.cost())
         bestSolutionOverall = *indiv;
-        return true;
-    }
-
-    return false;
 }
 
-void Population::updateBiasedFitnesses(SubPopulation &pop) const
+void Population::updateBiasedFitnesses(SubPopulation &pop,
+                                       std::vector<double> &fitness) const
 {
     // Updating the biased fitness values. If there is only one individual, its
     // biasedFitness is 0
     if (pop.size() == 1)
     {
-        pop[0]->biasedFitness = 0;
+        fitness[0] = 0;
         return;
     }
 
@@ -189,24 +185,25 @@ void Population::updateBiasedFitnesses(SubPopulation &pop) const
     {
         // Ranking the individuals based on the diversity rank and diversity
         // measure from 0 to 1
-        double divRank = idx / (popSize - 1);
-        double fitRank = ranking[idx].second / (popSize - 1);
+        double const divRank = idx / (popSize - 1);
+        double const fitRank = ranking[idx].second / (popSize - 1);
 
         // Elite individuals cannot be smaller than population size
         if (pop.size() <= params.config.nbElite)
-            pop[ranking[idx].second]->biasedFitness = fitRank;
+            fitness[ranking[idx].second] = fitRank;
         else if (params.config.diversityWeight > 0)
-            pop[ranking[idx].second]->biasedFitness
+            fitness[ranking[idx].second]
                 = fitRank + params.config.diversityWeight * divRank;
         else
-            pop[ranking[idx].second]->biasedFitness
+            fitness[ranking[idx].second]
                 = fitRank + (1.0 - params.config.nbElite / popSize) * divRank;
     }
 }
 
-void Population::removeWorstBiasedFitness(SubPopulation &pop)
+void Population::removeWorstBiasedFitness(SubPopulation &pop,
+                                          std::vector<double> &fitness)
 {
-    updateBiasedFitnesses(pop);
+    updateBiasedFitnesses(pop, fitness);
 
     // Throw an error of the population has at most one individual
     if (pop.size() <= 1)
@@ -225,9 +222,9 @@ void Population::removeWorstBiasedFitness(SubPopulation &pop)
         bool isClone = (pop[i]->avgBrokenPairsDistanceClosest(1) < MY_EPSILON);
         if ((isClone && !isWorstIndividualClone)
             || (isClone == isWorstIndividualClone
-                && pop[i]->biasedFitness > worstIndividualBiasedFitness))
+                && fitness[i] > worstIndividualBiasedFitness))
         {
-            worstIndividualBiasedFitness = pop[i]->biasedFitness;
+            worstIndividualBiasedFitness = fitness[i];
             isWorstIndividualClone = isClone;
             worstIndividualPosition = i;
             worstIndividual = pop[i];
@@ -238,6 +235,7 @@ void Population::removeWorstBiasedFitness(SubPopulation &pop)
 
     // Remove the worst individual from the population
     pop.erase(pop.begin() + worstIndividualPosition);
+    fitness.erase(fitness.begin() + worstIndividualPosition);
 
     // Cleaning its distances from the other individuals in the population
     for (Individual *myIndividual2 : pop)
@@ -258,7 +256,10 @@ void Population::restart()
     // Clear the pools of solutions and make a new empty individual as the best
     // solution after the restart
     feasibleSubpopulation.clear();
+    feasibleFitness.clear();
+
     infeasibleSubpopulation.clear();
+    infeasibleFitness.clear();
 
     // Generate a new initial population
     generatePopulation();
@@ -337,8 +338,8 @@ void Population::managePenalties()
 Individual const *Population::getBinaryTournament()
 {
     // TODO only compute updated biased fitness of selected individuals?
-    updateBiasedFitnesses(feasibleSubpopulation);
-    updateBiasedFitnesses(infeasibleSubpopulation);
+    updateBiasedFitnesses(feasibleSubpopulation, feasibleFitness);
+    updateBiasedFitnesses(infeasibleSubpopulation, infeasibleFitness);
 
     auto feasSize = feasibleSubpopulation.size();
     auto infeasSize = infeasibleSubpopulation.size();
@@ -346,20 +347,28 @@ Individual const *Population::getBinaryTournament()
     // Pick a first random number individual from the total population (of both
     // feasible and infeasible individuals)
     size_t idx1 = rng.randint(feasSize + infeasSize);
+
     auto *individual1 = idx1 >= feasSize
                             ? infeasibleSubpopulation[idx1 - feasSize]
                             : feasibleSubpopulation[idx1];
 
+    double const fitness1 = idx1 >= feasSize
+                                ? infeasibleFitness[idx1 - feasSize]
+                                : feasibleFitness[idx1];
+
     // Pick a second random number individual from the total population (of both
     // feasible and infeasible individuals)
     size_t idx2 = rng.randint(feasSize + infeasSize);
+
     auto *individual2 = idx2 >= feasSize
                             ? infeasibleSubpopulation[idx2 - feasSize]
                             : feasibleSubpopulation[idx2];
 
-    return individual1->biasedFitness < individual2->biasedFitness
-               ? individual1
-               : individual2;
+    double const fitness2 = idx2 >= feasSize
+                                ? infeasibleFitness[idx2 - feasSize]
+                                : feasibleFitness[idx2];
+
+    return fitness1 < fitness2 ? individual1 : individual2;
 }
 
 std::pair<Individual const *, Individual const *>

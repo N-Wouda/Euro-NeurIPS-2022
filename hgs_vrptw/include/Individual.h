@@ -58,23 +58,20 @@ class Individual
     // clients (can not be the depot 0). Size is nbClients.
     Clients tourChrom;
 
-    // The other individuals in the population (cannot be the depot 0), ordered
-    // by increasing proximity (the set container follows a natural ordering
-    // based on the value of the first pair)
-    std::multiset<std::pair<double, Individual *>> indivsPerProximity;
-
-    // Makes routes from the tour chromosome (using the linear split algorithm)
-    void makeRoutes();
-
-public:
-    // TODO make members private
-    double biasedFitness = 0;  // Biased fitness of the solution
-
     // For each vehicle, the associated sequence of deliveries (complete
     // solution). Size is nbVehicles, but quite a few routes are likely empty
     // - the numRoutes() member indicates the number of nonempty routes.
     std::vector<Clients> routeChrom;
 
+    // The other individuals in the population (cannot be the depot 0), ordered
+    // by increasing proximity (the set container follows a natural ordering
+    // based on the value of the first pair)
+    std::multiset<std::pair<double, Individual *>> indivsPerProximity;
+
+    // Splits the tour chromosome into routes using the linear split algorithm
+    void makeRoutes();
+
+public:
     /**
      * Returns this individual's objective (penalized cost).
      */
