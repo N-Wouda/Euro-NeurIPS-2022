@@ -24,7 +24,7 @@ try
 
     Genetic solver(params, rng, pop, ls);
 
-    auto until = start + std::chrono::seconds(config.timeLimit);
+    auto const until = start + std::chrono::seconds(config.timeLimit);
     auto const res = solver.runUntil(until);
 
     std::chrono::duration<double> const timeDelta = clock::now() - start;

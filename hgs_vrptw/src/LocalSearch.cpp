@@ -1723,7 +1723,6 @@ void LocalSearch::updateRouteData(Route *myRoute)
 {
     int myplace = 0;
     int myload = 0;
-    int mytime = 0;
     int myReversalDistance = 0;
     int cumulatedX = 0;
     int cumulatedY = 0;
@@ -1734,7 +1733,7 @@ void LocalSearch::updateRouteData(Route *myRoute)
     mynode->cumulatedReversalDistance = 0;
 
     bool firstIt = true;
-    TimeWindowData seedTwD;
+    TimeWindowData seedTwD = mynode->twData;
     Node *seedNode = nullptr;
     while (!mynode->isDepot || firstIt)
     {
@@ -1742,8 +1741,6 @@ void LocalSearch::updateRouteData(Route *myRoute)
         myplace++;
         mynode->position = myplace;
         myload += params.cli[mynode->cour].demand;
-        mytime += params.timeCost.get(mynode->prev->cour, mynode->cour)
-                  + params.cli[mynode->cour].serviceDuration;
         myReversalDistance
             += params.timeCost.get(mynode->cour, mynode->prev->cour)
                - params.timeCost.get(mynode->prev->cour, mynode->cour);
@@ -1761,6 +1758,7 @@ void LocalSearch::updateRouteData(Route *myRoute)
                 myRoute->sector.initialize(params.cli[mynode->cour].polarAngle);
             else
                 myRoute->sector.extend(params.cli[mynode->cour].polarAngle);
+
             if (myplace % 4 == 0)
             {
                 if (seedNode != nullptr)
@@ -1773,13 +1771,9 @@ void LocalSearch::updateRouteData(Route *myRoute)
                 seedNode = mynode;
             }
             else if (myplace % 4 == 1)
-            {
                 seedTwD = mynode->twData;
-            }
             else
-            {
                 seedTwD = MergeTWDataRecursive(seedTwD, mynode->twData);
-            }
         }
         firstIt = false;
     }
@@ -1795,14 +1789,12 @@ void LocalSearch::updateRouteData(Route *myRoute)
     myRoute->isDeltaRemovalTWOutdated = true;
 
     // Time window data in reverse direction, mynode should be end depot now
-    firstIt = true;
-    while (!mynode->isDepot || firstIt)
+    do
     {
         mynode = mynode->prev;
         mynode->postfixTwData
             = MergeTWDataRecursive(mynode->twData, mynode->next->postfixTwData);
-        firstIt = false;
-    }
+    } while (!mynode->isDepot);
 
     if (myRoute->nbCustomers == 0)
     {
@@ -1816,6 +1808,7 @@ void LocalSearch::updateRouteData(Route *myRoute)
                         - params.cli[0].coordY,
                     cumulatedX / static_cast<double>(myRoute->nbCustomers)
                         - params.cli[0].coordX);
+
         // Enforce minimum size of circle sector
         if (params.config.minCircleSectorSize > 0)
         {
@@ -1862,6 +1855,8 @@ void LocalSearch::loadIndividual(Individual *indiv)
         // myTwData->load = params.cli[i].demand;
     }
 
+    auto const &routesIndiv = indiv->getRoutes();
+
     for (int r = 0; r < params.nbVehicles; r++)
     {
         Node *myDepot = &depots[r];
@@ -1869,17 +1864,16 @@ void LocalSearch::loadIndividual(Individual *indiv)
         Route *myRoute = &routes[r];
         myDepot->prev = myDepotFin;
         myDepotFin->next = myDepot;
-        if (!indiv->routeChrom[r].empty())
+        if (!routesIndiv[r].empty())
         {
-            Node *myClient = &clients[indiv->routeChrom[r][0]];
+            Node *myClient = &clients[routesIndiv[r][0]];
             myClient->route = myRoute;
             myClient->prev = myDepot;
             myDepot->next = myClient;
-            for (int i = 1; i < static_cast<int>(indiv->routeChrom[r].size());
-                 i++)
+            for (int i = 1; i < static_cast<int>(routesIndiv[r].size()); i++)
             {
                 Node *myClientPred = myClient;
-                myClient = &clients[indiv->routeChrom[r][i]];
+                myClient = &clients[routesIndiv[r][i]];
                 myClient->prev = myClientPred;
                 myClientPred->next = myClient;
                 myClient->route = myRoute;

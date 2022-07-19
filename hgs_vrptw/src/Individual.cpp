@@ -270,7 +270,7 @@ void Individual::removeProximity(Individual *other)
     indivsPerProximity.erase(it);
 }
 
-double Individual::brokenPairsDistance(Individual *other)
+void Individual::brokenPairsDistance(Individual *other)
 {
     int diffs = 0;
 
@@ -287,7 +287,10 @@ double Individual::brokenPairsDistance(Individual *other)
                  && other->successors[j] != 0;
     }
 
-    return static_cast<double>(diffs) / params->nbClients;
+    double const dist = static_cast<double>(diffs) / params->nbClients;
+
+    other->indivsPerProximity.insert({dist, this});
+    indivsPerProximity.insert({dist, other});
 }
 
 double Individual::avgBrokenPairsDistanceClosest(size_t nbClosest) const

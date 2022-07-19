@@ -58,6 +58,11 @@ class Individual
     // clients (can not be the depot 0). Size is nbClients.
     Clients tourChrom;
 
+    // The other individuals in the population (cannot be the depot 0), ordered
+    // by increasing proximity (the set container follows a natural ordering
+    // based on the value of the first pair)
+    std::multiset<std::pair<double, Individual *>> indivsPerProximity;
+
     // Makes routes from the tour chromosome (using the linear split algorithm)
     void makeRoutes();
 
@@ -69,11 +74,6 @@ public:
     // solution). Size is nbVehicles, but quite a few routes are likely empty
     // - the numRoutes() member indicates the number of nonempty routes.
     std::vector<Clients> routeChrom;
-
-    // The other individuals in the population (cannot be the depot 0), ordered
-    // by increasing proximity (the set container follows a natural ordering
-    // based on the value of the first pair)
-    std::multiset<std::pair<double, Individual *>> indivsPerProximity;
 
     /**
      * Returns this individual's objective (penalized cost).
@@ -119,9 +119,9 @@ public:
     // Removes the other from the proximity structure of this individual.
     void removeProximity(Individual *other);
 
-    // Distance measure with another individual, based on the number of arcs
-    // that differ between two solutions
-    [[nodiscard]] double brokenPairsDistance(Individual *other);
+    // Computes and stores a distance measure with another individual, based on
+    // the number of arcs that differ between two solutions
+    void brokenPairsDistance(Individual *other);
 
     // Returns the average distance of this individual with the nbClosest
     // individuals

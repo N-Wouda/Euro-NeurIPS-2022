@@ -130,12 +130,8 @@ bool Population::addIndividual(const Individual *indiv, bool updateFeasible)
     // calculating inter-individual distances
     auto *myIndividual = new Individual(*indiv);
 
-    for (Individual *myIndividual2 : pop)
-    {
-        double myDistance = myIndividual->brokenPairsDistance(myIndividual2);
-        myIndividual2->indivsPerProximity.insert({myDistance, myIndividual});
-        myIndividual->indivsPerProximity.insert({myDistance, myIndividual2});
-    }
+    for (Individual *other : pop)
+        myIndividual->brokenPairsDistance(other);
 
     // Identify the correct location in the population and insert the individual
     // TODO binsearch?
