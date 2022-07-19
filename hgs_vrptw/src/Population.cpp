@@ -365,8 +365,7 @@ Individual const *Population::getBinaryTournament()
     return fitness1 < fitness2 ? individual1 : individual2;
 }
 
-std::pair<Individual const *, Individual const *>
-Population::selectParents()
+std::pair<Individual const *, Individual const *> Population::selectParents()
 {
     // Pick two individual using a binary tournament
     Individual const *par1 = getBinaryTournament();
