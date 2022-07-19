@@ -52,7 +52,7 @@ struct ClientSplits
                                   : INT_MIN;
 
             splits[idx] = {params.cli[curr].demand,
-                           params.cli[curr].serviceDuration,
+                           params.cli[curr].servDur,
                            params.timeCost.get(0, curr),
                            params.timeCost.get(curr, 0),
                            dist};
@@ -178,9 +178,9 @@ void Individual::evaluateCompleteCost()
             maxReleaseTime
                 = std::max(maxReleaseTime, params->cli[idx].releaseTime);
 
-        // Get the distance, load, serviceDuration and time associated with the
+        // Get the distance, load, servDur and time associated with the
         // vehicle traveling from the depot to the first client. Assume depot
-        // has service time 0 and earliestArrival 0
+        // has service time 0 and twEarly 0
         int distance = params->timeCost.get(0, route[0]);
         int load = params->cli[route[0]].demand;
 
@@ -188,62 +188,55 @@ void Individual::evaluateCompleteCost()
         int waitTime = 0;
         int timeWarp = 0;
 
-        if (time < params->cli[route[0]].earliestArrival)
+        if (time < params->cli[route[0]].twEarly)
         {
             // Don't add wait time since we can start route later (doesn't
             // really matter since there is no penalty anyway).
-            time = params->cli[route[0]].earliestArrival;
+            time = params->cli[route[0]].twEarly;
         }
 
         // Add possible time warp
-        if (time > params->cli[route[0]].latestArrival)
+        if (time > params->cli[route[0]].twLate)
         {
-            timeWarp += time - params->cli[route[0]].latestArrival;
-            time = params->cli[route[0]].latestArrival;
+            timeWarp += time - params->cli[route[0]].twLate;
+            time = params->cli[route[0]].twLate;
         }
-
-        predecessors[route[0]] = 0;
 
         // Loop over all clients for this vehicle
         for (size_t idx = 1; idx < route.size(); idx++)
         {
-            // Sum the distance, load, serviceDuration and time associated
+            // Sum the distance, load, servDur and time associated
             // with the vehicle traveling from the depot to the next client
             distance += params->timeCost.get(route[idx - 1], route[idx]);
             load += params->cli[route[idx]].demand;
 
-            time += params->cli[route[idx - 1]].serviceDuration
+            time += params->cli[route[idx - 1]].servDur
                     + params->timeCost.get(route[idx - 1], route[idx]);
 
             // Add possible waiting time
-            if (time < params->cli[route[idx]].earliestArrival)
+            if (time < params->cli[route[idx]].twEarly)
             {
-                waitTime += params->cli[route[idx]].earliestArrival - time;
-                time = params->cli[route[idx]].earliestArrival;
+                waitTime += params->cli[route[idx]].twEarly - time;
+                time = params->cli[route[idx]].twEarly;
             }
 
             // Add possible time warp
-            if (time > params->cli[route[idx]].latestArrival)
+            if (time > params->cli[route[idx]].twLate)
             {
-                timeWarp += time - params->cli[route[idx]].latestArrival;
-                time = params->cli[route[idx]].latestArrival;
+                timeWarp += time - params->cli[route[idx]].twLate;
+                time = params->cli[route[idx]].twLate;
             }
-
-            // Update predecessors and successors
-            predecessors[route[idx]] = route[idx - 1];
-            successors[route[idx - 1]] = route[idx];
         }
 
         // For the last client, the successors is the depot. Also update the
         // distance and time
-        successors[route.back()] = 0;
         distance += params->timeCost.get(route.back(), 0);
-        time += params->cli[route.back()].serviceDuration
+        time += params->cli[route.back()].servDur
                 + params->timeCost.get(route.back(), 0);
 
         // For the depot, we only need to check the end of the time window
         // (add possible time warp)
-        timeWarp += std::max(time - params->cli[0].latestArrival, 0);
+        timeWarp += std::max(time - params->cli[0].twLate, 0);
 
         // Whole solution stats
         this->distance += distance;
@@ -272,19 +265,23 @@ void Individual::removeProximity(Individual *other)
 
 void Individual::brokenPairsDistance(Individual *other)
 {
+    auto const tNeighbours = this->getNeighbours();
+    auto const oNeighbours = other->getNeighbours();
+
     int diffs = 0;
 
     for (int j = 1; j <= params->nbClients; j++)
     {
+        auto const &[tPred, tSucc] = tNeighbours[j];
+        auto const &[oPred, oSucc] = oNeighbours[j];
+
         // Increase the difference if the successor of j in this individual is
         // not directly linked to j in other
-        diffs += successors[j] != other->successors[j]
-                 && successors[j] != other->predecessors[j];
+        diffs += tSucc != oSucc && tSucc != oPred;
 
         // Increase the difference if the predecessor of j in this individual is
         // not directly linked to j in other
-        diffs += predecessors[j] == 0 && other->predecessors[j] != 0
-                 && other->successors[j] != 0;
+        diffs += tPred == 0 && oPred != 0 && oSucc != 0;
     }
 
     double const dist = static_cast<double>(diffs) / params->nbClients;
@@ -295,8 +292,9 @@ void Individual::brokenPairsDistance(Individual *other)
 
 double Individual::avgBrokenPairsDistanceClosest(size_t nbClosest) const
 {
-    double result = 0;
     size_t maxSize = std::min(nbClosest, indivsPerProximity.size());
+
+    double result = 0;
     auto it = indivsPerProximity.begin();
 
     for (size_t itemCount = 0; itemCount != maxSize; ++itemCount)
@@ -327,6 +325,20 @@ void Individual::exportCVRPLibFormat(std::string const &path, double time) const
     out << "Time " << time << '\n';
 }
 
+std::vector<std::pair<int, int>> Individual::getNeighbours() const
+{
+    std::vector<std::pair<int, int>> neighbours(params->nbClients + 1);
+    neighbours[0] = {0, 0};  // note that depot neighbours have no meaning
+
+    for (auto const &route : routeChrom)
+        for (size_t idx = 0; idx != route.size(); ++idx)
+            neighbours[route[idx]]
+                = {idx == 0 ? 0 : route[idx - 1],                  // pred
+                   idx == route.size() - 1 ? 0 : route[idx + 1]};  // succ
+
+    return neighbours;
+}
+
 bool Individual::operator==(Individual const &other) const
 {
     auto diff = std::abs(cost() - other.cost());
@@ -336,8 +348,6 @@ bool Individual::operator==(Individual const &other) const
 
 Individual::Individual(Params *params, XorShift128 *rng)
     : params(params),
-      successors(params->nbClients + 1),
-      predecessors(params->nbClients + 1),
       tourChrom(params->nbClients),
       routeChrom(params->nbVehicles)
 {
@@ -348,11 +358,7 @@ Individual::Individual(Params *params, XorShift128 *rng)
 }
 
 Individual::Individual(Params *params, Clients tour)
-    : params(params),
-      successors(params->nbClients + 1),
-      predecessors(params->nbClients + 1),
-      tourChrom(std::move(tour)),
-      routeChrom(params->nbVehicles)
+    : params(params), tourChrom(std::move(tour)), routeChrom(params->nbVehicles)
 {
     makeRoutes();
 }
@@ -360,11 +366,7 @@ Individual::Individual(Params *params, Clients tour)
 Individual::Individual(Params *params,
                        Clients tour,
                        std::vector<Clients> routes)
-    : params(params),
-      successors(params->nbClients + 1),
-      predecessors(params->nbClients + 1),
-      tourChrom(std::move(tour)),
-      routeChrom(std::move(routes))
+    : params(params), tourChrom(std::move(tour)), routeChrom(std::move(routes))
 {
     evaluateCompleteCost();
 }

@@ -42,14 +42,14 @@ struct TimeWindowData
     int lastNodeIndex;
     int duration;  // Cumulative duration, including waiting and servicing
     int timeWarp;  // Cumulative time warp
-    int earliestArrival;  // Earliest start of servicing first node in sequence,
-                          // given a min cost route sequence
-    int latestArrival;    // Latest start of servicing first node in sequence,
-                          // given a min cost route sequence
+    int twEarly;   // Earliest start of servicing first node in sequence,
+                   // given a min cost route sequence
+    int twLate;    // Latest start of servicing first node in sequence,
+                   // given a min cost route sequence
     int latestReleaseTime;  // Latest of all release times of customers in
                             // sequence, so route cannot dispatch before
 
-    // Note: [earliestArrival, latestArrival] represent the time in which we can
+    // Note: [twEarly, twLate] represent the time in which we can
     // arrive at the first node and execute the min cost route. Arriving later
     // would lead to (additional) time warp and arriving earlier would lead to
     // (additional) waiting time, not necessarily at the first node.
@@ -232,15 +232,8 @@ class LocalSearch
     penaltyTimeWindows(const TimeWindowData &twData) const
     {
         return (twData.timeWarp
-                + std::max(twData.latestReleaseTime - twData.latestArrival, 0))
+                + std::max(twData.latestReleaseTime - twData.twLate, 0))
                * penaltyTimeWarpLS;
-    }
-
-    inline double deltaPenaltyTimeWindows(const TimeWindowData &twDataAdd,
-                                          const TimeWindowData &twDataSubtract)
-    {
-        return penaltyTimeWindows(twDataAdd)
-               - penaltyTimeWindows(twDataSubtract);
     }
 
     /* RELOCATE MOVES */
@@ -361,7 +354,7 @@ public:
     // Groups orders per route according to angle with depot. fillPercentage can
     // be configured to allow some room for repairing routes during local
     // search. Orders with short time window are added in order of time
-    // latestArrival, other orders are inserted in best position.
+    // twLate, other orders are inserted in best position.
     Individual constructIndividualBySweep(int fillPercentage);
 
     LocalSearch(Params &params, XorShift128 &rng);

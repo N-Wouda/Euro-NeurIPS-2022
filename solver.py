@@ -21,12 +21,12 @@ def get_hgspy_module(where: str = 'release/lib/hgspy*.so'):
 
 
 try:
-    from hgspy import (XorShift128, Config, Genetic, Params, Population,  # noqa
-                       LocalSearch)  # noqa
+    from hgspy import (XorShift128, Config, GeneticAlgorithm, Params,
+                       Population, LocalSearch)  # noqa
 except (ImportError, ModuleNotFoundError):
     get_hgspy_module()
-    from hgspy import (XorShift128, Config, Genetic, Params, Population,  # noqa
-                       LocalSearch)  # noqa
+    from hgspy import (XorShift128, Config, GeneticAlgorithm, Params,
+                       Population, LocalSearch)  # noqa
 
 
 def parse_args():
@@ -84,7 +84,7 @@ def solve_static_vrptw(instance, time_limit=3600, seed=1):
     ls = LocalSearch(params, rng)
     pop = Population(params, rng, ls)
 
-    algo = Genetic(params, rng, pop)
+    algo = GeneticAlgorithm(params, rng, pop)
     res = algo.run_until(start + timedelta(seconds=time_limit))
 
     best = res.get_best_found()

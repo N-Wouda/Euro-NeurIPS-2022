@@ -14,8 +14,8 @@ bool operator==(const TimeWindowData &twData1, const TimeWindowData &twData2)
            && twData1.lastNodeIndex == twData2.lastNodeIndex
            && twData1.duration == twData2.duration
            && twData1.timeWarp == twData2.timeWarp
-           && twData1.earliestArrival == twData2.earliestArrival
-           && twData1.latestArrival == twData2.latestArrival;
+           && twData1.twEarly == twData2.twEarly
+           && twData1.twLate == twData2.twLate;
 }
 
 void LocalSearch::initializeConstruction(
@@ -29,8 +29,8 @@ void LocalSearch::initializeConstruction(
     depotTwData.lastNodeIndex = 0;
     depotTwData.duration = 0;
     depotTwData.timeWarp = 0;
-    depotTwData.earliestArrival = params.cli[0].earliestArrival;
-    depotTwData.latestArrival = params.cli[0].latestArrival;
+    depotTwData.twEarly = params.cli[0].twEarly;
+    depotTwData.twLate = params.cli[0].twLate;
 
     // Initializing time window data for clients
     for (int i = 1; i <= params.nbClients; i++)
@@ -38,9 +38,9 @@ void LocalSearch::initializeConstruction(
         TimeWindowData *myTwData = &clients[i].twData;
         myTwData->firstNodeIndex = i;
         myTwData->lastNodeIndex = i;
-        myTwData->duration = params.cli[i].serviceDuration;
-        myTwData->earliestArrival = params.cli[i].earliestArrival;
-        myTwData->latestArrival = params.cli[i].latestArrival;
+        myTwData->duration = params.cli[i].servDur;
+        myTwData->twEarly = params.cli[i].twEarly;
+        myTwData->twLate = params.cli[i].twLate;
     }
 
     // Initialize routes
@@ -71,10 +71,9 @@ void LocalSearch::initializeConstruction(
         nodeToInsert.clientIdx = i;
         nodeToInsert.twData = clients[i].twData;
         nodeToInsert.load = params.cli[i].demand;
-        nodeToInsert.angleFromDepot
-            = atan2(params.cli[i].coordY - params.cli[0].coordY,
-                    params.cli[i].coordX - params.cli[0].coordX);
-        nodeToInsert.serviceDuration = params.cli[i].serviceDuration;
+        nodeToInsert.angleFromDepot = atan2(params.cli[i].y - params.cli[0].y,
+                                            params.cli[i].x - params.cli[0].x);
+        nodeToInsert.serviceDuration = params.cli[i].servDur;
         nodesToInsert->push_back(nodeToInsert);
     }
 }
@@ -118,15 +117,15 @@ Individual LocalSearch::constructIndividualBySweep(int fillPercentage)
     for (int r = 0; r < static_cast<int>(nodeIndicesPerRoute.size()); r++)
     {
         int depotOpeningDuration
-            = depots[r].twData.latestArrival - depots[r].twData.earliestArrival;
+            = depots[r].twData.twLate - depots[r].twData.twEarly;
         std::vector<int> nodeIndicesToInsertShortTw;
         std::vector<int> nodeIndicesToInsertLongTw;
         for (int idx : nodeIndicesPerRoute[r])
         {
             // Arbitrary division, but for all instances time windows are either
             // much shorter than half of depotOpeningDuration, or much larger.
-            if ((nodesToInsert[idx].twData.latestArrival
-                 - nodesToInsert[idx].twData.earliestArrival)
+            if ((nodesToInsert[idx].twData.twLate
+                 - nodesToInsert[idx].twData.twEarly)
                     * 2
                 > depotOpeningDuration)
                 nodeIndicesToInsertLongTw.push_back(idx);
@@ -138,8 +137,8 @@ Individual LocalSearch::constructIndividualBySweep(int fillPercentage)
         std::sort(std::begin(nodeIndicesToInsertShortTw),
                   std::end(nodeIndicesToInsertShortTw),
                   [&nodesToInsert](int a, int b) {
-                      return nodesToInsert[a].twData.latestArrival
-                             < nodesToInsert[b].twData.latestArrival;
+                      return nodesToInsert[a].twData.twLate
+                             < nodesToInsert[b].twData.twLate;
                   });
 
         // Insert nodes with short time window in order in the route.
@@ -1524,7 +1523,9 @@ int LocalSearch::getCheapestInsertSimultRemovalWithTW(Node *U,
     int deltaCost = params.timeCost.get(V->prev->cour, U->cour)
                     + params.timeCost.get(U->cour, V->next->cour)
                     - params.timeCost.get(V->prev->cour, V->next->cour)
-                    + deltaPenaltyTimeWindows(twData, V->route->twData);
+                    + penaltyTimeWindows(twData)
+                    - penaltyTimeWindows(V->route->twData);
+
     if (!found || deltaCost < bestCost)
     {
         bestPosition = V->prev;
@@ -1583,7 +1584,7 @@ void LocalSearch::preprocessInsertionsWithTW(Route *R1, Route *R2)
                 = params.timeCost.get(U->prev->cour, U->next->cour)
                   - params.timeCost.get(U->prev->cour, U->cour)
                   - params.timeCost.get(U->cour, U->next->cour)
-                  + deltaPenaltyTimeWindows(twData, R1->twData);
+                  + penaltyTimeWindows(twData) - penaltyTimeWindows(R1->twData);
         }
         auto &currentOption = bestInsertClientTW[R2->cour][U->cour];
         if (R2->whenLastModified > currentOption.whenLastCalculated)
@@ -1601,7 +1602,8 @@ void LocalSearch::preprocessInsertionsWithTW(Route *R1, Route *R2)
             int cost = params.timeCost.get(0, U->cour)
                        + params.timeCost.get(U->cour, R2->depot->next->cour)
                        - params.timeCost.get(0, R2->depot->next->cour)
-                       + deltaPenaltyTimeWindows(twData, R2->twData);
+                       + penaltyTimeWindows(twData)
+                       - penaltyTimeWindows(R2->twData);
 
             currentOption.add(cost, R2->depot);
 
@@ -1613,12 +1615,14 @@ void LocalSearch::preprocessInsertionsWithTW(Route *R1, Route *R2)
                 int deltaCost = params.timeCost.get(V->cour, U->cour)
                                 + params.timeCost.get(U->cour, V->next->cour)
                                 - params.timeCost.get(V->cour, V->next->cour)
-                                + deltaPenaltyTimeWindows(twData, R2->twData);
+                                + penaltyTimeWindows(twData)
+                                - penaltyTimeWindows(R2->twData);
 
                 currentOption.add(deltaCost, V);
             }
         }
     }
+
     R1->isDeltaRemovalTWOutdated = false;
 }
 
@@ -1665,21 +1669,17 @@ TimeWindowData LocalSearch::MergeTWDataRecursive(const TimeWindowData &twData1,
         = params.timeCost.get(twData1.lastNodeIndex, twData2.firstNodeIndex);
     int deltaDuration = deltaCost;
     int delta = twData1.duration - twData1.timeWarp + deltaDuration;
-    int deltaWaitTime
-        = std::max(twData2.earliestArrival - delta - twData1.latestArrival, 0);
-    int deltaTimeWarp
-        = std::max(twData1.earliestArrival + delta - twData2.latestArrival, 0);
+    int deltaWaitTime = std::max(twData2.twEarly - delta - twData1.twLate, 0);
+    int deltaTimeWarp = std::max(twData1.twEarly + delta - twData2.twLate, 0);
     mergedTwData.firstNodeIndex = twData1.firstNodeIndex;
     mergedTwData.lastNodeIndex = twData2.lastNodeIndex;
     mergedTwData.duration
         = twData1.duration + twData2.duration + deltaDuration + deltaWaitTime;
     mergedTwData.timeWarp = twData1.timeWarp + twData2.timeWarp + deltaTimeWarp;
-    mergedTwData.earliestArrival
-        = std::max(twData2.earliestArrival - delta, twData1.earliestArrival)
-          - deltaWaitTime;
-    mergedTwData.latestArrival
-        = std::min(twData2.latestArrival - delta, twData1.latestArrival)
-          + deltaTimeWarp;
+    mergedTwData.twEarly
+        = std::max(twData2.twEarly - delta, twData1.twEarly) - deltaWaitTime;
+    mergedTwData.twLate
+        = std::min(twData2.twLate - delta, twData1.twLate) + deltaTimeWarp;
     mergedTwData.latestReleaseTime
         = std::max(twData1.latestReleaseTime, twData2.latestReleaseTime);
     return mergedTwData;
@@ -1752,12 +1752,12 @@ void LocalSearch::updateRouteData(Route *myRoute)
         mynode->nextSeed = nullptr;
         if (!mynode->isDepot)
         {
-            cumulatedX += params.cli[mynode->cour].coordX;
-            cumulatedY += params.cli[mynode->cour].coordY;
+            cumulatedX += params.cli[mynode->cour].x;
+            cumulatedY += params.cli[mynode->cour].y;
             if (firstIt)
-                myRoute->sector.initialize(params.cli[mynode->cour].polarAngle);
+                myRoute->sector.initialize(params.cli[mynode->cour].angle);
             else
-                myRoute->sector.extend(params.cli[mynode->cour].polarAngle);
+                myRoute->sector.extend(params.cli[mynode->cour].angle);
 
             if (myplace % 4 == 0)
             {
@@ -1805,9 +1805,9 @@ void LocalSearch::updateRouteData(Route *myRoute)
     {
         myRoute->polarAngleBarycenter
             = atan2(cumulatedY / static_cast<double>(myRoute->nbCustomers)
-                        - params.cli[0].coordY,
+                        - params.cli[0].y,
                     cumulatedX / static_cast<double>(myRoute->nbCustomers)
-                        - params.cli[0].coordX);
+                        - params.cli[0].x);
 
         // Enforce minimum size of circle sector
         if (params.config.minCircleSectorSize > 0)
@@ -1837,8 +1837,8 @@ void LocalSearch::loadIndividual(Individual *indiv)
     depotTwData.lastNodeIndex = 0;
     depotTwData.duration = 0;
     depotTwData.timeWarp = 0;
-    depotTwData.earliestArrival = params.cli[0].earliestArrival;
-    depotTwData.latestArrival = params.cli[0].latestArrival;
+    depotTwData.twEarly = params.cli[0].twEarly;
+    depotTwData.twLate = params.cli[0].twLate;
     depotTwData.latestReleaseTime = params.cli[0].releaseTime;
 
     // Initializing time window data (before loop since it is needed in update
@@ -1848,9 +1848,9 @@ void LocalSearch::loadIndividual(Individual *indiv)
         TimeWindowData *myTwData = &clients[i].twData;
         myTwData->firstNodeIndex = i;
         myTwData->lastNodeIndex = i;
-        myTwData->duration = params.cli[i].serviceDuration;
-        myTwData->earliestArrival = params.cli[i].earliestArrival;
-        myTwData->latestArrival = params.cli[i].latestArrival;
+        myTwData->duration = params.cli[i].servDur;
+        myTwData->twEarly = params.cli[i].twEarly;
+        myTwData->twLate = params.cli[i].twLate;
         myTwData->latestReleaseTime = params.cli[i].releaseTime;
         // myTwData->load = params.cli[i].demand;
     }

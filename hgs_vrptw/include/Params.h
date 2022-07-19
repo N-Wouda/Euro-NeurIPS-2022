@@ -33,33 +33,33 @@ SOFTWARE.*/
 
 #define MY_EPSILON 0.00001  // Used to avoid numerical instabilities
 
-// Structure of a Client, including its index, position, and all other variables
-// and parameters
-struct Client
-{
-    int custNum;          // Index of the client
-    int coordX;           // Coordinate X
-    int coordY;           // Coordinate Y
-    int serviceDuration;  // Service duration
-    int demand;           // Demand
-    int earliestArrival;  // Earliest arrival (when using time windows)
-    int latestArrival;    // Latest arrival (when using time windows)
-
-    // Release time (when using time windows, route containing this customer
-    // cannot depart before this time)
-    int releaseTime;
-
-    // Polar angle of the client around the depot (starting at east, moving
-    // counter-clockwise), measured in degrees and truncated for convenience
-    int polarAngle;
-};
-
 // Class that stores all the parameters (from the command line) (in Config) and
 // data of the instance needed by the algorithm
 class Params
 {
     // TODO get rid of this object; turn it into ProblemData (and then have
     //  Config as a separate object)
+
+    // Structure of a Client, including its index, position, and all other
+    // variables and parameters
+    struct Client
+    {
+        int custNum;  // Index of the client
+        int x;        // Coordinate X
+        int y;        // Coordinate Y
+        int servDur;  // Service duration
+        int demand;   // Demand
+        int twEarly;  // Earliest arrival (when using time windows)
+        int twLate;   // Latest arrival (when using time windows)
+
+        // Release time (when using time windows, route containing this customer
+        // cannot depart before this time)
+        int releaseTime;
+
+        // Polar angle of the client around the depot (starting at east, moving
+        // counter-clockwise), measured in degrees and truncated for convenience
+        int angle;
+    };
 
 public:
     // TODO make members private

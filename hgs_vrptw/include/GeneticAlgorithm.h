@@ -37,7 +37,7 @@ SOFTWARE.*/
 
 // Class to run the genetic algorithm, which incorporates functionality of
 // population management, doing crossovers and updating parameters.
-class Genetic
+class GeneticAlgorithm
 {
     using Parents = std::pair<Individual const *, Individual const *>;
     using timePoint = std::chrono::system_clock::time_point;
@@ -74,7 +74,7 @@ public:
      */
     Result runUntil(timePoint const &timePoint);
 
-    Genetic(Params &params, XorShift128 &rng, Population &population);
+    GeneticAlgorithm(Params &params, XorShift128 &rng, Population &population);
 };
 
 #endif

@@ -32,9 +32,8 @@ SOFTWARE.*/
 #include <list>
 #include <vector>
 
-// Class representing the population of a Genetic Algorithm with functionality
-// to write information to files, do binary tournaments, update fitness values
-// etc.
+// Class representing the population of a genetic algorithm with do binary
+// tournaments, update fitness values, etc.
 class Population
 {
     using Parents = std::pair<Individual const *, Individual const *>;

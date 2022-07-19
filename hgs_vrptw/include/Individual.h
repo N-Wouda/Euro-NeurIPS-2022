@@ -46,14 +46,6 @@ class Individual
 
     Params *params;  // Problem parameters
 
-    // For each node, the successor in the solution (can be the depot 0). Size
-    // is nbClients + 1.
-    Clients successors;
-
-    // For each node, the predecessor in the solution (can be the depot 0). Size
-    // is nbClients + 1.
-    Clients predecessors;
-
     // Giant tour representing the individual: list of integers representing
     // clients (can not be the depot 0). Size is nbClients.
     Clients tourChrom;
@@ -70,6 +62,11 @@ class Individual
 
     // Splits the tour chromosome into routes using the linear split algorithm
     void makeRoutes();
+
+    /**
+     * Returns a vector of [pred, succ] clients for each client (index).
+     */
+    [[nodiscard]] std::vector<std::pair<Client, Client>> getNeighbours() const;
 
 public:
     /**

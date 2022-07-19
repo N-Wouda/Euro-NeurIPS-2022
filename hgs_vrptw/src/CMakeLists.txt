@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.2)
 
 set(geneticSources
-        Genetic.cpp)
+        GeneticAlgorithm.cpp)
 
 set(individualSources
         Individual.cpp)

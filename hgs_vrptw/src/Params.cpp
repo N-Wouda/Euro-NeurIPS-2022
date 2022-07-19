@@ -61,22 +61,21 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
         {
             // Store all the information of the next client
             cli[nbClients].custNum = node;
-            inputFile >> cli[nbClients].coordX >> cli[nbClients].coordY
-                >> cli[nbClients].demand >> cli[nbClients].earliestArrival
-                >> cli[nbClients].latestArrival
-                >> cli[nbClients].serviceDuration;
+            inputFile >> cli[nbClients].x >> cli[nbClients].y
+                >> cli[nbClients].demand >> cli[nbClients].twEarly
+                >> cli[nbClients].twLate >> cli[nbClients].servDur;
 
             // Scale coordinates by factor 10, later the distances will be
             // rounded so we optimize with 1 decimal distances
-            cli[nbClients].coordX *= 10;
-            cli[nbClients].coordY *= 10;
-            cli[nbClients].earliestArrival *= 10;
-            cli[nbClients].latestArrival *= 10;
-            cli[nbClients].serviceDuration *= 10;
-            cli[nbClients].polarAngle = CircleSector::positive_mod(
+            cli[nbClients].x *= 10;
+            cli[nbClients].y *= 10;
+            cli[nbClients].twEarly *= 10;
+            cli[nbClients].twLate *= 10;
+            cli[nbClients].servDur *= 10;
+            cli[nbClients].angle = CircleSector::positive_mod(
                 static_cast<int>(32768.
-                                 * atan2(cli[nbClients].coordY - cli[0].coordY,
-                                         cli[nbClients].coordX - cli[0].coordX)
+                                 * atan2(cli[nbClients].y - cli[0].y,
+                                         cli[nbClients].x - cli[0].x)
                                  / M_PI));
 
             // Keep track of the max demand, the total demand, and the
@@ -97,11 +96,11 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
 
         // Check if the required service and the start of the time window of
         // the depot are both zero
-        if (cli[0].earliestArrival != 0)
+        if (cli[0].twEarly != 0)
         {
             throw std::runtime_error("Depot time window should start at 0");
         }
-        if (cli[0].serviceDuration != 0)
+        if (cli[0].servDur != 0)
         {
             throw std::runtime_error("Depot service duration should be 0");
         }
@@ -168,8 +167,7 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
                 cli = std::vector<Client>(nbClients + 1);
                 for (int i = 0; i <= nbClients; i++)
                 {
-                    inputFile >> cli[i].custNum >> cli[i].coordX
-                        >> cli[i].coordY;
+                    inputFile >> cli[i].custNum >> cli[i].x >> cli[i].y;
 
                     // Check if the clients are in order
                     if (cli[i].custNum != i + 1)
@@ -179,11 +177,9 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
                     }
 
                     cli[i].custNum--;
-                    cli[i].polarAngle = CircleSector::positive_mod(
-                        static_cast<int>(32768.
-                                         * atan2(cli[i].coordY - cli[0].coordY,
-                                                 cli[i].coordX - cli[0].coordX)
-                                         / M_PI));
+                    cli[i].angle = CircleSector::positive_mod(static_cast<int>(
+                        32768. * atan2(cli[i].y - cli[0].y, cli[i].x - cli[0].x)
+                        / M_PI));
                 }
             }
             // Read the demand of each client (including the depot, which
@@ -214,7 +210,7 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
                 {
                     throw std::runtime_error(
                         "Depot demand is not zero, but is instead: "
-                        + std::to_string(cli[0].serviceDuration));
+                        + std::to_string(cli[0].servDur));
                 }
             }
             else if (content == "DEPOT_SECTION")
@@ -232,7 +228,7 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
                 for (int i = 0; i <= nbClients; i++)
                 {
                     int clientNr = 0;
-                    inputFile >> clientNr >> cli[i].serviceDuration;
+                    inputFile >> clientNr >> cli[i].servDur;
 
                     // Check if the clients are in order
                     if (clientNr != i + 1)
@@ -242,7 +238,7 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
                     }
                 }
                 // Check if the service duration of the depot is 0
-                if (cli[0].serviceDuration != 0)
+                if (cli[0].servDur != 0)
                 {
                     throw std::runtime_error(
                         "Service duration for depot should be 0");
@@ -277,8 +273,7 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
                 for (int i = 0; i <= nbClients; i++)
                 {
                     int clientNr = 0;
-                    inputFile >> clientNr >> cli[i].earliestArrival
-                        >> cli[i].latestArrival;
+                    inputFile >> clientNr >> cli[i].twEarly >> cli[i].twLate;
 
                     // Check if the clients are in order
                     if (clientNr != i + 1)
@@ -289,7 +284,7 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
                 }
 
                 // Check the start of the time window of the depot
-                if (cli[0].earliestArrival != 0)
+                if (cli[0].twEarly != 0)
                 {
                     throw std::runtime_error(
                         "Time window for depot should start at 0");
@@ -306,7 +301,7 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
         {
             for (int i = 0; i <= nbClients; i++)
             {
-                cli[i].serviceDuration = (i == 0) ? 0 : serviceTimeData;
+                cli[i].servDur = (i == 0) ? 0 : serviceTimeData;
             }
         }
 
@@ -342,13 +337,13 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
         bool hasLargeRoutes = stopsPerRoute > 25;
 
         // Get the time horizon (by using the time window of the depot)
-        int horizon = cli[0].latestArrival - cli[0].earliestArrival;
+        int horizon = cli[0].twLate - cli[0].twEarly;
         int nbLargeTW = 0;
 
         // Loop over all clients (excluding the depot) and count the amount of
         // large time windows (greater than 0.7*horizon)
         for (int i = 1; i <= nbClients; i++)
-            if (cli[i].latestArrival - cli[i].earliestArrival > 0.7 * horizon)
+            if (cli[i].twLate - cli[i].twEarly > 0.7 * horizon)
                 nbLargeTW++;
 
         bool hasLargeTW = nbLargeTW > 0;
@@ -463,8 +458,8 @@ Params::Params(Config &config,
     {
         auto const angle = CircleSector::positive_mod(
             static_cast<int>(32768.
-                             * atan2(cli[nbClients].coordY - coords[idx].second,
-                                     cli[nbClients].coordX - coords[idx].first)
+                             * atan2(cli[nbClients].y - coords[idx].second,
+                                     cli[nbClients].x - coords[idx].first)
                              / M_PI));
 
         cli[idx] = {static_cast<int>(idx + 1),
@@ -504,25 +499,21 @@ void Params::setCorrelatedVertices()
 
             int const first
                 = weightWaitTime
-                      * std::max(cli[j].earliestArrival - time
-                                     - cli[i].serviceDuration
-                                     - cli[i].latestArrival,
+                      * std::max(cli[j].twEarly - time - cli[i].servDur
+                                     - cli[i].twLate,
                                  0)
                   + weightTimeWarp
-                        * std::max(cli[i].earliestArrival
-                                       + cli[i].serviceDuration + time
-                                       - cli[j].latestArrival,
+                        * std::max(cli[i].twEarly + cli[i].servDur + time
+                                       - cli[j].twLate,
                                    0);
             int const second
                 = weightWaitTime
-                      * std::max(cli[i].earliestArrival - time
-                                     - cli[j].serviceDuration
-                                     - cli[j].latestArrival,
+                      * std::max(cli[i].twEarly - time - cli[j].servDur
+                                     - cli[j].twLate,
                                  0)
                   + weightTimeWarp
-                        * std::max(cli[j].earliestArrival
-                                       + cli[j].serviceDuration + time
-                                       - cli[i].latestArrival,
+                        * std::max(cli[j].twEarly + cli[j].servDur + time
+                                       - cli[i].twLate,
                                    0);
 
             proximity.emplace_back(time + std::min(first, second), j);

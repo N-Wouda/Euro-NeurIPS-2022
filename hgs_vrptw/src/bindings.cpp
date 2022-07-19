@@ -1,5 +1,5 @@
 #include "Config.h"
-#include "Genetic.h"
+#include "GeneticAlgorithm.h"
 #include "Individual.h"
 #include "LocalSearch.h"
 #include "Params.h"
@@ -167,10 +167,10 @@ PYBIND11_MODULE(hgspy, m)
     py::class_<Result>(m, "Result")
         .def("get_best_found", &Result::getBestFound);
 
-    py::class_<Genetic>(m, "Genetic")
+    py::class_<GeneticAlgorithm>(m, "GeneticAlgorithm")
         .def(py::init<Params &, XorShift128 &, Population &>(),
              py::arg("params"),
              py::arg("rng"),
              py::arg("population"))
-        .def("run_until", &Genetic::runUntil, py::arg("time_point"));
+        .def("run_until", &GeneticAlgorithm::runUntil, py::arg("time_point"));
 }

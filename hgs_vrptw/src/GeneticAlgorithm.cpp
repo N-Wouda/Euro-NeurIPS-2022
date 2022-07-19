@@ -1,4 +1,4 @@
-#include "Genetic.h"
+#include "GeneticAlgorithm.h"
 
 #include "Individual.h"
 #include "LocalSearch.h"
@@ -8,7 +8,7 @@
 
 #include <unordered_set>
 
-Result Genetic::runUntil(timePoint const &timePoint)
+Result GeneticAlgorithm::runUntil(timePoint const &timePoint)
 {
     if (params.nbClients == 1)
         throw std::runtime_error("Cannot run genetic algorithm with one node.");
@@ -95,7 +95,7 @@ Result Genetic::runUntil(timePoint const &timePoint)
     return {population.getBestFound()};
 }
 
-Individual Genetic::crossoverOX(Parents parents)
+Individual GeneticAlgorithm::crossoverOX(Parents parents)
 {
     // First OX crossover offspring
     size_t const start1 = rng.randint(params.nbClients);
@@ -117,7 +117,7 @@ Individual Genetic::crossoverOX(Parents parents)
 }
 
 Individual
-Genetic::doOXcrossover(Parents parents, size_t start, size_t end) const
+GeneticAlgorithm::doOXcrossover(Parents parents, size_t start, size_t end) const
 {
     auto const &tour1 = parents.first->getTour();
     auto const &tour2 = parents.second->getTour();
@@ -152,7 +152,7 @@ Genetic::doOXcrossover(Parents parents, size_t start, size_t end) const
     return {&params, newTour};
 }
 
-Individual Genetic::crossoverSREX(Parents parents) const
+Individual GeneticAlgorithm::crossoverSREX(Parents parents) const
 {
     // Get the number of routes of both parents
     auto const &routesA = parents.first->getRoutes();
@@ -323,7 +323,7 @@ Individual Genetic::crossoverSREX(Parents parents) const
     return indiv1.cost() < indiv2.cost() ? indiv1 : indiv2;
 }
 
-void Genetic::insertUnplannedTasks(
+void GeneticAlgorithm::insertUnplannedTasks(
     std::vector<std::vector<int>> &routes,
     std::unordered_set<int> const &unplannedTasks) const
 {
@@ -335,8 +335,8 @@ void Genetic::insertUnplannedTasks(
     for (int c : unplannedTasks)
     {
         // Get the earliest and laster possible arrival at the client
-        int earliestArrival = params.cli[c].earliestArrival;
-        int latestArrival = params.cli[c].latestArrival;
+        int earliestArrival = params.cli[c].twEarly;
+        int latestArrival = params.cli[c].twLate;
 
         int bestDistance = INT_MAX;
         std::pair<int, int> bestLocation;
@@ -350,7 +350,7 @@ void Genetic::insertUnplannedTasks(
 
             newDistanceFromInsert = params.timeCost.get(c, routes[r][0]);
             if (earliestArrival + newDistanceFromInsert
-                < params.cli[routes[r][0]].latestArrival)
+                < params.cli[routes[r][0]].twLate)
             {
                 distanceDelta = params.timeCost.get(0, c) + newDistanceToInsert
                                 - params.timeCost.get(0, routes[r][0]);
@@ -365,11 +365,10 @@ void Genetic::insertUnplannedTasks(
             {
                 newDistanceToInsert = params.timeCost.get(routes[r][i - 1], c);
                 newDistanceFromInsert = params.timeCost.get(c, routes[r][i]);
-                if (params.cli[routes[r][i - 1]].earliestArrival
-                            + newDistanceToInsert
+                if (params.cli[routes[r][i - 1]].twEarly + newDistanceToInsert
                         < latestArrival
                     && earliestArrival + newDistanceFromInsert
-                           < params.cli[routes[r][i]].latestArrival)
+                           < params.cli[routes[r][i]].twLate)
                 {
                     distanceDelta
                         = newDistanceToInsert + newDistanceFromInsert
@@ -383,8 +382,7 @@ void Genetic::insertUnplannedTasks(
             }
 
             newDistanceToInsert = params.timeCost.get(routes[r].back(), c);
-            if (params.cli[routes[r].back()].earliestArrival
-                    + newDistanceToInsert
+            if (params.cli[routes[r].back()].twEarly + newDistanceToInsert
                 < latestArrival)
             {
                 distanceDelta = newDistanceToInsert + params.timeCost.get(c, 0)
@@ -402,7 +400,9 @@ void Genetic::insertUnplannedTasks(
     }
 }
 
-Genetic::Genetic(Params &params, XorShift128 &rng, Population &population)
+GeneticAlgorithm::GeneticAlgorithm(Params &params,
+                                   XorShift128 &rng,
+                                   Population &population)
     : params(params), rng(rng), population(population)
 {
 }

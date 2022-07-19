@@ -1,5 +1,5 @@
 #include "CommandLine.h"
-#include "Genetic.h"
+#include "GeneticAlgorithm.h"
 #include "LocalSearch.h"
 #include "Params.h"
 #include "Population.h"
@@ -22,7 +22,7 @@ try
     LocalSearch ls(params, rng);
     Population pop(params, rng, ls);
 
-    Genetic solver(params, rng, pop);
+    GeneticAlgorithm solver(params, rng, pop);
 
     auto const until = start + std::chrono::seconds(config.timeLimit);
     auto const res = solver.runUntil(until);
