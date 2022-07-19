@@ -166,10 +166,9 @@ struct SwapStarElement
     Node *bestPositionV = nullptr;
 };
 
-// Main local learch structure
+// Main local search structure
 class LocalSearch
 {
-private:
     Params &params;        // Problem parameters
     XorShift128 &rng;      // Random number generator
     bool searchCompleted;  // Tells whether all moves have been evaluated

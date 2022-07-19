@@ -9,7 +9,7 @@
 // Stores all the parameters values
 struct Config
 {
-    // TODO make fields const
+    // TODO make fields const?
 
     int seed = 0;             // Random seed
     int nbIter = 20'000;      // iters without improvement
@@ -31,7 +31,7 @@ struct Config
 
     // This was the default until now, but with this value feasible
     // individuals often become infeasible during the local search in
-    // doLocalSearchAndAddIndividual. With initialTimeWarpPenalty = 10,
+    // educate. With initialTimeWarpPenalty = 10,
     // this does not happen.
     double initialTimeWarpPenalty = 1.0;
 
@@ -40,11 +40,11 @@ struct Config
     double penaltyBooster = 2.0;
 
     size_t minimumPopulationSize = 25;
-    size_t generationSize = 40;   // max size before culling a generation
-    size_t nbElite = 4;           // number of elite individuals in pop
-    size_t nbClose = 5;           // # individuals when calculating diversity
-    double targetFeasible = 0.2;  // target feasible pop fraction
-    int repairProbability = 50;   // probability of repair if infeasible
+    size_t generationSize = 40;     // max size before culling a generation
+    size_t nbElite = 4;             // number of elite individuals in pop
+    size_t nbClose = 5;             // # individuals when calculating diversity
+    double targetFeasible = 0.2;    // target feasible pop fraction
+    size_t repairProbability = 50;  // probability of repair if infeasible
 
     // The number of iterations without improvements after
     // which the nbGranular is grown
@@ -114,7 +114,7 @@ struct Config
                     size_t nbElite = 4,
                     size_t nbClose = 5,
                     double targetFeasible = 0.2,
-                    int repairProbability = 50,
+                    size_t repairProbability = 50,
                     int growNbGranularAfterNonImprovementIterations = 5'000,
                     int growNbGranularAfterIterations = 0,
                     int growNbGranularSize = 0,

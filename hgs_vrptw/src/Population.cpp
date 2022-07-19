@@ -8,24 +8,18 @@
 #include <list>
 #include <vector>
 
-void Population::doLocalSearchAndAddIndividual(Individual *indiv)
+void Population::educate(Individual *indiv)
 {
-    // Do a Local Search
     localSearch.run(indiv, params.penaltyCapacity, params.penaltyTimeWarp);
-
-    // Add an individual
     addIndividual(indiv, true);
 
-    // With a certain probability, repair half of the solutions by increasing
-    // the penalties for infeasibilities (w.r.t. capacities and time warps) in a
-    // new Local Search in case of infeasibility
-    if (!indiv->isFeasible()
-        && rng.randint(100) < (unsigned int)params.config.repairProbability)
+    if (!indiv->isFeasible()  // possibly repair if currently infeasible
+        && rng.randint(100) < params.config.repairProbability)
     {
-        localSearch.run(
-            indiv, params.penaltyCapacity * 10., params.penaltyTimeWarp * 10.);
+        localSearch.run(indiv,  // re-run, but penalise infeasibility more
+                        params.penaltyCapacity * 10.,
+                        params.penaltyTimeWarp * 10.);
 
-        // Add the individual only when feasible
         if (indiv->isFeasible())
             addIndividual(indiv, false);
     }
@@ -75,7 +69,7 @@ void Population::generatePopulation()
 
         auto indiv = localSearch.constructIndividualWithSeedOrder(
             toleratedCapacityViolation, toleratedTimeWarp, false);
-        doLocalSearchAndAddIndividual(&indiv);
+        educate(&indiv);
     }
 
     // Generate some individuals using the FURHEST construction heuristic
@@ -89,7 +83,7 @@ void Population::generatePopulation()
 
         auto indiv = localSearch.constructIndividualWithSeedOrder(
             toleratedCapacityViolation, toleratedTimeWarp, true);
-        doLocalSearchAndAddIndividual(&indiv);
+        educate(&indiv);
     }
 
     // Generate some individuals using the SWEEP construction heuristic
@@ -102,14 +96,14 @@ void Population::generatePopulation()
                            + rng.randint(100 - minSweepFillPercentage + 1);
 
         auto indiv = localSearch.constructIndividualBySweep(fillPercentage);
-        doLocalSearchAndAddIndividual(&indiv);
+        educate(&indiv);
     }
 
     // Generate some individuals using a RANDOM strategy
     for (int i = 0; i < nofRandomIndividualsToGenerate; i++)
     {
         Individual randomIndiv(&params, &rng);
-        doLocalSearchAndAddIndividual(&randomIndiv);
+        educate(&randomIndiv);
     }
 }
 

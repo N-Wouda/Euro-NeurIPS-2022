@@ -110,7 +110,7 @@ public:
 
     [[nodiscard]] inline bool hasTimeWarp() const { return timeWarp > 0; }
 
-    // Measuring cost of a solution from the information of routeChrom
+    // Evaluates this solution's objective value.
     void evaluateCompleteCost();
 
     // Removes the other from the proximity structure of this individual.

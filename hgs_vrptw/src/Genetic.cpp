@@ -41,26 +41,8 @@ Result Genetic::runUntil(timePoint const &timePoint)
                              : offspringSREX;
 
         /* LOCAL SEARCH */
-        // Run the Local Search on the new individual
-        localSearch.run(
-            &offspring, params.penaltyCapacity, params.penaltyTimeWarp);
-
-        // Check if the new individual is the best feasible individual of the
-        // population, based on penalizedCost
         auto const currBest = population.getBestFound().cost();
-        population.addIndividual(&offspring, true);
-
-        if (!offspring.isFeasible()  // possibly repair if currently infeasible
-            && rng.randint(100) < (unsigned int)params.config.repairProbability)
-        {
-            // Re-run local search, but now penalise infeasibility more.
-            localSearch.run(&offspring,
-                            params.penaltyCapacity * 10.,
-                            params.penaltyTimeWarp * 10.);
-
-            if (offspring.isFeasible())
-                population.addIndividual(&offspring, false);
-        }
+        population.educate(&offspring);
 
         /* TRACKING THE NUMBER OF ITERATIONS SINCE LAST SOLUTION IMPROVEMENT */
         if (currBest > population.getBestFound().cost())
@@ -198,74 +180,42 @@ Individual Genetic::crossoverSREX(Parents parents) const
     while (true)
     {
         // Difference for moving 'left' in parent A
-        const int differenceALeft
-            = static_cast<int>(std::count_if(
-                  routesA[(startA - 1 + nbRoutesA) % nbRoutesA].begin(),
-                  routesA[(startA - 1 + nbRoutesA) % nbRoutesA].end(),
-                  [&clientsInSelectedB](int c) {
-                      return clientsInSelectedB.find(c)
-                             == clientsInSelectedB.end();
-                  }))
-              - static_cast<int>(std::count_if(
-                  routesA[(startA + nMovedRoutes - 1) % nbRoutesA].begin(),
-                  routesA[(startA + nMovedRoutes - 1) % nbRoutesA].end(),
-                  [&clientsInSelectedB](int c) {
-                      return clientsInSelectedB.find(c)
-                             == clientsInSelectedB.end();
-                  }));
+        int differenceALeft = 0;
+
+        for (int c : routesA[(startA - 1 + nbRoutesA) % nbRoutesA])
+            differenceALeft += !clientsInSelectedB.contains(c);
+
+        for (int c : routesA[(startA + nMovedRoutes - 1) % nbRoutesA])
+            differenceALeft -= !clientsInSelectedB.contains(c);
 
         // Difference for moving 'right' in parent A
-        const int differenceARight
-            = static_cast<int>(std::count_if(
-                  routesA[(startA + nMovedRoutes) % nbRoutesA].begin(),
-                  routesA[(startA + nMovedRoutes) % nbRoutesA].end(),
-                  [&clientsInSelectedB](int c) {
-                      return clientsInSelectedB.find(c)
-                             == clientsInSelectedB.end();
-                  }))
-              - static_cast<int>(
-                  std::count_if(routesA[startA].begin(),
-                                routesA[startA].end(),
-                                [&clientsInSelectedB](int c) {
-                                    return clientsInSelectedB.find(c)
-                                           == clientsInSelectedB.end();
-                                }));
+        int differenceARight = 0;
+
+        for (int c : routesA[(startA + nMovedRoutes) % nbRoutesA])
+            differenceARight += !clientsInSelectedB.contains(c);
+
+        for (int c : routesA[startA])
+            differenceARight -= !clientsInSelectedB.contains(c);
 
         // Difference for moving 'left' in parent B
-        const int differenceBLeft
-            = static_cast<int>(std::count_if(
-                  routesB[(startB - 1 + nMovedRoutes) % nbRoutesB].begin(),
-                  routesB[(startB - 1 + nMovedRoutes) % nbRoutesB].end(),
-                  [&clientsInSelectedA](int c) {
-                      return clientsInSelectedA.find(c)
-                             != clientsInSelectedA.end();
-                  }))
-              - static_cast<int>(std::count_if(
-                  routesB[(startB - 1 + nbRoutesB) % nbRoutesB].begin(),
-                  routesB[(startB - 1 + nbRoutesB) % nbRoutesB].end(),
-                  [&clientsInSelectedA](int c) {
-                      return clientsInSelectedA.find(c)
-                             != clientsInSelectedA.end();
-                  }));
+        int differenceBLeft = 0;
+
+        for (int c : routesB[(startB - 1 + nMovedRoutes) % nbRoutesB])
+            differenceBLeft += clientsInSelectedA.contains(c);
+
+        for (int c : routesB[(startB - 1 + nbRoutesB) % nbRoutesB])
+            differenceBLeft -= clientsInSelectedA.contains(c);
 
         // Difference for moving 'right' in parent B
-        const int differenceBRight
-            = static_cast<int>(
-                  std::count_if(routesB[startB].begin(),
-                                routesB[startB].end(),
-                                [&clientsInSelectedA](int c) {
-                                    return clientsInSelectedA.find(c)
-                                           != clientsInSelectedA.end();
-                                }))
-              - static_cast<int>(std::count_if(
-                  routesB[(startB + nMovedRoutes) % nbRoutesB].begin(),
-                  routesB[(startB + nMovedRoutes) % nbRoutesB].end(),
-                  [&clientsInSelectedA](int c) {
-                      return clientsInSelectedA.find(c)
-                             != clientsInSelectedA.end();
-                  }));
+        int differenceBRight = 0;
 
-        const int bestDifference = std::min({differenceALeft,
+        for (int c : routesB[startB])
+            differenceBRight += clientsInSelectedA.contains(c);
+
+        for (int c : routesB[(startB + nMovedRoutes) % nbRoutesB])
+            differenceBRight -= clientsInSelectedA.contains(c);
+
+        int const bestDifference = std::min({differenceALeft,
                                              differenceARight,
                                              differenceBLeft,
                                              differenceBRight});
@@ -276,69 +226,55 @@ Individual Genetic::crossoverSREX(Parents parents) const
         if (bestDifference == differenceALeft)
         {
             for (int c : routesA[(startA + nMovedRoutes - 1) % nbRoutesA])
-            {
-                clientsInSelectedA.erase(clientsInSelectedA.find(c));
-            }
+                clientsInSelectedA.erase(c);
+
             startA = (startA - 1 + nbRoutesA) % nbRoutesA;
+
             for (int c : routesA[startA])
-            {
                 clientsInSelectedA.insert(c);
-            }
         }
         else if (bestDifference == differenceARight)
         {
             for (int c : routesA[startA])
-            {
-                clientsInSelectedA.erase(clientsInSelectedA.find(c));
-            }
+                clientsInSelectedA.erase(c);
+
             startA = (startA + 1) % nbRoutesA;
+
             for (int c : routesA[(startA + nMovedRoutes - 1) % nbRoutesA])
-            {
                 clientsInSelectedA.insert(c);
-            }
         }
         else if (bestDifference == differenceBLeft)
         {
             for (int c : routesB[(startB + nMovedRoutes - 1) % nbRoutesB])
-            {
-                clientsInSelectedB.erase(clientsInSelectedB.find(c));
-            }
+                clientsInSelectedB.erase(c);
+
             startB = (startB - 1 + nbRoutesB) % nbRoutesB;
+
             for (int c : routesB[startB])
-            {
                 clientsInSelectedB.insert(c);
-            }
         }
         else if (bestDifference == differenceBRight)
         {
             for (int c : routesB[startB])
-            {
-                clientsInSelectedB.erase(clientsInSelectedB.find(c));
-            }
+                clientsInSelectedB.erase(c);
+
             startB = (startB + 1) % nbRoutesB;
+
             for (int c : routesB[(startB + nMovedRoutes - 1) % nbRoutesB])
-            {
                 clientsInSelectedB.insert(c);
-            }
         }
     }
 
     // Identify differences between route sets
     std::unordered_set<int> clientsInSelectedANotB;
-    std::copy_if(
-        clientsInSelectedA.begin(),
-        clientsInSelectedA.end(),
-        std::inserter(clientsInSelectedANotB, clientsInSelectedANotB.end()),
-        [&clientsInSelectedB](int c)
-        { return clientsInSelectedB.find(c) == clientsInSelectedB.end(); });
+    for (int c : clientsInSelectedA)
+        if (!clientsInSelectedB.contains(c))
+            clientsInSelectedANotB.insert(c);
 
     std::unordered_set<int> clientsInSelectedBNotA;
-    std::copy_if(
-        clientsInSelectedB.begin(),
-        clientsInSelectedB.end(),
-        std::inserter(clientsInSelectedBNotA, clientsInSelectedBNotA.end()),
-        [&clientsInSelectedA](int c)
-        { return clientsInSelectedA.find(c) == clientsInSelectedA.end(); });
+    for (int c : clientsInSelectedB)
+        if (!clientsInSelectedA.contains(c))
+            clientsInSelectedBNotA.insert(c);
 
     auto routes1 = std::vector<std::vector<int>>(params.nbVehicles);
     auto routes2 = std::vector<std::vector<int>>(params.nbVehicles);
@@ -353,7 +289,7 @@ Individual Genetic::crossoverSREX(Parents parents) const
         {
             routes1[indexA].push_back(c);
 
-            if (clientsInSelectedBNotA.find(c) == clientsInSelectedBNotA.end())
+            if (!clientsInSelectedBNotA.contains(c))
                 routes2[indexA].push_back(c);
         }
     }
@@ -365,7 +301,7 @@ Individual Genetic::crossoverSREX(Parents parents) const
 
         for (int c : routesA[indexA])
         {
-            if (clientsInSelectedBNotA.find(c) == clientsInSelectedBNotA.end())
+            if (!clientsInSelectedBNotA.contains(c))
                 routes1[indexA].push_back(c);
 
             routes2[indexA].push_back(c);

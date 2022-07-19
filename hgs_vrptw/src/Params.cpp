@@ -500,7 +500,6 @@ void Params::setCorrelatedVertices()
                 continue;
 
             // Compute proximity using Eq. 4 in Vidal 2012
-            // TODO simplify
             int const time = timeCost.get(i, j);
 
             int const first

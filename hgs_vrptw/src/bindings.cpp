@@ -45,7 +45,7 @@ PYBIND11_MODULE(hgspy, m)
                       size_t,
                       size_t,
                       double,
-                      int,
+                      size_t,
                       int,
                       int,
                       int,

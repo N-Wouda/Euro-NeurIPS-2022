@@ -69,11 +69,6 @@ class Population
     void removeWorstBiasedFitness(SubPopulation &subpop,
                                   std::vector<double> &fitness);
 
-    // Performs local search and adds the individual. If the individual is
-    // infeasible, with some probability we try to repair it and add it if this
-    // succeeds.
-    void doLocalSearchAndAddIndividual(Individual *indiv);
-
 public:
     // Generates the population. Part of the population is generated randomly
     // and the other part using several construction heuristics. There is
@@ -85,6 +80,11 @@ public:
     // triggered whenever the population reaches its maximum size), and possibly
     // update the current best candidate.
     void addIndividual(const Individual *indiv, bool updateFeasible);
+
+    // Performs local search and adds the individual. If the individual is
+    // infeasible, with some probability we try to repair it and add it if this
+    // succeeds.
+    void educate(Individual *indiv);
 
     // Cleans all solutions and generates a new initial population (only used
     // when running HGS until a time limit, in which case the algorithm restarts

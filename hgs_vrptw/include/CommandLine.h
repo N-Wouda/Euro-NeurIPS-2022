@@ -63,8 +63,8 @@ public:
         Config config;
 
         // Go over all possible command line arguments and store their
-        // values Explanations per command line argument can be found at
-        // their variable declaration, as well as in displayHelp()
+        // values. Explanations per command line argument can be found at
+        // their variable declaration.
         for (int i = 3; i < argc; i += 2)
         {
             if (std::string(argv[i]) == "-t")
