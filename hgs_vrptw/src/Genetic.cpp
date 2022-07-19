@@ -338,16 +338,18 @@ Individual Genetic::crossoverSREX(Parents parents) const
         clientsInSelectedA.begin(),
         clientsInSelectedA.end(),
         std::inserter(clientsInSelectedANotB, clientsInSelectedANotB.end()),
-        [&clientsInSelectedB](int c)
-        { return clientsInSelectedB.find(c) == clientsInSelectedB.end(); });
+        [&clientsInSelectedB](int c) {
+            return clientsInSelectedB.find(c) == clientsInSelectedB.end();
+        });
 
     std::unordered_set<int> clientsInSelectedBNotA;
     std::copy_if(
         clientsInSelectedB.begin(),
         clientsInSelectedB.end(),
         std::inserter(clientsInSelectedBNotA, clientsInSelectedBNotA.end()),
-        [&clientsInSelectedA](int c)
-        { return clientsInSelectedA.find(c) == clientsInSelectedA.end(); });
+        [&clientsInSelectedA](int c) {
+            return clientsInSelectedA.find(c) == clientsInSelectedA.end();
+        });
 
     Individual indiv1(&params, &rng);
     Individual indiv2(&params, &rng);
