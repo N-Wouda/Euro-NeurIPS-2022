@@ -55,7 +55,7 @@ def solve(loc: str, seed: int, time_limit: int):
     try:
         actual_cost = tools.validate_static_solution(instance, routes)
         assert np.isclose(actual_cost, cost), "Could not validate objective."
-    except AssertionError as e:
+    except AssertionError:
         has_issue = True
     else:
         has_issue = False
