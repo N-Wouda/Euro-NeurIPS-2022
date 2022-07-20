@@ -63,7 +63,7 @@ def solve(loc: str, seed: int, time_limit: int):
     else:
         has_issue = False
 
-    return path.stem, cost, res.get_num_iters(), has_issue
+    return path.stem, int(cost), int(res.get_num_iters()), has_issue
 
 
 def tabulate(headers, rows) -> str:
@@ -78,7 +78,7 @@ def tabulate(headers, rows) -> str:
              "  ".join("-" * l for l in lengths)]
 
     for row in rows:
-        lines.append("  ".join(f"{str(c):<{l}s}" for l, c in zip(lengths, row)))
+        lines.append("  ".join(f"{str(c):>{l}s}" for l, c in zip(lengths, row)))
 
     return "\n".join(lines)
 
@@ -95,7 +95,7 @@ def main():
             partial(solve, seed=args.seed, time_limit=args.time_limit),
             iglob(args.instance_pattern))
 
-    dtype = [('inst', 'U37'), ('obj', float), ('iters', int), ('issues', int)]
+    dtype = [('inst', 'U37'), ('obj', int), ('iters', int), ('issues', int)]
     data = np.array(data, dtype=dtype)
 
     print('\n', tabulate(["Inst.", "Obj.", "Iters."], data), '\n', sep="")
