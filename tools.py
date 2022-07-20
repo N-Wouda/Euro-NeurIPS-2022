@@ -1,5 +1,9 @@
+import glob
+import importlib.machinery
+import importlib.util
 import json
 import os
+
 import numpy as np
 
 # https://stackoverflow.com/questions/26646362/numpy-array-is-not-json-serializable
@@ -317,3 +321,12 @@ def write_vrplib(filename, instance, name="problem", euclidean=False, is_vrptw=T
                 f.write("\n")
             
         f.write("EOF\n")
+
+def get_hgspy_module(where: str = 'release/lib/hgspy*.so'):
+    lib_path = next(glob.iglob(where))
+    loader = importlib.machinery.ExtensionFileLoader('hgspy', lib_path)
+    spec = importlib.util.spec_from_loader(loader.name, loader)
+    hgspy = importlib.util.module_from_spec(spec)
+    loader.exec_module(hgspy)
+
+    return hgspy

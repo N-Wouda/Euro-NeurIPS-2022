@@ -1,7 +1,4 @@
 import argparse
-import glob
-import importlib.machinery
-import importlib.util
 import sys
 from datetime import datetime, timedelta
 
@@ -10,23 +7,6 @@ import numpy as np
 import tools
 from baselines.strategies import STRATEGIES
 from environment import ControllerEnvironment, VRPEnvironment
-
-
-def get_hgspy_module(where: str = 'release/lib/hgspy*.so'):
-    lib_path = next(glob.iglob(where))
-    loader = importlib.machinery.ExtensionFileLoader('hgspy', lib_path)
-    spec = importlib.util.spec_from_loader(loader.name, loader)
-    hgspy = importlib.util.module_from_spec(spec)
-    loader.exec_module(hgspy)
-
-
-try:
-    from hgspy import (XorShift128, Config, GeneticAlgorithm, Params,
-                       Population, LocalSearch)  # noqa
-except (ImportError, ModuleNotFoundError):
-    get_hgspy_module()
-    from hgspy import (XorShift128, Config, GeneticAlgorithm, Params,
-                       Population, LocalSearch)  # noqa
 
 
 def parse_args():
@@ -67,8 +47,9 @@ def solve_static_vrptw(instance, time_limit=3600, seed=1):
 
     # TODO all this works, but it is not pretty. Clean this up in tandem with
     #  the C++ implementation.
+    hgspy = tools.get_hgspy_module()
 
-    config = Config(seed=seed, nbVeh=-1)
+    config = hgspy.Config(seed=seed, nbVeh=-1)
 
     coords = [(x, y) for x, y in instance['coords'].tolist()]
     demands = instance['demands'].tolist()
@@ -77,14 +58,14 @@ def solve_static_vrptw(instance, time_limit=3600, seed=1):
     service_times = instance['service_times'].tolist()
     duration_matrix = instance['duration_matrix'].tolist()
 
-    params = Params(config, coords, demands, capacity, time_windows,
-                    service_times, duration_matrix)
+    params = hgspy.Params(config, coords, demands, capacity, time_windows,
+                          service_times, duration_matrix)
 
-    rng = XorShift128(seed=seed)
-    ls = LocalSearch(params, rng)
-    pop = Population(params, rng, ls)
+    rng = hgspy.XorShift128(seed=seed)
+    ls = hgspy.LocalSearch(params, rng)
+    pop = hgspy.Population(params, rng, ls)
 
-    algo = GeneticAlgorithm(params, rng, pop)
+    algo = hgspy.GeneticAlgorithm(params, rng, pop)
     res = algo.run_until(start + timedelta(seconds=time_limit))
 
     best = res.get_best_found()
@@ -113,7 +94,8 @@ def run_oracle(args, env):
     hindsight_problem = env.get_hindsight_problem()
 
     oracle_solution = \
-        min(solve_static_vrptw(hindsight_problem, time_limit=epoch_tlim), key=lambda x: x[1])[0]
+        min(solve_static_vrptw(hindsight_problem, time_limit=epoch_tlim),
+            key=lambda x: x[1])[0]
     oracle_cost = tools.validate_static_solution(hindsight_problem,
                                                  oracle_solution)
 
