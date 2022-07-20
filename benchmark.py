@@ -6,7 +6,6 @@ from multiprocessing import Pool
 from pathlib import Path
 
 import numpy as np
-from tabulate import tabulate
 
 import tools
 
@@ -15,8 +14,10 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--seed", type=int, default=1)
-    parser.add_argument("--time_limit", type=int, default=15)
+    parser.add_argument("--time_limit", type=int, default=10)
     parser.add_argument("--num_procs", type=int, default=4)
+    parser.add_argument("--instance_pattern",
+                        default="instances/ORTEC-VRPTW-ASYM-*.txt")
 
     return parser.parse_args()
 
@@ -24,7 +25,7 @@ def parse_args():
 def solve(loc: str, seed: int, time_limit: int):
     path = Path(loc)
 
-    print(f" * Solving '{path.stem}' with {seed=} and {time_limit=} seconds.")
+    print(f" * Solving '{path.stem}'.")
 
     hgspy = tools.get_hgspy_module()
     instance = tools.read_vrplib(path)
@@ -53,30 +54,54 @@ def solve(loc: str, seed: int, time_limit: int):
     routes = [route for route in best.get_routes() if route]
     cost = best.cost()
 
-    # This might fail if insufficient time was given for a feasible solution to
-    # be found. In that case, increase the time limit!
-    assert np.isclose(tools.validate_static_solution(instance, routes),
-                      cost)
+    try:
+        actual_cost = tools.validate_static_solution(instance, routes)
+        assert np.isclose(actual_cost, cost), "Could not validate objective."
+    except AssertionError as e:
+        print(f" !   Error '{path.stem}'. {e}.")
+        has_issue = True
+    else:
+        has_issue = False
 
-    return path.stem, cost, res.get_num_iters()
+    return path.stem, cost, res.get_num_iters(), has_issue
+
+
+def tabulate(headers, rows) -> str:
+    # These lengths are used to space each column properly.
+    lengths = [len(header) for header in headers]
+
+    for row in rows:
+        for idx, (cell, _) in enumerate(zip(row, headers)):
+            lengths[idx] = max(lengths[idx], len(str(cell)))
+
+    lines = ["  ".join(f"{h:<{l}s}" for l, h in zip(lengths, headers)),
+             "  ".join("-" * l for l in lengths)]
+
+    for row in rows:
+        lines.append("  ".join(f"{str(c):<{l}s}" for l, c in zip(lengths, row)))
+
+    return "\n".join(lines)
 
 
 def main():
     args = parse_args()
-    print(f"-- Benchmark run [{args.num_procs} processes] --")
+    print(f"Benchmark run "
+          f"[{args.num_procs} processes,"
+          f" seed {args.seed},"
+          f" time limit {args.time_limit} seconds].")
 
     with Pool(args.num_procs) as pool:
         data = pool.map(
             partial(solve, seed=args.seed, time_limit=args.time_limit),
-            iglob("instances/ORTEC-*.txt"))
+            iglob(args.instance_pattern))
 
-    data = np.array(data, dtype=[('inst', str), ('obj', float), ('iters', int)])
-    table = tabulate(data, ["Instance", "Objective", "Iterations"])
+    dtype = [('inst', 'U37'), ('obj', float), ('iters', int), ('issues', int)]
+    data = np.array(data, dtype=dtype)
 
-    print('\n', table)
-    print("\n-- Statistics --")
-    print(" Mean objective:", data['obj'].mean())
-    print("Mean iterations:", data['iters'].mean())
+    print('\n', tabulate(["Inst.", "Obj.", "Iters."], data), '\n', sep="")
+    print(f" Avg. objective: {data['obj'].mean():.0f}")
+    print(f"Avg. iterations: {data['iters'].mean():.0f}")
+    print(f"   Total issues: {data['issues'].sum()}")
 
 
 if __name__ == "__main__":
