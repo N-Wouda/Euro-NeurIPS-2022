@@ -82,14 +82,11 @@ def tabulate(headers, rows) -> str:
 
 def main():
     args = parse_args()
-    print(f"Benchmark run "
-          f"[{args.num_procs} processes,"
-          f" seed {args.seed},"
-          f" time limit {args.time_limit} seconds].")
 
     func = partial(solve, seed=args.seed, time_limit=args.time_limit)
     func_args = glob(args.instance_pattern)
-    data = process_map(func, func_args, max_workers=args.num_procs)
+    tqdm_kwargs = dict(max_workers=args.num_procs, unit="instance")
+    data = process_map(func, func_args, **tqdm_kwargs)
 
     dtype = [('inst', 'U37'), ('obj', int), ('iters', int), ('issues', bool)]
     data = np.array(data, dtype=dtype)
