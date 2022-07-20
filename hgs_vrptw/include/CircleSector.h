@@ -35,9 +35,9 @@ struct CircleSector
     }
 
     // Tests if a point is enclosed in the circle sector
-    bool isEnclosed(int point)
+    [[nodiscard]] bool isEnclosed(int point) const
     {
-        return (positive_mod(point - start) <= positive_mod(end - start));
+        return positive_mod(point - start) <= positive_mod(end - start);
     }
 
     // Tests overlap of two circle sectors with tolerance
@@ -48,7 +48,7 @@ struct CircleSector
                         const CircleSector &sector2,
                         const int tolerance)
     {
-        // the RHS is the size of the sector, by adding the tolerance outside of
+        // the RHS is the size of the sector, by adding the tolerance outside
         // the positive_mod, we avoid overflow beyond a full circle
         return ((positive_mod(sector2.start - sector1.start)
                  <= positive_mod(sector1.end - sector1.start) + tolerance)

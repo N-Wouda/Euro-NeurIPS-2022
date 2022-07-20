@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.2)
 
 set(geneticSources
-        Genetic.cpp)
+        GeneticAlgorithm.cpp)
 
 set(individualSources
         Individual.cpp)
@@ -15,17 +15,22 @@ set(paramsSources
 set(populationSources
         Population.cpp)
 
-set(splitSources
-        Split.cpp)
+set(resultSources
+        Result.cpp)
 
 # (Internal) library
-add_library(vrp
+add_library(hgs
         ${geneticSources}
         ${individualSources}
         ${localSearchSources}
         ${paramsSources}
         ${populationSources}
-        ${splitSources})
+        ${resultSources})
 
+# Executable
 add_executable(genvrp main.cpp)
-target_link_libraries(genvrp PRIVATE vrp)
+target_link_libraries(genvrp PRIVATE hgs)
+
+# Python bindings
+pybind11_add_module(hgspy bindings.cpp)
+target_link_libraries(hgspy PRIVATE hgs)

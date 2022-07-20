@@ -1,296 +1,372 @@
 #include "Individual.h"
-
 #include "Params.h"
 
-#include <algorithm>
+#include <cassert>
+#include <deque>
 #include <fstream>
-#include <iostream>
-#include <sstream>
+#include <numeric>
 #include <vector>
+
+namespace
+{
+// Structure representing a client when making routes
+struct ClientSplit
+{
+    int demand = 0;       // The demand of the client
+    int serviceTime = 0;  // The service duration of the client
+    int d0_x = 0;         // The distance from the depot to the client
+    int dx_0 = 0;         // The distance from the client to the depot
+    int dnext = 0;        // The distance from the client to the next client
+};
+
+struct ClientSplits
+{
+    int vehicleCap;
+    double capPenalty;
+
+    std::vector<ClientSplit> splits;
+    std::vector<int> predecessors;
+    std::vector<double> pathCosts;
+
+    std::vector<int> cumDist;
+    std::vector<int> cumLoad;
+    std::vector<int> cumServ;
+
+    explicit ClientSplits(Params const &params, std::vector<int> const &tour)
+        : vehicleCap(params.vehicleCapacity),
+          capPenalty(params.penaltyCapacity),
+          splits(params.nbClients + 1),
+          predecessors(params.nbClients + 1, 0),
+          pathCosts(params.nbClients + 1, 1.e30),
+          cumDist(params.nbClients + 1, 0),
+          cumLoad(params.nbClients + 1, 0),
+          cumServ(params.nbClients + 1, 0)
+    {
+        pathCosts[0] = 0;
+
+        for (int idx = 1; idx <= params.nbClients; idx++)  // exclude depot
+        {
+            auto const curr = tour[idx - 1];
+            auto const dist = idx < params.nbClients  // INT_MIN for last client
+                                  ? params.timeCost.get(curr, tour[idx])
+                                  : INT_MIN;
+
+            splits[idx] = {params.cli[curr].demand,
+                           params.cli[curr].servDur,
+                           params.timeCost.get(0, curr),
+                           params.timeCost.get(curr, 0),
+                           dist};
+
+            cumLoad[idx] = cumLoad[idx - 1] + splits[idx].demand;
+            cumServ[idx] = cumServ[idx - 1] + splits[idx].serviceTime;
+            cumDist[idx] = cumDist[idx - 1] + splits[idx - 1].dnext;
+        }
+    }
+
+    // Computes the cost of propagating label i to j
+    [[nodiscard]] inline double propagate(int i, int j) const
+    {
+        assert(i < j);
+        auto const excessCapacity = cumLoad[j] - cumLoad[i] - vehicleCap;
+        auto const deltaDist = cumDist[j] - cumDist[i + 1];
+        return pathCosts[i] + deltaDist + splits[i + 1].d0_x + splits[j].dx_0
+               + capPenalty * std::max(excessCapacity, 0);
+    }
+
+    // Tests if i dominates j as a predecessor for all nodes x >= j + 1
+    [[nodiscard]] inline bool leftDominates(int i, int j) const
+    {
+        assert(i < j);
+        auto const lhs = pathCosts[j] + splits[j + 1].d0_x;
+        auto const deltaDist = cumDist[j] - cumDist[i + 1];
+        auto const rhs = pathCosts[i] + splits[i + 1].d0_x + deltaDist
+                         + capPenalty * (cumLoad[j] - cumLoad[i]);
+
+        return lhs + MY_EPSILON > rhs;
+    }
+
+    // Tests if j dominates i as a predecessor for all nodes x >= j + 1
+    [[nodiscard]] inline bool rightDominates(int i, int j) const
+    {
+        assert(i < j);
+        auto const lhs = pathCosts[j] + splits[j + 1].d0_x;
+        auto const rhs = pathCosts[i] + splits[i + 1].d0_x + cumDist[j + 1]
+                         - cumDist[i + 1];
+
+        return lhs < rhs + MY_EPSILON;
+    };
+};
+}  // namespace
+
+void Individual::makeRoutes()
+{
+    ClientSplits splits(*params, getTour());
+
+    auto deq = std::deque<int>(params->nbClients + 1);
+    deq.push_front(0);  // depot
+
+    for (int idx = 1; idx <= params->nbClients; idx++)  // exclude depot
+    {
+        splits.pathCosts[idx] = splits.propagate(deq.front(), idx);
+        splits.predecessors[idx] = deq.front();  // best predecessor for idx
+
+        if (idx == params->nbClients)
+            break;
+
+        // idx will be inserted if idx is not dominated by the last client: we
+        // need to remove whoever is dominated by idx.
+        if (!splits.leftDominates(deq.back(), idx))
+        {
+            while (!deq.empty() && splits.rightDominates(deq.back(), idx))
+                deq.pop_back();
+
+            deq.push_back(idx);
+        }
+
+        while (deq.size() >= 2)  // Check if the current front is dominated by
+        {                        // the follow-up client. If so, remove.
+            auto const firstProp = splits.propagate(deq[0], idx + 1);
+            auto const secondProp = splits.propagate(deq[1], idx + 1);
+
+            if (firstProp + MY_EPSILON > secondProp)
+                deq.pop_front();
+            else
+                break;
+        }
+    }
+
+    if (splits.pathCosts[params->nbClients] > 1.e29)  // has not been updated
+        throw std::runtime_error("No split solution reached the last client");
+
+    int end = params->nbClients;
+    for (auto &route : routeChrom)
+    {
+        route.clear();
+
+        if (end != 0)  // assign routes
+        {
+            int begin = splits.predecessors[end];
+            route = std::vector<Client>(tourChrom.begin() + begin,
+                                        tourChrom.begin() + end);
+
+            end = begin;
+        }
+    }
+
+    evaluateCompleteCost();
+}
 
 void Individual::evaluateCompleteCost()
 {
-    // Create an object to store all information regarding solution costs
-    myCostSol = CostSol();
-    // Loop over all routes that are not empty
-    for (int r = 0; r < params->nbVehicles; r++)
+    // Reset fields before evaluating them again below.
+    penalizedCost = 0.;
+    nbRoutes = 0;
+    distance = 0;
+    waitTime = 0;
+    capacityExcess = 0;
+    timeWarp = 0;
+
+    for (auto const &route : routeChrom)
     {
-        if (!chromR[r].empty())
+        if (route.empty())  // First empty route. Due to makeRoutes() all
+            break;          // subsequent routes are empty as well
+
+        nbRoutes++;
+
+        int maxReleaseTime = 0;
+        for (auto const idx : route)
+            maxReleaseTime
+                = std::max(maxReleaseTime, params->cli[idx].releaseTime);
+
+        // Get the distance, load, servDur and time associated with the
+        // vehicle traveling from the depot to the first client. Assume depot
+        // has service time 0 and twEarly 0
+        int distance = params->timeCost.get(0, route[0]);
+        int load = params->cli[route[0]].demand;
+
+        int time = maxReleaseTime + distance;
+        int waitTime = 0;
+        int timeWarp = 0;
+
+        if (time < params->cli[route[0]].twEarly)
         {
-            int latestReleaseTime = params->cli[chromR[r][0]].releaseTime;
-            for (int i = 1; i < static_cast<int>(chromR[r].size()); i++)
-            {
-                latestReleaseTime = std::max(
-                    latestReleaseTime, params->cli[chromR[r][i]].releaseTime);
-            }
-            // Get the distance, load, serviceDuration and time associated with
-            // the vehicle traveling from the depot to the first client Assume
-            // depot has service time 0 and earliestArrival 0
-            int distance = params->timeCost.get(0, chromR[r][0]);
-            int load = params->cli[chromR[r][0]].demand;
-            int service = params->cli[chromR[r][0]].serviceDuration;
-            // Running time excludes service of current node. This is the time
-            // that runs with the vehicle traveling We start the route at the
-            // latest release time (or later but then we can just wait and there
-            // is no penalty for waiting)
-            int time = latestReleaseTime + distance;
-            int waitTime = 0;
-            int timeWarp = 0;
+            // Don't add wait time since we can start route later (doesn't
+            // really matter since there is no penalty anyway).
+            time = params->cli[route[0]].twEarly;
+        }
+
+        // Add possible time warp
+        if (time > params->cli[route[0]].twLate)
+        {
+            timeWarp += time - params->cli[route[0]].twLate;
+            time = params->cli[route[0]].twLate;
+        }
+
+        // Loop over all clients for this vehicle
+        for (size_t idx = 1; idx < route.size(); idx++)
+        {
+            // Sum the distance, load, servDur and time associated
+            // with the vehicle traveling from the depot to the next client
+            distance += params->timeCost.get(route[idx - 1], route[idx]);
+            load += params->cli[route[idx]].demand;
+
+            time += params->cli[route[idx - 1]].servDur
+                    + params->timeCost.get(route[idx - 1], route[idx]);
+
             // Add possible waiting time
-            if (time < params->cli[chromR[r][0]].earliestArrival)
+            if (time < params->cli[route[idx]].twEarly)
             {
-                // Don't add wait time since we can start route later
-                // (doesn't really matter since there is no penalty anyway)
-                // waitTime += params->cli[chromR[r][0]].earliestArrival - time;
-                time = params->cli[chromR[r][0]].earliestArrival;
+                waitTime += params->cli[route[idx]].twEarly - time;
+                time = params->cli[route[idx]].twEarly;
             }
+
             // Add possible time warp
-            else if (time > params->cli[chromR[r][0]].latestArrival)
+            if (time > params->cli[route[idx]].twLate)
             {
-                timeWarp += time - params->cli[chromR[r][0]].latestArrival;
-                time = params->cli[chromR[r][0]].latestArrival;
-            }
-            predecessors[chromR[r][0]] = 0;
-
-            // Loop over all clients for this vehicle
-            for (int i = 1; i < static_cast<int>(chromR[r].size()); i++)
-            {
-                // Sum the distance, load, serviceDuration and time associated
-                // with the vehicle traveling from the depot to the next client
-                distance
-                    += params->timeCost.get(chromR[r][i - 1], chromR[r][i]);
-                load += params->cli[chromR[r][i]].demand;
-                service += params->cli[chromR[r][i]].serviceDuration;
-                time = time + params->cli[chromR[r][i - 1]].serviceDuration
-                       + params->timeCost.get(chromR[r][i - 1], chromR[r][i]);
-
-                // Add possible waiting time
-                if (time < params->cli[chromR[r][i]].earliestArrival)
-                {
-                    waitTime
-                        += params->cli[chromR[r][i]].earliestArrival - time;
-                    time = params->cli[chromR[r][i]].earliestArrival;
-                }
-                // Add possible time warp
-                else if (time > params->cli[chromR[r][i]].latestArrival)
-                {
-                    timeWarp += time - params->cli[chromR[r][i]].latestArrival;
-                    time = params->cli[chromR[r][i]].latestArrival;
-                }
-
-                // Update predecessors and successors
-                predecessors[chromR[r][i]] = chromR[r][i - 1];
-                successors[chromR[r][i - 1]] = chromR[r][i];
-            }
-
-            // For the last client, the successors is the depot. Also update the
-            // distance and time
-            successors[chromR[r][chromR[r].size() - 1]] = 0;
-            distance
-                += params->timeCost.get(chromR[r][chromR[r].size() - 1], 0);
-            time
-                = time
-                  + params->cli[chromR[r][chromR[r].size() - 1]].serviceDuration
-                  + params->timeCost.get(chromR[r][chromR[r].size() - 1], 0);
-
-            // For the depot, we only need to check the end of the time window
-            // (add possible time warp)
-            if (time > params->cli[0].latestArrival)
-            {
-                timeWarp += time - params->cli[0].latestArrival;
-                time = params->cli[0].latestArrival;
-            }
-            // Update variables that track stats on the whole solution (all
-            // vehicles combined)
-            myCostSol.distance += distance;
-            myCostSol.waitTime += waitTime;
-            myCostSol.timeWarp += timeWarp;
-            myCostSol.nbRoutes++;
-            if (load > params->vehicleCapacity)
-            {
-                myCostSol.capacityExcess += load - params->vehicleCapacity;
+                timeWarp += time - params->cli[route[idx]].twLate;
+                time = params->cli[route[idx]].twLate;
             }
         }
+
+        // For the last client, the successors is the depot. Also update the
+        // distance and time
+        distance += params->timeCost.get(route.back(), 0);
+        time += params->cli[route.back()].servDur
+                + params->timeCost.get(route.back(), 0);
+
+        // For the depot, we only need to check the end of the time window
+        // (add possible time warp)
+        timeWarp += std::max(time - params->cli[0].twLate, 0);
+
+        // Whole solution stats
+        this->distance += distance;
+        this->waitTime += waitTime;
+        this->timeWarp += timeWarp;
+        this->capacityExcess += std::max(load - params->vehicleCapacity, 0);
     }
 
     // When all vehicles are dealt with, calculated total penalized cost and
     // check if the solution is feasible. (Wait time does not affect
     // feasibility)
-    myCostSol.penalizedCost
-        = myCostSol.distance
-          + myCostSol.capacityExcess * params->penaltyCapacity
-          + myCostSol.timeWarp * params->penaltyTimeWarp
-          + myCostSol.waitTime * params->penaltyWaitTime;
-    isFeasible = (myCostSol.capacityExcess < MY_EPSILON
-                  && myCostSol.timeWarp < MY_EPSILON);
+    this->penalizedCost = static_cast<double>(
+        this->distance + this->capacityExcess * params->penaltyCapacity
+        + this->timeWarp * params->penaltyTimeWarp
+        + this->waitTime * params->penaltyWaitTime);
 }
 
-void Individual::shuffleChromT()
+void Individual::removeProximity(Individual *other)
 {
-    // Initialize the chromT with values from 1 to nbClients
-    for (int i = 0; i < params->nbClients; i++)
-    {
-        chromT[i] = i + 1;
-    }
-    // Do a random shuffle chromT from begin to end
-    std::shuffle(chromT.begin(), chromT.end(), params->rng);
-}
-
-void Individual::removeProximity(Individual *indiv)
-{
-    // Get the first individual in indivsPerProximity
     auto it = indivsPerProximity.begin();
-    // Loop over all individuals in indivsPerProximity until indiv is found
-    while (it->second != indiv)
-    {
+    while (it->second != other)
         ++it;
-    }
-    // Remove indiv from indivsPerProximity
+
     indivsPerProximity.erase(it);
 }
 
-double Individual::brokenPairsDistance(Individual *indiv2)
+void Individual::brokenPairsDistance(Individual *other)
 {
-    // Initialize the difference to zero. Then loop over all clients of this
-    // individual
-    int differences = 0;
+    auto const tNeighbours = this->getNeighbours();
+    auto const oNeighbours = other->getNeighbours();
+
+    int diffs = 0;
+
     for (int j = 1; j <= params->nbClients; j++)
     {
+        auto const &[tPred, tSucc] = tNeighbours[j];
+        auto const &[oPred, oSucc] = oNeighbours[j];
+
         // Increase the difference if the successor of j in this individual is
-        // not directly linked to j in indiv2
-        if (successors[j] != indiv2->successors[j]
-            && successors[j] != indiv2->predecessors[j])
-        {
-            differences++;
-        }
-        // Last loop covers all but the first arc. Increase the difference if
-        // the predecessor of j in this individual is not directly linked to j
-        // in indiv2
-        if (predecessors[j] == 0 && indiv2->predecessors[j] != 0
-            && indiv2->successors[j] != 0)
-        {
-            differences++;
-        }
+        // not directly linked to j in other
+        diffs += tSucc != oSucc && tSucc != oPred;
+
+        // Increase the difference if the predecessor of j in this individual is
+        // not directly linked to j in other
+        diffs += tPred == 0 && oPred != 0 && oSucc != 0;
     }
-    return static_cast<double>(differences) / params->nbClients;
+
+    double const dist = static_cast<double>(diffs) / params->nbClients;
+
+    other->indivsPerProximity.insert({dist, this});
+    indivsPerProximity.insert({dist, other});
 }
 
-double Individual::averageBrokenPairsDistanceClosest(int nbClosest)
+double Individual::avgBrokenPairsDistanceClosest(size_t nbClosest) const
 {
+    size_t maxSize = std::min(nbClosest, indivsPerProximity.size());
+
     double result = 0;
-    int maxSize
-        = std::min(nbClosest, static_cast<int>(indivsPerProximity.size()));
     auto it = indivsPerProximity.begin();
-    for (int i = 0; i < maxSize; i++)
+
+    for (size_t itemCount = 0; itemCount != maxSize; ++itemCount)
     {
         result += it->first;
         ++it;
     }
-    return result / maxSize;
+
+    return result / static_cast<double>(maxSize);
 }
 
-void Individual::exportCVRPLibFormat(std::string fileName)
+void Individual::exportCVRPLibFormat(std::string const &path, double time) const
 {
-    std::cout << "----- WRITING SOLUTION WITH VALUE " << myCostSol.penalizedCost
-              << " IN : " << fileName << std::endl;
-    std::ofstream myfile(fileName);
-    if (myfile.is_open())
+    std::ofstream out(path);
+
+    if (!out)
+        throw std::runtime_error("Could not open " + path);
+
+    for (size_t rIdx = 0; rIdx != nbRoutes; ++rIdx)
     {
-        for (int k = 0; k < params->nbVehicles; k++)
-        {
-            if (!chromR[k].empty())
-            {
-                myfile << "Route #" << k + 1
-                       << ":";  // Route IDs start at 1 in the file format
-                for (int i : chromR[k])
-                {
-                    myfile << " " << i;
-                }
-                myfile << std::endl;
-            }
-        }
-        myfile << "Cost " << myCostSol.penalizedCost << std::endl;
-        myfile << "Time " << params->getTimeElapsedSeconds() << std::endl;
+        out << "Route #" << rIdx + 1 << ":";  // route number
+        for (int cIdx : routeChrom[rIdx])
+            out << " " << cIdx;  // client index
+        out << '\n';
     }
-    else
-        std::cout << "----- IMPOSSIBLE TO OPEN: " << fileName << std::endl;
+
+    out << "Cost " << cost() << '\n';
+    out << "Time " << time << '\n';
 }
 
-void Individual::printCVRPLibFormat()
+std::vector<std::pair<int, int>> Individual::getNeighbours() const
 {
-    std::cout << "----- PRINTING SOLUTION WITH VALUE "
-              << myCostSol.penalizedCost << std::endl;
-    for (int k = 0; k < params->nbVehicles; k++)
-    {
-        if (!chromR[k].empty())
-        {
-            std::cout << "Route #" << k + 1
-                      << ":";  // Route IDs start at 1 in the file format
-            for (int i : chromR[k])
-            {
-                std::cout << " " << i;
-            }
-            std::cout << std::endl;
-        }
-    }
-    std::cout << "Cost " << myCostSol.penalizedCost << std::endl;
-    std::cout << "Time " << params->getTimeElapsedSeconds() << std::endl;
-    fflush(stdout);
+    std::vector<std::pair<int, int>> neighbours(params->nbClients + 1);
+    neighbours[0] = {0, 0};  // note that depot neighbours have no meaning
+
+    for (auto const &route : routeChrom)
+        for (size_t idx = 0; idx != route.size(); ++idx)
+            neighbours[route[idx]]
+                = {idx == 0 ? 0 : route[idx - 1],                  // pred
+                   idx == route.size() - 1 ? 0 : route[idx + 1]};  // succ
+
+    return neighbours;
 }
 
-bool Individual::readCVRPLibFormat(std::string fileName,
-                                   std::vector<std::vector<int>> &readSolution,
-                                   double &readCost)
+bool Individual::operator==(Individual const &other) const
 {
-    readSolution.clear();
-    std::ifstream inputFile(fileName);
-    if (inputFile.is_open())
-    {
-        std::string inputString;
-        inputFile >> inputString;
-        // Loops as long as the first line keyword is "Route"
-        for (int r = 0; inputString == "Route"; r++)
-        {
-            readSolution.push_back(std::vector<int>());
-            inputFile >> inputString;
-            getline(inputFile, inputString);
-            std::stringstream ss(inputString);
-            int inputCustomer;
-            // Loops as long as there is an integer to read
-            while (ss >> inputCustomer)
-            {
-                readSolution[r].push_back(inputCustomer);
-            }
-            inputFile >> inputString;
-        }
-        if (inputString == "Cost")
-        {
-            inputFile >> readCost;
-            return true;
-        }
-        else
-            std::cout << "----- UNEXPECTED WORD IN SOLUTION FORMAT: "
-                      << inputString << std::endl;
-    }
-    else
-        std::cout << "----- IMPOSSIBLE TO OPEN: " << fileName << std::endl;
-    return false;
+    auto diff = std::abs(cost() - other.cost());
+    return diff < MY_EPSILON && tourChrom == other.tourChrom
+           && routeChrom == other.routeChrom;
 }
 
-Individual::Individual(Params *params, bool initializeChromTAndShuffle)
-    : params(params), isFeasible(false), biasedFitness(0)
+Individual::Individual(Params *params, XorShift128 *rng)
+    : params(params),
+      tourChrom(params->nbClients),
+      routeChrom(params->nbVehicles)
 {
-    successors = std::vector<int>(params->nbClients + 1);
-    predecessors = std::vector<int>(params->nbClients + 1);
-    chromR = std::vector<std::vector<int>>(params->nbVehicles);
-    chromT = std::vector<int>(params->nbClients);
-    if (initializeChromTAndShuffle)
-    {
-        shuffleChromT();
-    }
+    std::iota(tourChrom.begin(), tourChrom.end(), 1);
+    std::shuffle(tourChrom.begin(), tourChrom.end(), *rng);
+
+    makeRoutes();
 }
 
-Individual::Individual() : params(nullptr), isFeasible(false), biasedFitness(0)
+Individual::Individual(Params *params, Clients tour)
+    : params(params), tourChrom(std::move(tour)), routeChrom(params->nbVehicles)
 {
-    myCostSol.penalizedCost = 1.e30;
+    makeRoutes();
+}
+
+Individual::Individual(Params *params,
+                       Clients tour,
+                       std::vector<Clients> routes)
+    : params(params), tourChrom(std::move(tour)), routeChrom(std::move(routes))
+{
+    evaluateCompleteCost();
 }
