@@ -1,11 +1,11 @@
 import argparse
 from datetime import datetime, timedelta
 from functools import partial
-from glob import iglob
-from multiprocessing import Pool
+from glob import glob
 from pathlib import Path
 
 import numpy as np
+from tqdm.contrib.concurrent import process_map
 
 import tools
 
@@ -24,8 +24,6 @@ def parse_args():
 
 def solve(loc: str, seed: int, time_limit: int):
     path = Path(loc)
-
-    print(f" * Solving '{path.stem}'.")
 
     hgspy = tools.get_hgspy_module()
     instance = tools.read_vrplib(path)
@@ -58,7 +56,6 @@ def solve(loc: str, seed: int, time_limit: int):
         actual_cost = tools.validate_static_solution(instance, routes)
         assert np.isclose(actual_cost, cost), "Could not validate objective."
     except AssertionError as e:
-        print(f" !   Error '{path.stem}'. {e}.")
         has_issue = True
     else:
         has_issue = False
@@ -90,15 +87,15 @@ def main():
           f" seed {args.seed},"
           f" time limit {args.time_limit} seconds].")
 
-    with Pool(args.num_procs) as pool:
-        data = pool.map(
-            partial(solve, seed=args.seed, time_limit=args.time_limit),
-            iglob(args.instance_pattern))
+    func = partial(solve, seed=args.seed, time_limit=args.time_limit)
+    func_args = glob(args.instance_pattern)
+    data = process_map(func, func_args, max_workers=args.num_procs)
 
-    dtype = [('inst', 'U37'), ('obj', int), ('iters', int), ('issues', int)]
+    dtype = [('inst', 'U37'), ('obj', int), ('iters', int), ('issues', bool)]
     data = np.array(data, dtype=dtype)
+    table = tabulate(["Inst.", "Obj.", "Iters.", "Issue?"], data)
 
-    print('\n', tabulate(["Inst.", "Obj.", "Iters."], data), '\n', sep="")
+    print('\n', table, '\n', sep="")
     print(f" Avg. objective: {data['obj'].mean():.0f}")
     print(f"Avg. iterations: {data['iters'].mean():.0f}")
     print(f"   Total issues: {data['issues'].sum()}")
