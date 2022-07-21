@@ -25,7 +25,6 @@ SOFTWARE.*/
 #define POPULATION_H
 
 #include "Individual.h"
-#include "LocalSearch.h"
 #include "Params.h"
 #include "XorShift128.h"
 
@@ -39,9 +38,8 @@ class Population
     using Parents = std::pair<Individual const *, Individual const *>;
     using SubPopulation = std::vector<Individual *>;
 
-    Params &params;            // Problem parameters
-    XorShift128 &rng;          // Random number generator
-    LocalSearch &localSearch;  // Local search structure
+    Params &params;    // Problem parameters
+    XorShift128 &rng;  // Random number generator
 
     // Feasible subpopulation kept ordered by increasing penalized cost
     SubPopulation feasibleSubpopulation;
@@ -74,19 +72,14 @@ class Population
     // heuristics through the parameters used.
     void generatePopulation();
 
-    // Add an individual in the population (survivor selection is automatically
-    // triggered whenever the population reaches its maximum size), and possibly
-    // update the current best candidate.
-    void addIndividual(Individual const &indiv, bool updateFeasible);
-
     // Selects an individual by binary tournament
     Individual const *getBinaryTournament();
 
 public:
-    // Performs local search and adds the individual. If the individual is
-    // infeasible, with some probability we try to repair it and add it if this
-    // succeeds.
-    void educate(Individual &indiv);
+    // Add an individual in the population (survivor selection is automatically
+    // triggered whenever the population reaches its maximum size), and possibly
+    // update the current best candidate.
+    void addIndividual(Individual const &indiv, bool updateFeasible);
 
     // Cleans all solutions and generates a new initial population (only used
     // when running HGS until a time limit, in which case the algorithm restarts
@@ -107,7 +100,7 @@ public:
         return bestSolutionOverall;
     }
 
-    Population(Params &params, XorShift128 &rng, LocalSearch &localSearch);
+    Population(Params &params, XorShift128 &rng);
 
     ~Population();
 };

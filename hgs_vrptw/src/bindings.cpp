@@ -33,13 +33,6 @@ PYBIND11_MODULE(hgspy, m)
                       int,
                       double,
                       double,
-                      double,
-                      double,
-                      int,
-                      int,
-                      int,
-                      double,
-                      double,
                       size_t,
                       size_t,
                       size_t,
@@ -65,13 +58,6 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("nbIter") = 20'000,
              py::arg("timeLimit") = INT_MAX,
              py::arg("seed") = 0,
-             py::arg("fractionGeneratedNearest") = 0.05,
-             py::arg("fractionGeneratedFurthest") = 0.05,
-             py::arg("fractionGeneratedSweep") = 0.05,
-             py::arg("fractionGeneratedRandomly") = 0.85,
-             py::arg("minSweepFillPercentage") = 60,
-             py::arg("maxToleratedCapacityViolation") = 50,
-             py::arg("maxToleratedTimeWarp") = 100,
              py::arg("initialTimeWarpPenalty") = 1.,
              py::arg("penaltyBooster") = 2.,
              py::arg("minimumPopulationSize") = 25,
@@ -99,17 +85,6 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("nbIter", &Config::nbIter)
         .def_readonly("timeLimit", &Config::timeLimit)
         .def_readonly("seed", &Config::seed)
-        .def_readonly("fractionGeneratedNearest",
-                      &Config::fractionGeneratedNearest)
-        .def_readonly("fractionGeneratedFurthest",
-                      &Config::fractionGeneratedFurthest)
-        .def_readonly("fractionGeneratedSweep", &Config::fractionGeneratedSweep)
-        .def_readonly("fractionGeneratedRandomly",
-                      &Config::fractionGeneratedRandomly)
-        .def_readonly("minSweepFillPercentage", &Config::minSweepFillPercentage)
-        .def_readonly("maxToleratedCapacityViolation",
-                      &Config::maxToleratedCapacityViolation)
-        .def_readonly("maxToleratedTimeWarp", &Config::maxToleratedTimeWarp)
         .def_readonly("initialTimeWarpPenalty", &Config::initialTimeWarpPenalty)
         .def_readonly("penaltyBooster", &Config::penaltyBooster)
         .def_readonly("minimumPopulationSize", &Config::minimumPopulationSize)
@@ -159,19 +134,19 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("duration_matrix"));
 
     py::class_<Population>(m, "Population")
-        .def(py::init<Params &, XorShift128 &, LocalSearch &>(),
+        .def(py::init<Params &, XorShift128 &>(),
              py::arg("params"),
-             py::arg("rng"),
-             py::arg("local_search"));
+             py::arg("rng"));
 
     py::class_<Result>(m, "Result")
         .def("get_best_found", &Result::getBestFound)
         .def("get_num_iters", &Result::getNumIters);
 
     py::class_<GeneticAlgorithm>(m, "GeneticAlgorithm")
-        .def(py::init<Params &, XorShift128 &, Population &>(),
+        .def(py::init<Params &, XorShift128 &, Population &, LocalSearch &>(),
              py::arg("params"),
              py::arg("rng"),
-             py::arg("population"))
+             py::arg("population"),
+             py::arg("local_search"))
         .def("run_until", &GeneticAlgorithm::runUntil, py::arg("time_point"));
 }

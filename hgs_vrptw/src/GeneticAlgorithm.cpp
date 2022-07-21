@@ -40,7 +40,7 @@ Result GeneticAlgorithm::runUntil(timePoint const &timePoint)
 
         /* LOCAL SEARCH */
         auto const currBest = population.getBestFound().cost();
-        population.educate(offspring);
+        educate(offspring);
 
         /* TRACKING THE NUMBER OF ITERATIONS SINCE LAST SOLUTION IMPROVEMENT */
         if (currBest > population.getBestFound().cost())
@@ -399,9 +399,27 @@ void GeneticAlgorithm::insertUnplannedTasks(
     }
 }
 
+void GeneticAlgorithm::educate(Individual &indiv)
+{
+    localSearch.run(indiv, params.penaltyCapacity, params.penaltyTimeWarp);
+    population.addIndividual(indiv, true);
+
+    if (!indiv.isFeasible()  // possibly repair if currently infeasible
+        && rng.randint(100) < params.config.repairProbability)
+    {
+        localSearch.run(indiv,  // re-run, but penalise infeasibility more
+                        params.penaltyCapacity * 10.,
+                        params.penaltyTimeWarp * 10.);
+
+        if (indiv.isFeasible())
+            population.addIndividual(indiv, false);
+    }
+}
+
 GeneticAlgorithm::GeneticAlgorithm(Params &params,
                                    XorShift128 &rng,
-                                   Population &population)
-    : params(params), rng(rng), population(population)
+                                   Population &population,
+                                   LocalSearch &localSearch)
+    : params(params), rng(rng), population(population), localSearch(localSearch)
 {
 }

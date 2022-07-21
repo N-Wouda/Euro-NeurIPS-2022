@@ -19,10 +19,10 @@ try
 
     XorShift128 rng(config.seed);
     Params params(config, args.instPath());
+    Population pop(params, rng);
     LocalSearch ls(params, rng);
-    Population pop(params, rng, ls);
 
-    GeneticAlgorithm solver(params, rng, pop);
+    GeneticAlgorithm solver(params, rng, pop, ls);
 
     auto const until = start + std::chrono::seconds(config.timeLimit);
     auto const res = solver.runUntil(until);

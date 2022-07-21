@@ -15,20 +15,6 @@ struct Config
     size_t nbIter = 20'000;   // iters without improvement
     int timeLimit = INT_MAX;  // time limit in seconds
 
-    double fractionGeneratedNearest = 0.05;   // frac by nearest-first
-    double fractionGeneratedFurthest = 0.05;  // frac by furthest-first
-    double fractionGeneratedSweep = 0.05;     // frac by sweep
-    double fractionGeneratedRandomly = 0.85;  // frac randomly constructed
-
-    // Fill rate in BKS is always more than 40%, so I don't think less than
-    // this would make sense. The maximum vehicle usage is 40% (100/250
-    // routes, see SINTEF BKS), so take 60% to have some margin (otherwise
-    // all remaining orders will be in last route)
-    int minSweepFillPercentage = 60;
-
-    int maxToleratedCapacityViolation = 50;
-    int maxToleratedTimeWarp = 100;
-
     // This was the default until now, but with this value feasible
     // individuals often become infeasible during the local search in
     // educate. With initialTimeWarpPenalty = 10,
@@ -100,13 +86,6 @@ struct Config
     explicit Config(size_t nbIter = 20'000,
                     int timeLimit = INT_MAX,
                     int seed = 0,
-                    double fractionGeneratedNearest = 0.05,
-                    double fractionGeneratedFurthest = 0.05,
-                    double fractionGeneratedSweep = 0.05,
-                    double fractionGeneratedRandomly = 0.85,
-                    int minSweepFillPercentage = 60,
-                    int maxToleratedCapacityViolation = 50,
-                    int maxToleratedTimeWarp = 100,
                     double initialTimeWarpPenalty = 1.0,
                     double penaltyBooster = 2.,
                     size_t minimumPopulationSize = 25,
@@ -134,13 +113,6 @@ struct Config
         : seed(seed),
           nbIter(nbIter),
           timeLimit(timeLimit),
-          fractionGeneratedNearest(fractionGeneratedNearest),
-          fractionGeneratedFurthest(fractionGeneratedFurthest),
-          fractionGeneratedSweep(fractionGeneratedSweep),
-          fractionGeneratedRandomly(fractionGeneratedRandomly),
-          minSweepFillPercentage(minSweepFillPercentage),
-          maxToleratedCapacityViolation(maxToleratedCapacityViolation),
-          maxToleratedTimeWarp(maxToleratedTimeWarp),
           initialTimeWarpPenalty(initialTimeWarpPenalty),
           penaltyBooster(penaltyBooster),
           minimumPopulationSize(minimumPopulationSize),

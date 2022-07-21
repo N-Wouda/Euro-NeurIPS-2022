@@ -1,112 +1,21 @@
 #include "Population.h"
 
 #include "Individual.h"
-#include "LocalSearch.h"
 #include "Params.h"
 
-#include <cmath>
 #include <list>
 #include <vector>
 
-void Population::educate(Individual &indiv)
-{
-    localSearch.run(indiv, params.penaltyCapacity, params.penaltyTimeWarp);
-    addIndividual(indiv, true);
-
-    if (!indiv.isFeasible()  // possibly repair if currently infeasible
-        && rng.randint(100) < params.config.repairProbability)
-    {
-        localSearch.run(indiv,  // re-run, but penalise infeasibility more
-                        params.penaltyCapacity * 10.,
-                        params.penaltyTimeWarp * 10.);
-
-        if (indiv.isFeasible())
-            addIndividual(indiv, false);
-    }
-}
-
 void Population::generatePopulation()
 {
-    if (params.nbClients == 1)
-    {
-        // Quickly generate the one solution
-        Individual randomIndiv(&params, &rng);
-        addIndividual(randomIndiv, true);
-        return;
-    }
-
-    double fractionGeneratedNearest = params.config.fractionGeneratedNearest;
-    double fractionGeneratedFurthest = params.config.fractionGeneratedFurthest;
-    double fractionGeneratedSweep = params.config.fractionGeneratedSweep;
-    double fractionGeneratedRandomly = params.config.fractionGeneratedRandomly;
-    int minSweepFillPercentage = params.config.minSweepFillPercentage;
-    int maxToleratedCapacityViolation
-        = params.config.maxToleratedCapacityViolation;
-    int maxToleratedTimeWarp = params.config.maxToleratedTimeWarp;
-
     // Generate same number of individuals as in original solution.
-    int nofIndividuals = 4 * params.config.minimumPopulationSize;
-
-    // Too low fill percentage may cause that not all clients are planned
-    minSweepFillPercentage = std::max(minSweepFillPercentage, 30);
-    int nofNearestIndividualsToGenerate
-        = round(fractionGeneratedNearest * nofIndividuals);
-    int nofFurthestIndividualsToGenerate
-        = round(fractionGeneratedFurthest * nofIndividuals);
-    int nofSweepIndividualsToGenerate
-        = round(fractionGeneratedSweep * nofIndividuals);
-    int nofRandomIndividualsToGenerate
-        = round(fractionGeneratedRandomly * nofIndividuals);
-
-    // Generate some individuals using the NEAREST construction heuristic
-    for (int i = 0; i < nofNearestIndividualsToGenerate; i++)
-    {
-        // Create the first individual without violations
-        int toleratedCapacityViolation
-            = i == 0 ? 0 : rng.randint(maxToleratedCapacityViolation + 1);
-        int toleratedTimeWarp
-            = i == 0 ? 0 : rng.randint(maxToleratedTimeWarp + 1);
-
-        auto indiv = localSearch.constructIndividualWithSeedOrder(
-            toleratedCapacityViolation, toleratedTimeWarp, false);
-        educate(indiv);
-    }
-
-    // Generate some individuals using the FURHEST construction heuristic
-    for (int i = 0; i < nofFurthestIndividualsToGenerate; i++)
-    {
-        // Create the first individual without violations
-        int toleratedCapacityViolation
-            = i == 0 ? 0 : rng.randint(maxToleratedCapacityViolation + 1);
-        int toleratedTimeWarp
-            = i == 0 ? 0 : rng.randint(maxToleratedTimeWarp + 1);
-
-        auto indiv = localSearch.constructIndividualWithSeedOrder(
-            toleratedCapacityViolation, toleratedTimeWarp, true);
-        educate(indiv);
-    }
-
-    // Generate some individuals using the SWEEP construction heuristic
-    for (int i = 0; i < nofSweepIndividualsToGenerate; i++)
-    {
-        // Create the first individual without load restrictions
-        unsigned int fillPct;
-
-        if (i == 0)
-            fillPct = 100;
-        else
-            fillPct = minSweepFillPercentage
-                      + rng.randint(100 - minSweepFillPercentage + 1);
-
-        auto indiv = localSearch.constructIndividualBySweep(fillPct);
-        educate(indiv);
-    }
+    size_t const nofIndividuals = 4 * params.config.minimumPopulationSize;
 
     // Generate some individuals using a RANDOM strategy
-    for (int i = 0; i < nofRandomIndividualsToGenerate; i++)
+    for (size_t count = 0; count != nofIndividuals; ++count)
     {
         Individual randomIndiv(&params, &rng);
-        educate(randomIndiv);
+        addIndividual(randomIndiv, true);
     }
 }
 
@@ -382,12 +291,9 @@ std::pair<Individual const *, Individual const *> Population::selectParents()
     return std::make_pair(par1, par2);
 }
 
-Population::Population(Params &params,
-                       XorShift128 &rng,
-                       LocalSearch &localSearch)
+Population::Population(Params &params, XorShift128 &rng)
     : params(params),
       rng(rng),
-      localSearch(localSearch),
       bestSolutionOverall(&params, &rng)  // random initial best solution
 {
     // Create lists for the load feasibility of the last 100 individuals

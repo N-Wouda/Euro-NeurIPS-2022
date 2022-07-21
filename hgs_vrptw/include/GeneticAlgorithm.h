@@ -42,9 +42,10 @@ class GeneticAlgorithm
     using Parents = std::pair<Individual const *, Individual const *>;
     using timePoint = std::chrono::system_clock::time_point;
 
-    Params &params;          // Problem parameters
-    XorShift128 &rng;        // Random number generator
-    Population &population;  // Population
+    Params &params;            // Problem parameters
+    XorShift128 &rng;          // Random number generator
+    Population &population;    // Population
+    LocalSearch &localSearch;  // Local search structure
 
     // Function to do two OX Crossovers for a pair of individuals (the two
     // parents) and return the best individual based on penalizedCost
@@ -64,6 +65,11 @@ class GeneticAlgorithm
     void insertUnplannedTasks(std::vector<std::vector<int>> &routes,
                               std::unordered_set<int> const &unplanned) const;
 
+    // Performs local search and adds the individual to the population. If the
+    // individual is infeasible, with some probability we try to repair it and
+    // add it if this succeeds.
+    void educate(Individual &indiv);
+
 public:
     /**
      * Runs the genetic algorithm until just after the passed-in time point.
@@ -74,7 +80,10 @@ public:
      */
     Result runUntil(timePoint const &timePoint);
 
-    GeneticAlgorithm(Params &params, XorShift128 &rng, Population &population);
+    GeneticAlgorithm(Params &params,
+                     XorShift128 &rng,
+                     Population &population,
+                     LocalSearch &localSearch);
 };
 
 #endif
