@@ -156,7 +156,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("vehicle_cap"),
              py::arg("time_windows"),
              py::arg("service_durations"),
-             py::arg("distance_matrix"));
+             py::arg("duration_matrix"));
 
     py::class_<Population>(m, "Population")
         .def(py::init<Params &, XorShift128 &, LocalSearch &>(),

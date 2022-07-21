@@ -50,16 +50,7 @@ def solve_static_vrptw(instance, time_limit=3600, seed=1):
     hgspy = tools.get_hgspy_module()
 
     config = hgspy.Config(seed=seed, nbVeh=-1)
-
-    coords = [(x, y) for x, y in instance['coords'].tolist()]
-    demands = instance['demands'].tolist()
-    capacity = instance['capacity']
-    time_windows = [(l, u) for l, u in instance['time_windows'].tolist()]
-    service_times = instance['service_times'].tolist()
-    duration_matrix = instance['duration_matrix'].tolist()
-
-    params = hgspy.Params(config, coords, demands, capacity, time_windows,
-                          service_times, duration_matrix)
+    params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=seed)
     ls = hgspy.LocalSearch(params, rng)

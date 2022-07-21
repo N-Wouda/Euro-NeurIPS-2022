@@ -30,16 +30,7 @@ def solve(loc: str, seed: int, time_limit: int):
     start = datetime.now()
 
     config = hgspy.Config(seed=seed, nbVeh=-1)
-
-    coords = [(x, y) for x, y in instance['coords'].tolist()]
-    demands = instance['demands'].tolist()
-    capacity = instance['capacity']
-    time_windows = [(l, u) for l, u in instance['time_windows'].tolist()]
-    service_times = instance['service_times'].tolist()
-    duration_matrix = instance['duration_matrix'].tolist()
-
-    params = hgspy.Params(config, coords, demands, capacity, time_windows,
-                          service_times, duration_matrix)
+    params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=seed)
     ls = hgspy.LocalSearch(params, rng)
@@ -54,13 +45,13 @@ def solve(loc: str, seed: int, time_limit: int):
 
     try:
         actual_cost = tools.validate_static_solution(instance, routes)
+        has_issue = False
+
         assert np.isclose(actual_cost, cost), "Could not validate objective."
     except AssertionError:
         has_issue = True
-    else:
-        has_issue = False
 
-    return path.stem, int(cost), int(res.get_num_iters()), has_issue
+    return path.stem, int(cost), res.get_num_iters(), has_issue
 
 
 def tabulate(headers, rows) -> str:
@@ -68,7 +59,7 @@ def tabulate(headers, rows) -> str:
     lengths = [len(header) for header in headers]
 
     for row in rows:
-        for idx, (cell, _) in enumerate(zip(row, headers)):
+        for idx, cell in enumerate(row):
             lengths[idx] = max(lengths[idx], len(str(cell)))
 
     lines = ["  ".join(f"{h:<{l}s}" for l, h in zip(lengths, headers)),
