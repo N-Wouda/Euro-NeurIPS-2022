@@ -116,9 +116,6 @@ public:
     // Evaluates this solution's objective value.
     void evaluateCompleteCost();
 
-    // Removes the other from the proximity structure of this individual.
-    void removeProximity(Individual *other);
-
     // Computes and stores a distance measure with another individual, based on
     // the number of arcs that differ between two solutions
     void brokenPairsDistance(Individual *other);
@@ -140,6 +137,8 @@ public:
     Individual(Params *params,  // from tour and routes
                Clients tour,
                std::vector<Clients> routes);
+
+    ~Individual();
 };
 
 #endif

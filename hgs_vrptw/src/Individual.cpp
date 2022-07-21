@@ -254,15 +254,6 @@ void Individual::evaluateCompleteCost()
         + this->waitTime * params->penaltyWaitTime);
 }
 
-void Individual::removeProximity(Individual *other)
-{
-    auto it = indivsPerProximity.begin();
-    while (it->second != other)
-        ++it;
-
-    indivsPerProximity.erase(it);
-}
-
 void Individual::brokenPairsDistance(Individual *other)
 {
     auto const tNeighbours = this->getNeighbours();
@@ -369,4 +360,16 @@ Individual::Individual(Params *params,
     : params(params), tourChrom(std::move(tour)), routeChrom(std::move(routes))
 {
     evaluateCompleteCost();
+}
+
+Individual::~Individual()
+{
+    for (auto &[_, other] : indivsPerProximity)  // remove ourselves from
+    {                                            // other's proximity list
+        auto it = other->indivsPerProximity.begin();
+        while (it->second != this)
+            ++it;
+
+        other->indivsPerProximity.erase(it);
+    }
 }

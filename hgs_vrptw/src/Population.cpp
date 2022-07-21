@@ -6,14 +6,10 @@
 #include <list>
 #include <vector>
 
-void Population::generatePopulation()
+void Population::generatePopulation(size_t numToGenerate)
 {
-    // Generate same number of individuals as in original solution.
-    size_t const nofIndividuals = 4 * params.config.minimumPopulationSize;
-
-    // Generate some individuals using a RANDOM strategy
-    for (size_t count = 0; count != nofIndividuals; ++count)
-    {
+    for (size_t count = 0; count != numToGenerate; ++count)  // generate random
+    {                                                        // individuals
         Individual randomIndiv(&params, &rng);
         addIndividual(randomIndiv, true);
     }
@@ -111,43 +107,16 @@ void Population::removeWorstBiasedFitness(SubPopulation &pop,
 {
     updateBiasedFitnesses(pop, fitness);
 
-    // Throw an error of the population has at most one individual
     if (pop.size() <= 1)
         throw std::runtime_error("Eliminating the best individual");
 
-    Individual *worstIndividual = nullptr;
-    int worstIndividualPosition = -1;
-    bool isWorstIndividualClone = false;
-    double worstIndividualBiasedFitness = -1.e30;
+    auto worstFitness = std::max_element(fitness.begin(), fitness.end());
+    auto worstIdx = std::distance(fitness.begin(), worstFitness);
+    auto worstIndividual = pop[worstIdx];
 
-    // Loop over all individuals and save the worst individual
-    for (int i = 1; i < static_cast<int>(pop.size()); i++)
-    {
-        // An avgBrokenPairsDistanceClosest equal to 0 indicates that a
-        // clone exists
-        bool isClone = (pop[i]->avgBrokenPairsDistanceClosest(1) < MY_EPSILON);
-        if ((isClone && !isWorstIndividualClone)
-            || (isClone == isWorstIndividualClone
-                && fitness[i] > worstIndividualBiasedFitness))
-        {
-            worstIndividualBiasedFitness = fitness[i];
-            isWorstIndividualClone = isClone;
-            worstIndividualPosition = i;
-            worstIndividual = pop[i];
-        }
-    }
+    pop.erase(pop.begin() + worstIdx);
+    fitness.erase(fitness.begin() + worstIdx);
 
-    // TODO this could be very slow
-
-    // Remove the worst individual from the population
-    pop.erase(pop.begin() + worstIndividualPosition);
-    fitness.erase(fitness.begin() + worstIndividualPosition);
-
-    // Cleaning its distances from the other individuals in the population
-    for (Individual *myIndividual2 : pop)
-        myIndividual2->removeProximity(worstIndividual);
-
-    // Freeing memory
     delete worstIndividual;
 }
 
@@ -167,8 +136,8 @@ void Population::restart()
     infeasibleSubpopulation.clear();
     infeasibleFitness.clear();
 
-    // Generate a new initial population
-    generatePopulation();
+    size_t const popSize = 4 * params.config.minimumPopulationSize;
+    generatePopulation(popSize);
 }
 
 void Population::managePenalties()
@@ -301,8 +270,10 @@ Population::Population(Params &params, XorShift128 &rng)
     listFeasibilityLoad = std::list<bool>(100, true);
     listFeasibilityTimeWarp = std::list<bool>(100, true);
 
-    // Generate a new population
-    generatePopulation();
+    // Generate a new population somewhat larger than the minimum size, so we
+    // get a set of reasonable candidates early on.
+    size_t const popSize = 4 * params.config.minimumPopulationSize;
+    generatePopulation(popSize);
 }
 
 Population::~Population()

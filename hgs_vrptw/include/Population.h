@@ -66,11 +66,8 @@ class Population
     void removeWorstBiasedFitness(SubPopulation &subpop,
                                   std::vector<double> &fitness);
 
-    // Generates the population. Part of the population is generated randomly
-    // and the other part using several construction heuristics. There is
-    // variety in the individuals that are constructed using the construction
-    // heuristics through the parameters used.
-    void generatePopulation();
+    // Generates a population of passed-in size
+    void generatePopulation(size_t popSize);
 
     // Selects an individual by binary tournament
     Individual const *getBinaryTournament();
