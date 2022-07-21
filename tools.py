@@ -1,5 +1,9 @@
+import glob
+import importlib.machinery
+import importlib.util
 import json
 import os
+
 import numpy as np
 
 # https://stackoverflow.com/questions/26646362/numpy-array-is-not-json-serializable
@@ -317,3 +321,28 @@ def write_vrplib(filename, instance, name="problem", euclidean=False, is_vrptw=T
                 f.write("\n")
             
         f.write("EOF\n")
+
+
+def get_hgspy_module(where: str = 'release/lib/hgspy*.so'):
+    lib_path = next(glob.iglob(where))
+    loader = importlib.machinery.ExtensionFileLoader('hgspy', lib_path)
+    spec = importlib.util.spec_from_loader(loader.name, loader)
+    hgspy = importlib.util.module_from_spec(spec)
+    loader.exec_module(hgspy)
+
+    return hgspy
+
+
+def inst_to_vars(inst):
+    # Notice that the dictionary key names are not entirely free-form: these
+    # should match the argument names defined in the C++/Python bindings.
+
+    # TODO obsolete this by allowing numpy arguments to the bindings.
+    return dict(
+        coords=[(x, y) for x, y in inst['coords'].tolist()],
+        demands=inst['demands'].tolist(),
+        vehicle_cap=inst['capacity'],
+        time_windows=[(l, u) for l, u in inst['time_windows'].tolist()],
+        service_durations=inst['service_times'].tolist(),
+        duration_matrix=inst['duration_matrix'].tolist(),
+    )
