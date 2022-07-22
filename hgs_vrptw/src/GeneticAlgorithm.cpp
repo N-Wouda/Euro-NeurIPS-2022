@@ -29,11 +29,9 @@ Result GeneticAlgorithm::runUntil(timePoint const &timePoint)
         /* SELECTION AND CROSSOVER */
         auto parents = population.selectParents();
 
-        // Use the parents to create new individuals using OX and SREX
         Individual offspringOX = crossoverOX(parents);
         Individual offspringSREX = crossoverSREX(parents);
 
-        // Return the best individual, based on penalizedCost
         auto offspring = offspringOX.cost() < offspringSREX.cost()
                              ? offspringOX
                              : offspringSREX;

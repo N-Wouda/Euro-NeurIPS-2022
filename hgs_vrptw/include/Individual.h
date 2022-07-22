@@ -117,18 +117,16 @@ public:
     void evaluateCompleteCost();
 
     // Computes and stores a distance measure with another individual, based on
-    // the number of arcs that differ between two solutions
+    // the number of arcs that differ between two solutions.
     void brokenPairsDistance(Individual *other);
 
-    // Returns the average distance of this individual with the nbClosest
-    // individuals
-    [[nodiscard]] double avgBrokenPairsDistanceClosest(size_t nbClosest) const;
+    // Returns the average distance of this individual to the individuals
+    // nearest to it.
+    [[nodiscard]] double avgBrokenPairsDistanceClosest() const;
 
     // Exports a solution in CVRPLib format (adds a final line with the
-    // computational time)
+    // computational time).
     void exportCVRPLibFormat(std::string const &path, double time) const;
-
-    bool operator==(Individual const &other) const;
 
     Individual(Params *params, XorShift128 *rng);  // random individual
 

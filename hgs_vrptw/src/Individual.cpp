@@ -281,9 +281,10 @@ void Individual::brokenPairsDistance(Individual *other)
     indivsPerProximity.insert({dist, other});
 }
 
-double Individual::avgBrokenPairsDistanceClosest(size_t nbClosest) const
+double Individual::avgBrokenPairsDistanceClosest() const
 {
-    size_t maxSize = std::min(nbClosest, indivsPerProximity.size());
+    size_t maxSize
+        = std::min(params->config.nbClose, indivsPerProximity.size());
 
     double result = 0;
     auto it = indivsPerProximity.begin();
@@ -328,13 +329,6 @@ std::vector<std::pair<int, int>> Individual::getNeighbours() const
                    idx == route.size() - 1 ? 0 : route[idx + 1]};  // succ
 
     return neighbours;
-}
-
-bool Individual::operator==(Individual const &other) const
-{
-    auto diff = std::abs(cost() - other.cost());
-    return diff < MY_EPSILON && tourChrom == other.tourChrom
-           && routeChrom == other.routeChrom;
 }
 
 Individual::Individual(Params *params, XorShift128 *rng)
