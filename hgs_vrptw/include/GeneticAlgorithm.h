@@ -47,27 +47,18 @@ class GeneticAlgorithm
     Population &population;    // Population
     LocalSearch &localSearch;  // Local search structure
 
-    // Function to do two OX Crossovers for a pair of individuals (the two
-    // parents) and return the best individual based on penalizedCost
-    Individual crossoverOX(Parents parents);
+    /**
+     * Does one ordered crossover of the given parents. A randomly selected
+     * subset of clients is taken from the first parent - the rest comes from
+     * the second parent.
+     */
+    [[nodiscard]] Individual crossover(Parents const &parents) const;
 
-    // Function to do one (in place) OX Crossover, given the two parents and the
-    // beginning and end (inclusive) of the crossover zone.
-    [[nodiscard]] Individual
-    doOXcrossover(Parents parents, size_t start, size_t end) const;
-
-    // Function to do two SREX Crossovers for a pair of individuals (the two
-    // parents) and return the best individual based on penalizedCost.
-    [[nodiscard]] Individual crossoverSREX(Parents parents) const;
-
-    // Insert unplanned tasks (those that were in the removed routes of A, but
-    // not the inserted routes of B or vice versa)
-    void insertUnplannedTasks(std::vector<std::vector<int>> &routes,
-                              std::unordered_set<int> const &unplanned) const;
-
-    // Performs local search and adds the individual to the population. If the
-    // individual is infeasible, with some probability we try to repair it and
-    // add it if this succeeds.
+    /**
+     * Performs local search and adds the individual to the population. If the
+     * individual is infeasible, with some probability we try to repair it and
+     * add it if this succeeds.
+     */
     void educate(Individual &indiv);
 
 public:

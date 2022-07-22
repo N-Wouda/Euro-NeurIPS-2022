@@ -44,6 +44,11 @@ class Individual
     size_t capacityExcess = 0;  // Total excess load over all routes
     size_t timeWarp = 0;        // All route time warp of late arrivals
 
+    // The other individuals in the population (cannot be the depot 0), ordered
+    // by increasing proximity (the set container follows a natural ordering
+    // based on the value of the first pair)
+    std::multiset<std::pair<double, Individual *>> indivsPerProximity = {};
+
     Params *params;  // Problem parameters
 
     // Giant tour representing the individual: list of integers representing
@@ -54,11 +59,6 @@ class Individual
     // solution). Size is nbVehicles, but quite a few routes are likely empty
     // - the numRoutes() member indicates the number of nonempty routes.
     std::vector<Clients> routeChrom;
-
-    // The other individuals in the population (cannot be the depot 0), ordered
-    // by increasing proximity (the set container follows a natural ordering
-    // based on the value of the first pair)
-    std::multiset<std::pair<double, Individual *>> indivsPerProximity;
 
     // Splits the tour chromosome into routes using the linear split algorithm
     void makeRoutes();
@@ -81,11 +81,6 @@ public:
     {
         return routeChrom;
     }
-
-    /**
-     * Number of non-empty routes in this solution.
-     */
-    [[nodiscard]] inline size_t numRoutes() const { return nbRoutes; }
 
     /**
      * Returns this individual's giant tour chromosome.

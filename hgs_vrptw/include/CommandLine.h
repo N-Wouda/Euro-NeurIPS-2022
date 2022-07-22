@@ -79,20 +79,6 @@ public:
                 config.useDynamicParameters = atoi(argv[i + 1]) != 0;
             else if (std::string(argv[i]) == "-nbGranular")
                 config.nbGranular = atoi(argv[i + 1]);
-            else if (std::string(argv[i]) == "-fractionGeneratedNearest")
-                config.fractionGeneratedNearest = atof(argv[i + 1]);
-            else if (std::string(argv[i]) == "-fractionGeneratedFurthest")
-                config.fractionGeneratedFurthest = atof(argv[i + 1]);
-            else if (std::string(argv[i]) == "-fractionGeneratedSweep")
-                config.fractionGeneratedSweep = atof(argv[i + 1]);
-            else if (std::string(argv[i]) == "-fractionGeneratedRandomly")
-                config.fractionGeneratedRandomly = atof(argv[i + 1]);
-            else if (std::string(argv[i]) == "-minSweepFillPercentage")
-                config.minSweepFillPercentage = atoi(argv[i + 1]);
-            else if (std::string(argv[i]) == "-maxToleratedCapacityViolation")
-                config.maxToleratedCapacityViolation = atoi(argv[i + 1]);
-            else if (std::string(argv[i]) == "-maxToleratedTimeWarp")
-                config.maxToleratedTimeWarp = atoi(argv[i + 1]);
             else if (std::string(argv[i]) == "-initialTimeWarpPenalty")
                 config.initialTimeWarpPenalty = atof(argv[i + 1]);
             else if (std::string(argv[i]) == "-penaltyBooster")
@@ -104,6 +90,8 @@ public:
                     = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-generationSize")
                 config.generationSize = static_cast<size_t>(atoi(argv[i + 1]));
+            else if (std::string(argv[i]) == "-nbCrossover")
+                config.nbCrossover = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-nbElite")
                 config.nbElite = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-nbClose")
