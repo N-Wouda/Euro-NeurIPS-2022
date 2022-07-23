@@ -52,10 +52,6 @@ class Params
         int twEarly;  // Earliest arrival (when using time windows)
         int twLate;   // Latest arrival (when using time windows)
 
-        // Release time (when using time windows, route containing this customer
-        // cannot depart before this time)
-        int releaseTime;
-
         // Polar angle of the client around the depot (starting at east, moving
         // counter-clockwise), measured in degrees and truncated for convenience
         int angle;

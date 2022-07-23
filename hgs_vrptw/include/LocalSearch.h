@@ -46,8 +46,6 @@ struct TimeWindowData
                    // given a min cost route sequence
     int twLate;    // Latest start of servicing first node in sequence,
                    // given a min cost route sequence
-    int latestReleaseTime;  // Latest of all release times of customers in
-                            // sequence, so route cannot dispatch before
 
     // Note: [twEarly, twLate] represent the time in which we can
     // arrive at the first node and execute the min cost route. Arriving later
@@ -219,9 +217,7 @@ class LocalSearch
     [[nodiscard]] inline double
     penaltyTimeWindows(const TimeWindowData &twData) const
     {
-        return (twData.timeWarp
-                + std::max(twData.latestReleaseTime - twData.twLate, 0))
-               * penaltyTimeWarpLS;
+        return twData.timeWarp * penaltyTimeWarpLS;
     }
 
     /* RELOCATE MOVES */

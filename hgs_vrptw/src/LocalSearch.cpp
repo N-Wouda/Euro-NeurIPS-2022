@@ -1352,8 +1352,7 @@ LocalSearch::mergeTwDataRecursive(TimeWindowData const &twData1,
             twData1.duration + twData2.duration + dist + deltaWaitTime,
             twData1.timeWarp + twData2.timeWarp + deltaTimeWarp,
             std::max(twData2.twEarly - delta, twData1.twEarly) - deltaWaitTime,
-            std::min(twData2.twLate - delta, twData1.twLate) + deltaTimeWarp,
-            std::max(twData1.latestReleaseTime, twData2.latestReleaseTime)};
+            std::min(twData2.twLate - delta, twData1.twLate) + deltaTimeWarp};
 }
 
 void LocalSearch::insertNode(Node *toInsert, Node *insertionPoint)
@@ -1510,7 +1509,6 @@ void LocalSearch::loadIndividual(Individual const &indiv)
     depotTwData.timeWarp = 0;
     depotTwData.twEarly = params.cli[0].twEarly;
     depotTwData.twLate = params.cli[0].twLate;
-    depotTwData.latestReleaseTime = params.cli[0].releaseTime;
 
     // Initializing time window data (before loop since it is needed in update
     // route)
@@ -1522,8 +1520,6 @@ void LocalSearch::loadIndividual(Individual const &indiv)
         myTwData->duration = params.cli[i].servDur;
         myTwData->twEarly = params.cli[i].twEarly;
         myTwData->twLate = params.cli[i].twLate;
-        myTwData->latestReleaseTime = params.cli[i].releaseTime;
-        // myTwData->load = params.cli[i].demand;
     }
 
     auto const &routesIndiv = indiv.getRoutes();
