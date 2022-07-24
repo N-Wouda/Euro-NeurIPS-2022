@@ -127,14 +127,16 @@ PYBIND11_MODULE(hgspy, m)
                       int,
                       std::vector<std::pair<int, int>> const &,
                       std::vector<int> const &,
-                      std::vector<std::vector<int>> const &>(),
+                      std::vector<std::vector<int>> const &,
+                      std::vector<int> const &>(),
              py::arg("config"),
              py::arg("coords"),
              py::arg("demands"),
              py::arg("vehicle_cap"),
              py::arg("time_windows"),
              py::arg("service_durations"),
-             py::arg("duration_matrix"));
+             py::arg("duration_matrix"),
+             py::arg("release_times"));
 
     py::class_<Population>(m, "Population")
         .def(py::init<Params &, XorShift128 &>(),

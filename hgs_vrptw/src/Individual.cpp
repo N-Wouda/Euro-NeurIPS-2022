@@ -173,13 +173,18 @@ void Individual::evaluateCompleteCost()
 
         nbRoutes++;
 
+        int maxReleaseTime = 0;
+        for (auto const idx : route)
+            maxReleaseTime
+                = std::max(maxReleaseTime, params->cli[idx].releaseTime);
+
         // Get the distance, load, servDur and time associated with the
         // vehicle traveling from the depot to the first client. Assume depot
         // has service time 0 and twEarly 0
         int distance = params->timeCost.get(0, route[0]);
         int load = params->cli[route[0]].demand;
 
-        int time = distance;
+        int time = maxReleaseTime + distance;
         int waitTime = 0;
         int timeWarp = 0;
 

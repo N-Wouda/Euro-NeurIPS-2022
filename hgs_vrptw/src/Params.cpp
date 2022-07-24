@@ -245,6 +245,27 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
                 }
                 hasServiceTimeSection = true;
             }
+            else if (content == "RELEASE_TIME_SECTION")
+            {
+                for (int i = 0; i <= nbClients; i++)
+                {
+                    int clientNr = 0;
+                    inputFile >> clientNr >> cli[i].releaseTime;
+
+                    // Check if the clients are in order
+                    if (clientNr != i + 1)
+                    {
+                        throw std::runtime_error("Release times are not in"
+                                                 " client order");
+                    }
+                }
+                // Check if the service duration of the depot is 0
+                if (cli[0].releaseTime != 0)
+                {
+                    throw std::runtime_error(
+                        "Release time for depot should be 0");
+                }
+            }
             // Read the time windows of all the clients (the depot should
             // have a time window from 0 to max)
             else if (content == "TIME_WINDOW_SECTION")
@@ -404,7 +425,8 @@ Params::Params(Config &config,
                int vehicleCap,
                std::vector<std::pair<int, int>> const &timeWindows,
                std::vector<int> const &servDurs,
-               std::vector<std::vector<int>> const &dist)
+               std::vector<std::vector<int>> const &dist,
+               std::vector<int> const &releases)
     : config(config), nbClients(coords.size() - 1), vehicleCapacity(vehicleCap)
 {
     int totalDemand = std::accumulate(demands.begin(), demands.end(), 0);
@@ -448,6 +470,7 @@ Params::Params(Config &config,
                     demands[idx],
                     timeWindows[idx].first,
                     timeWindows[idx].second,
+                    releases[idx],
                     angle};
     }
 

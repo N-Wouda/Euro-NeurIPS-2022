@@ -44,13 +44,15 @@ class Params
     // variables and parameters
     struct Client
     {
-        int custNum;  // Index of the client
-        int x;        // Coordinate X
-        int y;        // Coordinate Y
-        int servDur;  // Service duration
-        int demand;   // Demand
-        int twEarly;  // Earliest arrival (when using time windows)
-        int twLate;   // Latest arrival (when using time windows)
+        int custNum;      // Index of the client
+        int x;            // Coordinate X
+        int y;            // Coordinate Y
+        int servDur;      // Service duration
+        int demand;       // Demand
+        int twEarly;      // Earliest arrival (when using time windows)
+        int twLate;       // Latest arrival (when using time windows)
+        int releaseTime;  // Routes with this client cannot leave depot before
+                          // this time
 
         // Polar angle of the client around the depot (starting at east, moving
         // counter-clockwise), measured in degrees and truncated for convenience
@@ -103,6 +105,7 @@ public:
      * @param timeWindows  Time windows as pairs of [early, late].
      * @param servDurs     Service durations.
      * @param dist         Distance matrix.
+     * @param releases     Client release times.
      */
     Params(Config &config,
            std::vector<std::pair<int, int>> const &coords,
@@ -110,7 +113,8 @@ public:
            int vehicleCap,
            std::vector<std::pair<int, int>> const &timeWindows,
            std::vector<int> const &servDurs,
-           std::vector<std::vector<int>> const &dist);
+           std::vector<std::vector<int>> const &dist,
+           std::vector<int> const &releases);
 
     // Calculate, for all vertices, the correlation for the nbGranular closest
     // vertices

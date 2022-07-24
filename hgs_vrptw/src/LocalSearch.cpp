@@ -1347,6 +1347,9 @@ TimeWindowData
 LocalSearch::mergeTwDataRecursive(TimeWindowData const &twData1,
                                   TimeWindowData const &twData2) const
 {
+    // TODO this is on the hot path in any profiling run I do. Can we do
+    //  anything to speed this up?
+
     int dist = params.timeCost.get(twData1.idxLast, twData2.idxFirst);
     int delta = twData1.duration - twData1.timeWarp + dist;
     int deltaWaitTime = std::max(twData2.twEarly - delta - twData1.twLate, 0);
@@ -1357,7 +1360,8 @@ LocalSearch::mergeTwDataRecursive(TimeWindowData const &twData1,
             twData1.duration + twData2.duration + dist + deltaWaitTime,
             twData1.timeWarp + twData2.timeWarp + deltaTimeWarp,
             std::max(twData2.twEarly - delta, twData1.twEarly) - deltaWaitTime,
-            std::min(twData2.twLate - delta, twData1.twLate) + deltaTimeWarp};
+            std::min(twData2.twLate - delta, twData1.twLate) + deltaTimeWarp,
+            std::max(twData1.latestReleaseTime, twData2.latestReleaseTime)};
 }
 
 void LocalSearch::insertNode(Node *toInsert, Node *insertionPoint)
@@ -1506,8 +1510,13 @@ void LocalSearch::loadIndividual(Individual const &indiv)
 {
     emptyRoutes.clear();
     nbMoves = 0;
-    TimeWindowData depotTwData
-        = {0, 0, 0, 0, params.cli[0].twEarly, params.cli[0].twLate};
+    TimeWindowData depotTwData = {0,
+                                  0,
+                                  0,
+                                  0,
+                                  params.cli[0].twEarly,
+                                  params.cli[0].twLate,
+                                  params.cli[0].releaseTime};
 
     // Initializing time window data (before loop since it is needed in update
     // route)
@@ -1519,6 +1528,7 @@ void LocalSearch::loadIndividual(Individual const &indiv)
         myTwData->duration = params.cli[i].servDur;
         myTwData->twEarly = params.cli[i].twEarly;
         myTwData->twLate = params.cli[i].twLate;
+        myTwData->latestReleaseTime = params.cli[i].releaseTime;
     }
 
     auto const &routesIndiv = indiv.getRoutes();

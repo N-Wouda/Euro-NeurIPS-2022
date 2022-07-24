@@ -336,6 +336,10 @@ def get_hgspy_module(where: str = 'release/lib/hgspy*.so'):
 def inst_to_vars(inst):
     # Notice that the dictionary key names are not entirely free-form: these
     # should match the argument names defined in the C++/Python bindings.
+    if 'release_times' in inst:
+        releases = inst['release_times'].tolist()
+    else:
+        releases = [0] * (len(inst['coords']) + 1)
 
     # TODO obsolete this by allowing numpy arguments to the bindings.
     return dict(
@@ -345,4 +349,5 @@ def inst_to_vars(inst):
         time_windows=[(l, u) for l, u in inst['time_windows'].tolist()],
         service_durations=inst['service_times'].tolist(),
         duration_matrix=inst['duration_matrix'].tolist(),
+        release_times=releases,
     )
