@@ -52,7 +52,10 @@ Result GeneticAlgorithm::runUntil(timePoint const &timePoint)
 
         // Diversification and penalty management
         if (iter % 100 == 0)
+        {
             updatePenalties();
+            population.reorder();  // re-order since penalties have changed
+        }
     }
 
     return {population.getBestFound(), iter};
@@ -134,7 +137,7 @@ void GeneticAlgorithm::updatePenalties()
             currPenalty *= 0.85;
 
         // Setting some bounds [0.1, 100000] to the penalty values for safety
-        return std::max(std::min(currPenalty, 100'000.), 0.1);
+        return std::max(std::min(currPenalty, 100000.), 0.1);
     };
 
     double fracFeasLoad = std::accumulate(loadFeas.begin(), loadFeas.end(), 0.);
@@ -145,8 +148,6 @@ void GeneticAlgorithm::updatePenalties()
 
     params.penaltyCapacity = compute(fracFeasLoad, params.penaltyCapacity);
     params.penaltyTimeWarp = compute(fracFeasTime, params.penaltyTimeWarp);
-
-    population.reorder();  // re-order since penalties have changed
 }
 
 GeneticAlgorithm::GeneticAlgorithm(Params &params,
