@@ -337,7 +337,7 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
 
     // Calculate, for all vertices, the correlation for the nbGranular closest
     // vertices
-    setCorrelatedVertices();
+    calculateNeighbours();
 
     // Safeguards to avoid possible numerical instability in case of instances
     // containing arbitrarily small or large numerical values
@@ -425,10 +425,10 @@ Params::Params(Config &config,
                         angle};
     }
 
-    setCorrelatedVertices();
+    calculateNeighbours();
 }
 
-void Params::setCorrelatedVertices()
+void Params::calculateNeighbours()
 {
     // See Vidal 2012, HGS for VRPTW. Multiplied by 10 for integer arithmetic.
     // TODO these are parameters, should be in config.
@@ -474,37 +474,25 @@ void Params::setCorrelatedVertices()
         std::sort(proximity.begin(), proximity.end());
     }
 
-    correlatedVertices = std::vector<std::vector<int>>(nbClients + 1);
+    neighbours = std::vector<std::vector<int>>(nbClients + 1);
 
     // First create a set of correlated vertices for each vertex (where the
     // depot is not taken into account)
-    auto set = std::vector<std::set<int>>(nbClients + 1);
+    std::vector<std::set<int>> set(nbClients + 1);
+    size_t const granularity
+        = std::min(config.nbGranular, static_cast<size_t>(nbClients) - 1);
 
     for (int i = 1; i <= nbClients; i++)  // again exclude depot
     {
-        auto &orderProximity = proximities[i];
+        auto const &orderProximity = proximities[i];
 
-        // Loop over all clients (taking into account the max number of clients
-        // and the granular restriction)
-        for (int j = 0; j < std::min(config.nbGranular, nbClients - 1); j++)
-        {
-            // If i is correlated with j, then j should be correlated with i
-            // (unless we have asymmetric problem with time windows) Insert
-            // vertices in set, in the order of
-            // orderProximity, where .second is used since the first index
-            // correponds to the depot
+        for (size_t j = 0; j != granularity; ++j)
             set[i].insert(orderProximity[j].second);
-
-            // For symmetric problems, set the other entry to the same value
-            if (config.useSymmetricCorrelatedVertices)
-                set[orderProximity[j].second].insert(i);
-        }
     }
 
-    // Now, fill the vector of correlated vertices, using set
     for (int i = 1; i <= nbClients; i++)
         for (int x : set[i])
-            correlatedVertices[i].push_back(x);
+            neighbours[i].push_back(x);
 }
 
 void Params::setDynamicParameters()

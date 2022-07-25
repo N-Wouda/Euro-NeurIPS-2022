@@ -78,13 +78,11 @@ public:
             else if (std::string(argv[i]) == "-useDynamicParameters")
                 config.useDynamicParameters = atoi(argv[i + 1]) != 0;
             else if (std::string(argv[i]) == "-nbGranular")
-                config.nbGranular = atoi(argv[i + 1]);
+                config.nbGranular = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-initialTimeWarpPenalty")
                 config.initialTimeWarpPenalty = atof(argv[i + 1]);
             else if (std::string(argv[i]) == "-penaltyBooster")
                 config.penaltyBooster = atof(argv[i + 1]);
-            else if (std::string(argv[i]) == "-useSymmetricCorrelatedVertices")
-                config.useSymmetricCorrelatedVertices = atoi(argv[i + 1]) != 0;
             else if (std::string(argv[i]) == "-minimumPopulationSize")
                 config.minimumPopulationSize
                     = static_cast<size_t>(atoi(argv[i + 1]));

@@ -64,7 +64,7 @@ struct Config
 
     // Granular search parameter, limits the number of moves in the RI local
     // search
-    int nbGranular = 40;
+    size_t nbGranular = 40;
 
     // Probability intensification moves are performed during LS ([0-100])
     int intensificationProbabilityLS = 15;
@@ -80,9 +80,6 @@ struct Config
     // Minimum size (in degrees as ints [0 - 65536]) for circle sectors such
     // that even small circle sectors have 'overlap'
     int minCircleSectorSize = static_cast<int>(15 / 360. * 65536);
-
-    // Whether correlation matrix is symmetric
-    bool useSymmetricCorrelatedVertices = false;
 
     explicit Config(size_t nbIter = 20'000,
                     int timeLimit = INT_MAX,
@@ -105,13 +102,12 @@ struct Config
                     double diversityWeight = 0.,
                     int nbVeh = INT_MAX,
                     bool useDynamicParameters = false,
-                    int nbGranular = 40,
+                    size_t nbGranular = 40,
                     int intensificationProbabilityLS = 15,
                     bool useSwapStarTW = true,
                     bool skipSwapStarDist = false,
                     int circleSectorOverlapToleranceDegrees = 0,
-                    int minCircleSectorSizeDegrees = 15,
-                    bool useSymmetricCorrelatedVertices = false)
+                    int minCircleSectorSizeDegrees = 15)
         : seed(seed),
           nbIter(nbIter),
           timeLimit(timeLimit),
@@ -139,8 +135,7 @@ struct Config
           intensificationProbabilityLS(intensificationProbabilityLS),
           useSwapStarTW(useSwapStarTW),
           skipSwapStarDist(skipSwapStarDist),
-          circleSectorOverlapTolerance(circleSectorOverlapToleranceDegrees),
-          useSymmetricCorrelatedVertices(useSymmetricCorrelatedVertices)
+          circleSectorOverlapTolerance(circleSectorOverlapToleranceDegrees)
     {
         auto const overlap = circleSectorOverlapToleranceDegrees / 360. * 65536;
         circleSectorOverlapTolerance = static_cast<int>(overlap);

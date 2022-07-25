@@ -59,6 +59,16 @@ class Params
         int angle;
     };
 
+    // Neighborhood restrictions: For each client, list of nearby clients (size
+    // nbClients + 1, but nothing stored for the depot!)
+    std::vector<std::vector<int>> neighbours;
+
+    /**
+     * Calculate, for all vertices, the correlation ('nearness') of the
+     * nbGranular closest vertices.
+     */
+    void calculateNeighbours();
+
     /**
      * Sets dynamic parameters based on the instance size. Use is toggled by the
      * ``config.useDynamicParameters`` flag.
@@ -70,11 +80,8 @@ public:
 
     Config config;  // Stores all the parameter values
 
-    // Penalty for one unit of capacity excess (adapted through the search)
-    double penaltyCapacity;
-
-    // Penalty for one unit time warp (adapted through the search)
-    double penaltyTimeWarp;
+    double penaltyCapacity;  // Excess capacity penalty (per unit)
+    double penaltyTimeWarp;  // Time warp penalty (per unit)
 
     int nbClients;        // Number of clients (excluding the depot)
     int nbVehicles;       // Number of vehicles
@@ -83,9 +90,18 @@ public:
     std::vector<Client> clients;  // Client (+depot) information
     Matrix dist;                  // Distance matrix (+depot)
 
-    // Neighborhood restrictions: For each client, list of nearby clients (size
-    // nbClients + 1, but nothing stored for the depot!)
-    std::vector<std::vector<int>> correlatedVertices;
+    /**
+     * Returns the nbGranular clients nearest/closest to the passed-in client.
+     * Possibly recalculates the neighbourhood if the granularity parameter has
+     * been updated.
+     */
+    [[nodiscard]] std::vector<int> const &getNeighboursOf(size_t client)
+    {
+        if (neighbours[client].size() < config.nbGranular)
+            calculateNeighbours();
+
+        return neighbours[client];
+    }
 
     /**
      * Constructs a Params object with the given configuration, and data read
@@ -118,10 +134,6 @@ public:
            std::vector<int> const &servDurs,
            std::vector<std::vector<int>> const &distMat,
            std::vector<int> const &releases);
-
-    // Calculate, for all vertices, the correlation for the nbGranular closest
-    // vertices
-    void setCorrelatedVertices();
 };
 
 #endif

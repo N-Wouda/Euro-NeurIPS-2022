@@ -70,7 +70,6 @@ Result GeneticAlgorithm::runUntil(timePoint const &timePoint)
             // Note: changing nbGranular also changes how often the order is
             // reshuffled
             params.config.nbGranular += params.config.growNbGranularSize;
-            params.setCorrelatedVertices();
         }
 
         // Increase the minimumPopulationSize by growPopulationSize every

@@ -49,13 +49,12 @@ PYBIND11_MODULE(hgspy, m)
                       double,
                       int,
                       bool,
-                      int,
+                      size_t,
                       int,
                       bool,
                       bool,
                       int,
-                      int,
-                      bool>(),
+                      int>(),
              py::arg("nbIter") = 20'000,
              py::arg("timeLimit") = INT_MAX,
              py::arg("seed") = 0,
@@ -82,8 +81,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("useSwapStarTW") = true,
              py::arg("skipSwapStarDist") = false,
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
-             py::arg("minCircleSectorSizeDegrees") = 15,
-             py::arg("useSymmetricCorrelatedVertices") = false)
+             py::arg("minCircleSectorSizeDegrees") = 15)
         .def_readonly("nbIter", &Config::nbIter)
         .def_readonly("timeLimit", &Config::timeLimit)
         .def_readonly("seed", &Config::seed)
@@ -116,9 +114,7 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("skipSwapStarDist", &Config::skipSwapStarDist)
         .def_readonly("circleSectorOverlapTolerance",
                       &Config::circleSectorOverlapTolerance)
-        .def_readonly("minCircleSectorSize", &Config::minCircleSectorSize)
-        .def_readonly("useSymmetricCorrelatedVertices",
-                      &Config::useSymmetricCorrelatedVertices);
+        .def_readonly("minCircleSectorSize", &Config::minCircleSectorSize);
 
     py::class_<Params>(m, "Params")
         .def(py::init<Config &,

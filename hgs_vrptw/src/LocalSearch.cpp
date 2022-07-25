@@ -26,13 +26,6 @@ void LocalSearch::run(Individual &indiv,
     // diversity in the search
     std::shuffle(orderNodes.begin(), orderNodes.end(), rng);
     std::shuffle(orderRoutes.begin(), orderRoutes.end(), rng);
-    for (int i = 1; i <= params.nbClients; i++)
-        if (rng.randint(params.config.nbGranular)
-            == 0)  // Designed to use O(nbGranular x n) time overall to avoid
-                   // possible bottlenecks
-            std::shuffle(params.correlatedVertices[i].begin(),
-                         params.correlatedVertices[i].end(),
-                         rng);
 
     searchCompleted = false;
     for (loopID = 0; !searchCompleted; loopID++)
@@ -52,9 +45,7 @@ void LocalSearch::run(Individual &indiv,
             int lastTestRINodeU = nodeU->whenLastTestedRI;
             nodeU->whenLastTestedRI = nbMoves;
 
-            const auto &correlated = params.correlatedVertices[nodeU->cour];
-
-            for (const auto &v : correlated)
+            for (auto const &v : params.getNeighboursOf(nodeU->cour))
             {
                 nodeV = &clients[v];
                 if (loopID == 0
