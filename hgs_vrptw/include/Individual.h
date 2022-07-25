@@ -40,7 +40,6 @@ class Individual
     double penalizedCost = 0.;  // Penalized cost of the solution
     size_t nbRoutes = 0;        // Number of routes
     size_t distance = 0;        // Total distance
-    size_t waitTime = 0;        // All route wait time of early arrivals
     size_t capacityExcess = 0;  // Total excess load over all routes
     size_t timeWarp = 0;        // All route time warp of late arrivals
 

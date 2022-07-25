@@ -67,9 +67,6 @@ public:
     // Penalty for one unit of capacity excess (adapted through the search)
     double penaltyCapacity;
 
-    // Penalty for one unit waiting time (adapted through the search)
-    double penaltyWaitTime;
-
     // Penalty for one unit time warp (adapted through the search)
     double penaltyTimeWarp;
 

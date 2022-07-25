@@ -146,9 +146,7 @@ void Individual::makeRoutes()
         if (end != 0)  // assign routes
         {
             int begin = splits.predecessors[end];
-            route = std::vector<Client>(tourChrom.begin() + begin,
-                                        tourChrom.begin() + end);
-
+            route = {tourChrom.begin() + begin, tourChrom.begin() + end};
             end = begin;
         }
     }
@@ -162,7 +160,6 @@ void Individual::evaluateCompleteCost()
     penalizedCost = 0.;
     nbRoutes = 0;
     distance = 0;
-    waitTime = 0;
     capacityExcess = 0;
     timeWarp = 0;
 
@@ -173,41 +170,30 @@ void Individual::evaluateCompleteCost()
 
         nbRoutes++;
 
-        int maxReleaseTime = 0;
+        int lastRelease = 0;
         for (auto const idx : route)
-            maxReleaseTime
-                = std::max(maxReleaseTime, params->cli[idx].releaseTime);
+            lastRelease = std::max(lastRelease, params->cli[idx].releaseTime);
 
-        // Get the distance, load, servDur and time associated with the
-        // vehicle traveling from the depot to the first client. Assume depot
-        // has service time 0 and twEarly 0
-        int distance = params->timeCost(0, route[0]);
+        int rDist = params->timeCost(0, route[0]);
+        int rTimeWarp = 0;
+
         int load = params->cli[route[0]].demand;
-
-        int time = maxReleaseTime + distance;
-        int waitTime = 0;
-        int timeWarp = 0;
+        int time = lastRelease + rDist;
 
         if (time < params->cli[route[0]].twEarly)
-        {
-            // Don't add wait time since we can start route later (doesn't
-            // really matter since there is no penalty anyway).
             time = params->cli[route[0]].twEarly;
-        }
 
-        // Add possible time warp
         if (time > params->cli[route[0]].twLate)
         {
-            timeWarp += time - params->cli[route[0]].twLate;
+            rTimeWarp += time - params->cli[route[0]].twLate;
             time = params->cli[route[0]].twLate;
         }
 
-        // Loop over all clients for this vehicle
         for (size_t idx = 1; idx < route.size(); idx++)
         {
-            // Sum the distance, load, servDur and time associated
-            // with the vehicle traveling from the depot to the next client
-            distance += params->timeCost(route[idx - 1], route[idx]);
+            // Sum the rDist, load, servDur and time associated with the vehicle
+            // traveling from the depot to the next client
+            rDist += params->timeCost(route[idx - 1], route[idx]);
             load += params->cli[route[idx]].demand;
 
             time += params->cli[route[idx - 1]].servDur
@@ -215,43 +201,37 @@ void Individual::evaluateCompleteCost()
 
             // Add possible waiting time
             if (time < params->cli[route[idx]].twEarly)
-            {
-                waitTime += params->cli[route[idx]].twEarly - time;
                 time = params->cli[route[idx]].twEarly;
-            }
 
             // Add possible time warp
             if (time > params->cli[route[idx]].twLate)
             {
-                timeWarp += time - params->cli[route[idx]].twLate;
+                rTimeWarp += time - params->cli[route[idx]].twLate;
                 time = params->cli[route[idx]].twLate;
             }
         }
 
         // For the last client, the successors is the depot. Also update the
-        // distance and time
-        distance += params->timeCost(route.back(), 0);
+        // rDist and time
+        rDist += params->timeCost(route.back(), 0);
         time += params->cli[route.back()].servDur
                 + params->timeCost(route.back(), 0);
 
         // For the depot, we only need to check the end of the time window
         // (add possible time warp)
-        timeWarp += std::max(time - params->cli[0].twLate, 0);
+        rTimeWarp += std::max(time - params->cli[0].twLate, 0);
 
         // Whole solution stats
-        this->distance += distance;
-        this->waitTime += waitTime;
-        this->timeWarp += timeWarp;
-        this->capacityExcess += std::max(load - params->vehicleCapacity, 0);
+        distance += rDist;
+        timeWarp += rTimeWarp;
+        capacityExcess += std::max(load - params->vehicleCapacity, 0);
     }
 
-    // When all vehicles are dealt with, calculated total penalized cost and
-    // check if the solution is feasible. (Wait time does not affect
-    // feasibility)
-    this->penalizedCost = static_cast<double>(
-        this->distance + this->capacityExcess * params->penaltyCapacity
-        + this->timeWarp * params->penaltyTimeWarp
-        + this->waitTime * params->penaltyWaitTime);
+    // When all vehicles are dealt with, calculate objective value
+    penalizedCost
+        = static_cast<double>(distance)
+          + static_cast<double>(capacityExcess) * params->penaltyCapacity
+          + static_cast<double>(timeWarp) * params->penaltyTimeWarp;
 }
 
 void Individual::brokenPairsDistance(Individual *other)

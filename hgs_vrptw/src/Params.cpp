@@ -414,8 +414,7 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
     penaltyCapacity = std::max(
         0.1, std::min(1000., static_cast<double>(maxDist) / maxDemand));
 
-    // Initial parameter values of these two parameters are not argued
-    penaltyWaitTime = 0.;
+    // Initial parameter values of this parameter is not argued
     penaltyTimeWarp = config.initialTimeWarpPenalty;
 }
 
@@ -449,8 +448,7 @@ Params::Params(Config &config,
     penaltyCapacity = std::max(
         0.1, std::min(1000., static_cast<double>(maxDist) / maxDemand));
 
-    // Initial parameter values of these two parameters are not argued
-    penaltyWaitTime = 0.;
+    // Initial parameter values of this parameter is not argued
     penaltyTimeWarp = config.initialTimeWarpPenalty;
 
     cli = std::vector<Client>(nbClients + 1);
