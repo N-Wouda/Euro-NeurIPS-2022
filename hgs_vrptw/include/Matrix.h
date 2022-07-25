@@ -16,23 +16,21 @@ class Matrix
 
 public:
     // Empty constructor: with zero columns and a vector of size zero
-    Matrix() : cols_(0), data_(std::vector<int>(0)) {}
+    Matrix() : cols_(0), data_(0) {}
 
     // Constructor: create a matrix of size dimension by dimension, using a C++
     // vector of size dimension * dimension
-    explicit Matrix(const int dimension) : cols_(dimension)
+    explicit Matrix(int dimension)
+        : cols_(dimension), data_(dimension * dimension)
     {
-        data_ = std::vector<int>(dimension * dimension);
     }
 
-    // Set a value val at position (row, col) in the matrix
-    void set(const int row, const int col, const int val)
+    [[nodiscard]] inline int &operator()(int row, int col)  // for modification
     {
-        data_[cols_ * row + col] = val;
+        return data_[cols_ * row + col];
     }
 
-    // Get the value at position (row, col) in the matrix
-    [[nodiscard]] int get(const int row, const int col) const
+    [[nodiscard]] inline int operator()(int row, int col) const  // for access
     {
         return data_[cols_ * row + col];
     }

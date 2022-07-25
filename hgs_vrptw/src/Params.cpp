@@ -157,7 +157,7 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
                         // clients (or the depot)
                         int cost;
                         inputFile >> cost;
-                        timeCost.set(i, j, cost);
+                        timeCost(i, j) = cost;
                     }
                 }
             }
@@ -441,7 +441,7 @@ Params::Params(Config &config,
 
     for (size_t i = 0; i != dist.size(); ++i)
         for (size_t j = 0; j != dist[i].size(); ++j)
-            timeCost.set(i, j, dist[i][j]);
+            timeCost(i, j) = dist[i][j];
 
     int maxDist = timeCost.max();
 
@@ -496,7 +496,7 @@ void Params::setCorrelatedVertices()
                 continue;
 
             // Compute proximity using Eq. 4 in Vidal 2012
-            int const time = timeCost.get(i, j);
+            int const time = timeCost(i, j);
 
             int const first
                 = weightWaitTime

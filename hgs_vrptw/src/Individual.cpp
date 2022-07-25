@@ -48,13 +48,13 @@ struct ClientSplits
         {
             auto const curr = tour[idx - 1];
             auto const dist = idx < params.nbClients  // INT_MIN for last client
-                                  ? params.timeCost.get(curr, tour[idx])
+                                  ? params.timeCost(curr, tour[idx])
                                   : INT_MIN;
 
             splits[idx] = {params.cli[curr].demand,
                            params.cli[curr].servDur,
-                           params.timeCost.get(0, curr),
-                           params.timeCost.get(curr, 0),
+                           params.timeCost(0, curr),
+                           params.timeCost(curr, 0),
                            dist};
 
             cumLoad[idx] = cumLoad[idx - 1] + splits[idx].demand;
@@ -181,7 +181,7 @@ void Individual::evaluateCompleteCost()
         // Get the distance, load, servDur and time associated with the
         // vehicle traveling from the depot to the first client. Assume depot
         // has service time 0 and twEarly 0
-        int distance = params->timeCost.get(0, route[0]);
+        int distance = params->timeCost(0, route[0]);
         int load = params->cli[route[0]].demand;
 
         int time = maxReleaseTime + distance;
@@ -207,11 +207,11 @@ void Individual::evaluateCompleteCost()
         {
             // Sum the distance, load, servDur and time associated
             // with the vehicle traveling from the depot to the next client
-            distance += params->timeCost.get(route[idx - 1], route[idx]);
+            distance += params->timeCost(route[idx - 1], route[idx]);
             load += params->cli[route[idx]].demand;
 
             time += params->cli[route[idx - 1]].servDur
-                    + params->timeCost.get(route[idx - 1], route[idx]);
+                    + params->timeCost(route[idx - 1], route[idx]);
 
             // Add possible waiting time
             if (time < params->cli[route[idx]].twEarly)
@@ -230,9 +230,9 @@ void Individual::evaluateCompleteCost()
 
         // For the last client, the successors is the depot. Also update the
         // distance and time
-        distance += params->timeCost.get(route.back(), 0);
+        distance += params->timeCost(route.back(), 0);
         time += params->cli[route.back()].servDur
-                + params->timeCost.get(route.back(), 0);
+                + params->timeCost(route.back(), 0);
 
         // For the depot, we only need to check the end of the time window
         // (add possible time warp)
