@@ -4,6 +4,7 @@
 #include "Params.h"
 
 #include <list>
+#include <numeric>
 #include <vector>
 
 void Population::generatePopulation(size_t numToGenerate)
@@ -19,10 +20,10 @@ void Population::addIndividual(Individual const &indiv, bool updateFeasible)
 {
     if (updateFeasible)  // update feasibility if needed
     {
-        listFeasibilityLoad.push_back(!indiv.hasExcessCapacity());
-        listFeasibilityTimeWarp.push_back(!indiv.hasTimeWarp());
-        listFeasibilityLoad.pop_front();
-        listFeasibilityTimeWarp.pop_front();
+        loadFeas.push_back(!indiv.hasExcessCapacity());
+        timeFeas.push_back(!indiv.hasTimeWarp());
+        loadFeas.pop_front();
+        timeFeas.pop_front();
     }
 
     // Create a copy of the individual and update the proximity structures
@@ -49,8 +50,8 @@ void Population::addIndividual(Individual const &indiv, bool updateFeasible)
         while (population.size() > params.config.minimumPopulationSize)
             removeWorstBiasedFitness();
 
-    if (indiv.isFeasible() && indiv.cost() < bestSolutionOverall.cost())
-        bestSolutionOverall = indiv;
+    if (indiv.isFeasible() && indiv.cost() < bestSol.cost())
+        bestSol = indiv;
 }
 
 void Population::updateBiasedFitness()
@@ -123,57 +124,26 @@ void Population::restart()
 
 void Population::managePenalties()
 {
-    // TODO this is ugly
+    auto compute = [&](double currFeas, double penalty) {
+        if (currFeas <= 0.01 && params.config.penaltyBooster > 0)
+            penalty *= params.config.penaltyBooster;
+        else if (currFeas < params.config.targetFeasible - 0.05)
+            penalty *= 1.2;
+        else if (currFeas > params.config.targetFeasible + 0.05)
+            penalty *= 0.85;
 
-    // Setting some bounds [0.1,100000] to the penalty values for safety
-    double fractionFeasibleLoad
-        = static_cast<double>(std::count(
-              listFeasibilityLoad.begin(), listFeasibilityLoad.end(), true))
-          / static_cast<double>(listFeasibilityLoad.size());
-    if (fractionFeasibleLoad <= 0.01 && params.config.penaltyBooster > 0.
-        && params.penaltyCapacity < 100000.)
-    {
-        params.penaltyCapacity = std::min(
-            params.penaltyCapacity * params.config.penaltyBooster, 100000.);
-    }
-    else if (fractionFeasibleLoad < params.config.targetFeasible - 0.05
-             && params.penaltyCapacity < 100000.)
-    {
-        params.penaltyCapacity
-            = std::min(params.penaltyCapacity * 1.2, 100000.);
-    }
-    else if (fractionFeasibleLoad > params.config.targetFeasible + 0.05
-             && params.penaltyCapacity > 0.1)
-    {
-        params.penaltyCapacity = std::max(params.penaltyCapacity * 0.85, 0.1);
-    }
+        // Setting some bounds [0.1, 100000] to the penalty values for safety
+        return std::max(std::min(penalty, 100'000.), 0.1);
+    };
 
-    // Setting some bounds [0.1,100000] to the penalty values for safety
-    double fractionFeasibleTimeWarp
-        = static_cast<double>(std::count(listFeasibilityTimeWarp.begin(),
-                                         listFeasibilityTimeWarp.end(),
-                                         true))
-          / static_cast<double>(listFeasibilityTimeWarp.size());
-    if (fractionFeasibleTimeWarp <= 0.01 && params.config.penaltyBooster > 0.
-        && params.penaltyTimeWarp < 100000.)
-    {
-        params.penaltyTimeWarp = std::min(
-            params.penaltyTimeWarp * params.config.penaltyBooster, 100000.);
-    }
-    else if (fractionFeasibleTimeWarp < params.config.targetFeasible - 0.05
-             && params.penaltyTimeWarp < 100000.)
-    {
-        params.penaltyTimeWarp
-            = std::min(params.penaltyTimeWarp * 1.2, 100000.);
-    }
-    else if (fractionFeasibleTimeWarp > params.config.targetFeasible + 0.05
-             && params.penaltyTimeWarp > 0.1)
-    {
-        params.penaltyTimeWarp = std::max(params.penaltyTimeWarp * 0.85, 0.1);
-    }
+    double fracFeasLoad = std::accumulate(loadFeas.begin(), loadFeas.end(), 0.);
+    fracFeasLoad /= static_cast<double>(loadFeas.size());
 
-    for (auto &indiv : population)
-        indiv->evaluateCompleteCost();
+    double fracFeasTime = std::accumulate(timeFeas.begin(), timeFeas.end(), 0.);
+    fracFeasTime /= static_cast<double>(timeFeas.size());
+
+    params.penaltyCapacity = compute(fracFeasLoad, params.penaltyCapacity);
+    params.penaltyTimeWarp = compute(fracFeasTime, params.penaltyTimeWarp);
 
     // Reorder the population since the penalties have changed.
     std::sort(population.begin(),
@@ -213,12 +183,12 @@ std::pair<Individual const *, Individual const *> Population::selectParents()
 Population::Population(Params &params, XorShift128 &rng)
     : params(params),
       rng(rng),
-      bestSolutionOverall(&params, &rng)  // random initial best solution
+      bestSol(&params, &rng)  // random initial best solution
 {
     // Create lists for the load feasibility of the last 100 individuals
     // generated by LS, where all feasibilities are set to true
-    listFeasibilityLoad = std::list<bool>(100, true);
-    listFeasibilityTimeWarp = std::list<bool>(100, true);
+    loadFeas = std::list<bool>(100, true);
+    timeFeas = std::list<bool>(100, true);
 
     // Generate a new population somewhat larger than the minimum size, so we
     // get a set of reasonable candidates early on.
