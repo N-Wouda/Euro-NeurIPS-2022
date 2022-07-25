@@ -58,7 +58,7 @@ public:
     /**
      * Returns a random integer in the range [0, high).
      */
-    result_type inline randint(int high) { return operator()() % high; }
+    inline result_type randint(int high) { return operator()() % high; }
 };
 
 #endif

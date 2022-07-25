@@ -5,360 +5,27 @@
 #include "Params.h"
 
 #include <cmath>
+#include <numeric>
 #include <set>
 #include <vector>
-
-bool operator==(const TimeWindowData &twData1, const TimeWindowData &twData2)
-{
-    return twData1.idxFirst == twData2.idxFirst
-           && twData1.idxLast == twData2.idxLast
-           && twData1.duration == twData2.duration
-           && twData1.timeWarp == twData2.timeWarp
-           && twData1.twEarly == twData2.twEarly
-           && twData1.twLate == twData2.twLate;
-}
-
-void LocalSearch::initializeConstruction(
-    std::vector<NodeToInsert> *nodesToInsert)
-{
-    // Initialize datastructures relevant for constructions.
-    // Local search-related data structures are not initialized.
-    emptyRoutes.clear();
-    TimeWindowData depotTwData;
-    depotTwData.idxFirst = 0;
-    depotTwData.idxLast = 0;
-    depotTwData.duration = 0;
-    depotTwData.timeWarp = 0;
-    depotTwData.twEarly = params.cli[0].twEarly;
-    depotTwData.twLate = params.cli[0].twLate;
-
-    // Initializing time window data for clients
-    for (int i = 1; i <= params.nbClients; i++)
-    {
-        TimeWindowData *myTwData = &clients[i].twData;
-        myTwData->idxFirst = i;
-        myTwData->idxLast = i;
-        myTwData->duration = params.cli[i].servDur;
-        myTwData->twEarly = params.cli[i].twEarly;
-        myTwData->twLate = params.cli[i].twLate;
-    }
-
-    // Initialize routes
-    for (int r = 0; r < params.nbVehicles; r++)
-    {
-        Node *myDepot = &depots[r];
-        Node *myDepotFin = &depotsEnd[r];
-        myDepot->prev = myDepotFin;
-        myDepotFin->next = myDepot;
-        myDepot->next = myDepotFin;
-        myDepotFin->prev = myDepot;
-
-        myDepot->twData = depotTwData;
-        myDepot->prefixTwData = depotTwData;
-        myDepot->postfixTwData = depotTwData;
-
-        myDepotFin->twData = depotTwData;
-        myDepotFin->prefixTwData = depotTwData;
-        myDepotFin->postfixTwData = depotTwData;
-
-        updateRouteData(&routes[r]);
-    }
-
-    // Initialize clients.
-    for (int i = 1; i <= params.nbClients; i++)
-    {
-        NodeToInsert nodeToInsert;
-        nodeToInsert.clientIdx = i;
-        nodeToInsert.twData = clients[i].twData;
-        nodeToInsert.load = params.cli[i].demand;
-        nodeToInsert.angleFromDepot = atan2(params.cli[i].y - params.cli[0].y,
-                                            params.cli[i].x - params.cli[0].x);
-        nodeToInsert.serviceDuration = params.cli[i].servDur;
-        nodesToInsert->push_back(nodeToInsert);
-    }
-}
-
-Individual LocalSearch::constructIndividualBySweep(int fillPercentage)
-{
-    std::vector<NodeToInsert> nodesToInsert;
-    initializeConstruction(&nodesToInsert);
-
-    std::vector<std::vector<int>> nodeIndicesPerRoute;
-
-    // Sort nodes according to angle with depot.
-    std::sort(std::begin(nodesToInsert),
-              std::end(nodesToInsert),
-              [](NodeToInsert a, NodeToInsert b) {
-                  return a.angleFromDepot < b.angleFromDepot;
-              });
-
-    // Distribute clients over routes.
-    int load = 0;
-    std::vector<int> nodeIndicesInRoute;
-    for (int i = 0; i < static_cast<int>(nodesToInsert.size()); i++)
-    {
-        if (load > 0
-            && load + nodesToInsert[i].load
-                   > fillPercentage * params.vehicleCapacity / 100
-            && nodeIndicesPerRoute.size() + 1 < routes.size())
-        {
-            nodeIndicesPerRoute.push_back(nodeIndicesInRoute);
-            nodeIndicesInRoute.clear();
-            load = 0;
-        }
-
-        load += nodesToInsert[i].load;
-        nodeIndicesInRoute.push_back(i);
-    }
-
-    nodeIndicesPerRoute.push_back(nodeIndicesInRoute);
-
-    // Construct routes
-    for (int r = 0; r < static_cast<int>(nodeIndicesPerRoute.size()); r++)
-    {
-        int depotOpeningDuration
-            = depots[r].twData.twLate - depots[r].twData.twEarly;
-        std::vector<int> nodeIndicesToInsertShortTw;
-        std::vector<int> nodeIndicesToInsertLongTw;
-        for (int idx : nodeIndicesPerRoute[r])
-        {
-            // Arbitrary division, but for all instances time windows are either
-            // much shorter than half of depotOpeningDuration, or much larger.
-            if ((nodesToInsert[idx].twData.twLate
-                 - nodesToInsert[idx].twData.twEarly)
-                    * 2
-                > depotOpeningDuration)
-                nodeIndicesToInsertLongTw.push_back(idx);
-            else
-                nodeIndicesToInsertShortTw.push_back(idx);
-        }
-
-        // Sort routes with short time window in increasing end of time window.
-        std::sort(std::begin(nodeIndicesToInsertShortTw),
-                  std::end(nodeIndicesToInsertShortTw),
-                  [&nodesToInsert](int a, int b) {
-                      return nodesToInsert[a].twData.twLate
-                             < nodesToInsert[b].twData.twLate;
-                  });
-
-        // Insert nodes with short time window in order in the route.
-        Node *prev = routes[r].depot;
-        for (int idx : nodeIndicesToInsertShortTw)
-        {
-            Node *toInsert = &clients[nodesToInsert[idx].clientIdx];
-            Node *insertionPoint = prev;
-            toInsert->prev = insertionPoint;
-            toInsert->next = insertionPoint->next;
-            insertionPoint->next->prev = toInsert;
-            insertionPoint->next = toInsert;
-            prev = toInsert;
-        }
-
-        updateRouteData(&routes[r]);
-
-        // Insert remaining nodes according to best distance
-        for (int idx : nodeIndicesToInsertLongTw)
-        {
-            double bestCost = std::numeric_limits<double>::max();
-            Node *bestPred = nullptr;
-            Node *prev = routes[r].depot;
-            for (int j = 0; j <= routes[r].nbCustomers; j++)
-            {
-                // Compute insertion cost
-                double insertionCost
-                    = params.timeCost.get(prev->cour,
-                                          nodesToInsert[idx].clientIdx)
-                      + params.timeCost.get(nodesToInsert[idx].clientIdx,
-                                            prev->next->cour)
-                      - params.timeCost.get(prev->cour, prev->next->cour);
-
-                if (insertionCost < bestCost)
-                {
-                    bestCost = insertionCost;
-                    bestPred = prev;
-                }
-
-                prev = prev->next;
-            }
-
-            Node *toInsert = &clients[nodesToInsert[idx].clientIdx];
-            Node *insertionPoint = bestPred;
-            toInsert->prev = insertionPoint;
-            toInsert->next = insertionPoint->next;
-            insertionPoint->next->prev = toInsert;
-            insertionPoint->next = toInsert;
-            updateRouteData(&routes[r]);
-        }
-    }
-
-    return exportIndividual();
-}
-
-Individual LocalSearch::constructIndividualWithSeedOrder(
-    int toleratedCapacityViolation,
-    int toleratedTimeWarp,
-    bool useSeedClientFurthestFromDepot)
-{
-    std::vector<NodeToInsert> nodesToInsert;
-    initializeConstruction(&nodesToInsert);
-
-    std::set<int> unassignedNodeIndices;
-    for (int i = 1; i <= params.nbClients; i++)
-    {
-        unassignedNodeIndices.insert(i - 1);
-    }
-
-    // Construct routes
-    for (size_t r = 0; r < routes.size() && !unassignedNodeIndices.empty(); r++)
-    {
-        // Note that if the seed client is the unassigned client closest to the
-        // depot, we do not have to do any initialization and can just start
-        // inserting nodes that are best according to distance in the main loop.
-        if (useSeedClientFurthestFromDepot)
-        {
-            int furthestNodeIdx = -1;
-            double furthestNodeCost = -1.0;
-            for (int idx : unassignedNodeIndices)
-            {
-                double insertionCost
-                    = params.timeCost.get(routes[r].depot->cour,
-                                          nodesToInsert[idx].clientIdx)
-                      + params.timeCost.get(nodesToInsert[idx].clientIdx,
-                                            routes[r].depot->next->cour)
-                      - params.timeCost.get(routes[r].depot->cour,
-                                            routes[r].depot->next->cour);
-
-                if (insertionCost > furthestNodeCost)
-                {
-                    furthestNodeCost = insertionCost;
-                    furthestNodeIdx = idx;
-                }
-            }
-
-            Node *toInsert = &clients[nodesToInsert[furthestNodeIdx].clientIdx];
-            toInsert->prev = routes[r].depot;
-            toInsert->next = routes[r].depot->next;
-            routes[r].depot->next->prev = toInsert;
-            routes[r].depot->next = toInsert;
-            updateRouteData(&routes[r]);
-            unassignedNodeIndices.erase(furthestNodeIdx);
-        }
-
-        bool insertedNode = true;
-        while (insertedNode)
-        {
-            insertedNode = false;
-            double bestCost = std::numeric_limits<double>::max();
-            Node *bestPred = nullptr;
-            int bestNodeIdx;
-            for (int idx : unassignedNodeIndices)
-            {
-                // Do not allow insertion if capacity is exceeded more than
-                // tolerance.
-                if (routes[r].load + nodesToInsert[idx].load
-                    > params.vehicleCapacity + toleratedCapacityViolation)
-                    continue;
-
-                Node *prev = routes[r].depot;
-                for (int j = 0; j <= routes[r].nbCustomers; j++)
-                {
-                    // Do not allow insertions if time windows are violated more
-                    // than tolerance
-                    TimeWindowData routeTwData
-                        = mergeTwDataRecursive(prev->prefixTwData,
-                                               nodesToInsert[idx].twData,
-                                               prev->next->postfixTwData);
-                    if (routeTwData.timeWarp > toleratedTimeWarp)
-                    {
-                        prev = prev->next;
-                        continue;
-                    }
-
-                    // Compute insertion cost
-                    double insertionCost
-                        = params.timeCost.get(prev->cour,
-                                              nodesToInsert[idx].clientIdx)
-                          + params.timeCost.get(nodesToInsert[idx].clientIdx,
-                                                prev->next->cour)
-                          - params.timeCost.get(prev->cour, prev->next->cour);
-
-                    if (insertionCost < bestCost)
-                    {
-                        bestCost = insertionCost;
-                        bestPred = prev;
-                        bestNodeIdx = idx;
-                    }
-
-                    prev = prev->next;
-                }
-            }
-
-            if (bestCost < std::numeric_limits<double>::max())
-            {
-                Node *toInsert = &clients[nodesToInsert[bestNodeIdx].clientIdx];
-                toInsert->prev = bestPred;
-                toInsert->next = bestPred->next;
-                bestPred->next->prev = toInsert;
-                bestPred->next = toInsert;
-                updateRouteData(&routes[r]);
-                insertedNode = true;
-                unassignedNodeIndices.erase(bestNodeIdx);
-            }
-        }
-    }
-
-    // Insert all unassigned nodes at the back of the last route. We assume that
-    // typically there are no unassigned nodes left, because there are plenty
-    // routes, but we have to make sure that all nodes are assigned.
-    if (!unassignedNodeIndices.empty())
-    {
-        size_t lastRouteIdx = routes.size() - 1;
-        Node *prevNode = depotsEnd[lastRouteIdx].prev;  // node before depot
-
-        while (!unassignedNodeIndices.empty())
-        {
-            int idx = *unassignedNodeIndices.begin();
-            Node *toInsert = &clients[nodesToInsert[idx].clientIdx];
-            toInsert->prev = prevNode;
-            toInsert->next = prevNode->next;
-            prevNode->next->prev = toInsert;
-            prevNode->next = toInsert;
-            unassignedNodeIndices.erase(idx);
-        }
-
-        updateRouteData(&routes[lastRouteIdx]);
-    }
-
-    return exportIndividual();
-}
 
 void LocalSearch::run(Individual &indiv,
                       double penaltyCapacityLS,
                       double penaltyTimeWarpLS)
 {
-    static const bool neverIntensify
-        = params.config.intensificationProbabilityLS == 0;
-    static const bool alwaysIntensify
-        = params.config.intensificationProbabilityLS == 100;
-    const bool runLS_INT
+    this->penaltyCapacityLS = penaltyCapacityLS;
+    this->penaltyTimeWarpLS = penaltyTimeWarpLS;
+
+    bool const shouldIntensify
         = rng.randint(100)
           < (unsigned int)params.config.intensificationProbabilityLS;
 
-    this->penaltyCapacityLS = penaltyCapacityLS;
-    this->penaltyTimeWarpLS = penaltyTimeWarpLS;
     loadIndividual(indiv);
 
     // Shuffling the order of the nodes explored by the LS to allow for more
     // diversity in the search
     std::shuffle(orderNodes.begin(), orderNodes.end(), rng);
     std::shuffle(orderRoutes.begin(), orderRoutes.end(), rng);
-    for (int i = 1; i <= params.nbClients; i++)
-        if (rng.randint(params.config.nbGranular)
-            == 0)  // Designed to use O(nbGranular x n) time overall to avoid
-                   // possible bottlenecks
-            std::shuffle(params.correlatedVertices[i].begin(),
-                         params.correlatedVertices[i].end(),
-                         rng);
 
     searchCompleted = false;
     for (loopID = 0; !searchCompleted; loopID++)
@@ -378,9 +45,7 @@ void LocalSearch::run(Individual &indiv,
             int lastTestRINodeU = nodeU->whenLastTestedRI;
             nodeU->whenLastTestedRI = nbMoves;
 
-            const auto &correlated = params.correlatedVertices[nodeU->cour];
-
-            for (const auto &v : correlated)
+            for (auto const &v : params.getNeighboursOf(nodeU->cour))
             {
                 nodeV = &clients[v];
                 if (loopID == 0
@@ -451,8 +116,7 @@ void LocalSearch::run(Individual &indiv,
         }
 
         /* (SWAP*) MOVES LIMITED TO ROUTE PAIRS WHOSE CIRCLE SECTORS OVERLAP */
-        if (!neverIntensify && searchCompleted
-            && (alwaysIntensify || runLS_INT))
+        if (searchCompleted && shouldIntensify)
         {
             for (int rU = 0; rU < params.nbVehicles; rU++)
             {
@@ -516,8 +180,8 @@ void LocalSearch::setLocalVariablesRouteU()
     nodeUIndex = nodeU->cour;
     nodeUPrevIndex = nodeU->prev->cour;
     nodeXIndex = nodeX->cour;
-    loadU = params.cli[nodeUIndex].demand;
-    loadX = params.cli[nodeXIndex].demand;
+    loadU = params.clients[nodeUIndex].demand;
+    loadX = params.clients[nodeXIndex].demand;
     routeUTimeWarp = routeU->twData.timeWarp > 0;
     routeULoadPenalty = routeU->load > params.vehicleCapacity;
 }
@@ -530,8 +194,8 @@ void LocalSearch::setLocalVariablesRouteV()
     nodeVIndex = nodeV->cour;
     nodeVPrevIndex = nodeV->prev->cour;
     nodeYIndex = nodeY->cour;
-    loadV = params.cli[nodeVIndex].demand;
-    loadY = params.cli[nodeYIndex].demand;
+    loadV = params.clients[nodeVIndex].demand;
+    loadY = params.clients[nodeYIndex].demand;
     routeVTimeWarp = routeV->twData.timeWarp > 0;
     routeVLoadPenalty = routeV->load > params.vehicleCapacity;
 }
@@ -542,12 +206,12 @@ bool LocalSearch::MoveSingleClient()
     if (nodeUIndex == nodeYIndex)
         return false;
 
-    double costSuppU = params.timeCost.get(nodeUPrevIndex, nodeXIndex)
-                       - params.timeCost.get(nodeUPrevIndex, nodeUIndex)
-                       - params.timeCost.get(nodeUIndex, nodeXIndex);
-    double costSuppV = params.timeCost.get(nodeVIndex, nodeUIndex)
-                       + params.timeCost.get(nodeUIndex, nodeYIndex)
-                       - params.timeCost.get(nodeVIndex, nodeYIndex);
+    double costSuppU = params.dist(nodeUPrevIndex, nodeXIndex)
+                       - params.dist(nodeUPrevIndex, nodeUIndex)
+                       - params.dist(nodeUIndex, nodeXIndex);
+    double costSuppV = params.dist(nodeVIndex, nodeUIndex)
+                       + params.dist(nodeUIndex, nodeYIndex)
+                       - params.dist(nodeVIndex, nodeYIndex);
 
     if (routeU != routeV)
     {
@@ -622,13 +286,12 @@ bool LocalSearch::MoveTwoClients()
     if (nodeU == nodeY || nodeV == nodeX || nodeX->isDepot)
         return false;
 
-    double costSuppU = params.timeCost.get(nodeUPrevIndex, nodeXNextIndex)
-                       - params.timeCost.get(nodeUPrevIndex, nodeUIndex)
-                       - params.timeCost.get(nodeXIndex, nodeXNextIndex);
-    double costSuppV = params.timeCost.get(nodeVIndex, nodeUIndex)
-                       + params.timeCost.get(nodeXIndex, nodeYIndex)
-                       - params.timeCost.get(nodeVIndex, nodeYIndex);
-    TimeWindowData routeUTwData, routeVTwData;
+    double costSuppU = params.dist(nodeUPrevIndex, nodeXNextIndex)
+                       - params.dist(nodeUPrevIndex, nodeUIndex)
+                       - params.dist(nodeXIndex, nodeXNextIndex);
+    double costSuppV = params.dist(nodeVIndex, nodeUIndex)
+                       + params.dist(nodeXIndex, nodeYIndex)
+                       - params.dist(nodeVIndex, nodeYIndex);
 
     if (routeU != routeV)
     {
@@ -638,11 +301,11 @@ bool LocalSearch::MoveTwoClients()
             return false;
         }
 
-        routeUTwData = mergeTwDataRecursive(nodeU->prev->prefixTwData,
-                                            nodeX->next->postfixTwData);
-        routeVTwData = mergeTwDataRecursive(nodeV->prefixTwData,
-                                            getEdgeTwData(nodeU, nodeX),
-                                            nodeY->postfixTwData);
+        auto routeUTwData = mergeTwDataRecursive(nodeU->prev->prefixTwData,
+                                                 nodeX->next->postfixTwData);
+        auto routeVTwData = mergeTwDataRecursive(nodeV->prefixTwData,
+                                                 getEdgeTwData(nodeU, nodeX),
+                                                 nodeY->postfixTwData);
 
         costSuppU += penaltyExcessLoad(routeU->load - loadU - loadX)
                      + penaltyTimeWindows(routeUTwData) - routeU->penalty;
@@ -656,6 +319,8 @@ bool LocalSearch::MoveTwoClients()
         {
             return false;
         }
+
+        TimeWindowData routeUTwData;
 
         // Move within the same route
         if (nodeU->position < nodeV->position)
@@ -705,15 +370,14 @@ bool LocalSearch::MoveTwoClientsReversed()
     if (nodeU == nodeY || nodeX == nodeV || nodeX->isDepot)
         return false;
 
-    double costSuppU = params.timeCost.get(nodeUPrevIndex, nodeXNextIndex)
-                       - params.timeCost.get(nodeUPrevIndex, nodeUIndex)
-                       - params.timeCost.get(nodeUIndex, nodeXIndex)
-                       - params.timeCost.get(nodeXIndex, nodeXNextIndex);
-    double costSuppV = params.timeCost.get(nodeVIndex, nodeXIndex)
-                       + params.timeCost.get(nodeXIndex, nodeUIndex)
-                       + params.timeCost.get(nodeUIndex, nodeYIndex)
-                       - params.timeCost.get(nodeVIndex, nodeYIndex);
-    TimeWindowData routeUTwData, routeVTwData;
+    double costSuppU = params.dist(nodeUPrevIndex, nodeXNextIndex)
+                       - params.dist(nodeUPrevIndex, nodeUIndex)
+                       - params.dist(nodeUIndex, nodeXIndex)
+                       - params.dist(nodeXIndex, nodeXNextIndex);
+    double costSuppV = params.dist(nodeVIndex, nodeXIndex)
+                       + params.dist(nodeXIndex, nodeUIndex)
+                       + params.dist(nodeUIndex, nodeYIndex)
+                       - params.dist(nodeVIndex, nodeYIndex);
 
     if (routeU != routeV)
     {
@@ -723,11 +387,11 @@ bool LocalSearch::MoveTwoClientsReversed()
             return false;
         }
 
-        routeUTwData = mergeTwDataRecursive(nodeU->prev->prefixTwData,
-                                            nodeX->next->postfixTwData);
-        routeVTwData = mergeTwDataRecursive(nodeV->prefixTwData,
-                                            getEdgeTwData(nodeX, nodeU),
-                                            nodeY->postfixTwData);
+        auto routeUTwData = mergeTwDataRecursive(nodeU->prev->prefixTwData,
+                                                 nodeX->next->postfixTwData);
+        auto routeVTwData = mergeTwDataRecursive(nodeV->prefixTwData,
+                                                 getEdgeTwData(nodeX, nodeU),
+                                                 nodeY->postfixTwData);
 
         costSuppU += penaltyExcessLoad(routeU->load - loadU - loadX)
                      + penaltyTimeWindows(routeUTwData) - routeU->penalty;
@@ -741,6 +405,8 @@ bool LocalSearch::MoveTwoClientsReversed()
         {
             return false;
         }
+
+        TimeWindowData routeUTwData;
 
         // Move within the same route
         if (nodeU->position < nodeV->position)
@@ -790,15 +456,14 @@ bool LocalSearch::SwapTwoSingleClients()
     if (nodeUIndex == nodeVPrevIndex || nodeUIndex == nodeYIndex)
         return false;
 
-    double costSuppU = params.timeCost.get(nodeUPrevIndex, nodeVIndex)
-                       + params.timeCost.get(nodeVIndex, nodeXIndex)
-                       - params.timeCost.get(nodeUPrevIndex, nodeUIndex)
-                       - params.timeCost.get(nodeUIndex, nodeXIndex);
-    double costSuppV = params.timeCost.get(nodeVPrevIndex, nodeUIndex)
-                       + params.timeCost.get(nodeUIndex, nodeYIndex)
-                       - params.timeCost.get(nodeVPrevIndex, nodeVIndex)
-                       - params.timeCost.get(nodeVIndex, nodeYIndex);
-    TimeWindowData routeUTwData, routeVTwData;
+    double costSuppU = params.dist(nodeUPrevIndex, nodeVIndex)
+                       + params.dist(nodeVIndex, nodeXIndex)
+                       - params.dist(nodeUPrevIndex, nodeUIndex)
+                       - params.dist(nodeUIndex, nodeXIndex);
+    double costSuppV = params.dist(nodeVPrevIndex, nodeUIndex)
+                       + params.dist(nodeUIndex, nodeYIndex)
+                       - params.dist(nodeVPrevIndex, nodeVIndex)
+                       - params.dist(nodeVIndex, nodeYIndex);
 
     if (routeU != routeV)
     {
@@ -808,9 +473,9 @@ bool LocalSearch::SwapTwoSingleClients()
             return false;
         }
 
-        routeUTwData = mergeTwDataRecursive(
+        auto routeUTwData = mergeTwDataRecursive(
             nodeU->prev->prefixTwData, nodeV->twData, nodeX->postfixTwData);
-        routeVTwData = mergeTwDataRecursive(
+        auto routeVTwData = mergeTwDataRecursive(
             nodeV->prev->prefixTwData, nodeU->twData, nodeY->postfixTwData);
 
         costSuppU += penaltyExcessLoad(routeU->load + loadV - loadU)
@@ -825,6 +490,8 @@ bool LocalSearch::SwapTwoSingleClients()
         {
             return false;
         }
+
+        TimeWindowData routeUTwData;
 
         // Swap within the same route
         if (nodeU->position < nodeV->position)
@@ -876,15 +543,14 @@ bool LocalSearch::SwapTwoClientsForOne()
         || nodeX->isDepot)
         return false;
 
-    double costSuppU = params.timeCost.get(nodeUPrevIndex, nodeVIndex)
-                       + params.timeCost.get(nodeVIndex, nodeXNextIndex)
-                       - params.timeCost.get(nodeUPrevIndex, nodeUIndex)
-                       - params.timeCost.get(nodeXIndex, nodeXNextIndex);
-    double costSuppV = params.timeCost.get(nodeVPrevIndex, nodeUIndex)
-                       + params.timeCost.get(nodeXIndex, nodeYIndex)
-                       - params.timeCost.get(nodeVPrevIndex, nodeVIndex)
-                       - params.timeCost.get(nodeVIndex, nodeYIndex);
-    TimeWindowData routeUTwData, routeVTwData;
+    double costSuppU = params.dist(nodeUPrevIndex, nodeVIndex)
+                       + params.dist(nodeVIndex, nodeXNextIndex)
+                       - params.dist(nodeUPrevIndex, nodeUIndex)
+                       - params.dist(nodeXIndex, nodeXNextIndex);
+    double costSuppV = params.dist(nodeVPrevIndex, nodeUIndex)
+                       + params.dist(nodeXIndex, nodeYIndex)
+                       - params.dist(nodeVPrevIndex, nodeVIndex)
+                       - params.dist(nodeVIndex, nodeYIndex);
 
     if (routeU != routeV)
     {
@@ -894,12 +560,12 @@ bool LocalSearch::SwapTwoClientsForOne()
             return false;
         }
 
-        routeUTwData = mergeTwDataRecursive(nodeU->prev->prefixTwData,
-                                            nodeV->twData,
-                                            nodeX->next->postfixTwData);
-        routeVTwData = mergeTwDataRecursive(nodeV->prev->prefixTwData,
-                                            getEdgeTwData(nodeU, nodeX),
-                                            nodeY->postfixTwData);
+        auto routeUTwData = mergeTwDataRecursive(nodeU->prev->prefixTwData,
+                                                 nodeV->twData,
+                                                 nodeX->next->postfixTwData);
+        auto routeVTwData = mergeTwDataRecursive(nodeV->prev->prefixTwData,
+                                                 getEdgeTwData(nodeU, nodeX),
+                                                 nodeY->postfixTwData);
 
         costSuppU += penaltyExcessLoad(routeU->load + loadV - loadU - loadX)
                      + penaltyTimeWindows(routeUTwData) - routeU->penalty;
@@ -913,6 +579,8 @@ bool LocalSearch::SwapTwoClientsForOne()
         {
             return false;
         }
+
+        TimeWindowData routeUTwData;
 
         // Swap within the same route
         if (nodeU->position < nodeV->position)
@@ -966,15 +634,14 @@ bool LocalSearch::SwapTwoClientPairs()
         || nodeU == nodeY || nodeX == nodeV || nodeV == nodeX->next)
         return false;
 
-    double costSuppU = params.timeCost.get(nodeUPrevIndex, nodeVIndex)
-                       + params.timeCost.get(nodeYIndex, nodeXNextIndex)
-                       - params.timeCost.get(nodeUPrevIndex, nodeUIndex)
-                       - params.timeCost.get(nodeXIndex, nodeXNextIndex);
-    double costSuppV = params.timeCost.get(nodeVPrevIndex, nodeUIndex)
-                       + params.timeCost.get(nodeXIndex, nodeYNextIndex)
-                       - params.timeCost.get(nodeVPrevIndex, nodeVIndex)
-                       - params.timeCost.get(nodeYIndex, nodeYNextIndex);
-    TimeWindowData routeUTwData, routeVTwData;
+    double costSuppU = params.dist(nodeUPrevIndex, nodeVIndex)
+                       + params.dist(nodeYIndex, nodeXNextIndex)
+                       - params.dist(nodeUPrevIndex, nodeUIndex)
+                       - params.dist(nodeXIndex, nodeXNextIndex);
+    double costSuppV = params.dist(nodeVPrevIndex, nodeUIndex)
+                       + params.dist(nodeXIndex, nodeYNextIndex)
+                       - params.dist(nodeVPrevIndex, nodeVIndex)
+                       - params.dist(nodeYIndex, nodeYNextIndex);
 
     if (routeU != routeV)
     {
@@ -984,12 +651,12 @@ bool LocalSearch::SwapTwoClientPairs()
             return false;
         }
 
-        routeUTwData = mergeTwDataRecursive(nodeU->prev->prefixTwData,
-                                            getEdgeTwData(nodeV, nodeY),
-                                            nodeX->next->postfixTwData);
-        routeVTwData = mergeTwDataRecursive(nodeV->prev->prefixTwData,
-                                            getEdgeTwData(nodeU, nodeX),
-                                            nodeY->next->postfixTwData);
+        auto routeUTwData = mergeTwDataRecursive(nodeU->prev->prefixTwData,
+                                                 getEdgeTwData(nodeV, nodeY),
+                                                 nodeX->next->postfixTwData);
+        auto routeVTwData = mergeTwDataRecursive(nodeV->prev->prefixTwData,
+                                                 getEdgeTwData(nodeU, nodeX),
+                                                 nodeY->next->postfixTwData);
 
         costSuppU
             += penaltyExcessLoad(routeU->load + loadV + loadY - loadU - loadX)
@@ -1005,6 +672,8 @@ bool LocalSearch::SwapTwoClientPairs()
         {
             return false;
         }
+
+        TimeWindowData routeUTwData;
 
         // Swap within the same route
         if (nodeU->position < nodeV->position)
@@ -1054,10 +723,10 @@ bool LocalSearch::TwoOptWithinTrip()
     if (nodeU->position >= nodeV->position - 1)
         return false;
 
-    double cost = params.timeCost.get(nodeUIndex, nodeVIndex)
-                  + params.timeCost.get(nodeXIndex, nodeYIndex)
-                  - params.timeCost.get(nodeUIndex, nodeXIndex)
-                  - params.timeCost.get(nodeVIndex, nodeYIndex)
+    double cost = params.dist(nodeUIndex, nodeVIndex)
+                  + params.dist(nodeXIndex, nodeYIndex)
+                  - params.dist(nodeUIndex, nodeXIndex)
+                  - params.dist(nodeVIndex, nodeYIndex)
                   + nodeV->cumulatedReversalDistance
                   - nodeX->cumulatedReversalDistance;
 
@@ -1103,10 +772,10 @@ bool LocalSearch::TwoOptWithinTrip()
 
 bool LocalSearch::TwoOptBetweenTrips()
 {
-    double costSuppU = params.timeCost.get(nodeUIndex, nodeYIndex)
-                       - params.timeCost.get(nodeUIndex, nodeXIndex);
-    double costSuppV = params.timeCost.get(nodeVIndex, nodeXIndex)
-                       - params.timeCost.get(nodeVIndex, nodeYIndex);
+    double costSuppU = params.dist(nodeUIndex, nodeYIndex)
+                       - params.dist(nodeUIndex, nodeXIndex);
+    double costSuppV = params.dist(nodeVIndex, nodeXIndex)
+                       - params.dist(nodeVIndex, nodeYIndex);
 
     if (!routeULoadPenalty && !routeUTimeWarp && !routeVLoadPenalty
         && !routeVTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
@@ -1114,11 +783,9 @@ bool LocalSearch::TwoOptBetweenTrips()
         return false;
     }
 
-    TimeWindowData routeUTwData, routeVTwData;
-
-    routeUTwData
+    auto routeUTwData
         = mergeTwDataRecursive(nodeU->prefixTwData, nodeY->postfixTwData);
-    routeVTwData
+    auto routeVTwData
         = mergeTwDataRecursive(nodeV->prefixTwData, nodeX->postfixTwData);
 
     costSuppU += penaltyExcessLoad(nodeU->cumulatedLoad + routeV->load
@@ -1203,11 +870,11 @@ bool LocalSearch::swapStar(const bool withTW)
             // We cannot determine impact on timewarp without adding too much
             // complexity (O(n^3) instead of O(n^2))
             const double loadPenU = penaltyExcessLoad(
-                routeU->load + params.cli[nodeV->cour].demand
-                - params.cli[nodeU->cour].demand);
+                routeU->load + params.clients[nodeV->cour].demand
+                - params.clients[nodeU->cour].demand);
             const double loadPenV = penaltyExcessLoad(
-                routeV->load + params.cli[nodeU->cour].demand
-                - params.cli[nodeV->cour].demand);
+                routeV->load + params.clients[nodeU->cour].demand
+                - params.clients[nodeV->cour].demand);
             const double deltaLoadPen = loadPenU + loadPenV
                                         - penaltyExcessLoad(routeU->load)
                                         - penaltyExcessLoad(routeV->load);
@@ -1269,54 +936,51 @@ bool LocalSearch::swapStar(const bool withTW)
     }
 
     // Compute actual cost including TimeWarp penalty
-    double costSuppU = params.timeCost.get(myBestSwapStar.bestPositionV->cour,
-                                           myBestSwapStar.V->cour)
-                       - params.timeCost.get(myBestSwapStar.U->prev->cour,
-                                             myBestSwapStar.U->cour)
-                       - params.timeCost.get(myBestSwapStar.U->cour,
-                                             myBestSwapStar.U->next->cour);
-    double costSuppV = params.timeCost.get(myBestSwapStar.bestPositionU->cour,
-                                           myBestSwapStar.U->cour)
-                       - params.timeCost.get(myBestSwapStar.V->prev->cour,
-                                             myBestSwapStar.V->cour)
-                       - params.timeCost.get(myBestSwapStar.V->cour,
-                                             myBestSwapStar.V->next->cour);
+    double costSuppU
+        = params.dist(myBestSwapStar.bestPositionV->cour,
+                      myBestSwapStar.V->cour)
+          - params.dist(myBestSwapStar.U->prev->cour, myBestSwapStar.U->cour)
+          - params.dist(myBestSwapStar.U->cour, myBestSwapStar.U->next->cour);
+    double costSuppV
+        = params.dist(myBestSwapStar.bestPositionU->cour,
+                      myBestSwapStar.U->cour)
+          - params.dist(myBestSwapStar.V->prev->cour, myBestSwapStar.V->cour)
+          - params.dist(myBestSwapStar.V->cour, myBestSwapStar.V->next->cour);
 
     if (myBestSwapStar.bestPositionV == myBestSwapStar.U->prev)
     {
         // Insert in place of U
-        costSuppU += params.timeCost.get(myBestSwapStar.V->cour,
-                                         myBestSwapStar.U->next->cour);
+        costSuppU += params.dist(myBestSwapStar.V->cour,
+                                 myBestSwapStar.U->next->cour);
     }
     else
     {
-        costSuppU
-            += params.timeCost.get(myBestSwapStar.V->cour,
-                                   myBestSwapStar.bestPositionV->next->cour)
-               + params.timeCost.get(myBestSwapStar.U->prev->cour,
-                                     myBestSwapStar.U->next->cour)
-               - params.timeCost.get(myBestSwapStar.bestPositionV->cour,
-                                     myBestSwapStar.bestPositionV->next->cour);
+        costSuppU += params.dist(myBestSwapStar.V->cour,
+                                 myBestSwapStar.bestPositionV->next->cour)
+                     + params.dist(myBestSwapStar.U->prev->cour,
+                                   myBestSwapStar.U->next->cour)
+                     - params.dist(myBestSwapStar.bestPositionV->cour,
+                                   myBestSwapStar.bestPositionV->next->cour);
     }
 
     if (myBestSwapStar.bestPositionU == myBestSwapStar.V->prev)
     {
         // Insert in place of V
-        costSuppV += params.timeCost.get(myBestSwapStar.U->cour,
-                                         myBestSwapStar.V->next->cour);
+        costSuppV += params.dist(myBestSwapStar.U->cour,
+                                 myBestSwapStar.V->next->cour);
     }
     else
     {
-        costSuppV
-            += params.timeCost.get(myBestSwapStar.U->cour,
-                                   myBestSwapStar.bestPositionU->next->cour)
-               + params.timeCost.get(myBestSwapStar.V->prev->cour,
-                                     myBestSwapStar.V->next->cour)
-               - params.timeCost.get(myBestSwapStar.bestPositionU->cour,
-                                     myBestSwapStar.bestPositionU->next->cour);
+        costSuppV += params.dist(myBestSwapStar.U->cour,
+                                 myBestSwapStar.bestPositionU->next->cour)
+                     + params.dist(myBestSwapStar.V->prev->cour,
+                                   myBestSwapStar.V->next->cour)
+                     - params.dist(myBestSwapStar.bestPositionU->cour,
+                                   myBestSwapStar.bestPositionU->next->cour);
     }
 
-    TimeWindowData routeUTwData, routeVTwData;
+    TimeWindowData routeUTwData;
+
     // It is not possible to have bestPositionU == V or bestPositionV == U, so
     // the positions are always strictly different
     if (myBestSwapStar.bestPositionV->position
@@ -1347,6 +1011,8 @@ bool LocalSearch::swapStar(const bool withTW)
             myBestSwapStar.V->twData,
             myBestSwapStar.bestPositionV->next->postfixTwData);
     }
+
+    TimeWindowData routeVTwData;
 
     if (myBestSwapStar.bestPositionU->position
         == myBestSwapStar.V->position - 1)
@@ -1410,20 +1076,20 @@ bool LocalSearch::RelocateStar()
 
         const TimeWindowData routeUTwData = mergeTwDataRecursive(
             nodeU->prev->prefixTwData, nodeX->postfixTwData);
-        const double costSuppU
-            = params.timeCost.get(nodeUPrevIndex, nodeXIndex)
-              - params.timeCost.get(nodeUPrevIndex, nodeUIndex)
-              - params.timeCost.get(nodeUIndex, nodeXIndex)
-              + penaltyExcessLoad(routeU->load - loadU)
-              + penaltyTimeWindows(routeUTwData) - routeU->penalty;
+        const double costSuppU = params.dist(nodeUPrevIndex, nodeXIndex)
+                                 - params.dist(nodeUPrevIndex, nodeUIndex)
+                                 - params.dist(nodeUIndex, nodeXIndex)
+                                 + penaltyExcessLoad(routeU->load - loadU)
+                                 + penaltyTimeWindows(routeUTwData)
+                                 - routeU->penalty;
 
         for (Node *V = routeV->depot->next; !V->isDepot; V = V->next)
         {
             const TimeWindowData routeVTwData = mergeTwDataRecursive(
                 V->prefixTwData, nodeU->twData, V->next->postfixTwData);
-            double costSuppV = params.timeCost.get(V->cour, nodeUIndex)
-                               + params.timeCost.get(nodeUIndex, V->next->cour)
-                               - params.timeCost.get(V->cour, V->next->cour)
+            double costSuppV = params.dist(V->cour, nodeUIndex)
+                               + params.dist(nodeUIndex, V->next->cour)
+                               - params.dist(V->cour, V->next->cour)
                                + penaltyExcessLoad(routeV->load + loadU)
                                + penaltyTimeWindows(routeVTwData)
                                - routeV->penalty;
@@ -1458,9 +1124,8 @@ int LocalSearch::getCheapestInsertSimultRemoval(Node *U,
     ThreeBestInsert *myBestInsert = &bestInsertClient[V->route->cour][U->cour];
     bool found = false;
 
-    // Find best insertion in the route such that V is not next or pred (can
-    // only belong to the top three locations)
-
+    // Finds the best insertion in the route such that V is not next or pred
+    // (can only belong to the top three locations)
     bestPosition = myBestInsert->bestLocation[0];
     int bestCost = myBestInsert->bestCost[0];
     found = (bestPosition != V && bestPosition->next != V);
@@ -1478,9 +1143,9 @@ int LocalSearch::getCheapestInsertSimultRemoval(Node *U,
     }
 
     // Compute insertion in the place of V
-    int deltaCost = params.timeCost.get(V->prev->cour, U->cour)
-                    + params.timeCost.get(U->cour, V->next->cour)
-                    - params.timeCost.get(V->prev->cour, V->next->cour);
+    int deltaCost = params.dist(V->prev->cour, U->cour)
+                    + params.dist(U->cour, V->next->cour)
+                    - params.dist(V->prev->cour, V->next->cour);
     if (!found || deltaCost < bestCost)
     {
         bestPosition = V->prev;
@@ -1500,8 +1165,8 @@ int LocalSearch::getCheapestInsertSimultRemovalWithTW(Node *U,
         = &bestInsertClientTW[V->route->cour][U->cour];
     bool found = false;
 
-    // Find best insertion in the route such that V is not next or pred (can
-    // only belong to the top three locations)
+    // Finds the best insertion in the route such that V is not next or pred
+    // (can only belong to the top three locations)
     bestPosition = myBestInsert->bestLocation[0];
     int bestCost = myBestInsert->bestCost[0];
     found = (bestPosition != V && bestPosition->next != V);
@@ -1521,9 +1186,9 @@ int LocalSearch::getCheapestInsertSimultRemovalWithTW(Node *U,
     // Compute insertion in the place of V
     TimeWindowData twData = mergeTwDataRecursive(
         V->prev->prefixTwData, U->twData, V->next->postfixTwData);
-    int deltaCost = params.timeCost.get(V->prev->cour, U->cour)
-                    + params.timeCost.get(U->cour, V->next->cour)
-                    - params.timeCost.get(V->prev->cour, V->next->cour)
+    int deltaCost = params.dist(V->prev->cour, U->cour)
+                    + params.dist(U->cour, V->next->cour)
+                    - params.dist(V->prev->cour, V->next->cour)
                     + penaltyTimeWindows(twData)
                     - penaltyTimeWindows(V->route->twData);
 
@@ -1541,24 +1206,24 @@ void LocalSearch::preprocessInsertions(Route *R1, Route *R2)
     for (Node *U = R1->depot->next; !U->isDepot; U = U->next)
     {
         // Performs the preprocessing
-        U->deltaRemoval = params.timeCost.get(U->prev->cour, U->next->cour)
-                          - params.timeCost.get(U->prev->cour, U->cour)
-                          - params.timeCost.get(U->cour, U->next->cour);
+        U->deltaRemoval = params.dist(U->prev->cour, U->next->cour)
+                          - params.dist(U->prev->cour, U->cour)
+                          - params.dist(U->cour, U->next->cour);
         auto &currentOption = bestInsertClient[R2->cour][U->cour];
         if (R2->whenLastModified > currentOption.whenLastCalculated)
         {
             currentOption = ThreeBestInsert();
             currentOption.whenLastCalculated = nbMoves;
             currentOption.bestCost[0]
-                = params.timeCost.get(0, U->cour)
-                  + params.timeCost.get(U->cour, R2->depot->next->cour)
-                  - params.timeCost.get(0, R2->depot->next->cour);
+                = params.dist(0, U->cour)
+                  + params.dist(U->cour, R2->depot->next->cour)
+                  - params.dist(0, R2->depot->next->cour);
             currentOption.bestLocation[0] = R2->depot;
             for (Node *V = R2->depot->next; !V->isDepot; V = V->next)
             {
-                int deltaCost = params.timeCost.get(V->cour, U->cour)
-                                + params.timeCost.get(U->cour, V->next->cour)
-                                - params.timeCost.get(V->cour, V->next->cour);
+                int deltaCost = params.dist(V->cour, U->cour)
+                                + params.dist(U->cour, V->next->cour)
+                                - params.dist(V->cour, V->next->cour);
                 currentOption.add(deltaCost, V);
             }
         }
@@ -1581,11 +1246,11 @@ void LocalSearch::preprocessInsertionsWithTW(Route *R1, Route *R2)
         {
             twData = mergeTwDataRecursive(U->prev->prefixTwData,
                                           U->next->postfixTwData);
-            U->deltaRemovalTW
-                = params.timeCost.get(U->prev->cour, U->next->cour)
-                  - params.timeCost.get(U->prev->cour, U->cour)
-                  - params.timeCost.get(U->cour, U->next->cour)
-                  + penaltyTimeWindows(twData) - penaltyTimeWindows(R1->twData);
+            U->deltaRemovalTW = params.dist(U->prev->cour, U->next->cour)
+                                - params.dist(U->prev->cour, U->cour)
+                                - params.dist(U->cour, U->next->cour)
+                                + penaltyTimeWindows(twData)
+                                - penaltyTimeWindows(R1->twData);
         }
         auto &currentOption = bestInsertClientTW[R2->cour][U->cour];
         if (R2->whenLastModified > currentOption.whenLastCalculated)
@@ -1600,9 +1265,9 @@ void LocalSearch::preprocessInsertionsWithTW(Route *R1, Route *R2)
                                           U->twData,
                                           R2->depot->next->postfixTwData);
 
-            int cost = params.timeCost.get(0, U->cour)
-                       + params.timeCost.get(U->cour, R2->depot->next->cour)
-                       - params.timeCost.get(0, R2->depot->next->cour)
+            int cost = params.dist(0, U->cour)
+                       + params.dist(U->cour, R2->depot->next->cour)
+                       - params.dist(0, R2->depot->next->cour)
                        + penaltyTimeWindows(twData)
                        - penaltyTimeWindows(R2->twData);
 
@@ -1613,9 +1278,9 @@ void LocalSearch::preprocessInsertionsWithTW(Route *R1, Route *R2)
                 twData = mergeTwDataRecursive(
                     V->prefixTwData, U->twData, V->next->postfixTwData);
 
-                int deltaCost = params.timeCost.get(V->cour, U->cour)
-                                + params.timeCost.get(U->cour, V->next->cour)
-                                - params.timeCost.get(V->cour, V->next->cour)
+                int deltaCost = params.dist(V->cour, U->cour)
+                                + params.dist(U->cour, V->next->cour)
+                                - params.dist(V->cour, V->next->cour)
                                 + penaltyTimeWindows(twData)
                                 - penaltyTimeWindows(R2->twData);
 
@@ -1665,7 +1330,10 @@ TimeWindowData
 LocalSearch::mergeTwDataRecursive(TimeWindowData const &twData1,
                                   TimeWindowData const &twData2) const
 {
-    int dist = params.timeCost.get(twData1.idxLast, twData2.idxFirst);
+    // TODO this is on the hot path in any profiling run I do. Can we do
+    //  anything to speed this up?
+
+    int dist = params.dist(twData1.idxLast, twData2.idxFirst);
     int delta = twData1.duration - twData1.timeWarp + dist;
     int deltaWaitTime = std::max(twData2.twEarly - delta - twData1.twLate, 0);
     int deltaTimeWarp = std::max(twData1.twEarly + delta - twData2.twLate, 0);
@@ -1734,10 +1402,9 @@ void LocalSearch::updateRouteData(Route *myRoute)
         mynode = mynode->next;
         myplace++;
         mynode->position = myplace;
-        myload += params.cli[mynode->cour].demand;
-        myReversalDistance
-            += params.timeCost.get(mynode->cour, mynode->prev->cour)
-               - params.timeCost.get(mynode->prev->cour, mynode->cour);
+        myload += params.clients[mynode->cour].demand;
+        myReversalDistance += params.dist(mynode->cour, mynode->prev->cour)
+                              - params.dist(mynode->prev->cour, mynode->cour);
         mynode->cumulatedLoad = myload;
         mynode->cumulatedReversalDistance = myReversalDistance;
         mynode->prefixTwData
@@ -1746,12 +1413,12 @@ void LocalSearch::updateRouteData(Route *myRoute)
         mynode->nextSeed = nullptr;
         if (!mynode->isDepot)
         {
-            cumulatedX += params.cli[mynode->cour].x;
-            cumulatedY += params.cli[mynode->cour].y;
+            cumulatedX += params.clients[mynode->cour].x;
+            cumulatedY += params.clients[mynode->cour].y;
             if (firstIt)
-                myRoute->sector.initialize(params.cli[mynode->cour].angle);
+                myRoute->sector.initialize(params.clients[mynode->cour].angle);
             else
-                myRoute->sector.extend(params.cli[mynode->cour].angle);
+                myRoute->sector.extend(params.clients[mynode->cour].angle);
 
             if (myplace % 4 == 0)
             {
@@ -1799,19 +1466,18 @@ void LocalSearch::updateRouteData(Route *myRoute)
     {
         myRoute->polarAngleBarycenter
             = atan2(cumulatedY / static_cast<double>(myRoute->nbCustomers)
-                        - params.cli[0].y,
+                        - params.clients[0].y,
                     cumulatedX / static_cast<double>(myRoute->nbCustomers)
-                        - params.cli[0].x);
+                        - params.clients[0].x);
 
         // Enforce minimum size of circle sector
         if (params.config.minCircleSectorSize > 0)
         {
             const int growSectorBy
                 = (params.config.minCircleSectorSize
-                   - myRoute->sector.positive_mod(myRoute->sector.end
-                                                  - myRoute->sector.start)
-                   + 1)
+                   - CircleSector::positive_mod(myRoute->sector) + 1)
                   / 2;
+
             if (growSectorBy > 0)
             {
                 myRoute->sector.extend(myRoute->sector.start - growSectorBy);
@@ -1826,14 +1492,13 @@ void LocalSearch::loadIndividual(Individual const &indiv)
 {
     emptyRoutes.clear();
     nbMoves = 0;
-    TimeWindowData depotTwData;
-    depotTwData.idxFirst = 0;
-    depotTwData.idxLast = 0;
-    depotTwData.duration = 0;
-    depotTwData.timeWarp = 0;
-    depotTwData.twEarly = params.cli[0].twEarly;
-    depotTwData.twLate = params.cli[0].twLate;
-    depotTwData.latestReleaseTime = params.cli[0].releaseTime;
+    TimeWindowData depotTwData = {0,
+                                  0,
+                                  0,
+                                  0,
+                                  params.clients[0].twEarly,
+                                  params.clients[0].twLate,
+                                  params.clients[0].releaseTime};
 
     // Initializing time window data (before loop since it is needed in update
     // route)
@@ -1842,11 +1507,10 @@ void LocalSearch::loadIndividual(Individual const &indiv)
         TimeWindowData *myTwData = &clients[i].twData;
         myTwData->idxFirst = i;
         myTwData->idxLast = i;
-        myTwData->duration = params.cli[i].servDur;
-        myTwData->twEarly = params.cli[i].twEarly;
-        myTwData->twLate = params.cli[i].twLate;
-        myTwData->latestReleaseTime = params.cli[i].releaseTime;
-        // myTwData->load = params.cli[i].demand;
+        myTwData->duration = params.clients[i].servDur;
+        myTwData->twEarly = params.clients[i].twEarly;
+        myTwData->twLate = params.clients[i].twLate;
+        myTwData->latestReleaseTime = params.clients[i].releaseTime;
     }
 
     auto const &routesIndiv = indiv.getRoutes();
@@ -1909,32 +1573,35 @@ Individual LocalSearch::exportIndividual()
     for (int r = 0; r < params.nbVehicles; r++)
         routePolarAngles.emplace_back(routes[r].polarAngleBarycenter, r);
 
-    // empty routes have a polar angle of 1.e30, and therefore will always
+    // empty indivRoutes have a polar angle of 1.e30, and therefore will always
     // appear at the end
     std::sort(routePolarAngles.begin(), routePolarAngles.end());
 
-    std::vector<int> tour(params.nbClients);
-    std::vector<std::vector<int>> routes(params.nbVehicles);
+    std::vector<int> tour;
+    tour.reserve(params.nbClients);
 
-    int pos = 0;
+    std::vector<std::vector<int>> indivRoutes(params.nbVehicles);
+
     for (int r = 0; r < params.nbVehicles; r++)
     {
         Node *node = depots[routePolarAngles[r].second].next;
 
         while (!node->isDepot)
         {
-            tour[pos] = node->cour;
-            routes[r].push_back(node->cour);
+            tour.push_back(node->cour);
+            indivRoutes[r].push_back(node->cour);
             node = node->next;
-            pos++;
         }
     }
 
-    return {&params, tour, routes};
+    return {&params, tour, indivRoutes};
 }
 
 LocalSearch::LocalSearch(Params &params, XorShift128 &rng)
-    : params(params), rng(rng)
+    : params(params),
+      rng(rng),
+      orderNodes(params.nbClients),
+      orderRoutes(params.nbVehicles)
 {
     clients = std::vector<Node>(params.nbClients + 1);
     routes = std::vector<Route>(params.nbVehicles);
@@ -1963,8 +1630,7 @@ LocalSearch::LocalSearch(Params &params, XorShift128 &rng)
         depotsEnd[i].isDepot = true;
         depotsEnd[i].route = &routes[i];
     }
-    for (int i = 1; i <= params.nbClients; i++)
-        orderNodes.push_back(i);
-    for (int r = 0; r < params.nbVehicles; r++)
-        orderRoutes.push_back(r);
+
+    std::iota(orderNodes.begin(), orderNodes.end(), 1);
+    std::iota(orderRoutes.begin(), orderRoutes.end(), 0);
 }

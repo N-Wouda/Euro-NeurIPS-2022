@@ -33,6 +33,7 @@ SOFTWARE.*/
 
 #include <array>
 #include <chrono>
+#include <list>
 #include <unordered_set>
 
 // Class to run the genetic algorithm, which incorporates functionality of
@@ -42,27 +43,33 @@ class GeneticAlgorithm
     using Parents = std::pair<Individual const *, Individual const *>;
     using timePoint = std::chrono::system_clock::time_point;
 
-    Params &params;          // Problem parameters
-    XorShift128 &rng;        // Random number generator
-    Population &population;  // Population
+    Params &params;            // Problem parameters
+    XorShift128 &rng;          // Random number generator
+    Population &population;    // Population
+    LocalSearch &localSearch;  // Local search structure
 
-    // Function to do two OX Crossovers for a pair of individuals (the two
-    // parents) and return the best individual based on penalizedCost
-    Individual crossoverOX(Parents parents);
+    std::list<bool> loadFeas;  // load feasibility of recent individuals
+    std::list<bool> timeFeas;  // time feasibility of recent individuals
 
-    // Function to do one (in place) OX Crossover, given the two parents and the
-    // beginning and end (inclusive) of the crossover zone.
-    [[nodiscard]] Individual
-    doOXcrossover(Parents parents, size_t start, size_t end) const;
+    /**
+     * Does one ordered crossover of the given parents. A randomly selected
+     * subset of clients is taken from the first parent - the rest comes from
+     * the second parent.
+     */
+    [[nodiscard]] Individual crossover(Parents const &parents) const;
 
-    // Function to do two SREX Crossovers for a pair of individuals (the two
-    // parents) and return the best individual based on penalizedCost.
-    [[nodiscard]] Individual crossoverSREX(Parents parents) const;
+    /**
+     * Performs local search and adds the individual to the population. If the
+     * individual is infeasible, with some probability we try to repair it and
+     * add it if this succeeds.
+     */
+    void educate(Individual &indiv);
 
-    // Insert unplanned tasks (those that were in the removed routes of A, but
-    // not the inserted routes of B or vice versa)
-    void insertUnplannedTasks(std::vector<std::vector<int>> &routes,
-                              std::unordered_set<int> const &unplanned) const;
+    /**
+     * Updates the infeasibility penalties, based on the feasibility status of
+     * the most recent individuals.
+     */
+    void updatePenalties();
 
 public:
     /**
@@ -74,7 +81,10 @@ public:
      */
     Result runUntil(timePoint const &timePoint);
 
-    GeneticAlgorithm(Params &params, XorShift128 &rng, Population &population);
+    GeneticAlgorithm(Params &params,
+                     XorShift128 &rng,
+                     Population &population,
+                     LocalSearch &localSearch);
 };
 
 #endif

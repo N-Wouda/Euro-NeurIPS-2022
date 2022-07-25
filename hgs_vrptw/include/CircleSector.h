@@ -25,6 +25,11 @@ struct CircleSector
         return (i % 65536 + 65536) % 65536;
     }
 
+    static int positive_mod(CircleSector sector)
+    {
+        return positive_mod(sector.end - sector.start);
+    }
+
     // Initialize a circle sector from a single point
     // The function extend(int point) can be used to create a circle sector that
     // is not only one point
@@ -51,9 +56,9 @@ struct CircleSector
         // the RHS is the size of the sector, by adding the tolerance outside
         // the positive_mod, we avoid overflow beyond a full circle
         return ((positive_mod(sector2.start - sector1.start)
-                 <= positive_mod(sector1.end - sector1.start) + tolerance)
+                 <= positive_mod(sector1) + tolerance)
                 || (positive_mod(sector1.start - sector2.start)
-                    <= positive_mod(sector2.end - sector2.start) + tolerance));
+                    <= positive_mod(sector2) + tolerance));
     }
 
     // Extends the circle sector to include an additional point

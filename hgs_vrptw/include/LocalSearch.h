@@ -46,6 +46,7 @@ struct TimeWindowData
                    // given a min cost route sequence
     int twLate;    // Latest start of servicing first node in sequence,
                    // given a min cost route sequence
+
     int latestReleaseTime;  // Latest of all release times of customers in
                             // sequence, so route cannot dispatch before
 
@@ -103,18 +104,6 @@ struct Node
         toNextSeedTwD;  // TimeWindowData for subsequence (cour...cour+4)
                         // excluding self, including cour + 4
     Node *nextSeed;     // next seeded node if available (nullptr otherwise)
-};
-
-// This struct is used for grouping all node data that is relevant during the
-// construction heuristics.
-struct NodeToInsert
-{
-    int clientIdx;          // Index in the clients vector
-    int load;               // Load of the node.
-    int serviceDuration;    // Service duration of the Node
-    double angleFromDepot;  // The angle of the node relative to the depot
-                            // (between -PI and PI)
-    TimeWindowData twData;  // TimeWindowData for the Node
 };
 
 // Structure used in SWAP* to remember the three best insertion positions of a
@@ -337,27 +326,6 @@ public:
     // Run the local search with the specified penalty values
     void
     run(Individual &indiv, double penaltyCapacityLS, double penaltyTimeWarpLS);
-
-    // Initialize data for construction heuristics
-    void initializeConstruction(std::vector<NodeToInsert> *nodesToInsert);
-
-    // Construct an individual using a heuristic with a maximum allowed
-    // violation of capacity and a maximum allowed time warp. If not all clients
-    // can be assigned given the tolerances, the unassigned clients are added to
-    // the back of the last route (should not happen in practice, since there
-    // are plenty routes). Routes are created sequentially. The seed client in
-    // the route can be either the unassigned client furthest from depot, or the
-    // unassigned client closest to the depot.
-    Individual
-    constructIndividualWithSeedOrder(int toleratedCapacityViolation,
-                                     int toleratedTimeWarp,
-                                     bool useSeedClientFurthestFromDepot);
-
-    // Groups orders per route according to angle with depot. fillPercentage can
-    // be configured to allow some room for repairing routes during local
-    // search. Orders with short time window are added in order of time
-    // twLate, other orders are inserted in best position.
-    Individual constructIndividualBySweep(int fillPercentage);
 
     LocalSearch(Params &params, XorShift128 &rng);
 };

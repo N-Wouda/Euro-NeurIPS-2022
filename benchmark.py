@@ -33,10 +33,10 @@ def solve(loc: str, seed: int, time_limit: int):
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=seed)
+    pop = hgspy.Population(params, rng)
     ls = hgspy.LocalSearch(params, rng)
-    pop = hgspy.Population(params, rng, ls)
 
-    algo = hgspy.GeneticAlgorithm(params, rng, pop)
+    algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
     res = algo.run_until(start + timedelta(seconds=time_limit))
 
     best = res.get_best_found()

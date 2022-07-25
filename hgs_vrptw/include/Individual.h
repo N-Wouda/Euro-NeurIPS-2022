@@ -37,12 +37,15 @@ class Individual
     using Client = int;
     using Clients = std::vector<Client>;
 
-    double penalizedCost = 0.;  // Penalized cost of the solution
     size_t nbRoutes = 0;        // Number of routes
     size_t distance = 0;        // Total distance
-    size_t waitTime = 0;        // All route wait time of early arrivals
     size_t capacityExcess = 0;  // Total excess load over all routes
     size_t timeWarp = 0;        // All route time warp of late arrivals
+
+    // The other individuals in the population (cannot be the depot 0), ordered
+    // by increasing proximity (the set container follows a natural ordering
+    // based on the value of the first pair)
+    std::multiset<std::pair<double, Individual *>> indivsPerProximity;
 
     Params *params;  // Problem parameters
 
@@ -55,13 +58,11 @@ class Individual
     // - the numRoutes() member indicates the number of nonempty routes.
     std::vector<Clients> routeChrom;
 
-    // The other individuals in the population (cannot be the depot 0), ordered
-    // by increasing proximity (the set container follows a natural ordering
-    // based on the value of the first pair)
-    std::multiset<std::pair<double, Individual *>> indivsPerProximity;
-
     // Splits the tour chromosome into routes using the linear split algorithm
     void makeRoutes();
+
+    // Evaluates this solution's objective value.
+    void evaluateCompleteCost();
 
     /**
      * Returns a vector of [pred, succ] clients for each client (index).
@@ -72,7 +73,12 @@ public:
     /**
      * Returns this individual's objective (penalized cost).
      */
-    [[nodiscard]] inline double cost() const { return penalizedCost; }
+    [[nodiscard]] inline double cost() const
+    {
+        return static_cast<double>(distance)
+               + static_cast<double>(capacityExcess) * params->penaltyCapacity
+               + static_cast<double>(timeWarp) * params->penaltyTimeWarp;
+    }
 
     /**
      * Returns this individual's routing decisions.
@@ -81,11 +87,6 @@ public:
     {
         return routeChrom;
     }
-
-    /**
-     * Number of non-empty routes in this solution.
-     */
-    [[nodiscard]] inline size_t numRoutes() const { return nbRoutes; }
 
     /**
      * Returns this individual's giant tour chromosome.
@@ -113,25 +114,17 @@ public:
      */
     [[nodiscard]] inline bool hasTimeWarp() const { return timeWarp > 0; }
 
-    // Evaluates this solution's objective value.
-    void evaluateCompleteCost();
-
-    // Removes the other from the proximity structure of this individual.
-    void removeProximity(Individual *other);
-
     // Computes and stores a distance measure with another individual, based on
-    // the number of arcs that differ between two solutions
+    // the number of arcs that differ between two solutions.
     void brokenPairsDistance(Individual *other);
 
-    // Returns the average distance of this individual with the nbClosest
-    // individuals
-    [[nodiscard]] double avgBrokenPairsDistanceClosest(size_t nbClosest) const;
+    // Returns the average distance of this individual to the individuals
+    // nearest to it.
+    [[nodiscard]] double avgBrokenPairsDistanceClosest() const;
 
     // Exports a solution in CVRPLib format (adds a final line with the
-    // computational time)
+    // computational time).
     void exportCVRPLibFormat(std::string const &path, double time) const;
-
-    bool operator==(Individual const &other) const;
 
     Individual(Params *params, XorShift128 *rng);  // random individual
 
@@ -140,6 +133,8 @@ public:
     Individual(Params *params,  // from tour and routes
                Clients tour,
                std::vector<Clients> routes);
+
+    ~Individual();
 };
 
 #endif

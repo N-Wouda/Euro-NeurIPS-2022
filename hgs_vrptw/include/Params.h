@@ -44,47 +44,59 @@ class Params
     // variables and parameters
     struct Client
     {
-        int custNum;  // Index of the client
-        int x;        // Coordinate X
-        int y;        // Coordinate Y
-        int servDur;  // Service duration
-        int demand;   // Demand
-        int twEarly;  // Earliest arrival (when using time windows)
-        int twLate;   // Latest arrival (when using time windows)
-
-        // Release time (when using time windows, route containing this customer
-        // cannot depart before this time)
-        int releaseTime;
+        int custNum;      // Index of the client
+        int x;            // Coordinate X
+        int y;            // Coordinate Y
+        int servDur;      // Service duration
+        int demand;       // Demand
+        int twEarly;      // Earliest arrival (when using time windows)
+        int twLate;       // Latest arrival (when using time windows)
+        int releaseTime;  // Routes with this client cannot leave depot before
+                          // this time
 
         // Polar angle of the client around the depot (starting at east, moving
         // counter-clockwise), measured in degrees and truncated for convenience
         int angle;
     };
 
+    // Neighborhood restrictions: For each client, list of nearby clients (size
+    // nbClients + 1, but nothing stored for the depot!)
+    std::vector<std::vector<int>> neighbours;
+
+    /**
+     * Calculate, for all vertices, the correlation ('nearness') of the
+     * nbGranular closest vertices.
+     */
+    void calculateNeighbours();
+
+    /**
+     * Sets dynamic parameters based on the instance size. Use is toggled by the
+     * ``config.useDynamicParameters`` flag.
+     */
+    void setDynamicParameters();
+
 public:
     // TODO make members private
 
     Config config;  // Stores all the parameter values
 
-    // Penalty for one unit of capacity excess (adapted through the search)
-    double penaltyCapacity;
-
-    // Penalty for one unit waiting time (adapted through the search)
-    double penaltyWaitTime;
-
-    // Penalty for one unit time warp (adapted through the search)
-    double penaltyTimeWarp;
+    double penaltyCapacity;  // Excess capacity penalty (per unit)
+    double penaltyTimeWarp;  // Time warp penalty (per unit)
 
     int nbClients;        // Number of clients (excluding the depot)
     int nbVehicles;       // Number of vehicles
     int vehicleCapacity;  // Capacity limit
 
-    std::vector<Client> cli;  // Client (+depot) information
-    Matrix timeCost;          // Distance matrix (+depot)
+    std::vector<Client> clients;  // Client (+depot) information
+    Matrix dist;                  // Distance matrix (+depot)
 
-    // Neighborhood restrictions: For each client, list of nearby clients (size
-    // nbClients + 1, but nothing stored for the depot!)
-    std::vector<std::vector<int>> correlatedVertices;
+    /**
+     * Returns the nbGranular clients nearest/closest to the passed-in client.
+     */
+    [[nodiscard]] std::vector<int> const &getNeighboursOf(size_t client) const
+    {
+        return neighbours[client];
+    }
 
     /**
      * Constructs a Params object with the given configuration, and data read
@@ -106,7 +118,8 @@ public:
      * @param vehicleCap   Vehicle capacity.
      * @param timeWindows  Time windows as pairs of [early, late].
      * @param servDurs     Service durations.
-     * @param dist         Distance matrix.
+     * @param distMat      Distance matrix.
+     * @param releases     Client release times.
      */
     Params(Config &config,
            std::vector<std::pair<int, int>> const &coords,
@@ -114,11 +127,8 @@ public:
            int vehicleCap,
            std::vector<std::pair<int, int>> const &timeWindows,
            std::vector<int> const &servDurs,
-           std::vector<std::vector<int>> const &dist);
-
-    // Calculate, for all vertices, the correlation for the nbGranular closest
-    // vertices
-    void setCorrelatedVertices();
+           std::vector<std::vector<int>> const &distMat,
+           std::vector<int> const &releases);
 };
 
 #endif

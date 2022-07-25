@@ -78,32 +78,18 @@ public:
             else if (std::string(argv[i]) == "-useDynamicParameters")
                 config.useDynamicParameters = atoi(argv[i + 1]) != 0;
             else if (std::string(argv[i]) == "-nbGranular")
-                config.nbGranular = atoi(argv[i + 1]);
-            else if (std::string(argv[i]) == "-fractionGeneratedNearest")
-                config.fractionGeneratedNearest = atof(argv[i + 1]);
-            else if (std::string(argv[i]) == "-fractionGeneratedFurthest")
-                config.fractionGeneratedFurthest = atof(argv[i + 1]);
-            else if (std::string(argv[i]) == "-fractionGeneratedSweep")
-                config.fractionGeneratedSweep = atof(argv[i + 1]);
-            else if (std::string(argv[i]) == "-fractionGeneratedRandomly")
-                config.fractionGeneratedRandomly = atof(argv[i + 1]);
-            else if (std::string(argv[i]) == "-minSweepFillPercentage")
-                config.minSweepFillPercentage = atoi(argv[i + 1]);
-            else if (std::string(argv[i]) == "-maxToleratedCapacityViolation")
-                config.maxToleratedCapacityViolation = atoi(argv[i + 1]);
-            else if (std::string(argv[i]) == "-maxToleratedTimeWarp")
-                config.maxToleratedTimeWarp = atoi(argv[i + 1]);
+                config.nbGranular = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-initialTimeWarpPenalty")
                 config.initialTimeWarpPenalty = atof(argv[i + 1]);
             else if (std::string(argv[i]) == "-penaltyBooster")
                 config.penaltyBooster = atof(argv[i + 1]);
-            else if (std::string(argv[i]) == "-useSymmetricCorrelatedVertices")
-                config.useSymmetricCorrelatedVertices = atoi(argv[i + 1]) != 0;
             else if (std::string(argv[i]) == "-minimumPopulationSize")
                 config.minimumPopulationSize
                     = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-generationSize")
                 config.generationSize = static_cast<size_t>(atoi(argv[i + 1]));
+            else if (std::string(argv[i]) == "-nbCrossover")
+                config.nbCrossover = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-nbElite")
                 config.nbElite = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-nbClose")
@@ -112,22 +98,6 @@ public:
                 config.targetFeasible = atof(argv[i + 1]);
             else if (std::string(argv[i]) == "-repairProbability")
                 config.repairProbability = atoi(argv[i + 1]);
-            else if (std::string(argv[i])
-                     == "-growNbGranularAfterNonImprovementIterations")
-                config.growNbGranularAfterNonImprovementIterations
-                    = atoi(argv[i + 1]);
-            else if (std::string(argv[i]) == "-growNbGranularAfterIterations")
-                config.growNbGranularAfterIterations = atoi(argv[i + 1]);
-            else if (std::string(argv[i]) == "-growNbGranularSize")
-                config.growNbGranularSize = atoi(argv[i + 1]);
-            else if (std::string(argv[i])
-                     == "-growPopulationAfterNonImprovementIterations")
-                config.growPopulationAfterNonImprovementIterations
-                    = atoi(argv[i + 1]);
-            else if (std::string(argv[i]) == "-growPopulationAfterIterations")
-                config.growPopulationAfterIterations = atoi(argv[i + 1]);
-            else if (std::string(argv[i]) == "-growPopulationSize")
-                config.growPopulationSize = atoi(argv[i + 1]);
             else if (std::string(argv[i]) == "-intensificationProbabilityLS")
                 config.intensificationProbabilityLS = atoi(argv[i + 1]);
             else if (std::string(argv[i]) == "-diversityWeight")

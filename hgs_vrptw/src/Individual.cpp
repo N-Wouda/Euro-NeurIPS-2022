@@ -48,13 +48,13 @@ struct ClientSplits
         {
             auto const curr = tour[idx - 1];
             auto const dist = idx < params.nbClients  // INT_MIN for last client
-                                  ? params.timeCost.get(curr, tour[idx])
+                                  ? params.dist(curr, tour[idx])
                                   : INT_MIN;
 
-            splits[idx] = {params.cli[curr].demand,
-                           params.cli[curr].servDur,
-                           params.timeCost.get(0, curr),
-                           params.timeCost.get(curr, 0),
+            splits[idx] = {params.clients[curr].demand,
+                           params.clients[curr].servDur,
+                           params.dist(0, curr),
+                           params.dist(curr, 0),
                            dist};
 
             cumLoad[idx] = cumLoad[idx - 1] + splits[idx].demand;
@@ -146,9 +146,7 @@ void Individual::makeRoutes()
         if (end != 0)  // assign routes
         {
             int begin = splits.predecessors[end];
-            route = std::vector<Client>(tourChrom.begin() + begin,
-                                        tourChrom.begin() + end);
-
+            route = {tourChrom.begin() + begin, tourChrom.begin() + end};
             end = begin;
         }
     }
@@ -159,10 +157,8 @@ void Individual::makeRoutes()
 void Individual::evaluateCompleteCost()
 {
     // Reset fields before evaluating them again below.
-    penalizedCost = 0.;
     nbRoutes = 0;
     distance = 0;
-    waitTime = 0;
     capacityExcess = 0;
     timeWarp = 0;
 
@@ -173,94 +169,63 @@ void Individual::evaluateCompleteCost()
 
         nbRoutes++;
 
-        int maxReleaseTime = 0;
+        int lastRelease = 0;
         for (auto const idx : route)
-            maxReleaseTime
-                = std::max(maxReleaseTime, params->cli[idx].releaseTime);
+            lastRelease
+                = std::max(lastRelease, params->clients[idx].releaseTime);
 
-        // Get the distance, load, servDur and time associated with the
-        // vehicle traveling from the depot to the first client. Assume depot
-        // has service time 0 and twEarly 0
-        int distance = params->timeCost.get(0, route[0]);
-        int load = params->cli[route[0]].demand;
+        int rDist = params->dist(0, route[0]);
+        int rTimeWarp = 0;
 
-        int time = maxReleaseTime + distance;
-        int waitTime = 0;
-        int timeWarp = 0;
+        int load = params->clients[route[0]].demand;
+        int time = lastRelease + rDist;
 
-        if (time < params->cli[route[0]].twEarly)
+        if (time < params->clients[route[0]].twEarly)
+            time = params->clients[route[0]].twEarly;
+
+        if (time > params->clients[route[0]].twLate)
         {
-            // Don't add wait time since we can start route later (doesn't
-            // really matter since there is no penalty anyway).
-            time = params->cli[route[0]].twEarly;
+            rTimeWarp += time - params->clients[route[0]].twLate;
+            time = params->clients[route[0]].twLate;
         }
 
-        // Add possible time warp
-        if (time > params->cli[route[0]].twLate)
-        {
-            timeWarp += time - params->cli[route[0]].twLate;
-            time = params->cli[route[0]].twLate;
-        }
-
-        // Loop over all clients for this vehicle
         for (size_t idx = 1; idx < route.size(); idx++)
         {
-            // Sum the distance, load, servDur and time associated
-            // with the vehicle traveling from the depot to the next client
-            distance += params->timeCost.get(route[idx - 1], route[idx]);
-            load += params->cli[route[idx]].demand;
+            // Sum the rDist, load, servDur and time associated with the vehicle
+            // traveling from the depot to the next client
+            rDist += params->dist(route[idx - 1], route[idx]);
+            load += params->clients[route[idx]].demand;
 
-            time += params->cli[route[idx - 1]].servDur
-                    + params->timeCost.get(route[idx - 1], route[idx]);
+            time += params->clients[route[idx - 1]].servDur
+                    + params->dist(route[idx - 1], route[idx]);
 
             // Add possible waiting time
-            if (time < params->cli[route[idx]].twEarly)
-            {
-                waitTime += params->cli[route[idx]].twEarly - time;
-                time = params->cli[route[idx]].twEarly;
-            }
+            if (time < params->clients[route[idx]].twEarly)
+                time = params->clients[route[idx]].twEarly;
 
             // Add possible time warp
-            if (time > params->cli[route[idx]].twLate)
+            if (time > params->clients[route[idx]].twLate)
             {
-                timeWarp += time - params->cli[route[idx]].twLate;
-                time = params->cli[route[idx]].twLate;
+                rTimeWarp += time - params->clients[route[idx]].twLate;
+                time = params->clients[route[idx]].twLate;
             }
         }
 
         // For the last client, the successors is the depot. Also update the
-        // distance and time
-        distance += params->timeCost.get(route.back(), 0);
-        time += params->cli[route.back()].servDur
-                + params->timeCost.get(route.back(), 0);
+        // rDist and time
+        rDist += params->dist(route.back(), 0);
+        time += params->clients[route.back()].servDur
+                + params->dist(route.back(), 0);
 
         // For the depot, we only need to check the end of the time window
         // (add possible time warp)
-        timeWarp += std::max(time - params->cli[0].twLate, 0);
+        rTimeWarp += std::max(time - params->clients[0].twLate, 0);
 
         // Whole solution stats
-        this->distance += distance;
-        this->waitTime += waitTime;
-        this->timeWarp += timeWarp;
-        this->capacityExcess += std::max(load - params->vehicleCapacity, 0);
+        distance += rDist;
+        timeWarp += rTimeWarp;
+        capacityExcess += std::max(load - params->vehicleCapacity, 0);
     }
-
-    // When all vehicles are dealt with, calculated total penalized cost and
-    // check if the solution is feasible. (Wait time does not affect
-    // feasibility)
-    this->penalizedCost = static_cast<double>(
-        this->distance + this->capacityExcess * params->penaltyCapacity
-        + this->timeWarp * params->penaltyTimeWarp
-        + this->waitTime * params->penaltyWaitTime);
-}
-
-void Individual::removeProximity(Individual *other)
-{
-    auto it = indivsPerProximity.begin();
-    while (it->second != other)
-        ++it;
-
-    indivsPerProximity.erase(it);
 }
 
 void Individual::brokenPairsDistance(Individual *other)
@@ -290,9 +255,10 @@ void Individual::brokenPairsDistance(Individual *other)
     indivsPerProximity.insert({dist, other});
 }
 
-double Individual::avgBrokenPairsDistanceClosest(size_t nbClosest) const
+double Individual::avgBrokenPairsDistanceClosest() const
 {
-    size_t maxSize = std::min(nbClosest, indivsPerProximity.size());
+    size_t maxSize
+        = std::min(params->config.nbClose, indivsPerProximity.size());
 
     double result = 0;
     auto it = indivsPerProximity.begin();
@@ -339,13 +305,6 @@ std::vector<std::pair<int, int>> Individual::getNeighbours() const
     return neighbours;
 }
 
-bool Individual::operator==(Individual const &other) const
-{
-    auto diff = std::abs(cost() - other.cost());
-    return diff < MY_EPSILON && tourChrom == other.tourChrom
-           && routeChrom == other.routeChrom;
-}
-
 Individual::Individual(Params *params, XorShift128 *rng)
     : params(params),
       tourChrom(params->nbClients),
@@ -369,4 +328,16 @@ Individual::Individual(Params *params,
     : params(params), tourChrom(std::move(tour)), routeChrom(std::move(routes))
 {
     evaluateCompleteCost();
+}
+
+Individual::~Individual()
+{
+    for (auto &[_, other] : indivsPerProximity)  // remove ourselves from
+    {                                            // other's proximity list
+        auto it = other->indivsPerProximity.begin();
+        while (it->second != this)
+            ++it;
+
+        other->indivsPerProximity.erase(it);
+    }
 }
