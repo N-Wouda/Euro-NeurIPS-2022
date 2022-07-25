@@ -326,62 +326,8 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
         nbVehicles = nbClients;
     }
 
-    // When dynamic parameters have to be used, set more parameter values
     if (config.useDynamicParameters)
-    {
-        // Determine categories of instances based on number of stops/route and
-        // whether it has large time windows Calculate an upper bound for the
-        // number of stops per route based on capacities
-        double stopsPerRoute = vehicleCapacity / (totalDemand / nbClients);
-        // Routes are large when more than 25 stops per route
-        bool hasLargeRoutes = stopsPerRoute > 25;
-
-        // Get the time horizon (by using the time window of the depot)
-        int horizon = cli[0].twLate - cli[0].twEarly;
-        int nbLargeTW = 0;
-
-        // Loop over all clients (excluding the depot) and count the amount of
-        // large time windows (greater than 0.7*horizon)
-        for (int i = 1; i <= nbClients; i++)
-            if (cli[i].twLate - cli[i].twEarly > 0.7 * horizon)
-                nbLargeTW++;
-
-        bool hasLargeTW = nbLargeTW > 0;
-
-        // Set the parameter values based on the characteristics of the instance
-        if (hasLargeRoutes)
-        {
-            config.nbGranular = 40;
-            // Grow neighborhood and population size
-            config.growNbGranularAfterIterations = 10000;
-            config.growNbGranularSize = 5;
-            config.growPopulationAfterIterations = 10000;
-            config.growPopulationSize = 5;
-            // Intensify occasionally
-            config.intensificationProbabilityLS = 15;
-        }
-        else
-        {
-            // Grow population size only
-            // config.growNbGranularAfterIterations = 10000;
-            // config.growNbGranularSize = 5;
-            if (hasLargeTW)
-            {
-                // Smaller neighbourhood so iterations are faster
-                // So take more iterations before growing population
-                config.nbGranular = 20;
-                config.growPopulationAfterIterations = 20000;
-            }
-            else
-            {
-                config.nbGranular = 40;
-                config.growPopulationAfterIterations = 10000;
-            }
-            config.growPopulationSize = 5;
-            // Intensify always
-            config.intensificationProbabilityLS = 100;
-        }
-    }
+        setDynamicParameters();
 
     int maxDist = timeCost.max();
 
@@ -430,6 +376,9 @@ Params::Params(Config &config,
 {
     int totalDemand = std::accumulate(demands.begin(), demands.end(), 0);
     int maxDemand = *std::max_element(demands.begin(), demands.end());
+
+    if (config.useDynamicParameters)
+        setDynamicParameters();
 
     // Number of vehicles: 30% above LP bin packing heuristic, and three more
     // just in case.
@@ -552,4 +501,59 @@ void Params::setCorrelatedVertices()
     for (int i = 1; i <= nbClients; i++)
         for (int x : set[i])
             correlatedVertices[i].push_back(x);
+}
+
+void Params::setDynamicParameters()
+{
+    // TODO these fixed parameter values are based on ORTEC's DIMACS VRP
+    //  competition result. We should verify this (a) makes sense to use, and
+    //  (b) is a good configuration.
+
+    int totalDemand = 0;
+    for (auto &client : cli)
+        totalDemand += client.demand;
+
+    // Determine categories of instances based on number of stops/route and
+    // whether it has large time windows Calculate an upper bound for the
+    // number of stops per route based on capacities
+    int stopsPerRoute = 1 + vehicleCapacity / (totalDemand / nbClients);
+
+    // Get the time horizon (by using the time window of the depot)
+    int horizon = cli[0].twLate - cli[0].twEarly;
+    int nbLargeTW = 0;
+    for (int i = 1; i <= nbClients; i++)
+         nbLargeTW += cli[i].twLate - cli[i].twEarly > 0.7 * horizon;
+
+    if (stopsPerRoute > 25)
+    {
+        config.nbGranular = 40;
+        // Grow neighborhood and population size
+        config.growNbGranularAfterIterations = 10'000;
+        config.growNbGranularSize = 5;
+        config.growPopulationAfterIterations = 10'000;
+        config.growPopulationSize = 5;
+        // Intensify occasionally
+        config.intensificationProbabilityLS = 15;
+    }
+    else
+    {
+        // Grow population size only
+        // config.growNbGranularAfterIterations = 10000;
+        // config.growNbGranularSize = 5;
+        if (nbLargeTW > 0)
+        {
+            // Smaller neighbourhood so iterations are faster
+            // So take more iterations before growing population
+            config.nbGranular = 20;
+            config.growPopulationAfterIterations = 20'000;
+        }
+        else
+        {
+            config.nbGranular = 40;
+            config.growPopulationAfterIterations = 10'000;
+        }
+        config.growPopulationSize = 5;
+        // Intensify always
+        config.intensificationProbabilityLS = 100;
+    }
 }

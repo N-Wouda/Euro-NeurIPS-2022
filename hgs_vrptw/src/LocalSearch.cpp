@@ -13,16 +13,13 @@ void LocalSearch::run(Individual &indiv,
                       double penaltyCapacityLS,
                       double penaltyTimeWarpLS)
 {
-    static const bool neverIntensify
-        = params.config.intensificationProbabilityLS == 0;
-    static const bool alwaysIntensify
-        = params.config.intensificationProbabilityLS == 100;
-    const bool runLS_INT
+    this->penaltyCapacityLS = penaltyCapacityLS;
+    this->penaltyTimeWarpLS = penaltyTimeWarpLS;
+
+    bool const shouldIntensify
         = rng.randint(100)
           < (unsigned int)params.config.intensificationProbabilityLS;
 
-    this->penaltyCapacityLS = penaltyCapacityLS;
-    this->penaltyTimeWarpLS = penaltyTimeWarpLS;
     loadIndividual(indiv);
 
     // Shuffling the order of the nodes explored by the LS to allow for more
@@ -128,8 +125,7 @@ void LocalSearch::run(Individual &indiv,
         }
 
         /* (SWAP*) MOVES LIMITED TO ROUTE PAIRS WHOSE CIRCLE SECTORS OVERLAP */
-        if (!neverIntensify && searchCompleted
-            && (alwaysIntensify || runLS_INT))
+        if (searchCompleted && shouldIntensify)
         {
             for (int rU = 0; rU < params.nbVehicles; rU++)
             {

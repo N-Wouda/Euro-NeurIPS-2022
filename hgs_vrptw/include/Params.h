@@ -59,6 +59,12 @@ class Params
         int angle;
     };
 
+    /**
+     * Sets dynamic parameters based on the instance size. Use is toggled by the
+     * ``config.useDynamicParameters`` flag.
+     */
+    void setDynamicParameters();
+
 public:
     // TODO make members private
 
