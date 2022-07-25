@@ -522,7 +522,7 @@ void Params::setDynamicParameters()
     int horizon = cli[0].twLate - cli[0].twEarly;
     int nbLargeTW = 0;
     for (int i = 1; i <= nbClients; i++)
-         nbLargeTW += cli[i].twLate - cli[i].twEarly > 0.7 * horizon;
+        nbLargeTW += cli[i].twLate - cli[i].twEarly > 0.7 * horizon;
 
     if (stopsPerRoute > 25)
     {
