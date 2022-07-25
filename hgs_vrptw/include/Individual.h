@@ -37,7 +37,6 @@ class Individual
     using Client = int;
     using Clients = std::vector<Client>;
 
-    double penalizedCost = 0.;  // Penalized cost of the solution
     size_t nbRoutes = 0;        // Number of routes
     size_t distance = 0;        // Total distance
     size_t capacityExcess = 0;  // Total excess load over all routes
@@ -62,6 +61,9 @@ class Individual
     // Splits the tour chromosome into routes using the linear split algorithm
     void makeRoutes();
 
+    // Evaluates this solution's objective value.
+    void evaluateCompleteCost();
+
     /**
      * Returns a vector of [pred, succ] clients for each client (index).
      */
@@ -71,7 +73,12 @@ public:
     /**
      * Returns this individual's objective (penalized cost).
      */
-    [[nodiscard]] inline double cost() const { return penalizedCost; }
+    [[nodiscard]] inline double cost() const
+    {
+        return static_cast<double>(distance)
+               + static_cast<double>(capacityExcess) * params->penaltyCapacity
+               + static_cast<double>(timeWarp) * params->penaltyTimeWarp;
+    }
 
     /**
      * Returns this individual's routing decisions.
@@ -106,9 +113,6 @@ public:
      * If true, then the route violates time window constraints.
      */
     [[nodiscard]] inline bool hasTimeWarp() const { return timeWarp > 0; }
-
-    // Evaluates this solution's objective value.
-    void evaluateCompleteCost();
 
     // Computes and stores a distance measure with another individual, based on
     // the number of arcs that differ between two solutions.

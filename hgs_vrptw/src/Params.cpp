@@ -497,10 +497,6 @@ void Params::calculateNeighbours()
 
 void Params::setDynamicParameters()
 {
-    // TODO these fixed parameter values are based on ORTEC's DIMACS VRP
-    //  competition result. We should verify this (a) makes sense to use, and
-    //  (b) is a good configuration.
-
     int totalDemand = 0;
     for (auto &client : clients)
         totalDemand += client.demand;
@@ -516,36 +512,23 @@ void Params::setDynamicParameters()
     for (int i = 1; i <= nbClients; i++)
         nbLargeTW += clients[i].twLate - clients[i].twEarly > 0.7 * horizon;
 
+    // TODO these fixed parameter values are based on ORTEC's DIMACS VRP
+    //  competition result. We should verify this (a) makes sense to use, and
+    //  (b) is a good configuration.
     if (stopsPerRoute > 25)
     {
         config.nbGranular = 40;
-        // Grow neighborhood and population size
-        config.growNbGranularAfterIterations = 10'000;
-        config.growNbGranularSize = 5;
-        config.growPopulationAfterIterations = 10'000;
-        config.growPopulationSize = 5;
-        // Intensify occasionally
         config.intensificationProbabilityLS = 15;
     }
     else
     {
-        // Grow population size only
-        // config.growNbGranularAfterIterations = 10000;
-        // config.growNbGranularSize = 5;
         if (nbLargeTW > 0)
-        {
             // Smaller neighbourhood so iterations are faster
             // So take more iterations before growing population
             config.nbGranular = 20;
-            config.growPopulationAfterIterations = 20'000;
-        }
         else
-        {
             config.nbGranular = 40;
-            config.growPopulationAfterIterations = 10'000;
-        }
-        config.growPopulationSize = 5;
-        // Intensify always
+
         config.intensificationProbabilityLS = 100;
     }
 }

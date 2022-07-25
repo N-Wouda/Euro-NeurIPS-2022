@@ -6,6 +6,8 @@
 #include "Population.h"
 #include "Result.h"
 
+#include <numeric>
+
 Result GeneticAlgorithm::runUntil(timePoint const &timePoint)
 {
     if (params.nbClients == 1)
@@ -48,46 +50,9 @@ Result GeneticAlgorithm::runUntil(timePoint const &timePoint)
         else
             nbIterNonProd++;
 
-        /* DIVERSIFICATION, PENALTY MANAGEMENT AND TRACES */
-        // Update the penaltyTimeWarp and penaltyCapacity every 100 iterations
+        // Diversification and penalty management
         if (iter % 100 == 0)
-            population.managePenalties();
-
-        /* OTHER PARAMETER CHANGES*/
-        // Increase the nbGranular by growNbGranularSize (and set the correlated
-        // vertices again) every certain number of iterations, if
-        // growNbGranularSize is greater than 0
-        if (iter > 0 && params.config.growNbGranularSize != 0
-            && ((params.config.growNbGranularAfterIterations > 0
-                 && iter % params.config.growNbGranularAfterIterations == 0)
-                || (params.config.growNbGranularAfterNonImprovementIterations
-                        > 0
-                    && nbIterNonProd
-                               % params.config
-                                     .growNbGranularAfterNonImprovementIterations
-                           == 0)))
-        {
-            // Note: changing nbGranular also changes how often the order is
-            // reshuffled
-            params.config.nbGranular += params.config.growNbGranularSize;
-        }
-
-        // Increase the minimumPopulationSize by growPopulationSize every
-        // certain number of iterations, if growPopulationSize is greater than 0
-        if (iter > 0 && params.config.growPopulationSize != 0
-            && ((params.config.growPopulationAfterIterations > 0
-                 && iter % params.config.growPopulationAfterIterations == 0)
-                || (params.config.growPopulationAfterNonImprovementIterations
-                        > 0
-                    && nbIterNonProd
-                               % params.config
-                                     .growPopulationAfterNonImprovementIterations
-                           == 0)))
-        {
-            // This will automatically adjust after some iterations
-            params.config.minimumPopulationSize
-                += params.config.growPopulationSize;
-        }
+            updatePenalties();
     }
 
     return {population.getBestFound(), iter};
@@ -136,7 +101,13 @@ Individual GeneticAlgorithm::crossover(Parents const &parents) const
 void GeneticAlgorithm::educate(Individual &indiv)
 {
     localSearch.run(indiv, params.penaltyCapacity, params.penaltyTimeWarp);
-    population.addIndividual(indiv, true);
+    population.addIndividual(indiv);
+
+    loadFeas.push_back(!indiv.hasExcessCapacity());
+    loadFeas.pop_front();
+
+    timeFeas.push_back(!indiv.hasTimeWarp());
+    timeFeas.pop_front();
 
     if (!indiv.isFeasible()  // possibly repair if currently infeasible
         && rng.randint(100) < params.config.repairProbability)
@@ -146,14 +117,47 @@ void GeneticAlgorithm::educate(Individual &indiv)
                         params.penaltyTimeWarp * 10.);
 
         if (indiv.isFeasible())
-            population.addIndividual(indiv, false);
+            // TODO should we also register this individual in the load/time
+            //  feasibility lists?
+            population.addIndividual(indiv);
     }
+}
+
+void GeneticAlgorithm::updatePenalties()
+{
+    auto compute = [&](double currFeas, double currPenalty) {
+        if (currFeas <= 0.01 && params.config.penaltyBooster > 0)
+            currPenalty *= params.config.penaltyBooster;
+        else if (currFeas < params.config.targetFeasible - 0.05)
+            currPenalty *= 1.2;
+        else if (currFeas > params.config.targetFeasible + 0.05)
+            currPenalty *= 0.85;
+
+        // Setting some bounds [0.1, 100000] to the penalty values for safety
+        return std::max(std::min(currPenalty, 100'000.), 0.1);
+    };
+
+    double fracFeasLoad = std::accumulate(loadFeas.begin(), loadFeas.end(), 0.);
+    fracFeasLoad /= static_cast<double>(loadFeas.size());
+
+    double fracFeasTime = std::accumulate(timeFeas.begin(), timeFeas.end(), 0.);
+    fracFeasTime /= static_cast<double>(timeFeas.size());
+
+    params.penaltyCapacity = compute(fracFeasLoad, params.penaltyCapacity);
+    params.penaltyTimeWarp = compute(fracFeasTime, params.penaltyTimeWarp);
+
+    population.reorder();  // re-order since penalties have changed
 }
 
 GeneticAlgorithm::GeneticAlgorithm(Params &params,
                                    XorShift128 &rng,
                                    Population &population,
                                    LocalSearch &localSearch)
-    : params(params), rng(rng), population(population), localSearch(localSearch)
+    : params(params),
+      rng(rng),
+      population(population),
+      localSearch(localSearch),
+      loadFeas(100, true),
+      timeFeas(100, true)
 {
 }

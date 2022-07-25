@@ -98,22 +98,6 @@ public:
                 config.targetFeasible = atof(argv[i + 1]);
             else if (std::string(argv[i]) == "-repairProbability")
                 config.repairProbability = atoi(argv[i + 1]);
-            else if (std::string(argv[i])
-                     == "-growNbGranularAfterNonImprovementIterations")
-                config.growNbGranularAfterNonImprovementIterations
-                    = atoi(argv[i + 1]);
-            else if (std::string(argv[i]) == "-growNbGranularAfterIterations")
-                config.growNbGranularAfterIterations = atoi(argv[i + 1]);
-            else if (std::string(argv[i]) == "-growNbGranularSize")
-                config.growNbGranularSize = atoi(argv[i + 1]);
-            else if (std::string(argv[i])
-                     == "-growPopulationAfterNonImprovementIterations")
-                config.growPopulationAfterNonImprovementIterations
-                    = atoi(argv[i + 1]);
-            else if (std::string(argv[i]) == "-growPopulationAfterIterations")
-                config.growPopulationAfterIterations = atoi(argv[i + 1]);
-            else if (std::string(argv[i]) == "-growPopulationSize")
-                config.growPopulationSize = atoi(argv[i + 1]);
             else if (std::string(argv[i]) == "-intensificationProbabilityLS")
                 config.intensificationProbabilityLS = atoi(argv[i + 1]);
             else if (std::string(argv[i]) == "-diversityWeight")

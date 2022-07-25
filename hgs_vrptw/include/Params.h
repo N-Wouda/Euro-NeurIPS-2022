@@ -92,14 +92,9 @@ public:
 
     /**
      * Returns the nbGranular clients nearest/closest to the passed-in client.
-     * Possibly recalculates the neighbourhood if the granularity parameter has
-     * been updated.
      */
-    [[nodiscard]] std::vector<int> const &getNeighboursOf(size_t client)
+    [[nodiscard]] std::vector<int> const &getNeighboursOf(size_t client) const
     {
-        if (neighbours[client].size() < config.nbGranular)
-            calculateNeighbours();
-
         return neighbours[client];
     }
 

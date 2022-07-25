@@ -40,12 +40,6 @@ PYBIND11_MODULE(hgspy, m)
                       size_t,
                       double,
                       size_t,
-                      int,
-                      int,
-                      int,
-                      int,
-                      int,
-                      int,
                       double,
                       int,
                       bool,
@@ -67,12 +61,6 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("nbClose") = 5,
              py::arg("targetFeasible") = 0.2,
              py::arg("repairProbability") = 50,
-             py::arg("growNbGranularAfterNonImprovementIterations") = 5'000,
-             py::arg("growNbGranularAfterIterations") = 0,
-             py::arg("growNbGranularSize") = 0,
-             py::arg("growPopulationAfterNonImprovementIterations") = 5'000,
-             py::arg("growPopulationAfterIterations") = 0,
-             py::arg("growPopulationSize") = 0,
              py::arg("diversityWeight") = 0.,
              py::arg("nbVeh") = INT_MAX,
              py::arg("useDynamicParameters") = false,
@@ -94,16 +82,6 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("nbClose", &Config::nbClose)
         .def_readonly("targetFeasible", &Config::targetFeasible)
         .def_readonly("repairProbability", &Config::repairProbability)
-        .def_readonly("growNbGranularAfterNonImprovementIterations",
-                      &Config::growNbGranularAfterNonImprovementIterations)
-        .def_readonly("growNbGranularAfterIterations",
-                      &Config::growNbGranularAfterIterations)
-        .def_readonly("growNbGranularSize", &Config::growNbGranularSize)
-        .def_readonly("growPopulationAfterNonImprovementIterations",
-                      &Config::growPopulationAfterNonImprovementIterations)
-        .def_readonly("growPopulationAfterIterations",
-                      &Config::growPopulationAfterIterations)
-        .def_readonly("growPopulationSize", &Config::growPopulationSize)
         .def_readonly("diversityWeight", &Config::diversityWeight)
         .def_readonly("nbVeh", &Config::nbVeh)
         .def_readonly("useDynamicParameters", &Config::useDynamicParameters)

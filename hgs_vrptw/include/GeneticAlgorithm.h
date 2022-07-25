@@ -33,6 +33,7 @@ SOFTWARE.*/
 
 #include <array>
 #include <chrono>
+#include <list>
 #include <unordered_set>
 
 // Class to run the genetic algorithm, which incorporates functionality of
@@ -47,6 +48,9 @@ class GeneticAlgorithm
     Population &population;    // Population
     LocalSearch &localSearch;  // Local search structure
 
+    std::list<bool> loadFeas;  // load feasibility of recent individuals
+    std::list<bool> timeFeas;  // time feasibility of recent individuals
+
     /**
      * Does one ordered crossover of the given parents. A randomly selected
      * subset of clients is taken from the first parent - the rest comes from
@@ -60,6 +64,12 @@ class GeneticAlgorithm
      * add it if this succeeds.
      */
     void educate(Individual &indiv);
+
+    /**
+     * Updates the infeasibility penalties, based on the feasibility status of
+     * the most recent individuals.
+     */
+    void updatePenalties();
 
 public:
     /**

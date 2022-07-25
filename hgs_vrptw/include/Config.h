@@ -33,26 +33,6 @@ struct Config
     double targetFeasible = 0.2;    // target feasible pop fraction
     size_t repairProbability = 50;  // probability of repair if infeasible
 
-    // The number of iterations without improvements after
-    // which the nbGranular is grown
-    int growNbGranularAfterNonImprovementIterations = 5'000;
-
-    // The number of iteration after which the nbGranular is grown
-    int growNbGranularAfterIterations = 0;
-
-    // The number nbGranular is increased by
-    int growNbGranularSize = 0;
-
-    // The number of iterations without improvements after which the
-    // minimumPopulationSize is grown
-    int growPopulationAfterNonImprovementIterations = 5'000;
-
-    // The number of iteration after which minimumPopulationSize is grown
-    int growPopulationAfterIterations = 0;
-
-    // The number minimumPopulationSize is increased by
-    int growPopulationSize = 0;
-
     // Weight for diversity criterion. If 0, weight is set to 1 - nbElite /
     // populationSize
     double diversityWeight = 0.0;
@@ -93,12 +73,6 @@ struct Config
                     size_t nbClose = 5,
                     double targetFeasible = 0.2,
                     size_t repairProbability = 50,
-                    int growNbGranularAfterNonImprovementIterations = 5'000,
-                    int growNbGranularAfterIterations = 0,
-                    int growNbGranularSize = 0,
-                    int growPopulationAfterNonImprovementIterations = 5'000,
-                    int growPopulationAfterIterations = 0,
-                    int growPopulationSize = 0,
                     double diversityWeight = 0.,
                     int nbVeh = INT_MAX,
                     bool useDynamicParameters = false,
@@ -120,14 +94,6 @@ struct Config
           nbClose(nbClose),
           targetFeasible(targetFeasible),
           repairProbability(repairProbability),
-          growNbGranularAfterNonImprovementIterations(
-              growNbGranularAfterNonImprovementIterations),
-          growNbGranularAfterIterations(growNbGranularAfterIterations),
-          growNbGranularSize(growNbGranularSize),
-          growPopulationAfterNonImprovementIterations(
-              growPopulationAfterNonImprovementIterations),
-          growPopulationAfterIterations(growPopulationAfterIterations),
-          growPopulationSize(growPopulationSize),
           diversityWeight(diversityWeight),
           nbVeh(nbVeh),
           useDynamicParameters(useDynamicParameters),

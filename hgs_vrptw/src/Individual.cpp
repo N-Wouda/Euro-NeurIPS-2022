@@ -157,7 +157,6 @@ void Individual::makeRoutes()
 void Individual::evaluateCompleteCost()
 {
     // Reset fields before evaluating them again below.
-    penalizedCost = 0.;
     nbRoutes = 0;
     distance = 0;
     capacityExcess = 0;
@@ -227,12 +226,6 @@ void Individual::evaluateCompleteCost()
         timeWarp += rTimeWarp;
         capacityExcess += std::max(load - params->vehicleCapacity, 0);
     }
-
-    // When all vehicles are dealt with, calculate objective value
-    penalizedCost
-        = static_cast<double>(distance)
-          + static_cast<double>(capacityExcess) * params->penaltyCapacity
-          + static_cast<double>(timeWarp) * params->penaltyTimeWarp;
 }
 
 void Individual::brokenPairsDistance(Individual *other)

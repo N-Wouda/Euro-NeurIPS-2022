@@ -28,7 +28,6 @@ SOFTWARE.*/
 #include "Params.h"
 #include "XorShift128.h"
 
-#include <list>
 #include <vector>
 
 // Class representing the population of a genetic algorithm with do binary
@@ -37,13 +36,12 @@ class Population
 {
     using Parents = std::pair<Individual const *, Individual const *>;
 
-    Params &params;                           // Problem parameters
-    XorShift128 &rng;                         // Random number generator
-    std::vector<Individual *> population;     // Population ordered asc. by cost
-    std::vector<double> fitness;              // Population fitness
-    std::list<bool> listFeasibilityLoad;      // load feas. recent individuals
-    std::list<bool> listFeasibilityTimeWarp;  // time feas. recent individuals
-    Individual bestSolutionOverall;           // best observed solution
+    Params &params;    // Problem parameters
+    XorShift128 &rng;  // Random number generator
+
+    std::vector<Individual *> population;  // Population ordered asc. by cost
+    std::vector<double> fitness;           // Population fitness
+    Individual bestSol;                    // best observed solution
 
     // Evaluates the biased fitness of all individuals in the population
     void updateBiasedFitness();
@@ -58,18 +56,26 @@ class Population
     Individual const *getBinaryTournament();
 
 public:
-    // Add an individual in the population (survivor selection is automatically
-    // triggered whenever the population reaches its maximum size), and possibly
-    // update the current best candidate.
-    void addIndividual(Individual const &indiv, bool updateFeasible);
+    // Add an individual in the population. Survivor selection is automatically
+    // triggered whenever the population reaches its maximum size.
+    void addIndividual(Individual const &indiv);
 
     // Cleans all solutions and generates a new initial population (only used
     // when running HGS until a time limit, in which case the algorithm restarts
     // until the time limit is reached)
     void restart();
 
-    // Adaptation of the penalty parameters (this also updates the evaluations)
-    void managePenalties();
+    /**
+     * Re-orders the population by cost.
+     */
+    void reorder()
+    {
+        std::sort(population.begin(),
+                  population.end(),
+                  [](auto const &indiv1, auto const &indiv2) {
+                      return indiv1->cost() < indiv2->cost();
+                  });
+    }
 
     // Selects two (if possible non-identical) parents by binary tournament
     Parents selectParents();
@@ -77,10 +83,7 @@ public:
     /**
      * Returns the best feasible solution that was observed during iteration.
      */
-    [[nodiscard]] Individual const &getBestFound() const
-    {
-        return bestSolutionOverall;
-    }
+    [[nodiscard]] Individual const &getBestFound() const { return bestSol; }
 
     Population(Params &params, XorShift128 &rng);
 
