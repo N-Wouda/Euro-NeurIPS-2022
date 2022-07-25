@@ -48,13 +48,13 @@ struct ClientSplits
         {
             auto const curr = tour[idx - 1];
             auto const dist = idx < params.nbClients  // INT_MIN for last client
-                                  ? params.timeCost(curr, tour[idx])
+                                  ? params.dist(curr, tour[idx])
                                   : INT_MIN;
 
-            splits[idx] = {params.cli[curr].demand,
-                           params.cli[curr].servDur,
-                           params.timeCost(0, curr),
-                           params.timeCost(curr, 0),
+            splits[idx] = {params.clients[curr].demand,
+                           params.clients[curr].servDur,
+                           params.dist(0, curr),
+                           params.dist(curr, 0),
                            dist};
 
             cumLoad[idx] = cumLoad[idx - 1] + splits[idx].demand;
@@ -172,54 +172,55 @@ void Individual::evaluateCompleteCost()
 
         int lastRelease = 0;
         for (auto const idx : route)
-            lastRelease = std::max(lastRelease, params->cli[idx].releaseTime);
+            lastRelease
+                = std::max(lastRelease, params->clients[idx].releaseTime);
 
-        int rDist = params->timeCost(0, route[0]);
+        int rDist = params->dist(0, route[0]);
         int rTimeWarp = 0;
 
-        int load = params->cli[route[0]].demand;
+        int load = params->clients[route[0]].demand;
         int time = lastRelease + rDist;
 
-        if (time < params->cli[route[0]].twEarly)
-            time = params->cli[route[0]].twEarly;
+        if (time < params->clients[route[0]].twEarly)
+            time = params->clients[route[0]].twEarly;
 
-        if (time > params->cli[route[0]].twLate)
+        if (time > params->clients[route[0]].twLate)
         {
-            rTimeWarp += time - params->cli[route[0]].twLate;
-            time = params->cli[route[0]].twLate;
+            rTimeWarp += time - params->clients[route[0]].twLate;
+            time = params->clients[route[0]].twLate;
         }
 
         for (size_t idx = 1; idx < route.size(); idx++)
         {
             // Sum the rDist, load, servDur and time associated with the vehicle
             // traveling from the depot to the next client
-            rDist += params->timeCost(route[idx - 1], route[idx]);
-            load += params->cli[route[idx]].demand;
+            rDist += params->dist(route[idx - 1], route[idx]);
+            load += params->clients[route[idx]].demand;
 
-            time += params->cli[route[idx - 1]].servDur
-                    + params->timeCost(route[idx - 1], route[idx]);
+            time += params->clients[route[idx - 1]].servDur
+                    + params->dist(route[idx - 1], route[idx]);
 
             // Add possible waiting time
-            if (time < params->cli[route[idx]].twEarly)
-                time = params->cli[route[idx]].twEarly;
+            if (time < params->clients[route[idx]].twEarly)
+                time = params->clients[route[idx]].twEarly;
 
             // Add possible time warp
-            if (time > params->cli[route[idx]].twLate)
+            if (time > params->clients[route[idx]].twLate)
             {
-                rTimeWarp += time - params->cli[route[idx]].twLate;
-                time = params->cli[route[idx]].twLate;
+                rTimeWarp += time - params->clients[route[idx]].twLate;
+                time = params->clients[route[idx]].twLate;
             }
         }
 
         // For the last client, the successors is the depot. Also update the
         // rDist and time
-        rDist += params->timeCost(route.back(), 0);
-        time += params->cli[route.back()].servDur
-                + params->timeCost(route.back(), 0);
+        rDist += params->dist(route.back(), 0);
+        time += params->clients[route.back()].servDur
+                + params->dist(route.back(), 0);
 
         // For the depot, we only need to check the end of the time window
         // (add possible time warp)
-        rTimeWarp += std::max(time - params->cli[0].twLate, 0);
+        rTimeWarp += std::max(time - params->clients[0].twLate, 0);
 
         // Whole solution stats
         distance += rDist;

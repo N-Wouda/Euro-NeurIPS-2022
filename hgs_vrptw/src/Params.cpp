@@ -55,52 +55,52 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
 
         // Create a vector where all information on the Clients can be
         // stored and loop over all information in the file
-        cli = std::vector<Client>(1001);
+        clients = std::vector<Client>(1001);
         nbClients = 0;
         while (inputFile >> node)
         {
             // Store all the information of the next client
-            cli[nbClients].custNum = node;
-            inputFile >> cli[nbClients].x >> cli[nbClients].y
-                >> cli[nbClients].demand >> cli[nbClients].twEarly
-                >> cli[nbClients].twLate >> cli[nbClients].servDur;
+            clients[nbClients].custNum = node;
+            inputFile >> clients[nbClients].x >> clients[nbClients].y
+                >> clients[nbClients].demand >> clients[nbClients].twEarly
+                >> clients[nbClients].twLate >> clients[nbClients].servDur;
 
             // Scale coordinates by factor 10, later the distances will be
             // rounded so we optimize with 1 decimal distances
-            cli[nbClients].x *= 10;
-            cli[nbClients].y *= 10;
-            cli[nbClients].twEarly *= 10;
-            cli[nbClients].twLate *= 10;
-            cli[nbClients].servDur *= 10;
-            cli[nbClients].angle = CircleSector::positive_mod(
+            clients[nbClients].x *= 10;
+            clients[nbClients].y *= 10;
+            clients[nbClients].twEarly *= 10;
+            clients[nbClients].twLate *= 10;
+            clients[nbClients].servDur *= 10;
+            clients[nbClients].angle = CircleSector::positive_mod(
                 static_cast<int>(32768.
-                                 * atan2(cli[nbClients].y - cli[0].y,
-                                         cli[nbClients].x - cli[0].x)
+                                 * atan2(clients[nbClients].y - clients[0].y,
+                                         clients[nbClients].x - clients[0].x)
                                  / M_PI));
 
             // Keep track of the max demand, the total demand, and the
             // number of clients
-            if (cli[nbClients].demand > maxDemand)
+            if (clients[nbClients].demand > maxDemand)
             {
-                maxDemand = cli[nbClients].demand;
+                maxDemand = clients[nbClients].demand;
             }
-            totalDemand += cli[nbClients].demand;
+            totalDemand += clients[nbClients].demand;
             nbClients++;
         }
 
         // Reduce the size of the vector of clients if possible
-        cli.resize(nbClients);
+        clients.resize(nbClients);
 
         // Don't count depot as client
         nbClients--;
 
         // Check if the required service and the start of the time window of
         // the depot are both zero
-        if (cli[0].twEarly != 0)
+        if (clients[0].twEarly != 0)
         {
             throw std::runtime_error("Depot time window should start at 0");
         }
-        if (cli[0].servDur != 0)
+        if (clients[0].servDur != 0)
         {
             throw std::runtime_error("Depot service duration should be 0");
         }
@@ -148,7 +148,7 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
             // Read the edge weights of an explicit distance matrix
             else if (content == "EDGE_WEIGHT_SECTION")
             {
-                timeCost = Matrix(nbClients + 1);
+                dist = Matrix(nbClients + 1);
                 for (int i = 0; i <= nbClients; i++)
                 {
                     for (int j = 0; j <= nbClients; j++)
@@ -157,29 +157,32 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
                         // clients (or the depot)
                         int cost;
                         inputFile >> cost;
-                        timeCost(i, j) = cost;
+                        dist(i, j) = cost;
                     }
                 }
             }
             else if (content == "NODE_COORD_SECTION")
             {
                 // Reading client coordinates
-                cli = std::vector<Client>(nbClients + 1);
+                clients = std::vector<Client>(nbClients + 1);
                 for (int i = 0; i <= nbClients; i++)
                 {
-                    inputFile >> cli[i].custNum >> cli[i].x >> cli[i].y;
+                    inputFile >> clients[i].custNum >> clients[i].x
+                        >> clients[i].y;
 
                     // Check if the clients are in order
-                    if (cli[i].custNum != i + 1)
+                    if (clients[i].custNum != i + 1)
                     {
                         throw std::runtime_error("Coordinates are not in "
                                                  "order of clients");
                     }
 
-                    cli[i].custNum--;
-                    cli[i].angle = CircleSector::positive_mod(static_cast<int>(
-                        32768. * atan2(cli[i].y - cli[0].y, cli[i].x - cli[0].x)
-                        / M_PI));
+                    clients[i].custNum--;
+                    clients[i].angle = CircleSector::positive_mod(
+                        static_cast<int>(32768.
+                                         * atan2(clients[i].y - clients[0].y,
+                                                 clients[i].x - clients[0].x)
+                                         / M_PI));
                 }
             }
             // Read the demand of each client (including the depot, which
@@ -189,7 +192,7 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
                 for (int i = 0; i <= nbClients; i++)
                 {
                     int clientNr = 0;
-                    inputFile >> clientNr >> cli[i].demand;
+                    inputFile >> clientNr >> clients[i].demand;
 
                     // Check if the clients are in order
                     if (clientNr != i + 1)
@@ -199,18 +202,18 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
                     }
 
                     // Keep track of the max and total demand
-                    if (cli[i].demand > maxDemand)
+                    if (clients[i].demand > maxDemand)
                     {
-                        maxDemand = cli[i].demand;
+                        maxDemand = clients[i].demand;
                     }
-                    totalDemand += cli[i].demand;
+                    totalDemand += clients[i].demand;
                 }
                 // Check if the depot has demand 0
-                if (cli[0].demand != 0)
+                if (clients[0].demand != 0)
                 {
                     throw std::runtime_error(
                         "Depot demand is not zero, but is instead: "
-                        + std::to_string(cli[0].servDur));
+                        + std::to_string(clients[0].servDur));
                 }
             }
             else if (content == "DEPOT_SECTION")
@@ -228,7 +231,7 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
                 for (int i = 0; i <= nbClients; i++)
                 {
                     int clientNr = 0;
-                    inputFile >> clientNr >> cli[i].servDur;
+                    inputFile >> clientNr >> clients[i].servDur;
 
                     // Check if the clients are in order
                     if (clientNr != i + 1)
@@ -238,7 +241,7 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
                     }
                 }
                 // Check if the service duration of the depot is 0
-                if (cli[0].servDur != 0)
+                if (clients[0].servDur != 0)
                 {
                     throw std::runtime_error(
                         "Service duration for depot should be 0");
@@ -250,7 +253,7 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
                 for (int i = 0; i <= nbClients; i++)
                 {
                     int clientNr = 0;
-                    inputFile >> clientNr >> cli[i].releaseTime;
+                    inputFile >> clientNr >> clients[i].releaseTime;
 
                     // Check if the clients are in order
                     if (clientNr != i + 1)
@@ -260,7 +263,7 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
                     }
                 }
                 // Check if the service duration of the depot is 0
-                if (cli[0].releaseTime != 0)
+                if (clients[0].releaseTime != 0)
                 {
                     throw std::runtime_error(
                         "Release time for depot should be 0");
@@ -273,7 +276,8 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
                 for (int i = 0; i <= nbClients; i++)
                 {
                     int clientNr = 0;
-                    inputFile >> clientNr >> cli[i].twEarly >> cli[i].twLate;
+                    inputFile >> clientNr >> clients[i].twEarly
+                        >> clients[i].twLate;
 
                     // Check if the clients are in order
                     if (clientNr != i + 1)
@@ -284,7 +288,7 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
                 }
 
                 // Check the start of the time window of the depot
-                if (cli[0].twEarly != 0)
+                if (clients[0].twEarly != 0)
                 {
                     throw std::runtime_error(
                         "Time window for depot should start at 0");
@@ -301,7 +305,7 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
         {
             for (int i = 0; i <= nbClients; i++)
             {
-                cli[i].servDur = (i == 0) ? 0 : serviceTimeData;
+                clients[i].servDur = (i == 0) ? 0 : serviceTimeData;
             }
         }
 
@@ -329,7 +333,7 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
     if (config.useDynamicParameters)
         setDynamicParameters();
 
-    int maxDist = timeCost.max();
+    int maxDist = dist.max();
 
     // Calculate, for all vertices, the correlation for the nbGranular closest
     // vertices
@@ -370,7 +374,7 @@ Params::Params(Config &config,
                int vehicleCap,
                std::vector<std::pair<int, int>> const &timeWindows,
                std::vector<int> const &servDurs,
-               std::vector<std::vector<int>> const &dist,
+               std::vector<std::vector<int>> const &distMat,
                std::vector<int> const &releases)
     : config(config), nbClients(coords.size() - 1), vehicleCapacity(vehicleCap)
 {
@@ -385,13 +389,13 @@ Params::Params(Config &config,
     auto const vehicleMargin = std::ceil(1.3 * totalDemand / vehicleCapacity);
     nbVehicles = static_cast<int>(vehicleMargin) + 3;
 
-    timeCost = Matrix(dist.size());
+    dist = Matrix(distMat.size());
 
-    for (size_t i = 0; i != dist.size(); ++i)
-        for (size_t j = 0; j != dist[i].size(); ++j)
-            timeCost(i, j) = dist[i][j];
+    for (size_t i = 0; i != distMat.size(); ++i)
+        for (size_t j = 0; j != distMat[i].size(); ++j)
+            dist(i, j) = distMat[i][j];
 
-    int maxDist = timeCost.max();
+    int maxDist = dist.max();
 
     // A reasonable scale for the initial values of the penalties
     penaltyCapacity = std::max(
@@ -400,25 +404,25 @@ Params::Params(Config &config,
     // Initial parameter values of this parameter is not argued
     penaltyTimeWarp = config.initialTimeWarpPenalty;
 
-    cli = std::vector<Client>(nbClients + 1);
+    clients = std::vector<Client>(nbClients + 1);
 
     for (size_t idx = 0; idx <= static_cast<size_t>(nbClients); ++idx)
     {
         auto const angle = CircleSector::positive_mod(
             static_cast<int>(32768.
-                             * atan2(cli[nbClients].y - coords[idx].second,
-                                     cli[nbClients].x - coords[idx].first)
+                             * atan2(clients[nbClients].y - coords[idx].second,
+                                     clients[nbClients].x - coords[idx].first)
                              / M_PI));
 
-        cli[idx] = {static_cast<int>(idx + 1),
-                    coords[idx].first,
-                    coords[idx].second,
-                    servDurs[idx],
-                    demands[idx],
-                    timeWindows[idx].first,
-                    timeWindows[idx].second,
-                    releases[idx],
-                    angle};
+        clients[idx] = {static_cast<int>(idx + 1),
+                        coords[idx].first,
+                        coords[idx].second,
+                        servDurs[idx],
+                        demands[idx],
+                        timeWindows[idx].first,
+                        timeWindows[idx].second,
+                        releases[idx],
+                        angle};
     }
 
     setCorrelatedVertices();
@@ -427,6 +431,7 @@ Params::Params(Config &config,
 void Params::setCorrelatedVertices()
 {
     // See Vidal 2012, HGS for VRPTW. Multiplied by 10 for integer arithmetic.
+    // TODO these are parameters, should be in config.
     int const weightWaitTime = 2;
     int const weightTimeWarp = 10;
 
@@ -443,28 +448,27 @@ void Params::setCorrelatedVertices()
                 continue;
 
             // Compute proximity using Eq. 4 in Vidal 2012
-            int const time = timeCost(i, j);
-
             int const first
                 = weightWaitTime
-                      * std::max(cli[j].twEarly - time - cli[i].servDur
-                                     - cli[i].twLate,
+                      * std::max(clients[j].twEarly - dist(i, j)
+                                     - clients[i].servDur - clients[i].twLate,
                                  0)
                   + weightTimeWarp
-                        * std::max(cli[i].twEarly + cli[i].servDur + time
-                                       - cli[j].twLate,
-                                   0);
-            int const second
-                = weightWaitTime
-                      * std::max(cli[i].twEarly - time - cli[j].servDur
-                                     - cli[j].twLate,
-                                 0)
-                  + weightTimeWarp
-                        * std::max(cli[j].twEarly + cli[j].servDur + time
-                                       - cli[i].twLate,
+                        * std::max(clients[i].twEarly + clients[i].servDur
+                                       + dist(i, j) - clients[j].twLate,
                                    0);
 
-            proximity.emplace_back(time + std::min(first, second), j);
+            int const second
+                = weightWaitTime
+                      * std::max(clients[i].twEarly - dist(i, j)
+                                     - clients[j].servDur - clients[j].twLate,
+                                 0)
+                  + weightTimeWarp
+                        * std::max(clients[j].twEarly + clients[j].servDur
+                                       + dist(i, j) - clients[i].twLate,
+                                   0);
+
+            proximity.emplace_back(dist(i, j) + std::min(first, second), j);
         }
 
         std::sort(proximity.begin(), proximity.end());
@@ -510,7 +514,7 @@ void Params::setDynamicParameters()
     //  (b) is a good configuration.
 
     int totalDemand = 0;
-    for (auto &client : cli)
+    for (auto &client : clients)
         totalDemand += client.demand;
 
     // Determine categories of instances based on number of stops/route and
@@ -519,10 +523,10 @@ void Params::setDynamicParameters()
     int stopsPerRoute = 1 + vehicleCapacity / (totalDemand / nbClients);
 
     // Get the time horizon (by using the time window of the depot)
-    int horizon = cli[0].twLate - cli[0].twEarly;
+    int horizon = clients[0].twLate - clients[0].twEarly;
     int nbLargeTW = 0;
     for (int i = 1; i <= nbClients; i++)
-        nbLargeTW += cli[i].twLate - cli[i].twEarly > 0.7 * horizon;
+        nbLargeTW += clients[i].twLate - clients[i].twEarly > 0.7 * horizon;
 
     if (stopsPerRoute > 25)
     {

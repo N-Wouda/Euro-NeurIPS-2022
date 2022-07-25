@@ -80,8 +80,8 @@ public:
     int nbVehicles;       // Number of vehicles
     int vehicleCapacity;  // Capacity limit
 
-    std::vector<Client> cli;  // Client (+depot) information
-    Matrix timeCost;          // Distance matrix (+depot)
+    std::vector<Client> clients;  // Client (+depot) information
+    Matrix dist;                  // Distance matrix (+depot)
 
     // Neighborhood restrictions: For each client, list of nearby clients (size
     // nbClients + 1, but nothing stored for the depot!)
@@ -107,7 +107,7 @@ public:
      * @param vehicleCap   Vehicle capacity.
      * @param timeWindows  Time windows as pairs of [early, late].
      * @param servDurs     Service durations.
-     * @param dist         Distance matrix.
+     * @param distMat      Distance matrix.
      * @param releases     Client release times.
      */
     Params(Config &config,
@@ -116,7 +116,7 @@ public:
            int vehicleCap,
            std::vector<std::pair<int, int>> const &timeWindows,
            std::vector<int> const &servDurs,
-           std::vector<std::vector<int>> const &dist,
+           std::vector<std::vector<int>> const &distMat,
            std::vector<int> const &releases);
 
     // Calculate, for all vertices, the correlation for the nbGranular closest
