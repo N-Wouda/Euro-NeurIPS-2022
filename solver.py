@@ -40,7 +40,7 @@ def plot_single_run(stats, start):
     times, objs = list(zip(*stats.best_objectives()))
     ax_obj.plot([(x - start).seconds for x in times], objs)
 
-    ax_obj.set_title("Objective values")
+    ax_obj.set_title("Improving objective values")
     ax_obj.set_xlabel("Run-time (s)")
     ax_obj.set_ylabel("Objective")
 
