@@ -32,20 +32,29 @@ public:
     /**
      * Returns a vector of population sizes, one element for each iteration.
      */
-    std::vector<size_t> const &popSizes() const { return popSize; }
+    [[nodiscard]] std::vector<size_t> const &popSizes() const
+    {
+        return popSize;
+    }
 
     /**
      * Returns a vector of the number of feasible individuals in the population,
      * one element for each iteration. Of course, in each iteration, the number
      * of feasible individuals does not exceed the total population size.
      */
-    std::vector<size_t> const &feasiblePops() const { return numFeasible; }
+    [[nodiscard]] std::vector<size_t> const &feasiblePops() const
+    {
+        return numFeasible;
+    }
 
     /**
      * Returns a vector of (datetime, objective)-pairs, one for each time a
      * new, feasible best heuristic solution has been found.
      */
-    timedDatapoints const &bestObjectives() const { return bestObjectives_; }
+    [[nodiscard]] timedDatapoints const &bestObjectives() const
+    {
+        return bestObjectives_;
+    }
 };
 
 #endif  // STATISTICS_H

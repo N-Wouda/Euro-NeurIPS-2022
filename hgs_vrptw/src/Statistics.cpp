@@ -15,7 +15,7 @@ void Statistics::collectFrom(Population const &population)
 
     auto const &best = population.bestSol;
 
-    if (!best.isFeasible())  // avoids storing the possible infeasible initial
+    if (!best.isFeasible())  // avoids storing the possibly infeasible initial
         return;              // (random) solution
 
     if (bestObjectives_.empty() || best.cost() < bestObjectives_.back().second)
