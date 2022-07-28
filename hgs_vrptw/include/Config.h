@@ -38,9 +38,6 @@ struct Config
 
     int nbVeh = INT_MAX;  // Number of vehicles
 
-    // To use dynamic parameters based on instance attributes
-    bool useDynamicParameters = false;
-
     // Granular search parameter, limits the number of moves in the RI local
     // search
     size_t nbGranular = 40;
