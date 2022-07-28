@@ -133,8 +133,7 @@ void GeneticAlgorithm::educate(Individual &indiv)
 
 void GeneticAlgorithm::updatePenalties()
 {
-    auto compute = [&](double currFeas, double currPenalty)
-    {
+    auto compute = [&](double currFeas, double currPenalty) {
         if (currFeas < 0.01 && params.config.penaltyBooster > 0)
             currPenalty *= params.config.penaltyBooster;
         else if (currFeas < params.config.targetFeasible - 0.05)
