@@ -1,7 +1,9 @@
-
 The MIT License (MIT)
 
-Copyright (c) 2022  and contributors
+Original HGS-CVRP code: copyright (c) 2020 Thibaut Vidal
+Additional contributions: copyright (c) 2022 ORTEC
+Complete overhaul and EURO/NeurIPS extensions: copyright (c) 2022 OptiML team 
+members
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
