@@ -12,7 +12,8 @@
 #include <string>
 #include <vector>
 
-Params::Params(Config const &config, std::string const &instPath) : config(config)
+Params::Params(Config const &config, std::string const &instPath)
+    : config(config)
 {
     nbVehicles = config.nbVeh;
 
