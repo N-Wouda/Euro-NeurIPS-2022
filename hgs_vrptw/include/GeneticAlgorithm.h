@@ -40,8 +40,8 @@ SOFTWARE.*/
 // population management, doing crossovers and updating parameters.
 class GeneticAlgorithm
 {
+    using clock = std::chrono::system_clock;
     using Parents = std::pair<Individual const *, Individual const *>;
-    using timePoint = std::chrono::system_clock::time_point;
 
     Params &params;            // Problem parameters
     XorShift128 &rng;          // Random number generator
@@ -79,7 +79,7 @@ public:
      * @return          Result object contained the best solution, and current
      *                  population composition.
      */
-    Result runUntil(timePoint const &timePoint);
+    Result runUntil(clock::time_point const &timePoint);
 
     GeneticAlgorithm(Params &params,
                      XorShift128 &rng,

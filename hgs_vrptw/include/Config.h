@@ -9,8 +9,6 @@
 // Stores all the parameters values
 struct Config
 {
-    // TODO make fields const?
-
     int seed = 0;             // Random seed
     size_t nbIter = 20'000;   // iters without improvement
     int timeLimit = INT_MAX;  // time limit in seconds
@@ -21,9 +19,10 @@ struct Config
     // this does not happen.
     double initialTimeWarpPenalty = 1.0;
 
-    // Set to value > 0, so penalty will get multiplied by this value
-    // (instead of default 1.2) if num feasible == 0
-    double penaltyBooster = 2.0;
+    size_t nbPenaltyManagement = 100;  // manage penalties every # iterations
+    double penaltyBooster = 2.0;       // special increase penalty if no feas
+    double penaltyIncrease = 1.2;      // regular increase if below target feas
+    double penaltyDecrease = 0.85;     // regular decrease if above target feas
 
     size_t minimumPopulationSize = 25;
     size_t generationSize = 40;     // max size before culling a generation
@@ -39,12 +38,13 @@ struct Config
 
     int nbVeh = INT_MAX;  // Number of vehicles
 
-    // To use dynamic parameters based on instance attributes
-    bool useDynamicParameters = false;
-
     // Granular search parameter, limits the number of moves in the RI local
     // search
     size_t nbGranular = 40;
+
+    // See Vidal 2012, HGS for VRPTW. Multiplied by 10 for integer arithmetic.
+    int weightWaitTime = 2;   // weight for wait-time nearness
+    int weightTimeWarp = 10;  // weight for time warp nearness
 
     // Probability intensification moves are performed during LS ([0-100])
     int intensificationProbabilityLS = 15;
@@ -65,7 +65,10 @@ struct Config
                     int timeLimit = INT_MAX,
                     int seed = 0,
                     double initialTimeWarpPenalty = 1.0,
+                    size_t nbPenaltyManagement = 100,
                     double penaltyBooster = 2.,
+                    double penaltyIncrease = 1.2,
+                    double penaltyDecrease = 0.85,
                     size_t minimumPopulationSize = 25,
                     size_t generationSize = 40,
                     size_t nbCrossover = 16,
@@ -75,8 +78,9 @@ struct Config
                     size_t repairProbability = 50,
                     double diversityWeight = 0.,
                     int nbVeh = INT_MAX,
-                    bool useDynamicParameters = false,
                     size_t nbGranular = 40,
+                    int weightWaitTime = 2,
+                    int weightTimeWarp = 10,
                     int intensificationProbabilityLS = 15,
                     bool useSwapStarTW = true,
                     bool skipSwapStarDist = false,
@@ -86,7 +90,10 @@ struct Config
           nbIter(nbIter),
           timeLimit(timeLimit),
           initialTimeWarpPenalty(initialTimeWarpPenalty),
+          nbPenaltyManagement(nbPenaltyManagement),
           penaltyBooster(penaltyBooster),
+          penaltyIncrease(penaltyIncrease),
+          penaltyDecrease(penaltyDecrease),
           minimumPopulationSize(minimumPopulationSize),
           generationSize(generationSize),
           nbCrossover(nbCrossover),
@@ -96,8 +103,9 @@ struct Config
           repairProbability(repairProbability),
           diversityWeight(diversityWeight),
           nbVeh(nbVeh),
-          useDynamicParameters(useDynamicParameters),
           nbGranular(nbGranular),
+          weightWaitTime(weightWaitTime),
+          weightTimeWarp(weightTimeWarp),
           intensificationProbabilityLS(intensificationProbabilityLS),
           useSwapStarTW(useSwapStarTW),
           skipSwapStarDist(skipSwapStarDist),
