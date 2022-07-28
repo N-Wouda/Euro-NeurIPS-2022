@@ -8,7 +8,7 @@
 
 #include <numeric>
 
-Result GeneticAlgorithm::runUntil(timePoint const &timePoint)
+Result GeneticAlgorithm::runUntil(clock::time_point const &timePoint)
 {
     if (params.nbClients == 1)
         throw std::runtime_error("Cannot run genetic algorithm with one node.");
@@ -16,7 +16,7 @@ Result GeneticAlgorithm::runUntil(timePoint const &timePoint)
     size_t iter = 0;
     size_t nbIterNonProd = 1;
 
-    while (std::chrono::system_clock::now() < timePoint)
+    while (clock::now() < timePoint)
     {
         iter++;
 
@@ -51,7 +51,7 @@ Result GeneticAlgorithm::runUntil(timePoint const &timePoint)
             nbIterNonProd++;
 
         // Diversification and penalty management
-        if (iter % 100 == 0)
+        if (iter % params.config.nbPenaltyManagement == 0)
         {
             updatePenalties();
             population.reorder();  // re-order since penalties have changed
@@ -128,13 +128,14 @@ void GeneticAlgorithm::educate(Individual &indiv)
 
 void GeneticAlgorithm::updatePenalties()
 {
-    auto compute = [&](double currFeas, double currPenalty) {
-        if (currFeas <= 0.01 && params.config.penaltyBooster > 0)
+    auto compute = [&](double currFeas, double currPenalty)
+    {
+        if (currFeas < 0.01 && params.config.penaltyBooster > 0)
             currPenalty *= params.config.penaltyBooster;
         else if (currFeas < params.config.targetFeasible - 0.05)
-            currPenalty *= 1.2;
+            currPenalty *= params.config.penaltyIncrease;
         else if (currFeas > params.config.targetFeasible + 0.05)
-            currPenalty *= 0.85;
+            currPenalty *= params.config.penaltyDecrease;
 
         // Setting some bounds [0.1, 100000] to the penalty values for safety
         return std::max(std::min(currPenalty, 100000.), 0.1);

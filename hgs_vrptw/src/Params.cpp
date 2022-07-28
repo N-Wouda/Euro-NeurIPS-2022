@@ -430,11 +430,6 @@ Params::Params(Config &config,
 
 void Params::calculateNeighbours()
 {
-    // See Vidal 2012, HGS for VRPTW. Multiplied by 10 for integer arithmetic.
-    // TODO these are parameters, should be in config.
-    int const weightWaitTime = 2;
-    int const weightTimeWarp = 10;
-
     auto proximities
         = std::vector<std::vector<std::pair<int, int>>>(nbClients + 1);
 
@@ -449,21 +444,21 @@ void Params::calculateNeighbours()
 
             // Compute proximity using Eq. 4 in Vidal 2012
             int const first
-                = weightWaitTime
+                = config.weightWaitTime
                       * std::max(clients[j].twEarly - dist(i, j)
                                      - clients[i].servDur - clients[i].twLate,
                                  0)
-                  + weightTimeWarp
+                  + config.weightTimeWarp
                         * std::max(clients[i].twEarly + clients[i].servDur
                                        + dist(i, j) - clients[j].twLate,
                                    0);
 
             int const second
-                = weightWaitTime
+                = config.weightWaitTime
                       * std::max(clients[i].twEarly - dist(i, j)
                                      - clients[j].servDur - clients[j].twLate,
                                  0)
-                  + weightTimeWarp
+                  + config.weightTimeWarp
                         * std::max(clients[j].twEarly + clients[j].servDur
                                        + dist(i, j) - clients[i].twLate,
                                    0);

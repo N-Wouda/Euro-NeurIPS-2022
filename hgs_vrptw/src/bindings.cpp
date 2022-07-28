@@ -32,6 +32,9 @@ PYBIND11_MODULE(hgspy, m)
                       int,
                       int,
                       double,
+                      size_t,
+                      double,
+                      double,
                       double,
                       size_t,
                       size_t,
@@ -44,6 +47,8 @@ PYBIND11_MODULE(hgspy, m)
                       int,
                       bool,
                       size_t,
+                      int,
+                      int,
                       int,
                       bool,
                       bool,
@@ -53,7 +58,10 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("timeLimit") = INT_MAX,
              py::arg("seed") = 0,
              py::arg("initialTimeWarpPenalty") = 1.,
+             py::arg("nbPenaltyManagement") = 100,
              py::arg("penaltyBooster") = 2.,
+             py::arg("penaltyIncrease") = 1.2,
+             py::arg("penaltyDecrease") = 0.85,
              py::arg("minimumPopulationSize") = 25,
              py::arg("generationSize") = 40,
              py::arg("nbCrossover") = 16,
@@ -65,6 +73,8 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("nbVeh") = INT_MAX,
              py::arg("useDynamicParameters") = false,
              py::arg("nbGranular") = 40,
+             py::arg("weightWaitTime") = 2,
+             py::arg("weightTimeWarp") = 10,
              py::arg("intensificationProbabilityLS") = 15,
              py::arg("useSwapStarTW") = true,
              py::arg("skipSwapStarDist") = false,
@@ -74,7 +84,10 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("timeLimit", &Config::timeLimit)
         .def_readonly("seed", &Config::seed)
         .def_readonly("initialTimeWarpPenalty", &Config::initialTimeWarpPenalty)
+        .def_readonly("nbPenaltyManagement", &Config::nbPenaltyManagement)
         .def_readonly("penaltyBooster", &Config::penaltyBooster)
+        .def_readonly("penaltyIncrease", &Config::penaltyIncrease)
+        .def_readonly("penaltyDecrease", &Config::penaltyDecrease)
         .def_readonly("minimumPopulationSize", &Config::minimumPopulationSize)
         .def_readonly("generationSize", &Config::generationSize)
         .def_readonly("nbCrossover", &Config::nbCrossover)
@@ -86,6 +99,8 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("nbVeh", &Config::nbVeh)
         .def_readonly("useDynamicParameters", &Config::useDynamicParameters)
         .def_readonly("nbGranular", &Config::nbGranular)
+        .def_readonly("weightWaitTime", &Config::weightWaitTime)
+        .def_readonly("weightTimeWarp", &Config::weightTimeWarp)
         .def_readonly("intensificationProbabilityLS",
                       &Config::intensificationProbabilityLS)
         .def_readonly("useSwapStarTW", &Config::useSwapStarTW)
