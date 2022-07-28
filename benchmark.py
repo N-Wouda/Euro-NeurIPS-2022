@@ -84,7 +84,11 @@ def main():
     table = tabulate(["Inst.", "Obj.", "Iters.", "Issue?"], data)
 
     print('\n', table, '\n', sep="")
-    print(f" Avg. objective: {data['obj'].mean():.0f}")
+
+    obj_all = data['obj'].mean()
+    obj_feas = data[~data['issues']]['obj'].mean()
+
+    print(f" Avg. objective: {obj_all:.0f} (w/o infeas: {obj_feas:.0f})")
     print(f"Avg. iterations: {data['iters'].mean():.0f}")
     print(f"   Total issues: {data['issues'].sum()}")
 
