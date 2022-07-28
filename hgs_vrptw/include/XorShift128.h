@@ -1,4 +1,3 @@
-
 #ifndef XORSHIFT128_H
 #define XORSHIFT128_H
 
