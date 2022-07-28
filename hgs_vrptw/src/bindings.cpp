@@ -133,7 +133,9 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("rng"));
 
     py::class_<Result>(m, "Result")
-        .def("get_best_found", &Result::getBestFound)
+        .def("get_best_found",
+             &Result::getBestFound,
+             py::return_value_policy::reference)
         .def("get_num_iters", &Result::getNumIters);
 
     py::class_<GeneticAlgorithm>(m, "GeneticAlgorithm")
