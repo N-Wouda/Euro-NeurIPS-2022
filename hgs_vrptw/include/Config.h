@@ -9,8 +9,6 @@
 // Stores all the parameters values
 struct Config
 {
-    // TODO make fields const?
-
     int seed = 0;             // Random seed
     size_t nbIter = 20'000;   // iters without improvement
     int timeLimit = INT_MAX;  // time limit in seconds

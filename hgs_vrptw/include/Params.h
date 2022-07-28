@@ -69,16 +69,10 @@ class Params
      */
     void calculateNeighbours();
 
-    /**
-     * Sets dynamic parameters based on the instance size. Use is toggled by the
-     * ``config.useDynamicParameters`` flag.
-     */
-    void setDynamicParameters();
-
 public:
     // TODO make members private
 
-    Config config;  // Stores all the parameter values
+    Config const config;  // Stores all the parameter values
 
     double penaltyCapacity;  // Excess capacity penalty (per unit)
     double penaltyTimeWarp;  // Time warp penalty (per unit)
@@ -105,7 +99,7 @@ public:
      * @param config   Configuration object.
      * @param instPath Path to the instance data.
      */
-    Params(Config &config, std::string const &instPath);
+    Params(Config const &config, std::string const &instPath);
 
     /**
      * Constructs a Params object with the given configuration, and passed-in
@@ -121,7 +115,7 @@ public:
      * @param distMat      Distance matrix.
      * @param releases     Client release times.
      */
-    Params(Config &config,
+    Params(Config const &config,
            std::vector<std::pair<int, int>> const &coords,
            std::vector<int> const &demands,
            int vehicleCap,

@@ -110,7 +110,7 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("minCircleSectorSize", &Config::minCircleSectorSize);
 
     py::class_<Params>(m, "Params")
-        .def(py::init<Config &,
+        .def(py::init<Config const &,
                       std::vector<std::pair<int, int>> const &,
                       std::vector<int> const &,
                       int,
