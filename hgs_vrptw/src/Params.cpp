@@ -12,7 +12,8 @@
 #include <string>
 #include <vector>
 
-Params::Params(Config &config, std::string const &instPath) : config(config)
+Params::Params(Config const &config, std::string const &instPath)
+    : config(config)
 {
     nbVehicles = config.nbVeh;
 
@@ -330,9 +331,6 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
         nbVehicles = nbClients;
     }
 
-    if (config.useDynamicParameters)
-        setDynamicParameters();
-
     int maxDist = dist.max();
 
     // Calculate, for all vertices, the correlation for the nbGranular closest
@@ -368,7 +366,7 @@ Params::Params(Config &config, std::string const &instPath) : config(config)
     penaltyTimeWarp = config.initialTimeWarpPenalty;
 }
 
-Params::Params(Config &config,
+Params::Params(Config const &config,
                std::vector<std::pair<int, int>> const &coords,
                std::vector<int> const &demands,
                int vehicleCap,
@@ -380,9 +378,6 @@ Params::Params(Config &config,
 {
     int totalDemand = std::accumulate(demands.begin(), demands.end(), 0);
     int maxDemand = *std::max_element(demands.begin(), demands.end());
-
-    if (config.useDynamicParameters)
-        setDynamicParameters();
 
     // Number of vehicles: 30% above LP bin packing heuristic, and three more
     // just in case.
@@ -430,11 +425,6 @@ Params::Params(Config &config,
 
 void Params::calculateNeighbours()
 {
-    // See Vidal 2012, HGS for VRPTW. Multiplied by 10 for integer arithmetic.
-    // TODO these are parameters, should be in config.
-    int const weightWaitTime = 2;
-    int const weightTimeWarp = 10;
-
     auto proximities
         = std::vector<std::vector<std::pair<int, int>>>(nbClients + 1);
 
@@ -449,21 +439,21 @@ void Params::calculateNeighbours()
 
             // Compute proximity using Eq. 4 in Vidal 2012
             int const first
-                = weightWaitTime
+                = config.weightWaitTime
                       * std::max(clients[j].twEarly - dist(i, j)
                                      - clients[i].servDur - clients[i].twLate,
                                  0)
-                  + weightTimeWarp
+                  + config.weightTimeWarp
                         * std::max(clients[i].twEarly + clients[i].servDur
                                        + dist(i, j) - clients[j].twLate,
                                    0);
 
             int const second
-                = weightWaitTime
+                = config.weightWaitTime
                       * std::max(clients[i].twEarly - dist(i, j)
                                      - clients[j].servDur - clients[j].twLate,
                                  0)
-                  + weightTimeWarp
+                  + config.weightTimeWarp
                         * std::max(clients[j].twEarly + clients[j].servDur
                                        + dist(i, j) - clients[i].twLate,
                                    0);
@@ -493,42 +483,4 @@ void Params::calculateNeighbours()
     for (int i = 1; i <= nbClients; i++)
         for (int x : set[i])
             neighbours[i].push_back(x);
-}
-
-void Params::setDynamicParameters()
-{
-    int totalDemand = 0;
-    for (auto &client : clients)
-        totalDemand += client.demand;
-
-    // Determine categories of instances based on number of stops/route and
-    // whether it has large time windows Calculate an upper bound for the
-    // number of stops per route based on capacities
-    int stopsPerRoute = 1 + vehicleCapacity / (totalDemand / nbClients);
-
-    // Get the time horizon (by using the time window of the depot)
-    int horizon = clients[0].twLate - clients[0].twEarly;
-    int nbLargeTW = 0;
-    for (int i = 1; i <= nbClients; i++)
-        nbLargeTW += clients[i].twLate - clients[i].twEarly > 0.7 * horizon;
-
-    // TODO these fixed parameter values are based on ORTEC's DIMACS VRP
-    //  competition result. We should verify this (a) makes sense to use, and
-    //  (b) is a good configuration.
-    if (stopsPerRoute > 25)
-    {
-        config.nbGranular = 40;
-        config.intensificationProbabilityLS = 15;
-    }
-    else
-    {
-        if (nbLargeTW > 0)
-            // Smaller neighbourhood so iterations are faster
-            // So take more iterations before growing population
-            config.nbGranular = 20;
-        else
-            config.nbGranular = 40;
-
-        config.intensificationProbabilityLS = 100;
-    }
 }
