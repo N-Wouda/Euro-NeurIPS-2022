@@ -38,7 +38,7 @@ def plot_single_run(stats, start):
 
     # Objectives
     times, objs = list(zip(*stats.best_objectives()))
-    ax_obj.plot([(x - start).seconds for x in times], objs)
+    ax_obj.plot([(x - start).total_seconds() for x in times], objs)
 
     ax_obj.set_title("Improving objective values")
     ax_obj.set_xlabel("Run-time (s)")
@@ -71,11 +71,10 @@ def solve_static_vrptw(instance, time_limit=3600, seed=1, plot=False):
         yield solution, cost
         return
 
-    # TODO all this works, but it is not pretty. Clean this up in tandem with
-    #  the C++ implementation.
     hgspy = tools.get_hgspy_module()
 
-    config = hgspy.Config(seed=seed, nbVeh=-1)
+    # Need data to plot, so use plot here to control data collection
+    config = hgspy.Config(seed=seed, nbVeh=-1, collectStatistics=plot)
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=seed)

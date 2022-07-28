@@ -29,7 +29,7 @@ def solve(loc: str, seed: int, time_limit: int):
     instance = tools.read_vrplib(path)
     start = datetime.now()
 
-    config = hgspy.Config(seed=seed, nbVeh=-1)
+    config = hgspy.Config(seed=seed, nbVeh=-1, collectStatistics=True)
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=seed)
@@ -40,6 +40,8 @@ def solve(loc: str, seed: int, time_limit: int):
     res = algo.run_until(start + timedelta(seconds=time_limit))
 
     best = res.get_best_found()
+    stats = res.get_statistics()
+
     routes = [route for route in best.get_routes() if route]
     cost = best.cost()
 
@@ -51,7 +53,7 @@ def solve(loc: str, seed: int, time_limit: int):
     except AssertionError:
         has_issue = True
 
-    return path.stem, int(cost), res.get_num_iters(), has_issue
+    return path.stem, int(cost), stats.num_iters(), has_issue
 
 
 def tabulate(headers, rows) -> str:

@@ -13,6 +13,8 @@ class Statistics
     using clock = std::chrono::system_clock;
     using timedDatapoints = std::vector<std::pair<clock::time_point, double>>;
 
+    size_t numIters_;
+
     // TODO measure and store population diversity statistic?
 
     std::vector<size_t> popSize;
@@ -28,6 +30,11 @@ public:
      * @param population  Population object to collect data from.
      */
     void collectFrom(Population const &population);
+
+    /**
+     * Returns the total number of iterations.
+     */
+    [[nodiscard]] size_t numIters() const { return numIters_; }
 
     /**
      * Returns a vector of population sizes, one element for each iteration.

@@ -5,6 +5,8 @@
 
 void Statistics::collectFrom(Population const &population)
 {
+    numIters_++;
+
     auto const numFeas = std::count_if(
         population.population.begin(),
         population.population.end(),

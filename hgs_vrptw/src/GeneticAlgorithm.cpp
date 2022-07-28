@@ -60,10 +60,11 @@ Result GeneticAlgorithm::runUntil(clock::time_point const &timePoint)
             population.reorder();  // re-order since penalties have changed
         }
 
-        stats.collectFrom(population);
+        if (params.config.collectStatistics)
+            stats.collectFrom(population);
     }
 
-    return {population.getBestFound(), iter, stats};
+    return {population.getBestFound(), stats};
 }
 
 Individual GeneticAlgorithm::crossover(Parents const &parents) const
