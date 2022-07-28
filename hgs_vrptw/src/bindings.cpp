@@ -5,6 +5,7 @@
 #include "Params.h"
 #include "Population.h"
 #include "Result.h"
+#include "Statistics.h"
 #include "XorShift128.h"
 
 #include <pybind11/chrono.h>
@@ -129,11 +130,19 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("params"),
              py::arg("rng"));
 
+    py::class_<Statistics>(m, "Statistics")
+        .def("pop_sizes", &Statistics::popSizes)
+        .def("feasible_pops", &Statistics::feasiblePops)
+        .def("best_objectives", &Statistics::bestObjectives);
+
     py::class_<Result>(m, "Result")
         .def("get_best_found",
              &Result::getBestFound,
              py::return_value_policy::reference)
-        .def("get_num_iters", &Result::getNumIters);
+        .def("get_num_iters", &Result::getNumIters)
+        .def("get_statistics",
+             &Result::getStatistics,
+             py::return_value_policy::reference);
 
     py::class_<GeneticAlgorithm>(m, "GeneticAlgorithm")
         .def(py::init<Params &, XorShift128 &, Population &, LocalSearch &>(),

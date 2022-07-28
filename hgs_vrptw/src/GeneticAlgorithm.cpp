@@ -5,6 +5,7 @@
 #include "Params.h"
 #include "Population.h"
 #include "Result.h"
+#include "Statistics.h"
 
 #include <numeric>
 
@@ -12,6 +13,8 @@ Result GeneticAlgorithm::runUntil(clock::time_point const &timePoint)
 {
     if (params.nbClients == 1)
         throw std::runtime_error("Cannot run genetic algorithm with one node.");
+
+    Statistics stats;
 
     size_t iter = 0;
     size_t nbIterNonProd = 1;
@@ -56,9 +59,11 @@ Result GeneticAlgorithm::runUntil(clock::time_point const &timePoint)
             updatePenalties();
             population.reorder();  // re-order since penalties have changed
         }
+
+        stats.collectFrom(population);
     }
 
-    return {population.getBestFound(), iter};
+    return {population.getBestFound(), iter, stats};
 }
 
 Individual GeneticAlgorithm::crossover(Parents const &parents) const
@@ -128,7 +133,8 @@ void GeneticAlgorithm::educate(Individual &indiv)
 
 void GeneticAlgorithm::updatePenalties()
 {
-    auto compute = [&](double currFeas, double currPenalty) {
+    auto compute = [&](double currFeas, double currPenalty)
+    {
         if (currFeas < 0.01 && params.config.penaltyBooster > 0)
             currPenalty *= params.config.penaltyBooster;
         else if (currFeas < params.config.targetFeasible - 0.05)

@@ -3,6 +3,7 @@
 
 #include "Individual.h"
 #include "Params.h"
+#include "Statistics.h"
 #include "XorShift128.h"
 
 #include <vector>
@@ -11,6 +12,8 @@
 // tournaments, update fitness values, etc.
 class Population
 {
+    friend class Statistics;  // used to collect population statistics
+
     using Parents = std::pair<Individual const *, Individual const *>;
 
     Params &params;    // Problem parameters

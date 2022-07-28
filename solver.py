@@ -2,6 +2,7 @@ import argparse
 import sys
 from datetime import datetime, timedelta
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 import tools
@@ -18,11 +19,36 @@ def parse_args():
     parser.add_argument("--solver_seed", type=int, default=1)
     parser.add_argument("--static", action='store_true')
     parser.add_argument("--epoch_tlim", type=int, default=120)
+    parser.add_argument("--plot_statistics", action="store_true")
 
     return parser.parse_args()
 
 
-def solve_static_vrptw(instance, time_limit=3600, seed=1):
+def plot_single_run(stats, start):
+    _, (ax_pop, ax_obj) = plt.subplots(nrows=2, ncols=1, figsize=(8, 12))
+
+    # Population
+    ax_pop.plot(stats.pop_sizes(), label="Population size")
+    ax_pop.plot(stats.feasible_pops(), label="# Feasible")
+
+    ax_pop.set_title("Population statistics")
+    ax_pop.set_xlabel("Iteration (#)")
+    ax_pop.set_ylabel("Individuals (#)")
+    ax_pop.legend(frameon=False)
+
+    # Objectives
+    times, objs = list(zip(*stats.best_objectives()))
+    ax_obj.plot([(x - start).seconds for x in times], objs)
+
+    ax_obj.set_title("Objective values")
+    ax_obj.set_xlabel("Run-time (s)")
+    ax_obj.set_ylabel("Objective")
+
+    plt.tight_layout()
+    plt.savefig(f"tmp/{datetime.now().isoformat()}.png")
+
+
+def solve_static_vrptw(instance, time_limit=3600, seed=1, plot=False):
     # Instance is a dict that has the following entries:
     # - 'is_depot': boolean np.array. True for depot; False otherwise.
     # - 'coords': np.array of locations (incl. depot)
@@ -62,6 +88,9 @@ def solve_static_vrptw(instance, time_limit=3600, seed=1):
     best = res.get_best_found()
     routes = [route for route in best.get_routes() if route]
     cost = best.cost()
+
+    if plot:
+        plot_single_run(res.get_statistics(), start)
 
     assert np.isclose(tools.validate_static_solution(instance, routes), cost)
 
@@ -125,7 +154,8 @@ def run_baseline(args, env, oracle_solution=None):
             # we will exactly use the solver_seed whereas in the dynamic problem randomness is in the instance
             solutions = list(solve_static_vrptw(epoch_instance_dispatch,
                                                 time_limit=epoch_tlim,
-                                                seed=args.solver_seed))
+                                                seed=args.solver_seed,
+                                                plot=args.plot_statistics))
             assert len(
                 solutions) > 0, f"No solution found during epoch {observation['current_epoch']}"
             epoch_solution, cost = solutions[-1]
