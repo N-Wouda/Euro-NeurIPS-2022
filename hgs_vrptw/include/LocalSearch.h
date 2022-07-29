@@ -43,9 +43,9 @@ class LocalSearch
                                     // this route have been last tested
         bool isDeltaRemovalTWOutdated;  // Flag to indicate deltaRemovalTW data
                                         // of nodes is outdated
-        Node *depot;            // Pointer to the associated depot
-        int load;               // Total load on the route
-        TimeWindowData twData;  // Time window data of the route
+        Node *depot;                    // Pointer to the associated depot
+        int load;                       // Total load on the route
+        TimeWindowData twData;          // Time window data of the route
         double
             penalty;  // Current sum of load, duration and time window penalties
         double
@@ -60,23 +60,23 @@ class LocalSearch
         int position;  // Position in the route
         int whenLastTestedRI;  // "When" the RI moves for this node have been
                                // last tested
-        Node *next;         // Next node in the route order
-        Node *prev;         // Previous node in the route order
-        Route *route;       // Pointer towards the associated route
-        int cumulatedLoad;  // Cumulated load on this route until the client
-                            // (including itself)
+        Node *next;            // Next node in the route order
+        Node *prev;            // Previous node in the route order
+        Route *route;          // Pointer towards the associated route
+        int cumulatedLoad;     // Cumulated load on this route until the client
+                               // (including itself)
         int cumulatedReversalDistance;  // Difference of cost if the segment of
                                         // route (0...cour) is reversed (useful
                                         // for 2-opt moves with asymmetric
                                         // problems)
-        int deltaRemoval;  // Difference of cost in the current route if the
-                           // node is removed (used in SWAP*)
+        int deltaRemoval;    // Difference of cost in the current route if the
+                             // node is removed (used in SWAP*)
         int deltaRemovalTW;  // Difference of cost in the current route if the
                              // node is removed, including TimeWarp (used in
                              // SWAP*)
         TimeWindowData twData;  // TimeWindowData for individual node (cour)
-        TimeWindowData prefixTwData;  // TimeWindowData for subsequence
-                                      // (0...cour) including self
+        TimeWindowData prefixTwData;   // TimeWindowData for subsequence
+                                       // (0...cour) including self
         TimeWindowData postfixTwData;  // TimeWindowData for subsequence
                                        // (cour...0) including self
         bool isSeed;  // Tells whether a nextSeed is available (faster twData
