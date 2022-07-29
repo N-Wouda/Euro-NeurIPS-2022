@@ -292,17 +292,17 @@ class LocalSearch
     // Updates the preprocessed data of a route
     void updateRouteData(Route *myRoute);
 
-    // Loading an initial solution into the local search
+    // Load an individual solution into the local search
     void loadIndividual(Individual const &indiv);
 
-    // Exporting the LS solution into an individual and calculating the
-    // penalized cost according to the original penalty weights from Params
+    // Export the LS solution back into an individual
     Individual exportIndividual();
 
 public:
     // Run the local search with the specified penalty values
-    void
-    run(Individual &indiv, double penaltyCapacityLS, double penaltyTimeWarpLS);
+    void operator()(Individual &indiv,
+                    double penaltyCapacityLS,
+                    double penaltyTimeWarpLS);
 
     LocalSearch(Params &params, XorShift128 &rng);
 };

@@ -9,9 +9,9 @@
 #include <set>
 #include <vector>
 
-void LocalSearch::run(Individual &indiv,
-                      double penaltyCapacityLS,
-                      double penaltyTimeWarpLS)
+void LocalSearch::operator()(Individual &indiv,
+                             double penaltyCapacityLS,
+                             double penaltyTimeWarpLS)
 {
     this->penaltyCapacityLS = penaltyCapacityLS;
     this->penaltyTimeWarpLS = penaltyTimeWarpLS;
@@ -30,15 +30,10 @@ void LocalSearch::run(Individual &indiv,
     searchCompleted = false;
     for (loopID = 0; !searchCompleted; loopID++)
     {
-        if (loopID > 1)
-        {
-            // Allows at least two loops since some moves involving empty routes
-            // are not checked at the first loop
-            searchCompleted = true;
-        }
+        if (loopID > 1)              // At least two loops as some moves with
+            searchCompleted = true;  // empty routes are not done in the first
 
-        /* CLASSICAL ROUTE IMPROVEMENT (RI) MOVES SUBJECT TO A PROXIMITY
-         * RESTRICTION */
+        /* ROUTE IMPROVEMENT (RI) MOVES SUBJECT TO A PROXIMITY RESTRICTION */
         for (int posU = 0; posU < params.nbClients; posU++)
         {
             nodeU = &clients[orderNodes[posU]];
@@ -63,6 +58,7 @@ void LocalSearch::run(Individual &indiv,
                     // pair)
                     setLocalVariablesRouteU();
                     setLocalVariablesRouteV();
+
                     if (MoveSingleClient())
                         continue;  // RELOCATE
                     if (MoveTwoClients())
@@ -85,6 +81,7 @@ void LocalSearch::run(Individual &indiv,
                     {
                         nodeV = nodeV->prev;
                         setLocalVariablesRouteV();
+
                         if (MoveSingleClient())
                             continue;  // RELOCATE
                         if (MoveTwoClients())
@@ -104,6 +101,7 @@ void LocalSearch::run(Individual &indiv,
                 nodeV = routes[*emptyRoutes.begin()].depot;
                 setLocalVariablesRouteU();
                 setLocalVariablesRouteV();
+
                 if (MoveSingleClient())
                     continue;  // RELOCATE
                 if (MoveTwoClients())
@@ -122,9 +120,7 @@ void LocalSearch::run(Individual &indiv,
             {
                 routeU = &routes[orderRoutes[rU]];
                 if (routeU->nbCustomers == 0)
-                {
                     continue;
-                }
 
                 int lastTestLargeNbRouteU = routeU->whenLastTestedLargeNb;
                 routeU->whenLastTestedLargeNb = nbMoves;
@@ -133,36 +129,24 @@ void LocalSearch::run(Individual &indiv,
                     routeV = &routes[orderRoutes[rV]];
                     if (routeV->nbCustomers == 0
                         || routeU->cour >= routeV->cour)
-                    {
                         continue;
-                    }
 
                     if (loopID > 0
                         && std::max(routeU->whenLastModified,
                                     routeV->whenLastModified)
                                <= lastTestLargeNbRouteU)
-                    {
                         continue;
-                    }
 
                     if (!CircleSector::overlap(
                             routeU->sector,
                             routeV->sector,
                             params.config.circleSectorOverlapTolerance))
-                    {
                         continue;
-                    }
 
                     if (!RelocateStar())
-                    {
                         if (params.config.skipSwapStarDist || !swapStar(false))
-                        {
                             if (params.config.useSwapStarTW)
-                            {
                                 swapStar(true);
-                            }
-                        }
-                    }
                 }
             }
         }

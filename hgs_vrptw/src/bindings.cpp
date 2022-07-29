@@ -25,7 +25,8 @@ PYBIND11_MODULE(hgspy, m)
     py::class_<LocalSearch>(m, "LocalSearch")
         .def(py::init<Params &, XorShift128 &>(),
              py::arg("params"),
-             py::arg("rng"));
+             py::arg("rng"))
+        .def("__call__", &LocalSearch::operator());
 
     py::class_<Config>(m, "Config")
         .def(py::init<size_t,
