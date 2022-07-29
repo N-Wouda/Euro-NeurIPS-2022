@@ -47,7 +47,7 @@ struct Config
     int weightTimeWarp = 10;  // weight for time warp nearness
 
     // Probability intensification moves are performed during LS ([0-100])
-    int intensificationProbabilityLS = 15;
+    int intensificationProbability = 15;
     bool useSwapStarTW = true;
 
     // Skip normal swap star based on distance
@@ -81,7 +81,7 @@ struct Config
                     size_t nbGranular = 40,
                     int weightWaitTime = 2,
                     int weightTimeWarp = 10,
-                    int intensificationProbabilityLS = 15,
+                    int intensificationProbability = 15,
                     bool useSwapStarTW = true,
                     bool skipSwapStarDist = false,
                     int circleSectorOverlapToleranceDegrees = 0,
@@ -106,7 +106,7 @@ struct Config
           nbGranular(nbGranular),
           weightWaitTime(weightWaitTime),
           weightTimeWarp(weightTimeWarp),
-          intensificationProbabilityLS(intensificationProbabilityLS),
+          intensificationProbability(intensificationProbability),
           useSwapStarTW(useSwapStarTW),
           skipSwapStarDist(skipSwapStarDist),
           circleSectorOverlapTolerance(circleSectorOverlapToleranceDegrees)

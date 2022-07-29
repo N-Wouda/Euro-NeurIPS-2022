@@ -73,8 +73,8 @@ public:
                 config.targetFeasible = atof(argv[i + 1]);
             else if (std::string(argv[i]) == "-repairProbability")
                 config.repairProbability = atoi(argv[i + 1]);
-            else if (std::string(argv[i]) == "-intensificationProbabilityLS")
-                config.intensificationProbabilityLS = atoi(argv[i + 1]);
+            else if (std::string(argv[i]) == "-intensificationProbability")
+                config.intensificationProbability = atoi(argv[i + 1]);
             else if (std::string(argv[i]) == "-diversityWeight")
                 config.diversityWeight = atof(argv[i + 1]);
             else if (std::string(argv[i]) == "-useSwapStarTW")

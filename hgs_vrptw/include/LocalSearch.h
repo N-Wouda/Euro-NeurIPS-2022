@@ -298,11 +298,21 @@ class LocalSearch
     // Export the LS solution back into an individual
     Individual exportIndividual();
 
+    // Performs the actual local search procedure
+    void search();
+
 public:
-    // Run the local search with the specified penalty values
+    /**
+     * Performs the local search procedure around the given individual, using
+     * the passed-in penalty parameters.
+     *
+     * @param indiv                  Individual to improve.
+     * @param excessCapacityPenalty  Excess capacity penalty.
+     * @param timeWarpPenalty        Penalty for violated time windows.
+     */
     void operator()(Individual &indiv,
-                    double penaltyCapacityLS,
-                    double penaltyTimeWarpLS);
+                    double excessCapacityPenalty,
+                    double timeWarpPenalty);
 
     LocalSearch(Params &params, XorShift128 &rng);
 };

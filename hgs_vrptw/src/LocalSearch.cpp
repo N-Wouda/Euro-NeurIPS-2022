@@ -10,20 +10,23 @@
 #include <vector>
 
 void LocalSearch::operator()(Individual &indiv,
-                             double penaltyCapacityLS,
-                             double penaltyTimeWarpLS)
+                             double excessCapacityPenalty,
+                             double timeWarpPenalty)
 {
-    this->penaltyCapacityLS = penaltyCapacityLS;
-    this->penaltyTimeWarpLS = penaltyTimeWarpLS;
+    penaltyCapacityLS = excessCapacityPenalty;
+    penaltyTimeWarpLS = timeWarpPenalty;
 
+    loadIndividual(indiv);       // load individual...
+    search();                    // ...perform local search...
+    indiv = exportIndividual();  // ...export result back into the individual
+}
+
+void LocalSearch::search()
+{
     bool const shouldIntensify
-        = rng.randint(100)
-          < (unsigned int)params.config.intensificationProbabilityLS;
+        = rng.randint(100) < (unsigned)params.config.intensificationProbability;
 
-    loadIndividual(indiv);
-
-    // Shuffling the order of the nodes explored by the LS to allow for more
-    // diversity in the search
+    // Shuffling the nodes adds diversity to the search
     std::shuffle(orderNodes.begin(), orderNodes.end(), rng);
     std::shuffle(orderRoutes.begin(), orderRoutes.end(), rng);
 
@@ -151,9 +154,6 @@ void LocalSearch::operator()(Individual &indiv,
             }
         }
     }
-
-    // Register the solution produced by the LS in the individual
-    indiv = exportIndividual();
 }
 
 void LocalSearch::setLocalVariablesRouteU()
