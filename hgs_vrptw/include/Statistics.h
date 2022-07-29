@@ -15,10 +15,9 @@ class Statistics
 
     size_t numIters_ = 0;
 
-    // TODO measure and store population diversity statistic?
-
     std::vector<size_t> popSize;
     std::vector<size_t> numFeasible;
+    std::vector<double> popDiversity_;
     timedDatapoints bestObjectives_;
 
 public:
@@ -52,6 +51,18 @@ public:
     [[nodiscard]] std::vector<size_t> const &feasiblePops() const
     {
         return numFeasible;
+    }
+
+    /**
+     * Returns a vector of the average population diversity, one element for
+     * each iteration. The average diversity is computed as the average broken
+     * pairs distance for each individual in the population, compared to its
+     * neighbours (the neighbourhood size is controlled by the ``nbGranular``
+     * setting).
+     */
+    [[nodiscard]] std::vector<double> const &popDiversity() const
+    {
+        return popDiversity_;
     }
 
     /**

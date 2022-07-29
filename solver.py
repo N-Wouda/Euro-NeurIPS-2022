@@ -28,13 +28,20 @@ def plot_single_run(stats, start):
     _, (ax_pop, ax_obj) = plt.subplots(nrows=2, ncols=1, figsize=(8, 12))
 
     # Population
-    ax_pop.plot(stats.pop_sizes(), label="Population size")
-    ax_pop.plot(stats.feasible_pops(), label="# Feasible")
+    ax_pop.plot(stats.pop_sizes(), label="Population size", c="tab:blue")
+    ax_pop.plot(stats.feasible_pops(), label="# Feasible", c="tab:orange")
 
     ax_pop.set_title("Population statistics")
     ax_pop.set_xlabel("Iteration (#)")
     ax_pop.set_ylabel("Individuals (#)")
     ax_pop.legend(frameon=False)
+
+    # Population diversity
+    ax_pop_div = ax_pop.twinx()
+    ax_pop_div.plot(stats.pop_diversity(), label="Diversity", c="tab:red")
+
+    ax_pop_div.set_ylabel("Avg. diversity")
+    ax_pop_div.legend(frameon=False)
 
     # Objectives
     times, objs = list(zip(*stats.best_objectives()))

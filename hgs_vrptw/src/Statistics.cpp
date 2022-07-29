@@ -2,6 +2,7 @@
 #include "Population.h"
 
 #include <algorithm>
+#include <numeric>
 
 void Statistics::collectFrom(Population const &population)
 {
@@ -13,7 +14,19 @@ void Statistics::collectFrom(Population const &population)
         [](Individual const *indiv) { return indiv->isFeasible(); });
 
     numFeasible.push_back(numFeas);
-    popSize.push_back(population.population.size());
+
+    auto const nPops = population.population.size();
+    popSize.push_back(nPops);
+
+    double const totalDiversity = std::accumulate(
+        population.population.begin(),
+        population.population.end(),
+        0.,
+        [](double val, Individual const *indiv) {
+            return val + indiv->avgBrokenPairsDistanceClosest();
+        });
+
+    popDiversity_.push_back(totalDiversity / static_cast<double>(nPops));
 
     auto const &best = population.bestSol;
 
