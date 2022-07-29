@@ -1,6 +1,6 @@
 import argparse
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,6 +8,7 @@ import numpy as np
 import tools
 from baselines.strategies import STRATEGIES
 from environment import ControllerEnvironment, VRPEnvironment
+from python.functions import solve
 
 
 def parse_args():
@@ -78,18 +79,7 @@ def solve_static_vrptw(instance, time_limit=3600, seed=1, plot=False):
         yield solution, cost
         return
 
-    hgspy = tools.get_hgspy_module()
-
-    # Need data to plot, so use plot here to control data collection
-    config = hgspy.Config(seed=seed, nbVeh=-1, collectStatistics=plot)
-    params = hgspy.Params(config, **tools.inst_to_vars(instance))
-
-    rng = hgspy.XorShift128(seed=seed)
-    pop = hgspy.Population(params, rng)
-    ls = hgspy.LocalSearch(params, rng)
-
-    algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
-    res = algo.run_until(start + timedelta(seconds=time_limit))
+    res = solve(instance, seed, time_limit, nbVeh=-1, collectStatistics=plot)
 
     best = res.get_best_found()
     routes = [route for route in best.get_routes() if route]

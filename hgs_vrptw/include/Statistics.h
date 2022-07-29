@@ -57,7 +57,7 @@ public:
      * Returns a vector of the average population diversity, one element for
      * each iteration. The average diversity is computed as the average broken
      * pairs distance for each individual in the population, compared to its
-     * neighbours (the neighbourhood size is controlled by the ``nbGranular``
+     * neighbours (the neighbourhood size is controlled by the ``nbClose``
      * setting).
      */
     [[nodiscard]] std::vector<double> const &popDiversity() const
