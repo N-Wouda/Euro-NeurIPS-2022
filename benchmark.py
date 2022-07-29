@@ -8,6 +8,7 @@ import numpy as np
 from tqdm.contrib.concurrent import process_map
 
 import tools
+from python.classes import Measures
 
 
 def parse_args():
@@ -22,7 +23,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def solve(loc: str, seed: int, time_limit: int):
+def solve(loc: str, seed: int, time_limit: int, measures: Measures):
     path = Path(loc)
 
     hgspy = tools.get_hgspy_module()
@@ -40,20 +41,18 @@ def solve(loc: str, seed: int, time_limit: int):
     res = algo.run_until(start + timedelta(seconds=time_limit))
 
     best = res.get_best_found()
-    stats = res.get_statistics()
-
     routes = [route for route in best.get_routes() if route]
     cost = best.cost()
 
     try:
         actual_cost = tools.validate_static_solution(instance, routes)
-        has_issue = False
+        is_ok = "Y"
 
         assert np.isclose(actual_cost, cost), "Could not validate objective."
     except AssertionError:
-        has_issue = True
+        is_ok = "N"
 
-    return path.stem, int(cost), stats.num_iters(), has_issue
+    return path.stem, is_ok, *measures(res)
 
 
 def tabulate(headers, rows) -> str:
@@ -75,24 +74,29 @@ def tabulate(headers, rows) -> str:
 
 def main():
     args = parse_args()
+    measures = Measures()
 
-    func = partial(solve, seed=args.seed, time_limit=args.time_limit)
-    func_args = glob(args.instance_pattern)
+    kwargs = dict(seed=args.seed, time_limit=args.time_limit, measures=measures)
+    func = partial(solve, **kwargs)
+
     tqdm_kwargs = dict(max_workers=args.num_procs, unit="instance")
-    data = process_map(func, func_args, **tqdm_kwargs)
+    data = process_map(func, glob(args.instance_pattern), **tqdm_kwargs)
 
-    dtype = [('inst', 'U37'), ('obj', int), ('iters', int), ('issues', bool)]
-    data = np.array(data, dtype=dtype)
-    table = tabulate(["Inst.", "Obj.", "Iters.", "Issue?"], data)
+    dtypes = [('inst', 'U37'), ('ok', 'U1'), *measures.dtypes()]
+    data = np.array(data, dtype=dtypes)
+    table = tabulate(["Instance", "OK?", *measures.legend()], data)
 
     print('\n', table, '\n', sep="")
 
-    obj_all = data['obj'].mean()
-    obj_feas = data[~data['issues']]['obj'].mean()
+    obj_all = data['obj']
+    obj_feas = data[data['ok'] == 'Y']['obj']
 
-    print(f" Avg. objective: {obj_all:.0f} (w/o infeas: {obj_feas:.0f})")
-    print(f"Avg. iterations: {data['iters'].mean():.0f}")
-    print(f"   Total issues: {data['issues'].sum()}")
+    print(f"      Avg. objective: {obj_all.mean():.0f}", end=" ")
+    print(f"(w/o infeas: {obj_feas.mean():.0f})" if obj_feas.size > 0 else "")
+
+    print(f"     Avg. iterations: {data['iters'].mean():.0f}")
+    print(f"Avg. improving moves: {data['nb_improv'].mean():.1f}")
+    print(f"        Total not OK: {np.count_nonzero(data['ok'] == 'N')}")
 
 
 if __name__ == "__main__":

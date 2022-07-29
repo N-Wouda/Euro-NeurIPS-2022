@@ -13,7 +13,7 @@ class Statistics
     using clock = std::chrono::system_clock;
     using timedDatapoints = std::vector<std::pair<clock::time_point, double>>;
 
-    size_t numIters_;
+    size_t numIters_ = 0;
 
     // TODO measure and store population diversity statistic?
 
