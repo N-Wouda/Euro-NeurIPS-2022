@@ -16,6 +16,10 @@ void LocalSearch::operator()(Individual &indiv,
     penaltyCapacityLS = excessCapacityPenalty;
     penaltyTimeWarpLS = timeWarpPenalty;
 
+    // Shuffling the node order beforehand adds diversity to the search
+    std::shuffle(orderNodes.begin(), orderNodes.end(), rng);
+    std::shuffle(orderRoutes.begin(), orderRoutes.end(), rng);
+
     loadIndividual(indiv);       // load individual...
     search();                    // ...perform local search...
     indiv = exportIndividual();  // ...export result back into the individual
@@ -25,10 +29,6 @@ void LocalSearch::search()
 {
     bool const shouldIntensify
         = rng.randint(100) < (unsigned)params.config.intensificationProbability;
-
-    // Shuffling the nodes adds diversity to the search
-    std::shuffle(orderNodes.begin(), orderNodes.end(), rng);
-    std::shuffle(orderRoutes.begin(), orderRoutes.end(), rng);
 
     searchCompleted = false;
     for (int step = 0; !searchCompleted; ++step)
@@ -68,15 +68,15 @@ void LocalSearch::search()
                         continue;  // RELOCATE
                     if (MoveTwoClientsReversed())
                         continue;  // RELOCATE
-                    if (nodeUIndex < nodeVIndex && SwapTwoSingleClients())
+                    if (SwapTwoSingleClients())
                         continue;  // SWAP
                     if (SwapTwoClientsForOne())
                         continue;  // SWAP
-                    if (nodeUIndex < nodeVIndex && SwapTwoClientPairs())
+                    if (SwapTwoClientPairs())
                         continue;  // SWAP
-                    if (routeU->cour < routeV->cour && TwoOptBetweenTrips())
+                    if (TwoOptBetweenTrips())
                         continue;  // 2-OPT*
-                    if (routeU == routeV && TwoOptWithinTrip())
+                    if (TwoOptWithinTrip())
                         continue;  // 2-OPT
 
                     // Trying moves that insert nodeU directly after the depot
@@ -91,7 +91,7 @@ void LocalSearch::search()
                             continue;  // RELOCATE
                         if (MoveTwoClientsReversed())
                             continue;  // RELOCATE
-                        if (routeU->cour < routeV->cour && TwoOptBetweenTrips())
+                        if (TwoOptBetweenTrips())
                             continue;  // 2-OPT*
                     }
                 }
@@ -440,6 +440,9 @@ bool LocalSearch::MoveTwoClientsReversed()
 
 bool LocalSearch::SwapTwoSingleClients()
 {
+    if (nodeUIndex >= nodeVIndex)
+        return false;
+
     if (nodeUIndex == nodeVPrevIndex || nodeUIndex == nodeYIndex)
         return false;
 
@@ -619,6 +622,9 @@ bool LocalSearch::SwapTwoClientsForOne()
 
 bool LocalSearch::SwapTwoClientPairs()
 {
+    if (nodeUIndex >= nodeVIndex)
+        return false;
+
     if (nodeX->isDepot || nodeY->isDepot || nodeY == nodeU->prev
         || nodeU == nodeY || nodeX == nodeV || nodeV == nodeX->next)
         return false;
@@ -710,6 +716,9 @@ bool LocalSearch::SwapTwoClientPairs()
 
 bool LocalSearch::TwoOptWithinTrip()
 {
+    if (routeU != routeV)
+        return false;
+
     if (nodeU->position >= nodeV->position - 1)
         return false;
 
@@ -762,6 +771,9 @@ bool LocalSearch::TwoOptWithinTrip()
 
 bool LocalSearch::TwoOptBetweenTrips()
 {
+    if (routeU->cour >= routeV->cour)
+        return false;
+
     double costSuppU = params.dist(nodeUIndex, nodeYIndex)
                        - params.dist(nodeUIndex, nodeXIndex);
     double costSuppV = params.dist(nodeVIndex, nodeXIndex)
@@ -1324,9 +1336,6 @@ LocalSearch::TimeWindowData
 LocalSearch::mergeTwDataRecursive(TimeWindowData const &twData1,
                                   TimeWindowData const &twData2) const
 {
-    // TODO this is on the hot path in any profiling run I do. Can we do
-    //  anything to speed this up?
-
     int dist = params.dist(twData1.idxLast, twData2.idxFirst);
     int delta = twData1.duration - twData1.timeWarp + dist;
     int deltaWaitTime = std::max(twData2.twEarly - delta - twData1.twLate, 0);
