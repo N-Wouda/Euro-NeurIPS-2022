@@ -39,16 +39,18 @@ void LocalSearch::search()
         /* ROUTE IMPROVEMENT (RI) MOVES SUBJECT TO A PROXIMITY RESTRICTION */
         for (int posU = 0; posU < params.nbClients; posU++)
         {
-            nodeU = &clients[orderNodes[posU]];
-            int lastTestRINodeU = nodeU->whenLastTestedRI;
-            nodeU->whenLastTestedRI = nbMoves;
+            auto &nodeU = clients[orderNodes[posU]];
 
-            for (auto const &v : params.getNeighboursOf(nodeU->cour))
+            int lastTestRINodeU = nodeU.whenLastTestedRI;
+            nodeU.whenLastTestedRI = nbMoves;
+
+            for (auto const &vIdx : params.getNeighboursOf(nodeU.cour))
             {
-                nodeV = &clients[v];
+                auto &nodeV = clients[vIdx];
+
                 if (step == 0
-                    || std::max(nodeU->route->whenLastModified,
-                                nodeV->route->whenLastModified)
+                    || std::max(nodeU.route->whenLastModified,
+                                nodeV.route->whenLastModified)
                            > lastTestRINodeU)  // only evaluate moves involving
                                                // routes that have been
                                                // modified since last move
@@ -59,8 +61,8 @@ void LocalSearch::search()
                     // the order of the node pairs (and it's not very common to
                     // find improving moves of different types for the same node
                     // pair)
-                    setLocalVariablesRouteU();
-                    setLocalVariablesRouteV();
+                    u = {params, &nodeU};
+                    v = {params, &nodeV};
 
                     if (MoveSingleClient())
                         continue;  // RELOCATE
@@ -80,10 +82,9 @@ void LocalSearch::search()
                         continue;  // 2-OPT
 
                     // Trying moves that insert nodeU directly after the depot
-                    if (nodeV->prev->isDepot)
+                    if (nodeV.prev->isDepot)
                     {
-                        nodeV = nodeV->prev;
-                        setLocalVariablesRouteV();
+                        v = {params, nodeV.prev};
 
                         if (MoveSingleClient())
                             continue;  // RELOCATE
@@ -101,9 +102,7 @@ void LocalSearch::search()
              * AVOID INCREASING TOO MUCH THE FLEET SIZE */
             if (step > 0 && !emptyRoutes.empty())
             {
-                nodeV = routes[*emptyRoutes.begin()].depot;
-                setLocalVariablesRouteU();
-                setLocalVariablesRouteV();
+                v = {params, routes[*emptyRoutes.begin()].depot};
 
                 if (MoveSingleClient())
                     continue;  // RELOCATE
@@ -119,30 +118,33 @@ void LocalSearch::search()
         /* (SWAP*) MOVES LIMITED TO ROUTE PAIRS WHOSE CIRCLE SECTORS OVERLAP */
         if (searchCompleted && shouldIntensify)
         {
+            u = {params, u.node};
+            v = {params, v.node};
+
             for (int rU = 0; rU < params.nbVehicles; rU++)
             {
-                routeU = &routes[orderRoutes[rU]];
-                if (routeU->nbCustomers == 0)
+                u.route = &routes[orderRoutes[rU]];
+                if (u.route->nbCustomers == 0)
                     continue;
 
-                int lastTestLargeNbRouteU = routeU->whenLastTestedLargeNb;
-                routeU->whenLastTestedLargeNb = nbMoves;
+                int lastTestLargeNbRouteU = u.route->whenLastTestedLargeNb;
+                u.route->whenLastTestedLargeNb = nbMoves;
                 for (int rV = 0; rV < params.nbVehicles; rV++)
                 {
-                    routeV = &routes[orderRoutes[rV]];
-                    if (routeV->nbCustomers == 0
-                        || routeU->cour >= routeV->cour)
+                    v.route = &routes[orderRoutes[rV]];
+                    if (v.route->nbCustomers == 0
+                        || u.route->cour >= v.route->cour)
                         continue;
 
                     if (step > 0
-                        && std::max(routeU->whenLastModified,
-                                    routeV->whenLastModified)
+                        && std::max(u.route->whenLastModified,
+                                    v.route->whenLastModified)
                                <= lastTestLargeNbRouteU)
                         continue;
 
                     if (!CircleSector::overlap(
-                            routeU->sector,
-                            routeV->sector,
+                            u.route->sector,
+                            v.route->sector,
                             params.config.circleSectorOverlapTolerance))
                         continue;
 
@@ -156,83 +158,55 @@ void LocalSearch::search()
     }
 }
 
-void LocalSearch::setLocalVariablesRouteU()
-{
-    routeU = nodeU->route;
-    nodeX = nodeU->next;
-    nodeXNextIndex = nodeX->next->cour;
-    nodeUIndex = nodeU->cour;
-    nodeUPrevIndex = nodeU->prev->cour;
-    nodeXIndex = nodeX->cour;
-    loadU = params.clients[nodeUIndex].demand;
-    loadX = params.clients[nodeXIndex].demand;
-    routeUTimeWarp = routeU->twData.timeWarp > 0;
-    routeULoadPenalty = routeU->load > params.vehicleCapacity;
-}
-
-void LocalSearch::setLocalVariablesRouteV()
-{
-    routeV = nodeV->route;
-    nodeY = nodeV->next;
-    nodeYNextIndex = nodeY->next->cour;
-    nodeVIndex = nodeV->cour;
-    nodeVPrevIndex = nodeV->prev->cour;
-    nodeYIndex = nodeY->cour;
-    loadV = params.clients[nodeVIndex].demand;
-    loadY = params.clients[nodeYIndex].demand;
-    routeVTimeWarp = routeV->twData.timeWarp > 0;
-    routeVLoadPenalty = routeV->load > params.vehicleCapacity;
-}
-
 bool LocalSearch::MoveSingleClient()
 {
     // If U already comes directly after V, this move has no effect
-    if (nodeUIndex == nodeYIndex)
+    if (u.nodeIndex == v.nextIndex)
         return false;
 
-    double costSuppU = params.dist(nodeUPrevIndex, nodeXIndex)
-                       - params.dist(nodeUPrevIndex, nodeUIndex)
-                       - params.dist(nodeUIndex, nodeXIndex);
-    double costSuppV = params.dist(nodeVIndex, nodeUIndex)
-                       + params.dist(nodeUIndex, nodeYIndex)
-                       - params.dist(nodeVIndex, nodeYIndex);
+    double costSuppU = params.dist(u.prevIndex, u.nextIndex)
+                       - params.dist(u.prevIndex, u.nodeIndex)
+                       - params.dist(u.nodeIndex, u.nextIndex);
+    double costSuppV = params.dist(v.nodeIndex, u.nodeIndex)
+                       + params.dist(u.nodeIndex, v.nextIndex)
+                       - params.dist(v.nodeIndex, v.nextIndex);
 
-    if (routeU != routeV)
+    if (u.route != v.route)
     {
-        if (!routeULoadPenalty && !routeUTimeWarp
+        if (!u.hasExcessLoad && !u.hasTimeWarp
             && costSuppU + costSuppV > -MY_EPSILON)
         {
             return false;
         }
 
-        auto routeUTwData = mergeTwDataRecursive(nodeU->prev->prefixTwData,
-                                                 nodeX->postfixTwData);
+        auto routeUTwData = mergeTwDataRecursive(u.node->prev->prefixTwData,
+                                                 u.nextNode->postfixTwData);
         auto routeVTwData = mergeTwDataRecursive(
-            nodeV->prefixTwData, nodeU->twData, nodeY->postfixTwData);
+            v.node->prefixTwData, u.node->twData, v.nextNode->postfixTwData);
 
-        costSuppU += penaltyExcessLoad(routeU->load - loadU)
-                     + penaltyTimeWindows(routeUTwData) - routeU->penalty;
+        costSuppU += penaltyExcessLoad(u.route->load - u.demand)
+                     + penaltyTimeWindows(routeUTwData) - u.route->penalty;
 
-        costSuppV += penaltyExcessLoad(routeV->load + loadU)
-                     + penaltyTimeWindows(routeVTwData) - routeV->penalty;
+        costSuppV += penaltyExcessLoad(v.route->load + u.demand)
+                     + penaltyTimeWindows(routeVTwData) - v.route->penalty;
     }
     else
     {
-        if (!routeUTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
+        if (!u.hasTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
         {
             return false;
         }
 
         // Move within the same route
-        if (nodeU->position < nodeV->position)
+        if (u.node->position < v.node->position)
         {
             // Edge case V directly after U, so X == V, this works
             // start - ... - UPrev - X - ... - V - U - Y - ... - end
-            auto const routeUTwData
-                = mergeTwDataRecursive(nodeU->prev->prefixTwData,
-                                       getRouteSegmentTwData(nodeX, nodeV),
-                                       nodeU->twData,
-                                       nodeY->postfixTwData);
+            auto const routeUTwData = mergeTwDataRecursive(
+                u.node->prev->prefixTwData,
+                getRouteSegmentTwData(u.nextNode, v.node),
+                u.node->twData,
+                v.nextNode->postfixTwData);
 
             costSuppU += penaltyTimeWindows(routeUTwData);
         }
@@ -241,81 +215,82 @@ bool LocalSearch::MoveSingleClient()
             // Edge case U directly after V is excluded from beginning of
             // function start - ... - V - U - Y - ... - UPrev - X - ... - end
             auto const routeUTwData = mergeTwDataRecursive(
-                nodeV->prefixTwData,
-                nodeU->twData,
-                getRouteSegmentTwData(nodeY, nodeU->prev),
-                nodeX->postfixTwData);
+                v.node->prefixTwData,
+                u.node->twData,
+                getRouteSegmentTwData(v.nextNode, u.node->prev),
+                u.nextNode->postfixTwData);
 
             costSuppU += penaltyTimeWindows(routeUTwData);
         }
 
         // Compute new total penalty
-        costSuppU += penaltyExcessLoad(routeU->load) - routeU->penalty;
+        costSuppU += penaltyExcessLoad(u.route->load) - u.route->penalty;
     }
 
     if (costSuppU + costSuppV > -MY_EPSILON)
         return false;
 
-    insertNode(nodeU, nodeV);
+    insertNode(u.node, v.node);
     nbMoves++;  // Increment move counter before updating route data
     searchCompleted = false;
-    updateRouteData(routeU);
-    if (routeU != routeV)
-        updateRouteData(routeV);
+    updateRouteData(u.route);
+    if (u.route != v.route)
+        updateRouteData(v.route);
 
     return true;
 }
 
 bool LocalSearch::MoveTwoClients()
 {
-    if (nodeU == nodeY || nodeV == nodeX || nodeX->isDepot)
+    if (u.node == v.nextNode || v.node == u.nextNode || u.nextNode->isDepot)
         return false;
 
-    double costSuppU = params.dist(nodeUPrevIndex, nodeXNextIndex)
-                       - params.dist(nodeUPrevIndex, nodeUIndex)
-                       - params.dist(nodeXIndex, nodeXNextIndex);
-    double costSuppV = params.dist(nodeVIndex, nodeUIndex)
-                       + params.dist(nodeXIndex, nodeYIndex)
-                       - params.dist(nodeVIndex, nodeYIndex);
+    double costSuppU = params.dist(u.prevIndex, u.nextNextIndex)
+                       - params.dist(u.prevIndex, u.nodeIndex)
+                       - params.dist(u.nextIndex, u.nextNextIndex);
+    double costSuppV = params.dist(v.nodeIndex, u.nodeIndex)
+                       + params.dist(u.nextIndex, v.nextIndex)
+                       - params.dist(v.nodeIndex, v.nextIndex);
 
-    if (routeU != routeV)
+    if (u.route != v.route)
     {
-        if (!routeULoadPenalty && !routeUTimeWarp
+        if (!u.hasExcessLoad && !u.hasTimeWarp
             && costSuppU + costSuppV > -MY_EPSILON)
         {
             return false;
         }
 
-        auto routeUTwData = mergeTwDataRecursive(nodeU->prev->prefixTwData,
-                                                 nodeX->next->postfixTwData);
-        auto routeVTwData = mergeTwDataRecursive(nodeV->prefixTwData,
-                                                 getEdgeTwData(nodeU, nodeX),
-                                                 nodeY->postfixTwData);
+        auto routeUTwData = mergeTwDataRecursive(
+            u.node->prev->prefixTwData, u.nextNode->next->postfixTwData);
+        auto routeVTwData
+            = mergeTwDataRecursive(v.node->prefixTwData,
+                                   getEdgeTwData(u.node, u.nextNode),
+                                   v.nextNode->postfixTwData);
 
-        costSuppU += penaltyExcessLoad(routeU->load - loadU - loadX)
-                     + penaltyTimeWindows(routeUTwData) - routeU->penalty;
+        costSuppU += penaltyExcessLoad(u.route->load - u.demand - u.nextDemand)
+                     + penaltyTimeWindows(routeUTwData) - u.route->penalty;
 
-        costSuppV += penaltyExcessLoad(routeV->load + loadU + loadX)
-                     + penaltyTimeWindows(routeVTwData) - routeV->penalty;
+        costSuppV += penaltyExcessLoad(v.route->load + u.demand + u.nextDemand)
+                     + penaltyTimeWindows(routeVTwData) - v.route->penalty;
     }
     else
     {
-        if (!routeUTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
+        if (!u.hasTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
         {
             return false;
         }
 
         // Move within the same route
-        if (nodeU->position < nodeV->position)
+        if (u.node->position < v.node->position)
         {
             // Edge case V directly after U, so X == V is excluded, V directly
             // after X so XNext == V works start - ... - UPrev - XNext - ... - V
             // - U - X - Y - ... - end
             auto const routeUTwData = mergeTwDataRecursive(
-                nodeU->prev->prefixTwData,
-                getRouteSegmentTwData(nodeX->next, nodeV),
-                getEdgeTwData(nodeU, nodeX),
-                nodeY->postfixTwData);
+                u.node->prev->prefixTwData,
+                getRouteSegmentTwData(u.nextNode->next, v.node),
+                getEdgeTwData(u.node, u.nextNode),
+                v.nextNode->postfixTwData);
 
             costSuppU += penaltyTimeWindows(routeUTwData);
         }
@@ -325,84 +300,85 @@ bool LocalSearch::MoveTwoClients()
             // function start - ... - V - U - X - Y - ... - UPrev - XNext - ...
             // - end
             auto const routeUTwData = mergeTwDataRecursive(
-                nodeV->prefixTwData,
-                getEdgeTwData(nodeU, nodeX),
-                getRouteSegmentTwData(nodeY, nodeU->prev),
-                nodeX->next->postfixTwData);
+                v.node->prefixTwData,
+                getEdgeTwData(u.node, u.nextNode),
+                getRouteSegmentTwData(v.nextNode, u.node->prev),
+                u.nextNode->next->postfixTwData);
 
             costSuppU += penaltyTimeWindows(routeUTwData);
         }
 
         // Compute new total penalty
-        costSuppU += penaltyExcessLoad(routeU->load) - routeU->penalty;
+        costSuppU += penaltyExcessLoad(u.route->load) - u.route->penalty;
     }
 
     if (costSuppU + costSuppV > -MY_EPSILON)
         return false;
 
-    insertNode(nodeU, nodeV);
-    insertNode(nodeX, nodeU);
+    insertNode(u.node, v.node);
+    insertNode(u.nextNode, u.node);
     nbMoves++;  // Increment move counter before updating route data
     searchCompleted = false;
-    updateRouteData(routeU);
-    if (routeU != routeV)
-        updateRouteData(routeV);
+    updateRouteData(u.route);
+    if (u.route != v.route)
+        updateRouteData(v.route);
 
     return true;
 }
 
 bool LocalSearch::MoveTwoClientsReversed()
 {
-    if (nodeU == nodeY || nodeX == nodeV || nodeX->isDepot)
+    if (u.node == v.nextNode || u.nextNode == v.node || u.nextNode->isDepot)
         return false;
 
-    double costSuppU = params.dist(nodeUPrevIndex, nodeXNextIndex)
-                       - params.dist(nodeUPrevIndex, nodeUIndex)
-                       - params.dist(nodeUIndex, nodeXIndex)
-                       - params.dist(nodeXIndex, nodeXNextIndex);
-    double costSuppV = params.dist(nodeVIndex, nodeXIndex)
-                       + params.dist(nodeXIndex, nodeUIndex)
-                       + params.dist(nodeUIndex, nodeYIndex)
-                       - params.dist(nodeVIndex, nodeYIndex);
+    double costSuppU = params.dist(u.prevIndex, u.nextNextIndex)
+                       - params.dist(u.prevIndex, u.nodeIndex)
+                       - params.dist(u.nodeIndex, u.nextIndex)
+                       - params.dist(u.nextIndex, u.nextNextIndex);
+    double costSuppV = params.dist(v.nodeIndex, u.nextIndex)
+                       + params.dist(u.nextIndex, u.nodeIndex)
+                       + params.dist(u.nodeIndex, v.nextIndex)
+                       - params.dist(v.nodeIndex, v.nextIndex);
 
-    if (routeU != routeV)
+    if (u.route != v.route)
     {
-        if (!routeULoadPenalty && !routeUTimeWarp
+        if (!u.hasExcessLoad && !u.hasTimeWarp
             && costSuppU + costSuppV > -MY_EPSILON)
         {
             return false;
         }
 
-        auto routeUTwData = mergeTwDataRecursive(nodeU->prev->prefixTwData,
-                                                 nodeX->next->postfixTwData);
-        auto routeVTwData = mergeTwDataRecursive(nodeV->prefixTwData,
-                                                 getEdgeTwData(nodeX, nodeU),
-                                                 nodeY->postfixTwData);
+        auto routeUTwData = mergeTwDataRecursive(
+            u.node->prev->prefixTwData, u.nextNode->next->postfixTwData);
+        auto routeVTwData
+            = mergeTwDataRecursive(v.node->prefixTwData,
+                                   getEdgeTwData(u.nextNode, u.node),
+                                   v.nextNode->postfixTwData);
 
-        costSuppU += penaltyExcessLoad(routeU->load - loadU - loadX)
-                     + penaltyTimeWindows(routeUTwData) - routeU->penalty;
+        costSuppU += penaltyExcessLoad(u.route->load - u.demand - u.nextDemand)
+                     + penaltyTimeWindows(routeUTwData) - u.route->penalty;
 
-        costSuppV += penaltyExcessLoad(routeV->load + loadU + loadX)
-                     + penaltyTimeWindows(routeVTwData) - routeV->penalty;
+        costSuppV += penaltyExcessLoad(v.route->load + u.demand + u.nextDemand)
+                     + penaltyTimeWindows(routeVTwData) - v.route->penalty;
     }
     else
     {
-        if (!routeUTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
+        if (!u.hasTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
         {
             return false;
         }
 
         // Move within the same route
-        if (nodeU->position < nodeV->position)
+        if (u.node->position < v.node->position)
         {
             // Edge case V directly after U, so X == V is excluded, V directly
             // after X so XNext == V works start - ... - UPrev - XNext - ... - V
             // - X - U - Y - ... - end
             auto const routeUTwData = mergeTwDataRecursive(
-                nodeU->prev->prefixTwData,
-                getRouteSegmentTwData(nodeX->next, nodeV),
-                getEdgeTwData(nodeX, nodeU),
-                nodeY->postfixTwData);
+                u.node->prev->prefixTwData,
+                getRouteSegmentTwData(u.nextNode->next, v.node),
+                getEdgeTwData(u.nextNode, u.node),
+                v.nextNode->postfixTwData);
 
             costSuppU += penaltyTimeWindows(routeUTwData);
         }
@@ -412,87 +388,89 @@ bool LocalSearch::MoveTwoClientsReversed()
             // function start - ... - V - X - U - Y - ... - UPrev - XNext - ...
             // - end
             auto const routeUTwData = mergeTwDataRecursive(
-                nodeV->prefixTwData,
-                getEdgeTwData(nodeX, nodeU),
-                getRouteSegmentTwData(nodeY, nodeU->prev),
-                nodeX->next->postfixTwData);
+                v.node->prefixTwData,
+                getEdgeTwData(u.nextNode, u.node),
+                getRouteSegmentTwData(v.nextNode, u.node->prev),
+                u.nextNode->next->postfixTwData);
 
             costSuppU += penaltyTimeWindows(routeUTwData);
         }
 
         // Compute new total penalty
-        costSuppU += penaltyExcessLoad(routeU->load) - routeU->penalty;
+        costSuppU += penaltyExcessLoad(u.route->load) - u.route->penalty;
     }
 
     if (costSuppU + costSuppV > -MY_EPSILON)
         return false;
 
-    insertNode(nodeX, nodeV);
-    insertNode(nodeU, nodeX);
+    insertNode(u.nextNode, v.node);
+    insertNode(u.node, u.nextNode);
     nbMoves++;  // Increment move counter before updating route data
     searchCompleted = false;
-    updateRouteData(routeU);
-    if (routeU != routeV)
-        updateRouteData(routeV);
+    updateRouteData(u.route);
+    if (u.route != v.route)
+        updateRouteData(v.route);
 
     return true;
 }
 
 bool LocalSearch::SwapTwoSingleClients()
 {
-    if (nodeUIndex >= nodeVIndex)
+    if (u.nodeIndex >= v.nodeIndex)
         return false;
 
-    if (nodeUIndex == nodeVPrevIndex || nodeUIndex == nodeYIndex)
+    if (u.nodeIndex == v.prevIndex || u.nodeIndex == v.nextIndex)
         return false;
 
-    double costSuppU = params.dist(nodeUPrevIndex, nodeVIndex)
-                       + params.dist(nodeVIndex, nodeXIndex)
-                       - params.dist(nodeUPrevIndex, nodeUIndex)
-                       - params.dist(nodeUIndex, nodeXIndex);
-    double costSuppV = params.dist(nodeVPrevIndex, nodeUIndex)
-                       + params.dist(nodeUIndex, nodeYIndex)
-                       - params.dist(nodeVPrevIndex, nodeVIndex)
-                       - params.dist(nodeVIndex, nodeYIndex);
+    double costSuppU = params.dist(u.prevIndex, v.nodeIndex)
+                       + params.dist(v.nodeIndex, u.nextIndex)
+                       - params.dist(u.prevIndex, u.nodeIndex)
+                       - params.dist(u.nodeIndex, u.nextIndex);
+    double costSuppV = params.dist(v.prevIndex, u.nodeIndex)
+                       + params.dist(u.nodeIndex, v.nextIndex)
+                       - params.dist(v.prevIndex, v.nodeIndex)
+                       - params.dist(v.nodeIndex, v.nextIndex);
 
-    if (routeU != routeV)
+    if (u.route != v.route)
     {
-        if (!routeULoadPenalty && !routeUTimeWarp && !routeVLoadPenalty
-            && !routeVTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
+        if (!u.hasExcessLoad && !u.hasTimeWarp && !v.hasExcessLoad
+            && !v.hasTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
         {
             return false;
         }
 
-        auto routeUTwData = mergeTwDataRecursive(
-            nodeU->prev->prefixTwData, nodeV->twData, nodeX->postfixTwData);
-        auto routeVTwData = mergeTwDataRecursive(
-            nodeV->prev->prefixTwData, nodeU->twData, nodeY->postfixTwData);
+        auto routeUTwData = mergeTwDataRecursive(u.node->prev->prefixTwData,
+                                                 v.node->twData,
+                                                 u.nextNode->postfixTwData);
+        auto routeVTwData = mergeTwDataRecursive(v.node->prev->prefixTwData,
+                                                 u.node->twData,
+                                                 v.nextNode->postfixTwData);
 
-        costSuppU += penaltyExcessLoad(routeU->load + loadV - loadU)
-                     + penaltyTimeWindows(routeUTwData) - routeU->penalty;
+        costSuppU += penaltyExcessLoad(u.route->load + v.demand - u.demand)
+                     + penaltyTimeWindows(routeUTwData) - u.route->penalty;
 
-        costSuppV += penaltyExcessLoad(routeV->load + loadU - loadV)
-                     + penaltyTimeWindows(routeVTwData) - routeV->penalty;
+        costSuppV += penaltyExcessLoad(v.route->load + u.demand - v.demand)
+                     + penaltyTimeWindows(routeVTwData) - v.route->penalty;
     }
     else
     {
-        if (!routeUTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
+        if (!u.hasTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
         {
             return false;
         }
 
         // Swap within the same route
-        if (nodeU->position < nodeV->position)
+        if (u.node->position < v.node->position)
         {
             // Edge case V directly after U, so X == V is excluded, V directly
             // after X so XNext == V works start - ... - UPrev - V - X - ... -
             // VPrev - U - Y - ... - end
             auto const routeUTwData = mergeTwDataRecursive(
-                nodeU->prev->prefixTwData,
-                nodeV->twData,
-                getRouteSegmentTwData(nodeX, nodeV->prev),
-                nodeU->twData,
-                nodeY->postfixTwData);
+                u.node->prev->prefixTwData,
+                v.node->twData,
+                getRouteSegmentTwData(u.nextNode, v.node->prev),
+                u.node->twData,
+                v.nextNode->postfixTwData);
 
             costSuppU += penaltyTimeWindows(routeUTwData);
         }
@@ -502,86 +480,90 @@ bool LocalSearch::SwapTwoSingleClients()
             // function start - ... - VPrev - U - Y - ... - UPrev - V - X - ...
             // - end
             auto const routeUTwData = mergeTwDataRecursive(
-                nodeV->prev->prefixTwData,
-                nodeU->twData,
-                getRouteSegmentTwData(nodeY, nodeU->prev),
-                nodeV->twData,
-                nodeX->postfixTwData);
+                v.node->prev->prefixTwData,
+                u.node->twData,
+                getRouteSegmentTwData(v.nextNode, u.node->prev),
+                v.node->twData,
+                u.nextNode->postfixTwData);
 
             costSuppU += penaltyTimeWindows(routeUTwData);
         }
 
         // Compute new total penalty
-        costSuppU += penaltyExcessLoad(routeU->load) - routeU->penalty;
+        costSuppU += penaltyExcessLoad(u.route->load) - u.route->penalty;
     }
 
     if (costSuppU + costSuppV > -MY_EPSILON)
         return false;
 
-    swapNode(nodeU, nodeV);
+    swapNode(u.node, v.node);
     nbMoves++;  // Increment move counter before updating route data
     searchCompleted = false;
-    updateRouteData(routeU);
-    if (routeU != routeV)
-        updateRouteData(routeV);
+    updateRouteData(u.route);
+    if (u.route != v.route)
+        updateRouteData(v.route);
 
     return true;
 }
 
 bool LocalSearch::SwapTwoClientsForOne()
 {
-    if (nodeU == nodeV->prev || nodeX == nodeV->prev || nodeU == nodeY
-        || nodeX->isDepot)
+    if (u.node == v.node->prev || u.nextNode == v.node->prev
+        || u.node == v.nextNode || u.nextNode->isDepot)
         return false;
 
-    double costSuppU = params.dist(nodeUPrevIndex, nodeVIndex)
-                       + params.dist(nodeVIndex, nodeXNextIndex)
-                       - params.dist(nodeUPrevIndex, nodeUIndex)
-                       - params.dist(nodeXIndex, nodeXNextIndex);
-    double costSuppV = params.dist(nodeVPrevIndex, nodeUIndex)
-                       + params.dist(nodeXIndex, nodeYIndex)
-                       - params.dist(nodeVPrevIndex, nodeVIndex)
-                       - params.dist(nodeVIndex, nodeYIndex);
+    double costSuppU = params.dist(u.prevIndex, v.nodeIndex)
+                       + params.dist(v.nodeIndex, u.nextNextIndex)
+                       - params.dist(u.prevIndex, u.nodeIndex)
+                       - params.dist(u.nextIndex, u.nextNextIndex);
+    double costSuppV = params.dist(v.prevIndex, u.nodeIndex)
+                       + params.dist(u.nextIndex, v.nextIndex)
+                       - params.dist(v.prevIndex, v.nodeIndex)
+                       - params.dist(v.nodeIndex, v.nextIndex);
 
-    if (routeU != routeV)
+    if (u.route != v.route)
     {
-        if (!routeULoadPenalty && !routeUTimeWarp && !routeVLoadPenalty
-            && !routeVTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
+        if (!u.hasExcessLoad && !u.hasTimeWarp && !v.hasExcessLoad
+            && !v.hasTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
         {
             return false;
         }
 
-        auto routeUTwData = mergeTwDataRecursive(nodeU->prev->prefixTwData,
-                                                 nodeV->twData,
-                                                 nodeX->next->postfixTwData);
-        auto routeVTwData = mergeTwDataRecursive(nodeV->prev->prefixTwData,
-                                                 getEdgeTwData(nodeU, nodeX),
-                                                 nodeY->postfixTwData);
+        auto routeUTwData
+            = mergeTwDataRecursive(u.node->prev->prefixTwData,
+                                   v.node->twData,
+                                   u.nextNode->next->postfixTwData);
+        auto routeVTwData
+            = mergeTwDataRecursive(v.node->prev->prefixTwData,
+                                   getEdgeTwData(u.node, u.nextNode),
+                                   v.nextNode->postfixTwData);
 
-        costSuppU += penaltyExcessLoad(routeU->load + loadV - loadU - loadX)
-                     + penaltyTimeWindows(routeUTwData) - routeU->penalty;
+        costSuppU += penaltyExcessLoad(u.route->load + v.demand - u.demand
+                                       - u.nextDemand)
+                     + penaltyTimeWindows(routeUTwData) - u.route->penalty;
 
-        costSuppV += penaltyExcessLoad(routeV->load + loadU + loadX - loadV)
-                     + penaltyTimeWindows(routeVTwData) - routeV->penalty;
+        costSuppV += penaltyExcessLoad(v.route->load + u.demand + u.nextDemand
+                                       - v.demand)
+                     + penaltyTimeWindows(routeVTwData) - v.route->penalty;
     }
     else
     {
-        if (!routeUTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
+        if (!u.hasTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
         {
             return false;
         }
 
         // Swap within the same route
-        if (nodeU->position < nodeV->position)
+        if (u.node->position < v.node->position)
         {
             // start - ... - UPrev - V - XNext - ... - VPrev - U - X - Y - ... -
             // end
             auto const routeUTwData = mergeTwDataRecursive(
-                nodeU->prev->prefixTwData,
-                nodeV->twData,
-                getRouteSegmentTwData(nodeX->next, nodeV->prev),
-                getEdgeTwData(nodeU, nodeX),
-                nodeY->postfixTwData);
+                u.node->prev->prefixTwData,
+                v.node->twData,
+                getRouteSegmentTwData(u.nextNode->next, v.node->prev),
+                getEdgeTwData(u.node, u.nextNode),
+                v.nextNode->postfixTwData);
 
             costSuppU += penaltyTimeWindows(routeUTwData);
         }
@@ -590,17 +572,17 @@ bool LocalSearch::SwapTwoClientsForOne()
             // start - ... - VPrev - U - X - Y - ... - UPrev - V - XNext - ... -
             // end
             auto const routeUTwData = mergeTwDataRecursive(
-                nodeV->prev->prefixTwData,
-                getEdgeTwData(nodeU, nodeX),
-                getRouteSegmentTwData(nodeY, nodeU->prev),
-                nodeV->twData,
-                nodeX->next->postfixTwData);
+                v.node->prev->prefixTwData,
+                getEdgeTwData(u.node, u.nextNode),
+                getRouteSegmentTwData(v.nextNode, u.node->prev),
+                v.node->twData,
+                u.nextNode->next->postfixTwData);
 
             costSuppU += penaltyTimeWindows(routeUTwData);
         }
 
         // Compute new total penalty
-        costSuppU += penaltyExcessLoad(routeU->load) - routeU->penalty;
+        costSuppU += penaltyExcessLoad(u.route->load) - u.route->penalty;
     }
 
     if (costSuppU + costSuppV > -MY_EPSILON)
@@ -609,76 +591,79 @@ bool LocalSearch::SwapTwoClientsForOne()
     // Note: next two lines are a bit inefficient but we only update
     // occasionally and updateRouteData is much more costly anyway, efficient
     // checks are more important
-    swapNode(nodeU, nodeV);
-    insertNode(nodeX, nodeU);
+    swapNode(u.node, v.node);
+    insertNode(u.nextNode, u.node);
     nbMoves++;  // Increment move counter before updating route data
     searchCompleted = false;
-    updateRouteData(routeU);
-    if (routeU != routeV)
-        updateRouteData(routeV);
+    updateRouteData(u.route);
+    if (u.route != v.route)
+        updateRouteData(v.route);
 
     return true;
 }
 
 bool LocalSearch::SwapTwoClientPairs()
 {
-    if (nodeUIndex >= nodeVIndex)
+    if (u.nodeIndex >= v.nodeIndex)
         return false;
 
-    if (nodeX->isDepot || nodeY->isDepot || nodeY == nodeU->prev
-        || nodeU == nodeY || nodeX == nodeV || nodeV == nodeX->next)
+    if (u.nextNode->isDepot || v.nextNode->isDepot || v.nextNode == u.node->prev
+        || u.node == v.nextNode || u.nextNode == v.node
+        || v.node == u.nextNode->next)
         return false;
 
-    double costSuppU = params.dist(nodeUPrevIndex, nodeVIndex)
-                       + params.dist(nodeYIndex, nodeXNextIndex)
-                       - params.dist(nodeUPrevIndex, nodeUIndex)
-                       - params.dist(nodeXIndex, nodeXNextIndex);
-    double costSuppV = params.dist(nodeVPrevIndex, nodeUIndex)
-                       + params.dist(nodeXIndex, nodeYNextIndex)
-                       - params.dist(nodeVPrevIndex, nodeVIndex)
-                       - params.dist(nodeYIndex, nodeYNextIndex);
+    double costSuppU = params.dist(u.prevIndex, v.nodeIndex)
+                       + params.dist(v.nextIndex, u.nextNextIndex)
+                       - params.dist(u.prevIndex, u.nodeIndex)
+                       - params.dist(u.nextIndex, u.nextNextIndex);
+    double costSuppV = params.dist(v.prevIndex, u.nodeIndex)
+                       + params.dist(u.nextIndex, v.nextNextIndex)
+                       - params.dist(v.prevIndex, v.nodeIndex)
+                       - params.dist(v.nextIndex, v.nextNextIndex);
 
-    if (routeU != routeV)
+    if (u.route != v.route)
     {
-        if (!routeULoadPenalty && !routeUTimeWarp && !routeVLoadPenalty
-            && !routeVTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
+        if (!u.hasExcessLoad && !u.hasTimeWarp && !v.hasExcessLoad
+            && !v.hasTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
         {
             return false;
         }
 
-        auto routeUTwData = mergeTwDataRecursive(nodeU->prev->prefixTwData,
-                                                 getEdgeTwData(nodeV, nodeY),
-                                                 nodeX->next->postfixTwData);
-        auto routeVTwData = mergeTwDataRecursive(nodeV->prev->prefixTwData,
-                                                 getEdgeTwData(nodeU, nodeX),
-                                                 nodeY->next->postfixTwData);
+        auto routeUTwData
+            = mergeTwDataRecursive(u.node->prev->prefixTwData,
+                                   getEdgeTwData(v.node, v.nextNode),
+                                   u.nextNode->next->postfixTwData);
+        auto routeVTwData
+            = mergeTwDataRecursive(v.node->prev->prefixTwData,
+                                   getEdgeTwData(u.node, u.nextNode),
+                                   v.nextNode->next->postfixTwData);
 
-        costSuppU
-            += penaltyExcessLoad(routeU->load + loadV + loadY - loadU - loadX)
-               + penaltyTimeWindows(routeUTwData) - routeU->penalty;
+        costSuppU += penaltyExcessLoad(u.route->load + v.demand + v.nextDemand
+                                       - u.demand - u.nextDemand)
+                     + penaltyTimeWindows(routeUTwData) - u.route->penalty;
 
-        costSuppV
-            += penaltyExcessLoad(routeV->load + loadU + loadX - loadV - loadY)
-               + penaltyTimeWindows(routeVTwData) - routeV->penalty;
+        costSuppV += penaltyExcessLoad(v.route->load + u.demand + u.nextDemand
+                                       - v.demand - v.nextDemand)
+                     + penaltyTimeWindows(routeVTwData) - v.route->penalty;
     }
     else
     {
-        if (!routeUTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
+        if (!u.hasTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
         {
             return false;
         }
 
         // Swap within the same route
-        if (nodeU->position < nodeV->position)
+        if (u.node->position < v.node->position)
         {
             // start - ... - UPrev - V - Y - XNext - ... - VPrev - U - X - YNext
             // - ... - end
             auto const routeUTwData = mergeTwDataRecursive(
-                nodeU->prev->prefixTwData,
-                getEdgeTwData(nodeV, nodeY),
-                getRouteSegmentTwData(nodeX->next, nodeV->prev),
-                getEdgeTwData(nodeU, nodeX),
-                nodeY->next->postfixTwData);
+                u.node->prev->prefixTwData,
+                getEdgeTwData(v.node, v.nextNode),
+                getRouteSegmentTwData(u.nextNode->next, v.node->prev),
+                getEdgeTwData(u.node, u.nextNode),
+                v.nextNode->next->postfixTwData);
 
             costSuppU += penaltyTimeWindows(routeUTwData);
         }
@@ -687,74 +672,74 @@ bool LocalSearch::SwapTwoClientPairs()
             // start - ... - VPrev - U - X - YNext - ... - UPrev - V - Y - XNext
             // - ... - end
             auto const routeUTwData = mergeTwDataRecursive(
-                nodeV->prev->prefixTwData,
-                getEdgeTwData(nodeU, nodeX),
-                getRouteSegmentTwData(nodeY->next, nodeU->prev),
-                getEdgeTwData(nodeV, nodeY),
-                nodeX->next->postfixTwData);
+                v.node->prev->prefixTwData,
+                getEdgeTwData(u.node, u.nextNode),
+                getRouteSegmentTwData(v.nextNode->next, u.node->prev),
+                getEdgeTwData(v.node, v.nextNode),
+                u.nextNode->next->postfixTwData);
 
             costSuppU += penaltyTimeWindows(routeUTwData);
         }
 
         // Compute new total penalty
-        costSuppU += penaltyExcessLoad(routeU->load) - routeU->penalty;
+        costSuppU += penaltyExcessLoad(u.route->load) - u.route->penalty;
     }
 
     if (costSuppU + costSuppV > -MY_EPSILON)
         return false;
 
-    swapNode(nodeU, nodeV);
-    swapNode(nodeX, nodeY);
+    swapNode(u.node, v.node);
+    swapNode(u.nextNode, v.nextNode);
     nbMoves++;  // Increment move counter before updating route data
     searchCompleted = false;
-    updateRouteData(routeU);
-    if (routeU != routeV)
-        updateRouteData(routeV);
+    updateRouteData(u.route);
+    if (u.route != v.route)
+        updateRouteData(v.route);
 
     return true;
 }
 
 bool LocalSearch::TwoOptWithinTrip()
 {
-    if (routeU != routeV)
+    if (u.route != v.route)
         return false;
 
-    if (nodeU->position >= nodeV->position - 1)
+    if (u.node->position >= v.node->position - 1)
         return false;
 
-    double cost = params.dist(nodeUIndex, nodeVIndex)
-                  + params.dist(nodeXIndex, nodeYIndex)
-                  - params.dist(nodeUIndex, nodeXIndex)
-                  - params.dist(nodeVIndex, nodeYIndex)
-                  + nodeV->cumulatedReversalDistance
-                  - nodeX->cumulatedReversalDistance;
+    double cost = params.dist(u.nodeIndex, v.nodeIndex)
+                  + params.dist(u.nextIndex, v.nextIndex)
+                  - params.dist(u.nodeIndex, u.nextIndex)
+                  - params.dist(v.nodeIndex, v.nextIndex)
+                  + v.node->cumulatedReversalDistance
+                  - u.nextNode->cumulatedReversalDistance;
 
-    if (!routeUTimeWarp && cost > -MY_EPSILON)
+    if (!u.hasTimeWarp && cost > -MY_EPSILON)
     {
         return false;
     }
 
-    TimeWindowData routeTwData = nodeU->prefixTwData;
-    Node *itRoute = nodeV;
-    while (itRoute != nodeU)
+    TimeWindowData routeTwData = u.node->prefixTwData;
+    Node *itRoute = v.node;
+    while (itRoute != u.node)
     {
         routeTwData = mergeTwDataRecursive(routeTwData, itRoute->twData);
         itRoute = itRoute->prev;
     }
-    routeTwData = mergeTwDataRecursive(routeTwData, nodeY->postfixTwData);
+    routeTwData = mergeTwDataRecursive(routeTwData, v.nextNode->postfixTwData);
 
     // Compute new total penalty
-    cost += penaltyExcessLoad(routeU->load) + penaltyTimeWindows(routeTwData)
-            - routeU->penalty;
+    cost += penaltyExcessLoad(u.route->load) + penaltyTimeWindows(routeTwData)
+            - u.route->penalty;
 
     if (cost > -MY_EPSILON)
     {
         return false;
     }
 
-    itRoute = nodeV;
-    Node *insertionPoint = nodeU;
-    while (itRoute != nodeX)  // No need to move x, we pivot around it
+    itRoute = v.node;
+    Node *insertionPoint = u.node;
+    while (itRoute != u.nextNode)  // No need to move x, we pivot around it
     {
         Node *current = itRoute;
         itRoute = itRoute->prev;
@@ -764,45 +749,45 @@ bool LocalSearch::TwoOptWithinTrip()
 
     nbMoves++;  // Increment move counter before updating route data
     searchCompleted = false;
-    updateRouteData(routeU);
+    updateRouteData(u.route);
 
     return true;
 }
 
 bool LocalSearch::TwoOptBetweenTrips()
 {
-    if (routeU->cour >= routeV->cour)
+    if (u.route->cour >= v.route->cour)
         return false;
 
-    double costSuppU = params.dist(nodeUIndex, nodeYIndex)
-                       - params.dist(nodeUIndex, nodeXIndex);
-    double costSuppV = params.dist(nodeVIndex, nodeXIndex)
-                       - params.dist(nodeVIndex, nodeYIndex);
+    double costSuppU = params.dist(u.nodeIndex, v.nextIndex)
+                       - params.dist(u.nodeIndex, u.nextIndex);
+    double costSuppV = params.dist(v.nodeIndex, u.nextIndex)
+                       - params.dist(v.nodeIndex, v.nextIndex);
 
-    if (!routeULoadPenalty && !routeUTimeWarp && !routeVLoadPenalty
-        && !routeVTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
+    if (!u.hasExcessLoad && !u.hasTimeWarp && !v.hasExcessLoad && !v.hasTimeWarp
+        && costSuppU + costSuppV > -MY_EPSILON)
     {
         return false;
     }
 
     auto routeUTwData
-        = mergeTwDataRecursive(nodeU->prefixTwData, nodeY->postfixTwData);
+        = mergeTwDataRecursive(u.node->prefixTwData, v.nextNode->postfixTwData);
     auto routeVTwData
-        = mergeTwDataRecursive(nodeV->prefixTwData, nodeX->postfixTwData);
+        = mergeTwDataRecursive(v.node->prefixTwData, u.nextNode->postfixTwData);
 
-    costSuppU += penaltyExcessLoad(nodeU->cumulatedLoad + routeV->load
-                                   - nodeV->cumulatedLoad)
-                 + penaltyTimeWindows(routeUTwData) - routeU->penalty;
+    costSuppU += penaltyExcessLoad(u.node->cumulatedLoad + v.route->load
+                                   - v.node->cumulatedLoad)
+                 + penaltyTimeWindows(routeUTwData) - u.route->penalty;
 
-    costSuppV += penaltyExcessLoad(nodeV->cumulatedLoad + routeU->load
-                                   - nodeU->cumulatedLoad)
-                 + penaltyTimeWindows(routeVTwData) - routeV->penalty;
+    costSuppV += penaltyExcessLoad(v.node->cumulatedLoad + u.route->load
+                                   - u.node->cumulatedLoad)
+                 + penaltyTimeWindows(routeVTwData) - v.route->penalty;
 
     if (costSuppU + costSuppV > -MY_EPSILON)
         return false;
 
-    Node *itRouteV = nodeY;
-    Node *insertLocation = nodeU;
+    Node *itRouteV = v.nextNode;
+    Node *insertLocation = u.node;
     while (!itRouteV->isDepot)
     {
         Node *current = itRouteV;
@@ -811,8 +796,8 @@ bool LocalSearch::TwoOptBetweenTrips()
         insertLocation = current;
     }
 
-    Node *itRouteU = nodeX;
-    insertLocation = nodeV;
+    Node *itRouteU = u.nextNode;
+    insertLocation = v.node;
     while (!itRouteU->isDepot)
     {
         Node *current = itRouteU;
@@ -823,63 +808,65 @@ bool LocalSearch::TwoOptBetweenTrips()
 
     nbMoves++;  // Increment move counter before updating route data
     searchCompleted = false;
-    updateRouteData(routeU);
-    updateRouteData(routeV);
+    updateRouteData(u.route);
+    updateRouteData(v.route);
 
     return true;
 }
 
 bool LocalSearch::swapStar(const bool withTW)
 {
-    SwapStarElement myBestSwapStar;
+    SwapStarElement bestSwap;
 
-    if (!bestInsertInitializedForRoute[routeU->cour])
+    if (!bestInsertInitializedForRoute[u.route->cour])
     {
-        bestInsertInitializedForRoute[routeU->cour] = true;
+        bestInsertInitializedForRoute[u.route->cour] = true;
         for (int i = 1; i <= params.nbClients; i++)
         {
-            bestInsertClient[routeU->cour][i].whenLastCalculated = -1;
-            bestInsertClientTW[routeU->cour][i].whenLastCalculated = -1;
+            bestInsertClient[u.route->cour][i].whenLastCalculated = -1;
+            bestInsertClientTW[u.route->cour][i].whenLastCalculated = -1;
         }
     }
-    if (!bestInsertInitializedForRoute[routeV->cour])
+    if (!bestInsertInitializedForRoute[v.route->cour])
     {
-        bestInsertInitializedForRoute[routeV->cour] = true;
+        bestInsertInitializedForRoute[v.route->cour] = true;
         for (int i = 1; i <= params.nbClients; i++)
         {
-            bestInsertClient[routeV->cour][i].whenLastCalculated = -1;
-            bestInsertClientTW[routeV->cour][i].whenLastCalculated = -1;
+            bestInsertClient[v.route->cour][i].whenLastCalculated = -1;
+            bestInsertClientTW[v.route->cour][i].whenLastCalculated = -1;
         }
     }
 
     // Preprocessing insertion costs
     if (withTW)
     {
-        preprocessInsertionsWithTW(routeU, routeV);
-        preprocessInsertionsWithTW(routeV, routeU);
+        preprocessInsertionsWithTW(u.route, v.route);
+        preprocessInsertionsWithTW(v.route, u.route);
     }
     else
     {
-        preprocessInsertions(routeU, routeV);
-        preprocessInsertions(routeV, routeU);
+        preprocessInsertions(u.route, v.route);
+        preprocessInsertions(v.route, u.route);
     }
 
     // Evaluating the moves
-    for (nodeU = routeU->depot->next; !nodeU->isDepot; nodeU = nodeU->next)
+    for (auto *nodeU = u.route->depot->next; !nodeU->isDepot;
+         nodeU = nodeU->next)
     {
-        for (nodeV = routeV->depot->next; !nodeV->isDepot; nodeV = nodeV->next)
+        for (auto *nodeV = v.route->depot->next; !nodeV->isDepot;
+             nodeV = nodeV->next)
         {
-            // We cannot determine impact on timewarp without adding too much
+            // We cannot determine impact on time warp without adding too much
             // complexity (O(n^3) instead of O(n^2))
             const double loadPenU = penaltyExcessLoad(
-                routeU->load + params.clients[nodeV->cour].demand
+                u.route->load + params.clients[nodeV->cour].demand
                 - params.clients[nodeU->cour].demand);
             const double loadPenV = penaltyExcessLoad(
-                routeV->load + params.clients[nodeU->cour].demand
+                v.route->load + params.clients[nodeU->cour].demand
                 - params.clients[nodeV->cour].demand);
             const double deltaLoadPen = loadPenU + loadPenV
-                                        - penaltyExcessLoad(routeU->load)
-                                        - penaltyExcessLoad(routeV->load);
+                                        - penaltyExcessLoad(u.route->load)
+                                        - penaltyExcessLoad(v.route->load);
             const int deltaRemoval
                 = withTW ? nodeU->deltaRemovalTW + nodeV->deltaRemovalTW
                          : nodeU->deltaRemoval + nodeV->deltaRemoval;
@@ -888,173 +875,159 @@ bool LocalSearch::swapStar(const bool withTW)
             // capacity constraints/penalties and bounds on insertion costs
             if (deltaLoadPen + deltaRemoval <= 0)
             {
-                SwapStarElement mySwapStar;
-                mySwapStar.U = nodeU;
-                mySwapStar.V = nodeV;
+                SwapStarElement swap;
+                swap.U = nodeU;
+                swap.V = nodeV;
 
                 int extraV, extraU;
                 if (withTW)
                 {
-                    // Evaluate best reinsertion cost of U in the route of V
-                    // where V has been removed
+                    // Evaluate reinsertion cost of U in the route of V where V
+                    // has been removed
                     extraV = getCheapestInsertSimultRemovalWithTW(
-                        nodeU, nodeV, mySwapStar.bestPositionU);
+                        nodeU, nodeV, swap.bestPositionU);
 
-                    // Evaluate best reinsertion cost of V in the route of U
-                    // where U has been removed
+                    // Evaluate reinsertion cost of V in the route of U where U
+                    // has been removed
                     extraU = getCheapestInsertSimultRemovalWithTW(
-                        nodeV, nodeU, mySwapStar.bestPositionV);
+                        nodeV, nodeU, swap.bestPositionV);
                 }
                 else
                 {
-                    // Evaluate best reinsertion cost of U in the route of V
-                    // where V has been removed
+                    // Evaluate reinsertion cost of U in the route of V where V
+                    // has been removed
                     extraV = getCheapestInsertSimultRemoval(
-                        nodeU, nodeV, mySwapStar.bestPositionU);
+                        nodeU, nodeV, swap.bestPositionU);
 
-                    // Evaluate best reinsertion cost of V in the route of U
-                    // where U has been removed
+                    // Evaluate reinsertion cost of V in the route of U where U
+                    // has been removed
                     extraU = getCheapestInsertSimultRemoval(
-                        nodeV, nodeU, mySwapStar.bestPositionV);
+                        nodeV, nodeU, swap.bestPositionV);
                 }
 
-                // Evaluating final cost
-                mySwapStar.moveCost
-                    = deltaLoadPen + deltaRemoval + extraU + extraV;
+                swap.moveCost = deltaLoadPen + deltaRemoval + extraU + extraV;
 
-                if (mySwapStar.moveCost < myBestSwapStar.moveCost)
+                if (swap.moveCost < bestSwap.moveCost)
                 {
-                    myBestSwapStar = mySwapStar;
-                    myBestSwapStar.loadPenU = loadPenU;
-                    myBestSwapStar.loadPenV = loadPenV;
+                    bestSwap = swap;
+                    bestSwap.loadPenU = loadPenU;
+                    bestSwap.loadPenV = loadPenV;
                 }
             }
         }
     }
 
-    if (!myBestSwapStar.bestPositionU || !myBestSwapStar.bestPositionV)
+    if (!bestSwap.bestPositionU || !bestSwap.bestPositionV)
     {
         return false;
     }
 
     // Compute actual cost including TimeWarp penalty
     double costSuppU
-        = params.dist(myBestSwapStar.bestPositionV->cour,
-                      myBestSwapStar.V->cour)
-          - params.dist(myBestSwapStar.U->prev->cour, myBestSwapStar.U->cour)
-          - params.dist(myBestSwapStar.U->cour, myBestSwapStar.U->next->cour);
+        = params.dist(bestSwap.bestPositionV->cour, bestSwap.V->cour)
+          - params.dist(bestSwap.U->prev->cour, bestSwap.U->cour)
+          - params.dist(bestSwap.U->cour, bestSwap.U->next->cour);
     double costSuppV
-        = params.dist(myBestSwapStar.bestPositionU->cour,
-                      myBestSwapStar.U->cour)
-          - params.dist(myBestSwapStar.V->prev->cour, myBestSwapStar.V->cour)
-          - params.dist(myBestSwapStar.V->cour, myBestSwapStar.V->next->cour);
+        = params.dist(bestSwap.bestPositionU->cour, bestSwap.U->cour)
+          - params.dist(bestSwap.V->prev->cour, bestSwap.V->cour)
+          - params.dist(bestSwap.V->cour, bestSwap.V->next->cour);
 
-    if (myBestSwapStar.bestPositionV == myBestSwapStar.U->prev)
+    if (bestSwap.bestPositionV == bestSwap.U->prev)
     {
         // Insert in place of U
-        costSuppU += params.dist(myBestSwapStar.V->cour,
-                                 myBestSwapStar.U->next->cour);
+        costSuppU += params.dist(bestSwap.V->cour, bestSwap.U->next->cour);
     }
     else
     {
-        costSuppU += params.dist(myBestSwapStar.V->cour,
-                                 myBestSwapStar.bestPositionV->next->cour)
-                     + params.dist(myBestSwapStar.U->prev->cour,
-                                   myBestSwapStar.U->next->cour)
-                     - params.dist(myBestSwapStar.bestPositionV->cour,
-                                   myBestSwapStar.bestPositionV->next->cour);
+        costSuppU
+            += params.dist(bestSwap.V->cour, bestSwap.bestPositionV->next->cour)
+               + params.dist(bestSwap.U->prev->cour, bestSwap.U->next->cour)
+               - params.dist(bestSwap.bestPositionV->cour,
+                             bestSwap.bestPositionV->next->cour);
     }
 
-    if (myBestSwapStar.bestPositionU == myBestSwapStar.V->prev)
+    if (bestSwap.bestPositionU == bestSwap.V->prev)
     {
         // Insert in place of V
-        costSuppV += params.dist(myBestSwapStar.U->cour,
-                                 myBestSwapStar.V->next->cour);
+        costSuppV += params.dist(bestSwap.U->cour, bestSwap.V->next->cour);
     }
     else
     {
-        costSuppV += params.dist(myBestSwapStar.U->cour,
-                                 myBestSwapStar.bestPositionU->next->cour)
-                     + params.dist(myBestSwapStar.V->prev->cour,
-                                   myBestSwapStar.V->next->cour)
-                     - params.dist(myBestSwapStar.bestPositionU->cour,
-                                   myBestSwapStar.bestPositionU->next->cour);
+        costSuppV
+            += params.dist(bestSwap.U->cour, bestSwap.bestPositionU->next->cour)
+               + params.dist(bestSwap.V->prev->cour, bestSwap.V->next->cour)
+               - params.dist(bestSwap.bestPositionU->cour,
+                             bestSwap.bestPositionU->next->cour);
     }
 
     // It is not possible to have bestPositionU == V or bestPositionV == U, so
     // the positions are always strictly different
-    if (myBestSwapStar.bestPositionV->position
-        == myBestSwapStar.U->position - 1)
+    if (bestSwap.bestPositionV->position == bestSwap.U->position - 1)
     {
         // Special case
         auto const routeUTwData
-            = mergeTwDataRecursive(myBestSwapStar.bestPositionV->prefixTwData,
-                                   myBestSwapStar.V->twData,
-                                   myBestSwapStar.U->next->postfixTwData);
+            = mergeTwDataRecursive(bestSwap.bestPositionV->prefixTwData,
+                                   bestSwap.V->twData,
+                                   bestSwap.U->next->postfixTwData);
 
         costSuppU += penaltyTimeWindows(routeUTwData);
     }
-    else if (myBestSwapStar.bestPositionV->position
-             < myBestSwapStar.U->position)
+    else if (bestSwap.bestPositionV->position < bestSwap.U->position)
     {
         auto const routeUTwData = mergeTwDataRecursive(
-            myBestSwapStar.bestPositionV->prefixTwData,
-            myBestSwapStar.V->twData,
-            getRouteSegmentTwData(myBestSwapStar.bestPositionV->next,
-                                  myBestSwapStar.U->prev),
-            myBestSwapStar.U->next->postfixTwData);
+            bestSwap.bestPositionV->prefixTwData,
+            bestSwap.V->twData,
+            getRouteSegmentTwData(bestSwap.bestPositionV->next,
+                                  bestSwap.U->prev),
+            bestSwap.U->next->postfixTwData);
 
         costSuppU += penaltyTimeWindows(routeUTwData);
     }
     else
     {
         auto const routeUTwData = mergeTwDataRecursive(
-            myBestSwapStar.U->prev->prefixTwData,
-            getRouteSegmentTwData(myBestSwapStar.U->next,
-                                  myBestSwapStar.bestPositionV),
-            myBestSwapStar.V->twData,
-            myBestSwapStar.bestPositionV->next->postfixTwData);
+            bestSwap.U->prev->prefixTwData,
+            getRouteSegmentTwData(bestSwap.U->next, bestSwap.bestPositionV),
+            bestSwap.V->twData,
+            bestSwap.bestPositionV->next->postfixTwData);
 
         costSuppU += penaltyTimeWindows(routeUTwData);
     }
 
-    if (myBestSwapStar.bestPositionU->position
-        == myBestSwapStar.V->position - 1)
+    if (bestSwap.bestPositionU->position == bestSwap.V->position - 1)
     {
         // Special case
         auto const routeVTwData
-            = mergeTwDataRecursive(myBestSwapStar.bestPositionU->prefixTwData,
-                                   myBestSwapStar.U->twData,
-                                   myBestSwapStar.V->next->postfixTwData);
+            = mergeTwDataRecursive(bestSwap.bestPositionU->prefixTwData,
+                                   bestSwap.U->twData,
+                                   bestSwap.V->next->postfixTwData);
 
         costSuppV += penaltyTimeWindows(routeVTwData);
     }
-    else if (myBestSwapStar.bestPositionU->position
-             < myBestSwapStar.V->position)
+    else if (bestSwap.bestPositionU->position < bestSwap.V->position)
     {
         auto const routeVTwData = mergeTwDataRecursive(
-            myBestSwapStar.bestPositionU->prefixTwData,
-            myBestSwapStar.U->twData,
-            getRouteSegmentTwData(myBestSwapStar.bestPositionU->next,
-                                  myBestSwapStar.V->prev),
-            myBestSwapStar.V->next->postfixTwData);
+            bestSwap.bestPositionU->prefixTwData,
+            bestSwap.U->twData,
+            getRouteSegmentTwData(bestSwap.bestPositionU->next,
+                                  bestSwap.V->prev),
+            bestSwap.V->next->postfixTwData);
 
         costSuppV += penaltyTimeWindows(routeVTwData);
     }
     else
     {
         auto const routeVTwData = mergeTwDataRecursive(
-            myBestSwapStar.V->prev->prefixTwData,
-            getRouteSegmentTwData(myBestSwapStar.V->next,
-                                  myBestSwapStar.bestPositionU),
-            myBestSwapStar.U->twData,
-            myBestSwapStar.bestPositionU->next->postfixTwData);
+            bestSwap.V->prev->prefixTwData,
+            getRouteSegmentTwData(bestSwap.V->next, bestSwap.bestPositionU),
+            bestSwap.U->twData,
+            bestSwap.bestPositionU->next->postfixTwData);
 
         costSuppV += penaltyTimeWindows(routeVTwData);
     }
 
-    costSuppU += myBestSwapStar.loadPenU - routeU->penalty;
-    costSuppV += myBestSwapStar.loadPenV - routeV->penalty;
+    costSuppU += bestSwap.loadPenU - u.route->penalty;
+    costSuppV += bestSwap.loadPenV - v.route->penalty;
 
     if (costSuppU + costSuppV > -MY_EPSILON)
     {
@@ -1062,12 +1035,12 @@ bool LocalSearch::swapStar(const bool withTW)
     }
 
     // Applying the best move in case of improvement
-    insertNode(myBestSwapStar.U, myBestSwapStar.bestPositionU);
-    insertNode(myBestSwapStar.V, myBestSwapStar.bestPositionV);
+    insertNode(bestSwap.U, bestSwap.bestPositionU);
+    insertNode(bestSwap.V, bestSwap.bestPositionV);
     nbMoves++;  // Increment move counter before updating route data
     searchCompleted = false;
-    updateRouteData(routeU);
-    updateRouteData(routeV);
+    updateRouteData(u.route);
+    updateRouteData(v.route);
 
     return true;
 }
@@ -1077,29 +1050,31 @@ bool LocalSearch::RelocateStar()
     double bestCost = 0;
     Node *insertionPoint = nullptr;
     Node *nodeToInsert = nullptr;
-    for (nodeU = routeU->depot->next; !nodeU->isDepot; nodeU = nodeU->next)
+    for (auto *nodeU = u.route->depot->next; !nodeU->isDepot;
+         nodeU = nodeU->next)
     {
-        setLocalVariablesRouteU();
+        u = {params, nodeU};
 
         const TimeWindowData routeUTwData = mergeTwDataRecursive(
-            nodeU->prev->prefixTwData, nodeX->postfixTwData);
-        const double costSuppU = params.dist(nodeUPrevIndex, nodeXIndex)
-                                 - params.dist(nodeUPrevIndex, nodeUIndex)
-                                 - params.dist(nodeUIndex, nodeXIndex)
-                                 + penaltyExcessLoad(routeU->load - loadU)
+            nodeU->prev->prefixTwData, u.nextNode->postfixTwData);
+        const double costSuppU = params.dist(u.prevIndex, u.nextIndex)
+                                 - params.dist(u.prevIndex, u.nodeIndex)
+                                 - params.dist(u.nodeIndex, u.nextIndex)
+                                 + penaltyExcessLoad(u.route->load - u.demand)
                                  + penaltyTimeWindows(routeUTwData)
-                                 - routeU->penalty;
+                                 - u.route->penalty;
 
-        for (Node *V = routeV->depot->next; !V->isDepot; V = V->next)
+        for (Node *V = v.route->depot->next; !V->isDepot; V = V->next)
         {
             const TimeWindowData routeVTwData = mergeTwDataRecursive(
                 V->prefixTwData, nodeU->twData, V->next->postfixTwData);
-            double costSuppV = params.dist(V->cour, nodeUIndex)
-                               + params.dist(nodeUIndex, V->next->cour)
+            double costSuppV = params.dist(V->cour, u.nodeIndex)
+                               + params.dist(u.nodeIndex, V->next->cour)
                                - params.dist(V->cour, V->next->cour)
-                               + penaltyExcessLoad(routeV->load + loadU)
+                               + penaltyExcessLoad(v.route->load + u.demand)
                                + penaltyTimeWindows(routeVTwData)
-                               - routeV->penalty;
+                               - v.route->penalty;
+
             if (costSuppU + costSuppV < bestCost - MY_EPSILON)
             {
                 bestCost = costSuppU + costSuppV;
@@ -1114,11 +1089,11 @@ bool LocalSearch::RelocateStar()
         return false;
     }
 
-    routeU = nodeToInsert->route;
+    u.route = nodeToInsert->route;
     insertNode(nodeToInsert, insertionPoint);
     nbMoves++;  // Increment move counter before updating route data
     searchCompleted = false;
-    updateRouteData(routeU);
+    updateRouteData(u.route);
     updateRouteData(insertionPoint->route);
 
     return true;
@@ -1193,16 +1168,18 @@ int LocalSearch::getCheapestInsertSimultRemovalWithTW(Node *U,
     // Compute insertion in the place of V
     TimeWindowData twData = mergeTwDataRecursive(
         V->prev->prefixTwData, U->twData, V->next->postfixTwData);
-    int deltaCost = params.dist(V->prev->cour, U->cour)
-                    + params.dist(U->cour, V->next->cour)
-                    - params.dist(V->prev->cour, V->next->cour)
-                    + penaltyTimeWindows(twData)
-                    - penaltyTimeWindows(V->route->twData);
+
+    // TODO the time windows penalty calculations here are incorrect.
+    double deltaCost = params.dist(V->prev->cour, U->cour)
+                       + params.dist(U->cour, V->next->cour)
+                       - params.dist(V->prev->cour, V->next->cour)
+                       + penaltyTimeWindows(twData)
+                       - penaltyTimeWindows(V->route->twData);
 
     if (!found || deltaCost < bestCost)
     {
         bestPosition = V->prev;
-        bestCost = deltaCost;
+        bestCost = static_cast<int>(deltaCost);
     }
 
     return bestCost;

@@ -45,11 +45,11 @@ def solve_static_vrptw(instance, time_limit=3600, seed=1):
         yield solution, cost
         return
 
-    # TODO all this works, but it is not pretty. Clean this up in tandem with
-    #  the C++ implementation.
     hgspy = tools.get_hgspy_module()
 
-    config = hgspy.Config(seed=seed, nbVeh=-1)
+    config = hgspy.Config(seed=seed,
+                          nbVeh=-1,
+                          useSwapStarTW=False)  # TODO false until fixed
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=seed)

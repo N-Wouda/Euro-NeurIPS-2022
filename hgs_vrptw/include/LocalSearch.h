@@ -74,11 +74,15 @@ class LocalSearch
         int deltaRemovalTW;  // Difference of cost in the current route if the
                              // node is removed, including TimeWarp (used in
                              // SWAP*)
+
         TimeWindowData twData;  // TimeWindowData for individual node (cour)
-        TimeWindowData prefixTwData;   // TimeWindowData for subsequence
-                                       // (0...cour) including self
-        TimeWindowData postfixTwData;  // TimeWindowData for subsequence
-                                       // (cour...0) including self
+
+        // TimeWindowData for subsequence (0...cour) including self
+        TimeWindowData prefixTwData;
+
+        // TimeWindowData for subsequence (cour...0) including self
+        TimeWindowData postfixTwData;
+
         bool isSeed;  // Tells whether a nextSeed is available (faster twData
                       // calculations)
         TimeWindowData
@@ -136,6 +140,43 @@ class LocalSearch
         Node *bestPositionV = nullptr;
     };
 
+    struct RouteLocals  // TODO
+    {
+        Node *node = nullptr;
+        Node *nextNode = nullptr;
+        Route *route = nullptr;
+
+        int nextNextIndex = 0;
+        int nodeIndex = 0;
+        int prevIndex = 0;
+        int nextIndex = 0;
+
+        int demand = 0;
+        int nextDemand = 0;
+
+        bool hasTimeWarp = false;
+        bool hasExcessLoad = false;
+
+        RouteLocals() = default;
+
+        RouteLocals(Params &params, Node *node) : node(node)
+        {
+            route = node->route;
+            nextNode = node->next;
+
+            nextNextIndex = nextNode->next->cour;
+            nodeIndex = node->cour;
+            prevIndex = node->prev->cour;
+            nextIndex = nextNode->cour;
+
+            demand = params.clients[nodeIndex].demand;
+            nextDemand = params.clients[nextIndex].demand;
+
+            hasTimeWarp = route->twData.timeWarp > 0;
+            hasExcessLoad = route->load > params.vehicleCapacity;
+        }
+    };
+
     Params &params;        // Problem parameters
     XorShift128 &rng;      // Random number generator
     bool searchCompleted;  // Tells whether all moves have been evaluated
@@ -163,26 +204,8 @@ class LocalSearch
                              // cheapest insertion cost (including TW)
 
     /* TEMPORARY VARIABLES USED IN THE LOCAL SEARCH LOOPS */
-    Node *nodeU;
-    Node *nodeX;
-    Node *nodeV;
-    Node *nodeY;
-    Route *routeU;
-    Route *routeV;
-    int nodeUPrevIndex, nodeUIndex, nodeXIndex, nodeXNextIndex;
-    int nodeVPrevIndex, nodeVIndex, nodeYIndex, nodeYNextIndex;
-    int loadU, loadX, loadV, loadY;
-    bool routeUTimeWarp, routeULoadPenalty, routeVTimeWarp, routeVLoadPenalty;
+    RouteLocals u, v;
     double penaltyCapacityLS, penaltyTimeWarpLS;
-
-    void setLocalVariablesRouteU();  // Initializes some local variables and
-                                     // distances associated to routeU to avoid
-                                     // always querying the same values in the
-                                     // distance matrix
-    void setLocalVariablesRouteV();  // Initializes some local variables and
-                                     // distances associated to routeV to avoid
-                                     // always querying the same values in the
-                                     // distance matrix
 
     // Functions in charge of excess load penalty calculations
     [[nodiscard]] inline double penaltyExcessLoad(double load) const
