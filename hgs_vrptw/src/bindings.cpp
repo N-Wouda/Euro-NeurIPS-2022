@@ -18,6 +18,18 @@ PYBIND11_MODULE(hgspy, m)
         .def(py::init<int>(), py::arg("seed"));
 
     py::class_<Individual>(m, "Individual")
+        .def(py::init<Params *, XorShift128 *>(),
+             py::arg("params"),
+             py::arg("rng"))
+        .def(py::init<Params *, std::vector<int>>(),
+             py::arg("params"),
+             py::arg("tour"))
+        .def(py::init<Params *,
+                      std::vector<int>,
+                      std::vector<std::vector<int>>>(),
+             py::arg("params"),
+             py::arg("tour"),
+             py::arg("routes"))
         .def("get_routes", &Individual::getRoutes)
         .def("get_tour", &Individual::getTour)
         .def("cost", &Individual::cost);
