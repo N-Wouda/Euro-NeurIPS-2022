@@ -151,6 +151,7 @@ void Individual::makeRoutes()
         }
     }
 
+    assert(end == 0 && "All clients should be assigned to routes");
     evaluateCompleteCost();
 }
 
