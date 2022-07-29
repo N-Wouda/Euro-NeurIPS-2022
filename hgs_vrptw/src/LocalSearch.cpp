@@ -10,8 +10,8 @@
 #include <vector>
 
 void LocalSearch::operator()(Individual &indiv,
-                             double excessCapacityPenalty,
-                             double timeWarpPenalty)
+                             int excessCapacityPenalty,
+                             int timeWarpPenalty)
 {
     penaltyCapacityLS = excessCapacityPenalty;
     penaltyTimeWarpLS = timeWarpPenalty;
@@ -164,17 +164,17 @@ bool LocalSearch::MoveSingleClient()
     if (u.nodeIndex == v.nextIndex)
         return false;
 
-    double costSuppU = params.dist(u.prevIndex, u.nextIndex)
+    int costSuppU = params.dist(u.prevIndex, u.nextIndex)
                        - params.dist(u.prevIndex, u.nodeIndex)
                        - params.dist(u.nodeIndex, u.nextIndex);
-    double costSuppV = params.dist(v.nodeIndex, u.nodeIndex)
+    int costSuppV = params.dist(v.nodeIndex, u.nodeIndex)
                        + params.dist(u.nodeIndex, v.nextIndex)
                        - params.dist(v.nodeIndex, v.nextIndex);
 
     if (u.route != v.route)
     {
         if (!u.hasExcessLoad && !u.hasTimeWarp
-            && costSuppU + costSuppV > -MY_EPSILON)
+            && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -192,7 +192,7 @@ bool LocalSearch::MoveSingleClient()
     }
     else
     {
-        if (!u.hasTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
+        if (!u.hasTimeWarp && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -227,7 +227,7 @@ bool LocalSearch::MoveSingleClient()
         costSuppU += penaltyExcessLoad(u.route->load) - u.route->penalty;
     }
 
-    if (costSuppU + costSuppV > -MY_EPSILON)
+    if (costSuppU + costSuppV >= 0)
         return false;
 
     insertNode(u.node, v.node);
@@ -245,17 +245,17 @@ bool LocalSearch::MoveTwoClients()
     if (u.node == v.nextNode || v.node == u.nextNode || u.nextNode->isDepot)
         return false;
 
-    double costSuppU = params.dist(u.prevIndex, u.nextNextIndex)
+    int costSuppU = params.dist(u.prevIndex, u.nextNextIndex)
                        - params.dist(u.prevIndex, u.nodeIndex)
                        - params.dist(u.nextIndex, u.nextNextIndex);
-    double costSuppV = params.dist(v.nodeIndex, u.nodeIndex)
+    int costSuppV = params.dist(v.nodeIndex, u.nodeIndex)
                        + params.dist(u.nextIndex, v.nextIndex)
                        - params.dist(v.nodeIndex, v.nextIndex);
 
     if (u.route != v.route)
     {
         if (!u.hasExcessLoad && !u.hasTimeWarp
-            && costSuppU + costSuppV > -MY_EPSILON)
+            && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -275,7 +275,7 @@ bool LocalSearch::MoveTwoClients()
     }
     else
     {
-        if (!u.hasTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
+        if (!u.hasTimeWarp && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -312,7 +312,7 @@ bool LocalSearch::MoveTwoClients()
         costSuppU += penaltyExcessLoad(u.route->load) - u.route->penalty;
     }
 
-    if (costSuppU + costSuppV > -MY_EPSILON)
+    if (costSuppU + costSuppV >= 0)
         return false;
 
     insertNode(u.node, v.node);
@@ -331,11 +331,11 @@ bool LocalSearch::MoveTwoClientsReversed()
     if (u.node == v.nextNode || u.nextNode == v.node || u.nextNode->isDepot)
         return false;
 
-    double costSuppU = params.dist(u.prevIndex, u.nextNextIndex)
+    int costSuppU = params.dist(u.prevIndex, u.nextNextIndex)
                        - params.dist(u.prevIndex, u.nodeIndex)
                        - params.dist(u.nodeIndex, u.nextIndex)
                        - params.dist(u.nextIndex, u.nextNextIndex);
-    double costSuppV = params.dist(v.nodeIndex, u.nextIndex)
+    int costSuppV = params.dist(v.nodeIndex, u.nextIndex)
                        + params.dist(u.nextIndex, u.nodeIndex)
                        + params.dist(u.nodeIndex, v.nextIndex)
                        - params.dist(v.nodeIndex, v.nextIndex);
@@ -343,7 +343,7 @@ bool LocalSearch::MoveTwoClientsReversed()
     if (u.route != v.route)
     {
         if (!u.hasExcessLoad && !u.hasTimeWarp
-            && costSuppU + costSuppV > -MY_EPSILON)
+            && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -363,7 +363,7 @@ bool LocalSearch::MoveTwoClientsReversed()
     }
     else
     {
-        if (!u.hasTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
+        if (!u.hasTimeWarp && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -400,7 +400,7 @@ bool LocalSearch::MoveTwoClientsReversed()
         costSuppU += penaltyExcessLoad(u.route->load) - u.route->penalty;
     }
 
-    if (costSuppU + costSuppV > -MY_EPSILON)
+    if (costSuppU + costSuppV >= 0)
         return false;
 
     insertNode(u.nextNode, v.node);
@@ -422,11 +422,11 @@ bool LocalSearch::SwapTwoSingleClients()
     if (u.nodeIndex == v.prevIndex || u.nodeIndex == v.nextIndex)
         return false;
 
-    double costSuppU = params.dist(u.prevIndex, v.nodeIndex)
+    int costSuppU = params.dist(u.prevIndex, v.nodeIndex)
                        + params.dist(v.nodeIndex, u.nextIndex)
                        - params.dist(u.prevIndex, u.nodeIndex)
                        - params.dist(u.nodeIndex, u.nextIndex);
-    double costSuppV = params.dist(v.prevIndex, u.nodeIndex)
+    int costSuppV = params.dist(v.prevIndex, u.nodeIndex)
                        + params.dist(u.nodeIndex, v.nextIndex)
                        - params.dist(v.prevIndex, v.nodeIndex)
                        - params.dist(v.nodeIndex, v.nextIndex);
@@ -434,7 +434,7 @@ bool LocalSearch::SwapTwoSingleClients()
     if (u.route != v.route)
     {
         if (!u.hasExcessLoad && !u.hasTimeWarp && !v.hasExcessLoad
-            && !v.hasTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
+            && !v.hasTimeWarp && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -454,7 +454,7 @@ bool LocalSearch::SwapTwoSingleClients()
     }
     else
     {
-        if (!u.hasTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
+        if (!u.hasTimeWarp && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -493,7 +493,7 @@ bool LocalSearch::SwapTwoSingleClients()
         costSuppU += penaltyExcessLoad(u.route->load) - u.route->penalty;
     }
 
-    if (costSuppU + costSuppV > -MY_EPSILON)
+    if (costSuppU + costSuppV >= 0)
         return false;
 
     swapNode(u.node, v.node);
@@ -512,11 +512,11 @@ bool LocalSearch::SwapTwoClientsForOne()
         || u.node == v.nextNode || u.nextNode->isDepot)
         return false;
 
-    double costSuppU = params.dist(u.prevIndex, v.nodeIndex)
+    int costSuppU = params.dist(u.prevIndex, v.nodeIndex)
                        + params.dist(v.nodeIndex, u.nextNextIndex)
                        - params.dist(u.prevIndex, u.nodeIndex)
                        - params.dist(u.nextIndex, u.nextNextIndex);
-    double costSuppV = params.dist(v.prevIndex, u.nodeIndex)
+    int costSuppV = params.dist(v.prevIndex, u.nodeIndex)
                        + params.dist(u.nextIndex, v.nextIndex)
                        - params.dist(v.prevIndex, v.nodeIndex)
                        - params.dist(v.nodeIndex, v.nextIndex);
@@ -524,7 +524,7 @@ bool LocalSearch::SwapTwoClientsForOne()
     if (u.route != v.route)
     {
         if (!u.hasExcessLoad && !u.hasTimeWarp && !v.hasExcessLoad
-            && !v.hasTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
+            && !v.hasTimeWarp && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -548,7 +548,7 @@ bool LocalSearch::SwapTwoClientsForOne()
     }
     else
     {
-        if (!u.hasTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
+        if (!u.hasTimeWarp && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -585,7 +585,7 @@ bool LocalSearch::SwapTwoClientsForOne()
         costSuppU += penaltyExcessLoad(u.route->load) - u.route->penalty;
     }
 
-    if (costSuppU + costSuppV > -MY_EPSILON)
+    if (costSuppU + costSuppV >= 0)
         return false;
 
     // Note: next two lines are a bit inefficient but we only update
@@ -612,11 +612,11 @@ bool LocalSearch::SwapTwoClientPairs()
         || v.node == u.nextNode->next)
         return false;
 
-    double costSuppU = params.dist(u.prevIndex, v.nodeIndex)
+    int costSuppU = params.dist(u.prevIndex, v.nodeIndex)
                        + params.dist(v.nextIndex, u.nextNextIndex)
                        - params.dist(u.prevIndex, u.nodeIndex)
                        - params.dist(u.nextIndex, u.nextNextIndex);
-    double costSuppV = params.dist(v.prevIndex, u.nodeIndex)
+    int costSuppV = params.dist(v.prevIndex, u.nodeIndex)
                        + params.dist(u.nextIndex, v.nextNextIndex)
                        - params.dist(v.prevIndex, v.nodeIndex)
                        - params.dist(v.nextIndex, v.nextNextIndex);
@@ -624,7 +624,7 @@ bool LocalSearch::SwapTwoClientPairs()
     if (u.route != v.route)
     {
         if (!u.hasExcessLoad && !u.hasTimeWarp && !v.hasExcessLoad
-            && !v.hasTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
+            && !v.hasTimeWarp && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -648,7 +648,7 @@ bool LocalSearch::SwapTwoClientPairs()
     }
     else
     {
-        if (!u.hasTimeWarp && costSuppU + costSuppV > -MY_EPSILON)
+        if (!u.hasTimeWarp && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -685,7 +685,7 @@ bool LocalSearch::SwapTwoClientPairs()
         costSuppU += penaltyExcessLoad(u.route->load) - u.route->penalty;
     }
 
-    if (costSuppU + costSuppV > -MY_EPSILON)
+    if (costSuppU + costSuppV >= 0)
         return false;
 
     swapNode(u.node, v.node);
@@ -707,14 +707,14 @@ bool LocalSearch::TwoOptWithinTrip()
     if (u.node->position >= v.node->position - 1)
         return false;
 
-    double cost = params.dist(u.nodeIndex, v.nodeIndex)
+    int cost = params.dist(u.nodeIndex, v.nodeIndex)
                   + params.dist(u.nextIndex, v.nextIndex)
                   - params.dist(u.nodeIndex, u.nextIndex)
                   - params.dist(v.nodeIndex, v.nextIndex)
                   + v.node->cumulatedReversalDistance
                   - u.nextNode->cumulatedReversalDistance;
 
-    if (!u.hasTimeWarp && cost > -MY_EPSILON)
+    if (!u.hasTimeWarp && cost >= 0)
     {
         return false;
     }
@@ -732,7 +732,7 @@ bool LocalSearch::TwoOptWithinTrip()
     cost += penaltyExcessLoad(u.route->load) + penaltyTimeWindows(routeTwData)
             - u.route->penalty;
 
-    if (cost > -MY_EPSILON)
+    if (cost >= 0)
     {
         return false;
     }
@@ -759,13 +759,13 @@ bool LocalSearch::TwoOptBetweenTrips()
     if (u.route->cour >= v.route->cour)
         return false;
 
-    double costSuppU = params.dist(u.nodeIndex, v.nextIndex)
+    int costSuppU = params.dist(u.nodeIndex, v.nextIndex)
                        - params.dist(u.nodeIndex, u.nextIndex);
-    double costSuppV = params.dist(v.nodeIndex, u.nextIndex)
+    int costSuppV = params.dist(v.nodeIndex, u.nextIndex)
                        - params.dist(v.nodeIndex, v.nextIndex);
 
     if (!u.hasExcessLoad && !u.hasTimeWarp && !v.hasExcessLoad && !v.hasTimeWarp
-        && costSuppU + costSuppV > -MY_EPSILON)
+        && costSuppU + costSuppV >= 0)
     {
         return false;
     }
@@ -783,7 +783,7 @@ bool LocalSearch::TwoOptBetweenTrips()
                                    - u.node->cumulatedLoad)
                  + penaltyTimeWindows(routeVTwData) - v.route->penalty;
 
-    if (costSuppU + costSuppV > -MY_EPSILON)
+    if (costSuppU + costSuppV >= 0)
         return false;
 
     Node *itRouteV = v.nextNode;
@@ -858,16 +858,16 @@ bool LocalSearch::swapStar(const bool withTW)
         {
             // We cannot determine impact on time warp without adding too much
             // complexity (O(n^3) instead of O(n^2))
-            const double loadPenU = penaltyExcessLoad(
+            int const loadPenU = penaltyExcessLoad(
                 u.route->load + params.clients[nodeV->cour].demand
                 - params.clients[nodeU->cour].demand);
-            const double loadPenV = penaltyExcessLoad(
+            int const loadPenV = penaltyExcessLoad(
                 v.route->load + params.clients[nodeU->cour].demand
                 - params.clients[nodeV->cour].demand);
-            const double deltaLoadPen = loadPenU + loadPenV
+            int const deltaLoadPen = loadPenU + loadPenV
                                         - penaltyExcessLoad(u.route->load)
                                         - penaltyExcessLoad(v.route->load);
-            const int deltaRemoval
+            int const deltaRemoval
                 = withTW ? nodeU->deltaRemovalTW + nodeV->deltaRemovalTW
                          : nodeU->deltaRemoval + nodeV->deltaRemoval;
 
@@ -923,11 +923,11 @@ bool LocalSearch::swapStar(const bool withTW)
     }
 
     // Compute actual cost including TimeWarp penalty
-    double costSuppU
+    int costSuppU
         = params.dist(bestSwap.bestPositionV->cour, bestSwap.V->cour)
           - params.dist(bestSwap.U->prev->cour, bestSwap.U->cour)
           - params.dist(bestSwap.U->cour, bestSwap.U->next->cour);
-    double costSuppV
+    int costSuppV
         = params.dist(bestSwap.bestPositionU->cour, bestSwap.U->cour)
           - params.dist(bestSwap.V->prev->cour, bestSwap.V->cour)
           - params.dist(bestSwap.V->cour, bestSwap.V->next->cour);
@@ -1029,7 +1029,7 @@ bool LocalSearch::swapStar(const bool withTW)
     costSuppU += bestSwap.loadPenU - u.route->penalty;
     costSuppV += bestSwap.loadPenV - v.route->penalty;
 
-    if (costSuppU + costSuppV > -MY_EPSILON)
+    if (costSuppU + costSuppV >= 0)
     {
         return false;
     }
@@ -1047,7 +1047,7 @@ bool LocalSearch::swapStar(const bool withTW)
 
 bool LocalSearch::RelocateStar()
 {
-    double bestCost = 0;
+    int bestCost = 0;
     Node *insertionPoint = nullptr;
     Node *nodeToInsert = nullptr;
     for (auto *nodeU = u.route->depot->next; !nodeU->isDepot;
@@ -1057,7 +1057,7 @@ bool LocalSearch::RelocateStar()
 
         const TimeWindowData routeUTwData = mergeTwDataRecursive(
             nodeU->prev->prefixTwData, u.nextNode->postfixTwData);
-        const double costSuppU = params.dist(u.prevIndex, u.nextIndex)
+        int const costSuppU = params.dist(u.prevIndex, u.nextIndex)
                                  - params.dist(u.prevIndex, u.nodeIndex)
                                  - params.dist(u.nodeIndex, u.nextIndex)
                                  + penaltyExcessLoad(u.route->load - u.demand)
@@ -1068,14 +1068,14 @@ bool LocalSearch::RelocateStar()
         {
             const TimeWindowData routeVTwData = mergeTwDataRecursive(
                 V->prefixTwData, nodeU->twData, V->next->postfixTwData);
-            double costSuppV = params.dist(V->cour, u.nodeIndex)
+            int const costSuppV = params.dist(V->cour, u.nodeIndex)
                                + params.dist(u.nodeIndex, V->next->cour)
                                - params.dist(V->cour, V->next->cour)
                                + penaltyExcessLoad(v.route->load + u.demand)
                                + penaltyTimeWindows(routeVTwData)
                                - v.route->penalty;
 
-            if (costSuppU + costSuppV < bestCost - MY_EPSILON)
+            if (costSuppU + costSuppV < bestCost)
             {
                 bestCost = costSuppU + costSuppV;
                 insertionPoint = V;
@@ -1137,12 +1137,10 @@ int LocalSearch::getCheapestInsertSimultRemoval(Node *U,
     return bestCost;
 }
 
-// TODO make this double as cost??
 int LocalSearch::getCheapestInsertSimultRemovalWithTW(Node *U,
                                                       Node *V,
                                                       Node *&bestPosition)
 {
-    // TODO ThreeBestInsert must also use double as cost?
     ThreeBestInsert *myBestInsert
         = &bestInsertClientTW[V->route->cour][U->cour];
     bool found = false;
@@ -1169,8 +1167,7 @@ int LocalSearch::getCheapestInsertSimultRemovalWithTW(Node *U,
     TimeWindowData twData = mergeTwDataRecursive(
         V->prev->prefixTwData, U->twData, V->next->postfixTwData);
 
-    // TODO the time windows penalty calculations here are incorrect.
-    double deltaCost = params.dist(V->prev->cour, U->cour)
+    int deltaCost = params.dist(V->prev->cour, U->cour)
                        + params.dist(U->cour, V->next->cour)
                        - params.dist(V->prev->cour, V->next->cour)
                        + penaltyTimeWindows(twData)
@@ -1179,7 +1176,7 @@ int LocalSearch::getCheapestInsertSimultRemovalWithTW(Node *U,
     if (!found || deltaCost < bestCost)
     {
         bestPosition = V->prev;
-        bestCost = static_cast<int>(deltaCost);
+        bestCost = deltaCost;
     }
 
     return bestCost;

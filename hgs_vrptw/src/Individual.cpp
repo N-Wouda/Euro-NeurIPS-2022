@@ -22,11 +22,11 @@ struct ClientSplit
 struct ClientSplits
 {
     int vehicleCap;
-    double capPenalty;
+    int capPenalty;
 
     std::vector<ClientSplit> splits;
     std::vector<int> predecessors;
-    std::vector<double> pathCosts;
+    std::vector<int> pathCosts;
 
     std::vector<int> cumDist;
     std::vector<int> cumLoad;
@@ -37,7 +37,7 @@ struct ClientSplits
           capPenalty(params.penaltyCapacity),
           splits(params.nbClients + 1),
           predecessors(params.nbClients + 1, 0),
-          pathCosts(params.nbClients + 1, 1.e30),
+          pathCosts(params.nbClients + 1, INT_MAX),
           cumDist(params.nbClients + 1, 0),
           cumLoad(params.nbClients + 1, 0),
           cumServ(params.nbClients + 1, 0)
@@ -64,7 +64,7 @@ struct ClientSplits
     }
 
     // Computes the cost of propagating label i to j
-    [[nodiscard]] inline double propagate(int i, int j) const
+    [[nodiscard]] inline int propagate(int i, int j) const
     {
         assert(i < j);
         auto const excessCapacity = cumLoad[j] - cumLoad[i] - vehicleCap;
@@ -82,7 +82,7 @@ struct ClientSplits
         auto const rhs = pathCosts[i] + splits[i + 1].d0_x + deltaDist
                          + capPenalty * (cumLoad[j] - cumLoad[i]);
 
-        return lhs + MY_EPSILON > rhs;
+        return lhs >= rhs;
     }
 
     // Tests if j dominates i as a predecessor for all nodes x >= j + 1
@@ -93,7 +93,7 @@ struct ClientSplits
         auto const rhs = pathCosts[i] + splits[i + 1].d0_x + cumDist[j + 1]
                          - cumDist[i + 1];
 
-        return lhs < rhs + MY_EPSILON;
+        return lhs <= rhs;
     };
 };
 }  // namespace
@@ -128,14 +128,14 @@ void Individual::makeRoutes()
             auto const firstProp = splits.propagate(deq[0], idx + 1);
             auto const secondProp = splits.propagate(deq[1], idx + 1);
 
-            if (firstProp + MY_EPSILON > secondProp)
+            if (firstProp >= secondProp)
                 deq.pop_front();
             else
                 break;
         }
     }
 
-    if (splits.pathCosts[params->nbClients] > 1.e29)  // has not been updated
+    if (splits.pathCosts[params->nbClients] == INT_MAX)  // has not been updated
         throw std::runtime_error("No split solution reached the last client");
 
     int end = params->nbClients;

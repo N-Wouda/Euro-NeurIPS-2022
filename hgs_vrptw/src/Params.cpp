@@ -359,8 +359,7 @@ Params::Params(Config const &config, std::string const &instPath)
     }
 
     // A reasonable scale for the initial values of the penalties
-    penaltyCapacity = std::max(
-        0.1, std::min(1000., static_cast<double>(maxDist) / maxDemand));
+    penaltyCapacity = std::max(1, std::min(1000, maxDist / maxDemand));
 
     // Initial parameter values of this parameter is not argued
     penaltyTimeWarp = config.initialTimeWarpPenalty;
@@ -393,8 +392,7 @@ Params::Params(Config const &config,
     int maxDist = dist.max();
 
     // A reasonable scale for the initial values of the penalties
-    penaltyCapacity = std::max(
-        0.1, std::min(1000., static_cast<double>(maxDist) / maxDemand));
+    penaltyCapacity = std::max(1, std::min(1000, maxDist / maxDemand));
 
     // Initial parameter values of this parameter is not argued
     penaltyTimeWarp = config.initialTimeWarpPenalty;

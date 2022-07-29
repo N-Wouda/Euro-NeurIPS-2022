@@ -46,7 +46,7 @@ class LocalSearch
         Node *depot;                    // Pointer to the associated depot
         int load;                       // Total load on the route
         TimeWindowData twData;          // Time window data of the route
-        double
+        int
             penalty;  // Current sum of load, duration and time window penalties
         double
             polarAngleBarycenter;  // Polar angle of the barycenter of the route
@@ -131,9 +131,9 @@ class LocalSearch
     // Structure used to keep track of the best SWAP* move
     struct SwapStarElement
     {
-        double moveCost = 1.e30;
-        double loadPenU = 1.e30;
-        double loadPenV = 1.e30;
+        int moveCost = INT_MAX;
+        int loadPenU = INT_MAX;
+        int loadPenV = INT_MAX;
         Node *U = nullptr;
         Node *bestPositionU = nullptr;
         Node *V = nullptr;
@@ -205,15 +205,15 @@ class LocalSearch
 
     /* TEMPORARY VARIABLES USED IN THE LOCAL SEARCH LOOPS */
     RouteLocals u, v;
-    double penaltyCapacityLS, penaltyTimeWarpLS;
+    int penaltyCapacityLS, penaltyTimeWarpLS;
 
     // Functions in charge of excess load penalty calculations
-    [[nodiscard]] inline double penaltyExcessLoad(double load) const
+    [[nodiscard]] inline int penaltyExcessLoad(int load) const
     {
-        return std::max(0., load - params.vehicleCapacity) * penaltyCapacityLS;
+        return std::max(0, load - params.vehicleCapacity) * penaltyCapacityLS;
     }
 
-    [[nodiscard]] inline double
+    [[nodiscard]] inline int
     penaltyTimeWindows(const TimeWindowData &twData) const
     {
         return (twData.timeWarp
@@ -330,8 +330,8 @@ public:
      * @param timeWarpPenalty        Penalty for violated time windows.
      */
     void operator()(Individual &indiv,
-                    double excessCapacityPenalty,
-                    double timeWarpPenalty);
+                    int excessCapacityPenalty,
+                    int timeWarpPenalty);
 
     LocalSearch(Params &params, XorShift128 &rng);
 };

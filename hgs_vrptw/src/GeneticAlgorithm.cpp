@@ -116,8 +116,8 @@ void GeneticAlgorithm::educate(Individual &indiv)
         && rng.randint(100) < params.config.repairProbability)
     {
         localSearch(indiv,  // re-run, but penalise infeasibility more
-                    params.penaltyCapacity * 10.,
-                    params.penaltyTimeWarp * 10.);
+                    10 * params.penaltyCapacity,
+                    10 * params.penaltyTimeWarp);
 
         if (indiv.isFeasible())
             // TODO should we also register this individual in the load/time
@@ -136,8 +136,8 @@ void GeneticAlgorithm::updatePenalties()
         else if (currFeas > params.config.targetFeasible + 0.05)
             currPenalty *= params.config.penaltyDecrease;
 
-        // Setting some bounds [0.1, 100000] to the penalty values for safety
-        return std::max(std::min(currPenalty, 100000.), 0.1);
+        // Setting some bounds [1, 100000] to the penalty values for safety
+        return std::max(std::min(static_cast<int>(currPenalty), 100000), 1);
     };
 
     double fracFeasLoad = std::accumulate(loadFeas.begin(), loadFeas.end(), 0.);
