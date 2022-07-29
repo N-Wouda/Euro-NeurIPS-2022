@@ -31,9 +31,9 @@ void LocalSearch::search()
     std::shuffle(orderRoutes.begin(), orderRoutes.end(), rng);
 
     searchCompleted = false;
-    for (loopID = 0; !searchCompleted; loopID++)
+    for (int step = 0; !searchCompleted; ++step)
     {
-        if (loopID > 1)              // At least two loops as some moves with
+        if (step > 1)              // At least two loops as some moves with
             searchCompleted = true;  // empty routes are not done in the first
 
         /* ROUTE IMPROVEMENT (RI) MOVES SUBJECT TO A PROXIMITY RESTRICTION */
@@ -46,7 +46,7 @@ void LocalSearch::search()
             for (auto const &v : params.getNeighboursOf(nodeU->cour))
             {
                 nodeV = &clients[v];
-                if (loopID == 0
+                if (step == 0
                     || std::max(nodeU->route->whenLastModified,
                                 nodeV->route->whenLastModified)
                            > lastTestRINodeU)  // only evaluate moves involving
@@ -99,7 +99,7 @@ void LocalSearch::search()
 
             /* MOVES INVOLVING AN EMPTY ROUTE -- NOT TESTED IN THE FIRST LOOP TO
              * AVOID INCREASING TOO MUCH THE FLEET SIZE */
-            if (loopID > 0 && !emptyRoutes.empty())
+            if (step > 0 && !emptyRoutes.empty())
             {
                 nodeV = routes[*emptyRoutes.begin()].depot;
                 setLocalVariablesRouteU();
@@ -134,7 +134,7 @@ void LocalSearch::search()
                         || routeU->cour >= routeV->cour)
                         continue;
 
-                    if (loopID > 0
+                    if (step > 0
                         && std::max(routeU->whenLastModified,
                                     routeV->whenLastModified)
                                <= lastTestLargeNbRouteU)

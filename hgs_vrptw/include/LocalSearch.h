@@ -147,7 +147,6 @@ class LocalSearch
     std::vector<int> orderRoutes;  // Randomized order for checking the routes
                                    // in the SWAP* local search
     std::set<int> emptyRoutes;     // indices of all empty routes
-    int loopID;                    // Current loop index
 
     /* THE SOLUTION IS REPRESENTED AS A LINKED LIST OF ELEMENTS */
     std::vector<Node> clients;  // Elements representing clients (clients[0] is
@@ -292,7 +291,7 @@ class LocalSearch
     // Updates the preprocessed data of a route
     void updateRouteData(Route *myRoute);
 
-    // Load an individual solution into the local search
+    // Load an initial solution that we will attempt to improve
     void loadIndividual(Individual const &indiv);
 
     // Export the LS solution back into an individual
