@@ -46,8 +46,7 @@ class LocalSearch
         Node *depot;                    // Pointer to the associated depot
         int load;                       // Total load on the route
         TimeWindowData twData;          // Time window data of the route
-        int
-            penalty;  // Current sum of load, duration and time window penalties
+        int penalty;  // Current sum of load, duration and time window penalties
         double
             polarAngleBarycenter;  // Polar angle of the barycenter of the route
         CircleSector sector;  // Circle sector associated to the set of clients
@@ -140,7 +139,9 @@ class LocalSearch
         Node *bestPositionV = nullptr;
     };
 
-    struct RouteLocals  // TODO
+    // Stores a lot of relevant data about the currently considered nodes in the
+    // local search procedure.
+    struct RouteLocals
     {
         Node *node = nullptr;
         Node *nextNode = nullptr;
@@ -205,6 +206,7 @@ class LocalSearch
 
     /* TEMPORARY VARIABLES USED IN THE LOCAL SEARCH LOOPS */
     RouteLocals u, v;
+
     int penaltyCapacityLS, penaltyTimeWarpLS;
 
     // Functions in charge of excess load penalty calculations
