@@ -13,11 +13,13 @@ class Statistics
     using clock = std::chrono::system_clock;
     using timedDatapoints = std::vector<std::pair<clock::time_point, double>>;
 
+    clock::time_point lastIter = clock::now();
     size_t numIters_ = 0;
 
     std::vector<size_t> popSize;
     std::vector<size_t> numFeasible;
     std::vector<double> popDiversity_;
+    std::vector<double> iterTimes;
     timedDatapoints bestObjectives_;
 
 public:
@@ -34,6 +36,15 @@ public:
      * Returns the total number of iterations.
      */
     [[nodiscard]] size_t numIters() const { return numIters_; }
+
+    /**
+     * Returns a vector of run times, one element per iteration. The run times
+     * are in seconds.
+     */
+    [[nodiscard]] std::vector<double> const &runTimes() const
+    {
+        return iterTimes;
+    }
 
     /**
      * Returns a vector of population sizes, one element for each iteration.

@@ -8,6 +8,10 @@ void Statistics::collectFrom(Population const &population)
 {
     numIters_++;
 
+    std::chrono::duration<double> diff = clock::now() - lastIter;
+    iterTimes.push_back(diff.count());
+    lastIter = clock::now();  // update for next call
+
     auto const numFeas = std::count_if(
         population.population.begin(),
         population.population.end(),

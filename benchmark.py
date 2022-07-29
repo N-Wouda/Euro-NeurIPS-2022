@@ -1,4 +1,5 @@
 import argparse
+from datetime import datetime, timedelta
 from functools import partial
 from glob import glob
 from pathlib import Path
@@ -7,7 +8,6 @@ import numpy as np
 from tqdm.contrib.concurrent import process_map
 
 import tools
-from python.functions import solve as solve_instance
 
 
 def parse_args():
@@ -25,9 +25,19 @@ def parse_args():
 def solve(loc: str, seed: int, time_limit: int):
     path = Path(loc)
 
+    hgspy = tools.get_hgspy_module()
     instance = tools.read_vrplib(path)
-    res = solve_instance(instance, seed, time_limit, nbVeh=-1,
-                         collectStatistics=True)
+    start = datetime.now()
+
+    config = hgspy.Config(seed=seed, nbVeh=-1, collectStatistics=True)
+    params = hgspy.Params(config, **tools.inst_to_vars(instance))
+
+    rng = hgspy.XorShift128(seed=seed)
+    pop = hgspy.Population(params, rng)
+    ls = hgspy.LocalSearch(params, rng)
+
+    algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
+    res = algo.run_until(start + timedelta(seconds=time_limit))
 
     best = res.get_best_found()
     routes = [route for route in best.get_routes() if route]
