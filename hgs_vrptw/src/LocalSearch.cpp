@@ -33,7 +33,7 @@ void LocalSearch::search()
     searchCompleted = false;
     for (int step = 0; !searchCompleted; ++step)
     {
-        if (step > 1)              // At least two loops as some moves with
+        if (step > 1)                // At least two loops as some moves with
             searchCompleted = true;  // empty routes are not done in the first
 
         /* ROUTE IMPROVEMENT (RI) MOVES SUBJECT TO A PROXIMITY RESTRICTION */
@@ -1286,13 +1286,13 @@ void LocalSearch::preprocessInsertionsWithTW(Route *R1, Route *R2)
     R1->isDeltaRemovalTWOutdated = false;
 }
 
-TimeWindowData LocalSearch::getEdgeTwData(Node *U, Node *V)
+LocalSearch::TimeWindowData LocalSearch::getEdgeTwData(Node *U, Node *V)
 {
     // TODO this could be cached?
     return mergeTwDataRecursive(U->twData, V->twData);
 }
 
-TimeWindowData LocalSearch::getRouteSegmentTwData(Node *U, Node *V)
+LocalSearch::TimeWindowData LocalSearch::getRouteSegmentTwData(Node *U, Node *V)
 {
     if (U->isDepot)
         return V->prefixTwData;
@@ -1320,7 +1320,7 @@ TimeWindowData LocalSearch::getRouteSegmentTwData(Node *U, Node *V)
     return twData;
 }
 
-TimeWindowData
+LocalSearch::TimeWindowData
 LocalSearch::mergeTwDataRecursive(TimeWindowData const &twData1,
                                   TimeWindowData const &twData2) const
 {
