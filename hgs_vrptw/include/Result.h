@@ -2,17 +2,19 @@
 #define RESULT_H
 
 #include "Individual.h"
+#include "Statistics.h"
 
+#include <utility>
 #include <vector>
 
 class Result
 {
     Individual const &bestFound;
-    size_t numIters;
+    Statistics stats;
 
 public:
-    Result(Individual const &bestFound, size_t numIters)
-        : bestFound(bestFound), numIters(numIters)
+    Result(Individual const &bestFound, Statistics stats)
+        : bestFound(bestFound), stats(std::move(stats))
     {
     }
 
@@ -22,9 +24,9 @@ public:
     [[nodiscard]] Individual const &getBestFound() const { return bestFound; }
 
     /**
-     * Returns the total number of iterations.
+     * Returns statistics collected by the genetic algorithm.
      */
-    [[nodiscard]] size_t getNumIters() const { return numIters; }
+    [[nodiscard]] Statistics const &getStatistics() const { return stats; }
 };
 
 #endif  // RESULT_H

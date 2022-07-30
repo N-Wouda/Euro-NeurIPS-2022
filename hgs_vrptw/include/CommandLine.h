@@ -52,6 +52,8 @@ public:
                 config.seed = atoi(argv[i + 1]);
             else if (std::string(argv[i]) == "-veh")
                 config.nbVeh = atoi(argv[i + 1]);
+            else if (std::string(argv[i]) == "-collectStatistics")
+                config.collectStatistics = atoi(argv[i + 1]) != 0;
             else if (std::string(argv[i]) == "-nbGranular")
                 config.nbGranular = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-initialTimeWarpPenalty")

@@ -29,7 +29,7 @@ def solve(loc: str, seed: int, time_limit: int):
     instance = tools.read_vrplib(path)
     start = datetime.now()
 
-    config = hgspy.Config(seed=seed, nbVeh=-1)
+    config = hgspy.Config(seed=seed, nbVeh=-1, collectStatistics=True)
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=seed)
@@ -45,13 +45,16 @@ def solve(loc: str, seed: int, time_limit: int):
 
     try:
         actual_cost = tools.validate_static_solution(instance, routes)
-        has_issue = False
+        is_ok = "Y"
 
         assert np.isclose(actual_cost, cost), "Could not validate objective."
     except AssertionError:
-        has_issue = True
+        is_ok = "N"
 
-    return path.stem, int(cost), res.get_num_iters(), has_issue
+    stats = res.get_statistics()
+    kpis = (int(best.cost()), stats.num_iters(), len(stats.best_objectives()))
+
+    return path.stem, is_ok, *kpis
 
 
 def tabulate(headers, rows) -> str:
@@ -74,19 +77,34 @@ def tabulate(headers, rows) -> str:
 def main():
     args = parse_args()
 
-    func = partial(solve, seed=args.seed, time_limit=args.time_limit)
-    func_args = glob(args.instance_pattern)
+    kwargs = dict(seed=args.seed, time_limit=args.time_limit)
+    func = partial(solve, **kwargs)
+    func_args = sorted(glob(args.instance_pattern))
+
     tqdm_kwargs = dict(max_workers=args.num_procs, unit="instance")
     data = process_map(func, func_args, **tqdm_kwargs)
 
-    dtype = [('inst', 'U37'), ('obj', int), ('iters', int), ('issues', bool)]
-    data = np.array(data, dtype=dtype)
-    table = tabulate(["Inst.", "Obj.", "Iters.", "Issue?"], data)
+    dtypes = [('inst', 'U37'),
+              ('ok', 'U1'),
+              ('obj', int),
+              ('iters', int),
+              ('nb_improv', int)]
+    data = np.array(data, dtype=dtypes)
+
+    headers = ["Instance", "OK?", "Objective", "Iters. (#)", "Improv. (#)"]
+    table = tabulate(headers, data)
 
     print('\n', table, '\n', sep="")
-    print(f" Avg. objective: {data['obj'].mean():.0f}")
-    print(f"Avg. iterations: {data['iters'].mean():.0f}")
-    print(f"   Total issues: {data['issues'].sum()}")
+
+    obj_all = data['obj']
+    obj_feas = data[data['ok'] == 'Y']['obj']
+
+    print(f"      Avg. objective: {obj_all.mean():.0f}", end=" ")
+    print(f"(w/o infeas: {obj_feas.mean():.0f})" if obj_feas.size > 0 else "")
+
+    print(f"     Avg. iterations: {data['iters'].mean():.0f}")
+    print(f"Avg. improving moves: {data['nb_improv'].mean():.1f}")
+    print(f"        Total not OK: {np.count_nonzero(data['ok'] == 'N')}")
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@
 #include "Params.h"
 #include "Population.h"
 #include "Result.h"
+#include "Statistics.h"
 #include "XorShift128.h"
 
 #include <pybind11/chrono.h>
@@ -28,9 +29,10 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("rng"));
 
     py::class_<Config>(m, "Config")
-        .def(py::init<size_t,
+        .def(py::init<int,
+                      size_t,
                       int,
-                      int,
+                      bool,
                       double,
                       size_t,
                       double,
@@ -53,9 +55,10 @@ PYBIND11_MODULE(hgspy, m)
                       bool,
                       int,
                       int>(),
+             py::arg("seed") = 0,
              py::arg("nbIter") = 20'000,
              py::arg("timeLimit") = INT_MAX,
-             py::arg("seed") = 0,
+             py::arg("collectStatistics") = false,
              py::arg("initialTimeWarpPenalty") = 1.,
              py::arg("nbPenaltyManagement") = 100,
              py::arg("penaltyBooster") = 2.,
@@ -78,9 +81,10 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("skipSwapStarDist") = false,
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
              py::arg("minCircleSectorSizeDegrees") = 15)
+        .def_readonly("seed", &Config::seed)
         .def_readonly("nbIter", &Config::nbIter)
         .def_readonly("timeLimit", &Config::timeLimit)
-        .def_readonly("seed", &Config::seed)
+        .def_readonly("collectStatistics", &Config::collectStatistics)
         .def_readonly("initialTimeWarpPenalty", &Config::initialTimeWarpPenalty)
         .def_readonly("nbPenaltyManagement", &Config::nbPenaltyManagement)
         .def_readonly("penaltyBooster", &Config::penaltyBooster)
@@ -129,11 +133,21 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("params"),
              py::arg("rng"));
 
+    py::class_<Statistics>(m, "Statistics")
+        .def("num_iters", &Statistics::numIters)
+        .def("run_times", &Statistics::runTimes)
+        .def("pop_sizes", &Statistics::popSizes)
+        .def("feasible_pops", &Statistics::feasiblePops)
+        .def("pop_diversity", &Statistics::popDiversity)
+        .def("best_objectives", &Statistics::bestObjectives);
+
     py::class_<Result>(m, "Result")
         .def("get_best_found",
              &Result::getBestFound,
              py::return_value_policy::reference)
-        .def("get_num_iters", &Result::getNumIters);
+        .def("get_statistics",
+             &Result::getStatistics,
+             py::return_value_policy::reference);
 
     py::class_<GeneticAlgorithm>(m, "GeneticAlgorithm")
         .def(py::init<Params &, XorShift128 &, Population &, LocalSearch &>(),
