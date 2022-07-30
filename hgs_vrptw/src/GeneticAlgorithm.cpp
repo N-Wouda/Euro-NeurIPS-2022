@@ -8,6 +8,7 @@
 #include "Statistics.h"
 
 #include <numeric>
+#include <stdexcept>
 
 Result GeneticAlgorithm::runUntil(clock::time_point const &timePoint)
 {
