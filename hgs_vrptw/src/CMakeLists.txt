@@ -18,6 +18,9 @@ set(populationSources
 set(resultSources
         Result.cpp)
 
+set(statisticsSources
+        Statistics.cpp)
+
 # (Internal) library
 add_library(hgs
         ${geneticSources}
@@ -25,7 +28,8 @@ add_library(hgs
         ${localSearchSources}
         ${paramsSources}
         ${populationSources}
-        ${resultSources})
+        ${resultSources}
+        ${statisticsSources})
 
 # Executable
 add_executable(genvrp main.cpp)

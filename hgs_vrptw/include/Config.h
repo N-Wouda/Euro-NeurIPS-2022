@@ -9,9 +9,10 @@
 // Stores all the parameters values
 struct Config
 {
-    int seed = 0;             // Random seed
-    size_t nbIter = 20'000;   // iters without improvement
-    int timeLimit = INT_MAX;  // time limit in seconds
+    int seed = 0;                    // Random seed
+    size_t nbIter = 20'000;          // iters without improvement
+    int timeLimit = INT_MAX;         // time limit in seconds
+    bool collectStatistics = false;  // collect runtime statistics?
 
     // This was the default until now, but with this value feasible
     // individuals often become infeasible during the local search in
@@ -61,9 +62,10 @@ struct Config
     // that even small circle sectors have 'overlap'
     int minCircleSectorSize = static_cast<int>(15 / 360. * 65536);
 
-    explicit Config(size_t nbIter = 20'000,
+    explicit Config(int seed = 0,
+                    size_t nbIter = 20'000,
                     int timeLimit = INT_MAX,
-                    int seed = 0,
+                    bool collectStatistics = false,
                     double initialTimeWarpPenalty = 1.0,
                     size_t nbPenaltyManagement = 100,
                     double penaltyBooster = 2.,
@@ -89,6 +91,7 @@ struct Config
         : seed(seed),
           nbIter(nbIter),
           timeLimit(timeLimit),
+          collectStatistics(collectStatistics),
           initialTimeWarpPenalty(initialTimeWarpPenalty),
           nbPenaltyManagement(nbPenaltyManagement),
           penaltyBooster(penaltyBooster),
