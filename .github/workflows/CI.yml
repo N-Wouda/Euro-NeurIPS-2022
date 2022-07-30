@@ -10,13 +10,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         os: [ "ubuntu-latest"]
         python-version: [ '3.9', '3.10' ]
+        compiler: [ 'gcc', 'clang' ]
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
+      - if: matrix.compiler == 'clang'
+        name: Set up clang
+        uses: egor-tensin/setup-clang@v1
+      - if: matrix.compiler == 'gcc'
+        name: Set up GCC
+        uses: egor-tensin/setup-gcc@v1
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
         with:
