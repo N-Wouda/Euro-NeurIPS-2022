@@ -10,152 +10,150 @@
 #include <set>
 #include <vector>
 
-struct Node;
-
-// Structure containing characterizations for a sequence
-struct TimeWindowData
-{
-    int idxFirst;
-    int idxLast;
-    int duration;  // Cumulative duration, including waiting and servicing
-    int timeWarp;  // Cumulative time warp
-    int twEarly;   // Earliest start of servicing first node in sequence,
-                   // given a min cost route sequence
-    int twLate;    // Latest start of servicing first node in sequence,
-                   // given a min cost route sequence
-
-    int latestReleaseTime;  // Latest of all release times of customers in
-                            // sequence, so route cannot dispatch before
-
-    // Note: [twEarly, twLate] represent the time in which we can
-    // arrive at the first node and execute the min cost route. Arriving later
-    // would lead to (additional) time warp and arriving earlier would lead to
-    // (additional) waiting time, not necessarily at the first node.
-};
-
-// Structure containing a route
-struct Route
-{
-    int cour;                   // Route index
-    int nbCustomers;            // Number of customers visited in the route
-    int whenLastModified;       // "When" this route has been last modified
-    int whenLastTestedLargeNb;  // "When" the large neighborhood moves for this
-                                // route have been last tested
-    bool isDeltaRemovalTWOutdated;  // Flag to indicate deltaRemovalTW data of
-                                    // nodes is outdated
-    Node *depot;                    // Pointer to the associated depot
-    int load;                       // Total load on the route
-    TimeWindowData twData;          // Time window data of the route
-    double penalty;  // Current sum of load, duration and time window penalties
-    double polarAngleBarycenter;  // Polar angle of the barycenter of the route
-    CircleSector sector;  // Circle sector associated to the set of clients
-};
-
-struct Node
-{
-    bool isDepot;          // Tells whether this node represents a depot or not
-    int cour;              // Node index
-    int position;          // Position in the route
-    int whenLastTestedRI;  // "When" the RI moves for this node have been last
-                           // tested
-    Node *next;            // Next node in the route order
-    Node *prev;            // Previous node in the route order
-    Route *route;          // Pointer towards the associated route
-    int cumulatedLoad;     // Cumulated load on this route until the client
-                           // (including itself)
-    int cumulatedReversalDistance;  // Difference of cost if the segment of
-                                    // route (0...cour) is reversed (useful for
-                                    // 2-opt moves with asymmetric problems)
-    int deltaRemoval;  // Difference of cost in the current route if the node is
-                       // removed (used in SWAP*)
-    int deltaRemovalTW;  // Difference of cost in the current route if the node
-                         // is removed, including TimeWarp (used in SWAP*)
-    TimeWindowData twData;         // TimeWindowData for individual node (cour)
-    TimeWindowData prefixTwData;   // TimeWindowData for subsequence (0...cour)
-                                   // including self
-    TimeWindowData postfixTwData;  // TimeWindowData for subsequence (cour...0)
-                                   // including self
-    bool isSeed;  // Tells whether a nextSeed is available (faster twData
-                  // calculations)
-    TimeWindowData
-        toNextSeedTwD;  // TimeWindowData for subsequence (cour...cour+4)
-                        // excluding self, including cour + 4
-    Node *nextSeed;     // next seeded node if available (nullptr otherwise)
-};
-
-// Structure used in SWAP* to remember the three best insertion positions of a
-// client in a given route
-struct ThreeBestInsert
-{
-    int whenLastCalculated = 0;
-    std::array<int, 3> bestCost = {INT_MAX, INT_MAX, INT_MAX};
-    std::array<Node *, 3> bestLocation = {nullptr, nullptr, nullptr};
-
-    void add(int costInsert, Node *placeInsert)
-    {
-        if (costInsert >= bestCost[2])
-            return;
-
-        if (costInsert >= bestCost[1])
-        {
-            bestCost[2] = costInsert;
-            bestLocation[2] = placeInsert;
-        }
-        else if (costInsert >= bestCost[0])
-        {
-            bestCost[2] = bestCost[1];
-            bestLocation[2] = bestLocation[1];
-            bestCost[1] = costInsert;
-            bestLocation[1] = placeInsert;
-        }
-        else
-        {
-            bestCost[2] = bestCost[1];
-            bestLocation[2] = bestLocation[1];
-            bestCost[1] = bestCost[0];
-            bestLocation[1] = bestLocation[0];
-            bestCost[0] = costInsert;
-            bestLocation[0] = placeInsert;
-        }
-    }
-};
-
-// Structured used to keep track of the best SWAP* move
-struct SwapStarElement
-{
-    double moveCost = 1.e30;
-    double loadPenU = 1.e30;
-    double loadPenV = 1.e30;
-    Node *U = nullptr;
-    Node *bestPositionU = nullptr;
-    Node *V = nullptr;
-    Node *bestPositionV = nullptr;
-};
-
-// Main local search structure
 class LocalSearch
 {
+    struct Node;
+
+    struct TimeWindowData
+    {
+        int idxFirst;
+        int idxLast;
+        int duration;  // Cumulative duration, including waiting and servicing
+        int timeWarp;  // Cumulative time warp
+        int twEarly;   // Earliest start of servicing first node in sequence,
+                       // given a min cost route sequence
+        int twLate;    // Latest start of servicing first node in sequence,
+                       // given a min cost route sequence
+
+        int latestReleaseTime;  // Latest of all release times of customers in
+                                // sequence, so route cannot dispatch before
+
+        // Note: [twEarly, twLate] represent the time in which we can
+        // arrive at the first node and execute the min cost route. Arriving
+        // later would lead to (additional) time warp and arriving earlier would
+        // lead to (additional) waiting time, not necessarily at the first node.
+    };
+
+    struct Route
+    {
+        int cour;                   // Route index
+        int nbCustomers;            // Number of customers visited in the route
+        int whenLastModified;       // "When" this route has been last modified
+        int whenLastTestedLargeNb;  // "When" the large neighborhood moves for
+                                    // this route have been last tested
+        bool isDeltaRemovalTWOutdated;  // Flag to indicate deltaRemovalTW data
+                                        // of nodes is outdated
+        Node *depot;                    // Pointer to the associated depot
+        int load;                       // Total load on the route
+        TimeWindowData twData;          // Time window data of the route
+        double
+            penalty;  // Current sum of load, duration and time window penalties
+        double
+            polarAngleBarycenter;  // Polar angle of the barycenter of the route
+        CircleSector sector;  // Circle sector associated to the set of clients
+    };
+
+    struct Node
+    {
+        bool isDepot;  // Tells whether this node represents a depot or not
+        int cour;      // Node index
+        int position;  // Position in the route
+        int whenLastTestedRI;  // "When" the RI moves for this node have been
+                               // last tested
+        Node *next;            // Next node in the route order
+        Node *prev;            // Previous node in the route order
+        Route *route;          // Pointer towards the associated route
+        int cumulatedLoad;     // Cumulated load on this route until the client
+                               // (including itself)
+        int cumulatedReversalDistance;  // Difference of cost if the segment of
+                                        // route (0...cour) is reversed (useful
+                                        // for 2-opt moves with asymmetric
+                                        // problems)
+        int deltaRemoval;    // Difference of cost in the current route if the
+                             // node is removed (used in SWAP*)
+        int deltaRemovalTW;  // Difference of cost in the current route if the
+                             // node is removed, including TimeWarp (used in
+                             // SWAP*)
+        TimeWindowData twData;  // TimeWindowData for individual node (cour)
+        TimeWindowData prefixTwData;   // TimeWindowData for subsequence
+                                       // (0...cour) including self
+        TimeWindowData postfixTwData;  // TimeWindowData for subsequence
+                                       // (cour...0) including self
+        bool isSeed;  // Tells whether a nextSeed is available (faster twData
+                      // calculations)
+        TimeWindowData
+            toNextSeedTwD;  // TimeWindowData for subsequence (cour...cour+4)
+                            // excluding self, including cour + 4
+        Node *nextSeed;     // next seeded node if available (nullptr otherwise)
+    };
+
+    // Structure used in SWAP* to remember the three best insertion positions of
+    // a client in a given route
+    struct ThreeBestInsert
+    {
+        int whenLastCalculated = 0;
+        std::array<int, 3> bestCost = {INT_MAX, INT_MAX, INT_MAX};
+        std::array<Node *, 3> bestLocation = {nullptr, nullptr, nullptr};
+
+        void add(int costInsert, Node *placeInsert)
+        {
+            if (costInsert >= bestCost[2])
+                return;
+
+            if (costInsert >= bestCost[1])
+            {
+                bestCost[2] = costInsert;
+                bestLocation[2] = placeInsert;
+            }
+            else if (costInsert >= bestCost[0])
+            {
+                bestCost[2] = bestCost[1];
+                bestLocation[2] = bestLocation[1];
+                bestCost[1] = costInsert;
+                bestLocation[1] = placeInsert;
+            }
+            else
+            {
+                bestCost[2] = bestCost[1];
+                bestLocation[2] = bestLocation[1];
+                bestCost[1] = bestCost[0];
+                bestLocation[1] = bestLocation[0];
+                bestCost[0] = costInsert;
+                bestLocation[0] = placeInsert;
+            }
+        }
+    };
+
+    // Structure used to keep track of the best SWAP* move
+    struct SwapStarElement
+    {
+        double moveCost = 1.e30;
+        double loadPenU = 1.e30;
+        double loadPenV = 1.e30;
+        Node *U = nullptr;
+        Node *bestPositionU = nullptr;
+        Node *V = nullptr;
+        Node *bestPositionV = nullptr;
+    };
+
     Params &params;        // Problem parameters
     XorShift128 &rng;      // Random number generator
     bool searchCompleted;  // Tells whether all moves have been evaluated
                            // without success
+
     int nbMoves;  // Total number of moves (RI and SWAP*) applied during the
                   // local search. Attention: this is not only a simple counter,
                   // it is also used to avoid repeating move evaluations
-    std::vector<int> orderNodes;   // Randomized order for checking the nodes in
-                                   // the RI local search
-    std::vector<int> orderRoutes;  // Randomized order for checking the routes
-                                   // in the SWAP* local search
+
+    std::vector<int> orderNodes;   // random node order used in RI operators
+    std::vector<int> orderRoutes;  // random route order used in SWAP* operators
     std::set<int> emptyRoutes;     // indices of all empty routes
-    int loopID;                    // Current loop index
 
     /* THE SOLUTION IS REPRESENTED AS A LINKED LIST OF ELEMENTS */
-    std::vector<Node> clients;  // Elements representing clients (clients[0] is
-                                // a sentinel and should not be accessed)
-    std::vector<Node> depots;   // Elements representing depots
-    std::vector<Node>
-        depotsEnd;  // Duplicate of the depots to mark the end of the routes
-    std::vector<Route> routes;  // Elements representing routes
+    std::vector<Node> clients;    // Note that clients[0] is a sentinel value
+    std::vector<Node> depots;     // These depots mark the start of routes
+    std::vector<Node> depotsEnd;  // These depots mark the end of routes
+    std::vector<Route> routes;
     std::vector<bool> bestInsertInitializedForRoute;
     std::vector<std::vector<ThreeBestInsert>>
         bestInsertClient;  // (SWAP*) For each route and node, storing the
@@ -165,8 +163,6 @@ class LocalSearch
                              // cheapest insertion cost (including TW)
 
     /* TEMPORARY VARIABLES USED IN THE LOCAL SEARCH LOOPS */
-    // nodeUPrev -> nodeU -> nodeX -> nodeXNext
-    // nodeVPrev -> nodeV -> nodeY -> nodeYNext
     Node *nodeU;
     Node *nodeX;
     Node *nodeV;
@@ -292,17 +288,27 @@ class LocalSearch
     // Updates the preprocessed data of a route
     void updateRouteData(Route *myRoute);
 
-    // Loading an initial solution into the local search
+    // Load an initial solution that we will attempt to improve
     void loadIndividual(Individual const &indiv);
 
-    // Exporting the LS solution into an individual and calculating the
-    // penalized cost according to the original penalty weights from Params
+    // Export the LS solution back into an individual
     Individual exportIndividual();
 
+    // Performs the actual local search procedure
+    void search();
+
 public:
-    // Run the local search with the specified penalty values
-    void
-    run(Individual &indiv, double penaltyCapacityLS, double penaltyTimeWarpLS);
+    /**
+     * Performs the local search procedure around the given individual, using
+     * the passed-in penalty parameters.
+     *
+     * @param indiv                  Individual to improve.
+     * @param excessCapacityPenalty  Excess capacity penalty.
+     * @param timeWarpPenalty        Penalty for violated time windows.
+     */
+    void operator()(Individual &indiv,
+                    double excessCapacityPenalty,
+                    double timeWarpPenalty);
 
     LocalSearch(Params &params, XorShift128 &rng);
 };

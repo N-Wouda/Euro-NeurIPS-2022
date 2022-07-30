@@ -19,6 +19,18 @@ PYBIND11_MODULE(hgspy, m)
         .def(py::init<int>(), py::arg("seed"));
 
     py::class_<Individual>(m, "Individual")
+        .def(py::init<Params *, XorShift128 *>(),
+             py::arg("params"),
+             py::arg("rng"))
+        .def(py::init<Params *, std::vector<int>>(),
+             py::arg("params"),
+             py::arg("tour"))
+        .def(py::init<Params *,
+                      std::vector<int>,
+                      std::vector<std::vector<int>>>(),
+             py::arg("params"),
+             py::arg("tour"),
+             py::arg("routes"))
         .def("get_routes", &Individual::getRoutes)
         .def("get_tour", &Individual::getTour)
         .def("cost", &Individual::cost);
@@ -26,7 +38,12 @@ PYBIND11_MODULE(hgspy, m)
     py::class_<LocalSearch>(m, "LocalSearch")
         .def(py::init<Params &, XorShift128 &>(),
              py::arg("params"),
-             py::arg("rng"));
+             py::arg("rng"))
+        .def("__call__",
+             &LocalSearch::operator(),
+             py::arg("indiv"),
+             py::arg("excessCapacityPenalty"),
+             py::arg("timeWarpPenalty"));
 
     py::class_<Config>(m, "Config")
         .def(py::init<int,
@@ -76,7 +93,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("nbGranular") = 40,
              py::arg("weightWaitTime") = 2,
              py::arg("weightTimeWarp") = 10,
-             py::arg("intensificationProbabilityLS") = 15,
+             py::arg("intensificationProbability") = 15,
              py::arg("useSwapStarTW") = true,
              py::arg("skipSwapStarDist") = false,
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
@@ -102,8 +119,8 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("nbGranular", &Config::nbGranular)
         .def_readonly("weightWaitTime", &Config::weightWaitTime)
         .def_readonly("weightTimeWarp", &Config::weightTimeWarp)
-        .def_readonly("intensificationProbabilityLS",
-                      &Config::intensificationProbabilityLS)
+        .def_readonly("intensificationProbability",
+                      &Config::intensificationProbability)
         .def_readonly("useSwapStarTW", &Config::useSwapStarTW)
         .def_readonly("skipSwapStarDist", &Config::skipSwapStarDist)
         .def_readonly("circleSectorOverlapTolerance",
