@@ -30,15 +30,12 @@ Result GeneticAlgorithm::runUntil(clock::time_point const &timePoint)
             nbIterNonProd = 1;
         }
 
-        // Selection and crossover. Crossover is done several times, to
-        // preselect a reasonable candidate solution before applying an
-        // expensive educate step.
-        auto offspring = crossover();
-
         auto const currBest = population.getBestFound().cost();
+
+        auto offspring = crossover();
         educate(offspring);
 
-        if (currBest > population.getBestFound().cost())
+        if (currBest > population.getBestFound().cost())  // has new best!
             nbIterNonProd = 1;
         else
             nbIterNonProd++;

@@ -13,6 +13,7 @@ offsets getStartEnd(int n, XorShift128 &rng)
 {
     size_t start = rng.randint(n);
     size_t end = rng.randint(n);
+
     while (end == start)
         end = rng.randint(n);
 
@@ -20,30 +21,31 @@ offsets getStartEnd(int n, XorShift128 &rng)
 }
 
 Individual
-doOnce(Parents const &parents, Params const &params, offsets const &slice)
+doOnce(Parents const &parents, Params const &params, offsets const &offsets)
 {
     auto const &tour1 = parents.first->getTour();
     auto const &tour2 = parents.second->getTour();
 
-    auto const [start, end] = slice;
-
     std::vector<int> crossoverTour(params.nbClients);
     std::vector<bool> copied(params.nbClients + 1, false);
 
+    auto const [start, end] = offsets;
+    auto const idx2client = [&](size_t idx) { return idx % params.nbClients; };
+
     // Copy clients from start to end (possibly "wrapping around" the end)
-    size_t j = start;
-    for (; j % params.nbClients != (end + 1) % params.nbClients; ++j)
+    size_t insertPos = start;
+    for (; idx2client(insertPos) != idx2client(end + 1); ++insertPos)
     {
-        crossoverTour[j % params.nbClients] = tour1[j % params.nbClients];
-        copied[crossoverTour[j % params.nbClients]] = true;  // mark as copied
+        crossoverTour[idx2client(insertPos)] = tour1[idx2client(insertPos)];
+        copied[crossoverTour[idx2client(insertPos)]] = true;  // mark as copied
     }
 
     // Fill the remaining clients in the order given by the second parent
     for (int idx = 1; idx <= params.nbClients; ++idx)
     {
-        int const client = tour2[(end + idx) % params.nbClients];
+        int const client = tour2[idx2client(end + idx)];
         if (!copied[client])
-            crossoverTour[j++ % params.nbClients] = client;
+            crossoverTour[idx2client(insertPos++)] = client;
     }
 
     return {&params, crossoverTour};

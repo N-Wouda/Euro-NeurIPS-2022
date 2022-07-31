@@ -14,9 +14,9 @@ using Routes = std::vector<std::vector<int>>;
 
 // Uses a simple feasible nearest neighbour heuristic to insert unplanned
 // clients into the given routes.
-void addUnplannedToRoutes(Params const &params,
+void addUnplannedToRoutes(ClientSet const &unplanned,
                           Routes &routes,
-                          ClientSet const &unplanned)
+                          Params const &params)
 {
     for (int client : unplanned)
     {
@@ -199,11 +199,6 @@ Individual selectiveRouteExchange(
     }
 
     // Identify differences between route sets
-    ClientSet clientsInSelectedANotB;
-    for (int c : clientsInSelectedA)
-        if (!clientsInSelectedB.contains(c))
-            clientsInSelectedANotB.insert(c);
-
     ClientSet clientsInSelectedBNotA;
     for (int c : clientsInSelectedB)
         if (!clientsInSelectedA.contains(c))
@@ -243,8 +238,13 @@ Individual selectiveRouteExchange(
 
     // Insert unplanned clients (those that were in the removed routes of A, but
     // not the inserted routes of B).
-    addUnplannedToRoutes(params, routes1, clientsInSelectedANotB);
-    addUnplannedToRoutes(params, routes2, clientsInSelectedANotB);
+    ClientSet unplanned;
+    for (int c : clientsInSelectedA)
+        if (!clientsInSelectedB.contains(c))
+            unplanned.insert(c);
+
+    addUnplannedToRoutes(unplanned, routes1, params);
+    addUnplannedToRoutes(unplanned, routes2, params);
 
     Individual indiv1{&params, parents.first->getTour(), routes1};
     Individual indiv2{&params, parents.second->getTour(), routes2};
