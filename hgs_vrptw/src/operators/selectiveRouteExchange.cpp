@@ -4,7 +4,6 @@
 #include "Params.h"
 #include "XorShift128.h"
 
-#include <algorithm>
 #include <array>
 #include <unordered_set>
 
@@ -201,20 +200,14 @@ Individual selectiveRouteExchange(
 
     // Identify differences between route sets
     ClientSet clientsInSelectedANotB;
-    std::copy_if(
-        clientsInSelectedA.begin(),
-        clientsInSelectedA.end(),
-        std::inserter(clientsInSelectedANotB, clientsInSelectedANotB.end()),
-        [&clientsInSelectedB](int c)
-        { return !clientsInSelectedB.contains(c); });
+    for (int c : clientsInSelectedA)
+        if (!clientsInSelectedB.contains(c))
+            clientsInSelectedANotB.insert(c);
 
     ClientSet clientsInSelectedBNotA;
-    std::copy_if(
-        clientsInSelectedB.begin(),
-        clientsInSelectedB.end(),
-        std::inserter(clientsInSelectedBNotA, clientsInSelectedBNotA.end()),
-        [&clientsInSelectedA](int c)
-        { return !clientsInSelectedA.contains(c); });
+    for (int c : clientsInSelectedB)
+        if (!clientsInSelectedA.contains(c))
+            clientsInSelectedBNotA.insert(c);
 
     Routes routes1(params.nbVehicles);
     Routes routes2(params.nbVehicles);
@@ -248,8 +241,8 @@ Individual selectiveRouteExchange(
         }
     }
 
-    // Step 3: Insert unplanned clients (those that were in the removed routes
-    // of A, but not the inserted routes of B)
+    // Insert unplanned clients (those that were in the removed routes of A, but
+    // not the inserted routes of B).
     addUnplannedToRoutes(params, routes1, clientsInSelectedANotB);
     addUnplannedToRoutes(params, routes2, clientsInSelectedANotB);
 
