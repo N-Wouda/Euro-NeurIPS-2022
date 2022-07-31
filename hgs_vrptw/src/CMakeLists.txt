@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.2)
 
 set(geneticSources
-        GeneticAlgorithm.cpp)
+        GeneticAlgorithm.cpp
+        operators/ordered.cpp
+        operators/selectiveRouteExchange.cpp)
 
 set(individualSources
         Individual.cpp)

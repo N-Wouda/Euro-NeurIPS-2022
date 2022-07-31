@@ -7,8 +7,10 @@
 #include "Result.h"
 #include "Statistics.h"
 #include "XorShift128.h"
+#include "operators/crossover.h"
 
 #include <pybind11/chrono.h>
+#include <pybind11/functional.h>
 #include <pybind11/stl.h>
 
 namespace py = pybind11;
@@ -172,5 +174,23 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("rng"),
              py::arg("population"),
              py::arg("local_search"))
+        .def("add_crossover_operator",
+             &GeneticAlgorithm::addCrossoverOperator,
+             py::arg("op"))
         .def("run_until", &GeneticAlgorithm::runUntil, py::arg("time_point"));
+
+    // Crossover operators (as a submodule)
+    py::module xOps = m.def_submodule("crossover");
+
+    xOps.def("ordered",
+             &ordered,
+             py::arg("parents"),
+             py::arg("params"),
+             py::arg("rng"));
+
+    xOps.def("selective_route_exchange",
+             &selectiveRouteExchange,
+             py::arg("parents"),
+             py::arg("params"),
+             py::arg("rng"));
 }

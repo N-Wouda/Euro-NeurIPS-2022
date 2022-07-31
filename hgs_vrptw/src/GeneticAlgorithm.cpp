@@ -33,18 +33,7 @@ Result GeneticAlgorithm::runUntil(clock::time_point const &timePoint)
         // Selection and crossover. Crossover is done several times, to
         // preselect a reasonable candidate solution before applying an
         // expensive educate step.
-        auto parents = population.selectParents();
-        auto offspring = crossover(parents);
-
-        // TODO add other crossover types?
-        for (size_t count = 1; count != params.config.nbCrossover; ++count)
-        {
-            parents = population.selectParents();
-            auto cand = crossover(parents);
-
-            if (cand.cost() < offspring.cost())
-                offspring = cand;
-        }
+        auto offspring = crossover();
 
         auto const currBest = population.getBestFound().cost();
         educate(offspring);
@@ -68,44 +57,16 @@ Result GeneticAlgorithm::runUntil(clock::time_point const &timePoint)
     return {population.getBestFound(), stats};
 }
 
-Individual GeneticAlgorithm::crossover(Parents const &parents) const
+Individual GeneticAlgorithm::crossover() const
 {
-    auto const &tour1 = parents.first->getTour();
-    auto const &tour2 = parents.second->getTour();
+    auto const parents = population.selectParents();
+    std::vector<Individual> offspring;
 
-    std::vector<int> newTour(params.nbClients);
-    std::vector<bool> copied(params.nbClients + 1, false);
+    for (auto const &op : operators)
+        offspring.push_back(op(parents, params, rng));
 
-    // [start, end] marks the clients selected from the first parent. The
-    // remaining clients are taken from the second parent.
-    size_t start = rng.randint(params.nbClients);
-    size_t end = rng.randint(params.nbClients);
-    while (end == start)
-        end = rng.randint(params.nbClients);
-
-    // Copy in place the elements from start to end (possibly "wrapping around"
-    // the end of the array)
-    size_t j = start;
-    while (j % params.nbClients != (end + 1) % params.nbClients)
-    {
-        newTour[j % params.nbClients] = tour1[j % params.nbClients];
-        copied[newTour[j % params.nbClients]] = true;  // mark as copied
-        j++;
-    }
-
-    // Fill the remaining elements in the order given by the second parent
-    for (int i = 1; i <= params.nbClients; i++)
-    {
-        int client = tour2[(end + i) % params.nbClients];
-
-        if (!copied[client])  // copy now if not already in tour
-        {
-            newTour[j % params.nbClients] = client;
-            j++;
-        }
-    }
-
-    return {&params, newTour};
+    auto comp = [](auto &a, auto &b) { return a.cost() < b.cost(); };
+    return *std::max_element(offspring.begin(), offspring.end(), comp);
 }
 
 void GeneticAlgorithm::educate(Individual &indiv)

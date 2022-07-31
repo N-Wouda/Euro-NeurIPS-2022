@@ -4,6 +4,7 @@
 #include "Params.h"
 #include "Population.h"
 #include "XorShift128.h"
+#include "operators/crossover.h"
 
 #include <chrono>
 #include <iostream>
@@ -23,6 +24,7 @@ try
     LocalSearch ls(params, rng);
 
     GeneticAlgorithm solver(params, rng, pop, ls);
+    solver.addCrossoverOperator(ordered);
 
     auto const until = start + std::chrono::seconds(config.timeLimit);
     auto const res = solver.runUntil(until);

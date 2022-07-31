@@ -10,6 +10,7 @@
 
 #include <array>
 #include <chrono>
+#include <functional>
 #include <list>
 #include <unordered_set>
 
@@ -18,7 +19,10 @@
 class GeneticAlgorithm
 {
     using clock = std::chrono::system_clock;
-    using Parents = std::pair<Individual const *, Individual const *>;
+    using xOp = std::function<Individual(
+        std::pair<Individual const *, Individual const *> const &,
+        Params const &,
+        XorShift128 &)>;
 
     Params &params;            // Problem parameters
     XorShift128 &rng;          // Random number generator
@@ -28,12 +32,14 @@ class GeneticAlgorithm
     std::list<bool> loadFeas;  // load feasibility of recent individuals
     std::list<bool> timeFeas;  // time feasibility of recent individuals
 
+    std::vector<xOp> operators;  // crossover operators
+
     /**
-     * Does one ordered crossover of the given parents. A randomly selected
-     * subset of clients is taken from the first parent - the rest comes from
-     * the second parent.
+     * Runs the crossover algorithm: each given crossover operator is applied
+     * once, its resulting offspring inspected, and the best offspring in terms
+     * of penalised cost is returned.
      */
-    [[nodiscard]] Individual crossover(Parents const &parents) const;
+    [[nodiscard]] Individual crossover() const;
 
     /**
      * Performs local search and adds the individual to the population. If the
@@ -49,6 +55,11 @@ class GeneticAlgorithm
     void updatePenalties();
 
 public:
+    /**
+     * Add a crossover operator to the genetic search algorithm.
+     */
+    void addCrossoverOperator(xOp const &op) { operators.push_back(op); }
+
     /**
      * Runs the genetic algorithm until just after the passed-in time point.
      *

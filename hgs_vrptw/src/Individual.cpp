@@ -305,7 +305,7 @@ std::vector<std::pair<int, int>> Individual::getNeighbours() const
     return neighbours;
 }
 
-Individual::Individual(Params *params, XorShift128 *rng)
+Individual::Individual(Params const *params, XorShift128 *rng)
     : params(params),
       tourChrom(params->nbClients),
       routeChrom(params->nbVehicles)
@@ -316,13 +316,13 @@ Individual::Individual(Params *params, XorShift128 *rng)
     makeRoutes();
 }
 
-Individual::Individual(Params *params, Clients tour)
+Individual::Individual(Params const *params, Clients tour)
     : params(params), tourChrom(std::move(tour)), routeChrom(params->nbVehicles)
 {
     makeRoutes();
 }
 
-Individual::Individual(Params *params,
+Individual::Individual(Params const *params,
                        Clients tour,
                        std::vector<Clients> routes)
     : params(params), tourChrom(std::move(tour)), routeChrom(std::move(routes))
