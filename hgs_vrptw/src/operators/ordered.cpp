@@ -4,8 +4,6 @@
 #include "Params.h"
 #include "XorShift128.h"
 
-#include <ranges>
-
 namespace
 {
 using Parents = std::pair<Individual const *, Individual const *>;
@@ -41,7 +39,7 @@ doOnce(Parents const &parents, Params const &params, offsets const &slice)
     }
 
     // Fill the remaining clients in the order given by the second parent
-    for (int idx : std::views::iota(1, params.nbClients + 1))
+    for (int idx = 1; idx <= params.nbClients; ++idx)
     {
         int const client = tour2[(end + idx) % params.nbClients];
         if (!copied[client])
