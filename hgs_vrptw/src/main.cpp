@@ -25,6 +25,7 @@ try
 
     GeneticAlgorithm solver(params, rng, pop, ls);
     solver.addCrossoverOperator(ordered);
+    solver.addCrossoverOperator(selectiveRouteExchange);
 
     auto const until = start + std::chrono::seconds(config.timeLimit);
     auto const res = solver.runUntil(until);
