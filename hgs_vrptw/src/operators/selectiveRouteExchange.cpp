@@ -5,88 +5,77 @@
 #include "XorShift128.h"
 
 #include <algorithm>
+#include <array>
 #include <unordered_set>
 
 namespace
 {
-void insertUnplannedTasks(Params const &params,
-                          std::vector<std::vector<int>> &routes,
-                          std::unordered_set<int> &unplannedTasks)
+using ClientSet = std::unordered_set<int>;
+using Routes = std::vector<std::vector<int>>;
+
+void addUnplannedToRoute(Params const &params,
+                         Routes &routes,
+                         ClientSet const &unplanned)
 {
-    // Initialize some variables
-    int newDistanceToInsert = INT_MAX;    // TODO:
-    int newDistanceFromInsert = INT_MAX;  // TODO:
-    int distanceDelta = INT_MAX;          // TODO:
+    int distToInsert = INT_MAX;  // TODO:
 
-    // Loop over all unplannedTasks
-    for (int c : unplannedTasks)
+    // Loop over all unplanned
+    for (int c : unplanned)
     {
-        // Get the earliest and latest possible arrival at the client
-        int earliestArrival = params.clients[c].twEarly;
-        int latestArrival = params.clients[c].twLate;
+        int twEarly = params.clients[c].twEarly;
+        int twLate = params.clients[c].twLate;
 
-        int bestDistance = INT_MAX;
-        std::pair<int, int> bestLocation;
+        // Used as a tuple of (delta dist, route idx, offset idx) elements.
+        std::array<int, 3> best = {INT_MAX, 0, 0};
 
-        // Loop over all routes
         for (int r = 0; r < params.nbVehicles; r++)
         {
-            // Go to the next route if this route is empty
             if (routes[r].empty())
+                continue;  // TODO can this be break?
+
+            int size = static_cast<int>(routes[r].size());
+
+            int distFromInsert = params.dist(c, routes[r][0]);
+            if (twEarly + distFromInsert < params.clients[routes[r][0]].twLate)
             {
-                continue;
+                int distanceDelta = params.dist(0, c) + distToInsert
+                                    - params.dist(0, routes[r][0]);
+
+                if (distanceDelta < best[0])
+                    best = {distanceDelta, r, 0};
             }
 
-            newDistanceFromInsert = params.dist(c, routes[r][0]);
-            if (earliestArrival + newDistanceFromInsert
-                < params.clients[routes[r][0]].twLate)
+            for (int i = 1; i < size; i++)
             {
-                distanceDelta = params.dist(0, c) + newDistanceToInsert
-                                - params.dist(0, routes[r][0]);
-                if (distanceDelta < bestDistance)
-                {
-                    bestDistance = distanceDelta;
-                    bestLocation = {r, 0};
-                }
-            }
-
-            for (int i = 1; i < static_cast<int>(routes[r].size()); i++)
-            {
-                newDistanceToInsert = params.dist(routes[r][i - 1], c);
-                newDistanceFromInsert = params.dist(c, routes[r][i]);
-                if (params.clients[routes[r][i - 1]].twEarly
-                            + newDistanceToInsert
-                        < latestArrival
-                    && earliestArrival + newDistanceFromInsert
+                distToInsert = params.dist(routes[r][i - 1], c);
+                distFromInsert = params.dist(c, routes[r][i]);
+                if (params.clients[routes[r][i - 1]].twEarly + distToInsert
+                        < twLate
+                    && twEarly + distFromInsert
                            < params.clients[routes[r][i]].twLate)
                 {
-                    distanceDelta
-                        = newDistanceToInsert + newDistanceFromInsert
+                    int distanceDelta
+                        = distToInsert + distFromInsert
                           - params.dist(routes[r][i - 1], routes[r][i]);
-                    if (distanceDelta < bestDistance)
-                    {
-                        bestDistance = distanceDelta;
-                        bestLocation = {r, i};
-                    }
+
+                    if (distanceDelta < best[0])
+                        best = {distanceDelta, r, i};
                 }
             }
 
-            newDistanceToInsert = params.dist(routes[r].back(), c);
-            if (params.clients[routes[r].back()].twEarly + newDistanceToInsert
-                < latestArrival)
+            distToInsert = params.dist(routes[r].back(), c);
+            if (params.clients[routes[r].back()].twEarly + distToInsert
+                < twLate)
             {
-                distanceDelta = newDistanceToInsert + params.dist(c, 0)
-                                - params.dist(routes[r].back(), 0);
-                if (distanceDelta < bestDistance)
-                {
-                    bestDistance = distanceDelta;
-                    bestLocation = {r, static_cast<int>(routes[r].size())};
-                }
+                int distanceDelta
+                    = distToInsert + params.dist(c, 0) - params.dist(size, 0);
+
+                if (distanceDelta < best[0])
+                    best = {distanceDelta, r, size};
             }
         }
 
-        routes[bestLocation.first].insert(
-            routes[bestLocation.first].begin() + bestLocation.second, c);
+        routes[best[1]].insert(routes[best[1]].begin() + best[2], c);
     }
 }
 }  // namespace
@@ -97,176 +86,137 @@ Individual selectiveRouteExchange(
     XorShift128 &rng)
 {
     // Get the number of routes of both parents
-    int nOfRoutesA = parents.first->numRoutes();
-    int nOfRoutesB = parents.second->numRoutes();
+    size_t nOfRoutesA = parents.first->numRoutes();
+    size_t nOfRoutesB = parents.second->numRoutes();
 
     auto const &routesA = parents.first->getRoutes();
     auto const &routesB = parents.second->getRoutes();
 
-    // Picking the start index of routes to replace of parent A
-    // We like to replace routes with a large overlap of tasks, so we choose
-    // adjacent routes (they are sorted on polar angle)
-    int startA = rng.randint(nOfRoutesA);
-    int nOfMovedRoutes
+    // Picking the start index of routes to replace of parent A. We like to
+    // replace routes with a large overlap of tasks, so we choose adjacent
+    // routes (they are sorted on polar angle)
+    size_t startA = rng.randint(static_cast<int>(nOfRoutesA));
+    size_t nOfMovedRoutes
         = std::min(nOfRoutesA, nOfRoutesB) == 1  // prevent moving no routes
               ? 1
               : rng() % (std::min(nOfRoutesA - 1, nOfRoutesB - 1)) + 1;
-    int startB = startA < nOfRoutesB ? startA : 0;
+    size_t startB = startA < nOfRoutesB ? startA : 0;
 
-    std::unordered_set<int> clientsInSelectedA;
-    for (int r = 0; r < nOfMovedRoutes; r++)
-    {
-        // Insert the first
+    ClientSet clientsInSelectedA;
+    for (size_t r = 0; r < nOfMovedRoutes; r++)
         clientsInSelectedA.insert(routesA[(startA + r) % nOfRoutesA].begin(),
                                   routesA[(startA + r) % nOfRoutesA].end());
-    }
 
-    std::unordered_set<int> clientsInSelectedB;
-    for (int r = 0; r < nOfMovedRoutes; r++)
-    {
+    ClientSet clientsInSelectedB;
+    for (size_t r = 0; r < nOfMovedRoutes; r++)
         clientsInSelectedB.insert(routesB[(startB + r) % nOfRoutesB].begin(),
                                   routesB[(startB + r) % nOfRoutesB].end());
-    }
 
-    bool improved = true;
-    while (improved)
+    while (true)
     {
         // Difference for moving 'left' in parent A
-        const int differenceALeft
+        int const differenceALeft
             = static_cast<int>(std::count_if(
                   routesA[(startA - 1 + nOfRoutesA) % nOfRoutesA].begin(),
                   routesA[(startA - 1 + nOfRoutesA) % nOfRoutesA].end(),
-                  [&clientsInSelectedB](int c) {
-                      return clientsInSelectedB.find(c)
-                             == clientsInSelectedB.end();
-                  }))
+                  [&clientsInSelectedB](int c)
+                  { return !clientsInSelectedB.contains(c); }))
               - static_cast<int>(std::count_if(
                   routesA[(startA + nOfMovedRoutes - 1) % nOfRoutesA].begin(),
                   routesA[(startA + nOfMovedRoutes - 1) % nOfRoutesA].end(),
-                  [&clientsInSelectedB](int c) {
-                      return clientsInSelectedB.find(c)
-                             == clientsInSelectedB.end();
-                  }));
+                  [&clientsInSelectedB](int c)
+                  { return !clientsInSelectedB.contains(c); }));
 
         // Difference for moving 'right' in parent A
-        const int differenceARight
+        int const differenceARight
             = static_cast<int>(std::count_if(
                   routesA[(startA + nOfMovedRoutes) % nOfRoutesA].begin(),
                   routesA[(startA + nOfMovedRoutes) % nOfRoutesA].end(),
-                  [&clientsInSelectedB](int c) {
-                      return clientsInSelectedB.find(c)
-                             == clientsInSelectedB.end();
-                  }))
+                  [&clientsInSelectedB](int c)
+                  { return !clientsInSelectedB.contains(c); }))
               - static_cast<int>(
                   std::count_if(routesA[startA].begin(),
                                 routesA[startA].end(),
-                                [&clientsInSelectedB](int c) {
-                                    return clientsInSelectedB.find(c)
-                                           == clientsInSelectedB.end();
-                                }));
+                                [&clientsInSelectedB](int c)
+                                { return !clientsInSelectedB.contains(c); }));
 
         // Difference for moving 'left' in parent B
-        const int differenceBLeft
+        int const differenceBLeft
             = static_cast<int>(std::count_if(
                   routesB[(startB - 1 + nOfMovedRoutes) % nOfRoutesB].begin(),
                   routesB[(startB - 1 + nOfMovedRoutes) % nOfRoutesB].end(),
-                  [&clientsInSelectedA](int c) {
-                      return clientsInSelectedA.find(c)
-                             != clientsInSelectedA.end();
-                  }))
+                  [&clientsInSelectedA](int c)
+                  { return clientsInSelectedA.contains(c); }))
               - static_cast<int>(std::count_if(
                   routesB[(startB - 1 + nOfRoutesB) % nOfRoutesB].begin(),
                   routesB[(startB - 1 + nOfRoutesB) % nOfRoutesB].end(),
-                  [&clientsInSelectedA](int c) {
-                      return clientsInSelectedA.find(c)
-                             != clientsInSelectedA.end();
-                  }));
+                  [&clientsInSelectedA](int c)
+                  { return clientsInSelectedA.contains(c); }));
 
         // Difference for moving 'right' in parent B
-        const int differenceBRight
+        int const differenceBRight
             = static_cast<int>(
                   std::count_if(routesB[startB].begin(),
                                 routesB[startB].end(),
-                                [&clientsInSelectedA](int c) {
-                                    return clientsInSelectedA.find(c)
-                                           != clientsInSelectedA.end();
-                                }))
+                                [&clientsInSelectedA](int c)
+                                { return clientsInSelectedA.contains(c); }))
               - static_cast<int>(std::count_if(
                   routesB[(startB + nOfMovedRoutes) % nOfRoutesB].begin(),
                   routesB[(startB + nOfMovedRoutes) % nOfRoutesB].end(),
-                  [&clientsInSelectedA](int c) {
-                      return clientsInSelectedA.find(c)
-                             != clientsInSelectedA.end();
-                  }));
+                  [&clientsInSelectedA](int c)
+                  { return clientsInSelectedA.contains(c); }));
 
-        const int bestDifference = std::min({differenceALeft,
+        int const bestDifference = std::min({differenceALeft,
                                              differenceARight,
                                              differenceBLeft,
                                              differenceBRight});
 
-        if (bestDifference < 0)
+        if (bestDifference >= 0)  // there are no further improving moves
+            break;
+
+        if (bestDifference == differenceALeft)
         {
-            if (bestDifference == differenceALeft)
-            {
-                for (int c :
-                     routesA[(startA + nOfMovedRoutes - 1) % nOfRoutesA])
-                {
-                    clientsInSelectedA.erase(clientsInSelectedA.find(c));
-                }
-                startA = (startA - 1 + nOfRoutesA) % nOfRoutesA;
-                for (int c : routesA[startA])
-                {
-                    clientsInSelectedA.insert(c);
-                }
-            }
-            else if (bestDifference == differenceARight)
-            {
-                for (int c : routesA[startA])
-                {
-                    clientsInSelectedA.erase(clientsInSelectedA.find(c));
-                }
-                startA = (startA + 1) % nOfRoutesA;
-                for (int c :
-                     routesA[(startA + nOfMovedRoutes - 1) % nOfRoutesA])
-                {
-                    clientsInSelectedA.insert(c);
-                }
-            }
-            else if (bestDifference == differenceBLeft)
-            {
-                for (int c :
-                     routesB[(startB + nOfMovedRoutes - 1) % nOfRoutesB])
-                {
-                    clientsInSelectedB.erase(clientsInSelectedB.find(c));
-                }
-                startB = (startB - 1 + nOfRoutesB) % nOfRoutesB;
-                for (int c : routesB[startB])
-                {
-                    clientsInSelectedB.insert(c);
-                }
-            }
-            else if (bestDifference == differenceBRight)
-            {
-                for (int c : routesB[startB])
-                {
-                    clientsInSelectedB.erase(clientsInSelectedB.find(c));
-                }
-                startB = (startB + 1) % nOfRoutesB;
-                for (int c :
-                     routesB[(startB + nOfMovedRoutes - 1) % nOfRoutesB])
-                {
-                    clientsInSelectedB.insert(c);
-                }
-            }
+            for (int c : routesA[(startA + nOfMovedRoutes - 1) % nOfRoutesA])
+                clientsInSelectedA.erase(clientsInSelectedA.find(c));
+
+            startA = (startA - 1 + nOfRoutesA) % nOfRoutesA;
+
+            for (int c : routesA[startA])
+                clientsInSelectedA.insert(c);
         }
-        else
+        else if (bestDifference == differenceARight)
         {
-            improved = false;
+            for (int c : routesA[startA])
+                clientsInSelectedA.erase(clientsInSelectedA.find(c));
+
+            startA = (startA + 1) % nOfRoutesA;
+
+            for (int c : routesA[(startA + nOfMovedRoutes - 1) % nOfRoutesA])
+                clientsInSelectedA.insert(c);
+        }
+        else if (bestDifference == differenceBLeft)
+        {
+            for (int c : routesB[(startB + nOfMovedRoutes - 1) % nOfRoutesB])
+                clientsInSelectedB.erase(clientsInSelectedB.find(c));
+
+            startB = (startB - 1 + nOfRoutesB) % nOfRoutesB;
+
+            for (int c : routesB[startB])
+                clientsInSelectedB.insert(c);
+        }
+        else if (bestDifference == differenceBRight)
+        {
+            for (int c : routesB[startB])
+                clientsInSelectedB.erase(clientsInSelectedB.find(c));
+
+            startB = (startB + 1) % nOfRoutesB;
+            for (int c : routesB[(startB + nOfMovedRoutes - 1) % nOfRoutesB])
+                clientsInSelectedB.insert(c);
         }
     }
 
     // Identify differences between route sets
-    std::unordered_set<int> clientsInSelectedANotB;
+    ClientSet clientsInSelectedANotB;
     std::copy_if(
         clientsInSelectedA.begin(),
         clientsInSelectedA.end(),
@@ -274,7 +224,7 @@ Individual selectiveRouteExchange(
         [&clientsInSelectedB](int c)
         { return clientsInSelectedB.find(c) == clientsInSelectedB.end(); });
 
-    std::unordered_set<int> clientsInSelectedBNotA;
+    ClientSet clientsInSelectedBNotA;
     std::copy_if(
         clientsInSelectedB.begin(),
         clientsInSelectedB.end(),
@@ -282,53 +232,51 @@ Individual selectiveRouteExchange(
         [&clientsInSelectedA](int c)
         { return clientsInSelectedA.find(c) == clientsInSelectedA.end(); });
 
-    std::vector<std::vector<int>> routes1(params.nbVehicles);
-    std::vector<std::vector<int>> routes2(params.nbVehicles);
+    Routes routes1(params.nbVehicles);
+    Routes routes2(params.nbVehicles);
 
     // Replace selected routes from parent A with routes from parent B
-    for (int r = 0; r < nOfMovedRoutes; r++)
+    for (size_t r = 0; r < nOfMovedRoutes; r++)
     {
-        int indexA = (startA + r) % nOfRoutesA;
-        int indexB = (startB + r) % nOfRoutesB;
+        size_t indexA = (startA + r) % nOfRoutesA;
+        size_t indexB = (startB + r) % nOfRoutesB;
 
         for (int c : routesB[indexB])
         {
             routes1[indexA].push_back(c);
+
             if (clientsInSelectedBNotA.find(c) == clientsInSelectedBNotA.end())
-            {
                 routes2[indexA].push_back(c);
-            }
         }
     }
 
     // Move routes from parent A that are kept
-    for (int r = nOfMovedRoutes; r < nOfRoutesA; r++)
+    for (size_t r = nOfMovedRoutes; r < nOfRoutesA; r++)
     {
-        int indexA = (startA + r) % nOfRoutesA;
+        size_t indexA = (startA + r) % nOfRoutesA;
         routes1[indexA].clear();
         routes2[indexA].clear();
 
         for (int c : routesA[indexA])
         {
             if (clientsInSelectedBNotA.find(c) == clientsInSelectedBNotA.end())
-            {
                 routes1[indexA].push_back(c);
-            }
+
             routes2[indexA].push_back(c);
         }
     }
 
     // Delete any remaining routes that still lived in offspring
-    for (int r = nOfRoutesA; r < params.nbVehicles; r++)
+    for (size_t r = nOfRoutesA; r < static_cast<size_t>(params.nbVehicles); r++)
     {
         routes1[r].clear();
         routes2[r].clear();
     }
 
     // Step 3: Insert unplanned clients (those that were in the removed routes
-    // of A but not the inserted routes of B)
-    insertUnplannedTasks(params, routes1, clientsInSelectedANotB);
-    insertUnplannedTasks(params, routes2, clientsInSelectedANotB);
+    // of A, but not the inserted routes of B)
+    addUnplannedToRoute(params, routes1, clientsInSelectedANotB);
+    addUnplannedToRoute(params, routes2, clientsInSelectedANotB);
 
     Individual indiv1{&params, parents.first->getTour(), routes1};
     Individual indiv2{&params, parents.second->getTour(), routes2};
