@@ -61,7 +61,6 @@ PYBIND11_MODULE(hgspy, m)
                       size_t,
                       size_t,
                       size_t,
-                      size_t,
                       double,
                       size_t,
                       double,
@@ -85,7 +84,6 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("penaltyDecrease") = 0.85,
              py::arg("minimumPopulationSize") = 25,
              py::arg("generationSize") = 40,
-             py::arg("nbCrossover") = 16,
              py::arg("nbElite") = 4,
              py::arg("nbClose") = 5,
              py::arg("targetFeasible") = 0.2,
@@ -111,7 +109,6 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("penaltyDecrease", &Config::penaltyDecrease)
         .def_readonly("minimumPopulationSize", &Config::minimumPopulationSize)
         .def_readonly("generationSize", &Config::generationSize)
-        .def_readonly("nbCrossover", &Config::nbCrossover)
         .def_readonly("nbElite", &Config::nbElite)
         .def_readonly("nbClose", &Config::nbClose)
         .def_readonly("targetFeasible", &Config::targetFeasible)

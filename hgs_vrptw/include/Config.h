@@ -27,7 +27,6 @@ struct Config
 
     size_t minimumPopulationSize = 25;
     size_t generationSize = 40;     // max size before culling a generation
-    size_t nbCrossover = 16;        // number of crossovers in each iteration
     size_t nbElite = 4;             // number of elite individuals in pop
     size_t nbClose = 5;             // # individuals when calculating diversity
     double targetFeasible = 0.2;    // target feasible pop fraction
@@ -73,7 +72,6 @@ struct Config
                     double penaltyDecrease = 0.85,
                     size_t minimumPopulationSize = 25,
                     size_t generationSize = 40,
-                    size_t nbCrossover = 16,
                     size_t nbElite = 4,
                     size_t nbClose = 5,
                     double targetFeasible = 0.2,
@@ -99,7 +97,6 @@ struct Config
           penaltyDecrease(penaltyDecrease),
           minimumPopulationSize(minimumPopulationSize),
           generationSize(generationSize),
-          nbCrossover(nbCrossover),
           nbElite(nbElite),
           nbClose(nbClose),
           targetFeasible(targetFeasible),
