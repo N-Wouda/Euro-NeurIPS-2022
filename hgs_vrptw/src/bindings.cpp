@@ -7,7 +7,7 @@
 #include "Result.h"
 #include "Statistics.h"
 #include "XorShift128.h"
-#include "operators/crossover.h"
+#include "crossover.h"
 
 #include <pybind11/chrono.h>
 #include <pybind11/functional.h>

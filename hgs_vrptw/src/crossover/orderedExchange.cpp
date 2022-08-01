@@ -1,4 +1,4 @@
-#include "operators/crossover.h"
+#include "crossover.h"
 
 #include "Individual.h"
 #include "Params.h"

@@ -4,7 +4,7 @@
 #include "Params.h"
 #include "Population.h"
 #include "XorShift128.h"
-#include "operators/crossover.h"
+#include "crossover.h"
 
 #include <chrono>
 #include <iostream>
