@@ -2,6 +2,7 @@
 #include "Population.h"
 
 #include <algorithm>
+#include <cmath>
 #include <numeric>
 
 void Statistics::collectFrom(Population const &population)
@@ -35,16 +36,12 @@ void Statistics::collectFrom(Population const &population)
 
     if (!best.isFeasible())
     {
-        // Avoids storing the possibly infeasible initial (random) solution
-        currObjectives_.push_back(std::nan(""));
+        currObjectives_.push_back(NAN);
+        return;
     }
 
-    else
-    {
-        currObjectives_.push_back(best.cost());
+    currObjectives_.push_back(best.cost());
 
-        if (bestObjectives_.empty()
-            || best.cost() < bestObjectives_.back().second)
-            bestObjectives_.emplace_back(clock::now(), best.cost());
-    }
+    if (bestObjectives_.empty() || best.cost() < bestObjectives_.back().second)
+        bestObjectives_.emplace_back(clock::now(), best.cost());
 }
