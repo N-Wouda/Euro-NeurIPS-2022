@@ -8,10 +8,10 @@
  * crossover randomly selects a subset of clients from the first parent, and the
  * rest comes from the second parent.
  */
-Individual
-ordered(std::pair<Individual const *, Individual const *> const &parents,
-        Params const &params,
-        XorShift128 &rng);
+Individual orderedExchange(
+    std::pair<Individual const *, Individual const *> const &parents,
+    Params const &params,
+    XorShift128 &rng);
 
 /**
  * Performs two SREX [1] crossovers the given parents (binary tournament). This

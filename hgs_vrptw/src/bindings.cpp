@@ -179,8 +179,8 @@ PYBIND11_MODULE(hgspy, m)
     // Crossover operators (as a submodule)
     py::module xOps = m.def_submodule("crossover");
 
-    xOps.def("ordered",
-             &ordered,
+    xOps.def("ordered_exchange",
+             &orderedExchange,
              py::arg("parents"),
              py::arg("params"),
              py::arg("rng"));

@@ -24,7 +24,7 @@ try
     LocalSearch ls(params, rng);
 
     GeneticAlgorithm solver(params, rng, pop, ls);
-    solver.addCrossoverOperator(ordered);
+    solver.addCrossoverOperator(orderedExchange);
     solver.addCrossoverOperator(selectiveRouteExchange);
 
     auto const until = start + std::chrono::seconds(config.timeLimit);

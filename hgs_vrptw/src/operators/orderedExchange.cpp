@@ -53,7 +53,7 @@ doOnce(Parents const &parents, Params const &params, Offsets const &offsets)
 }  // namespace
 
 Individual
-ordered(Parents const &parents, Params const &params, XorShift128 &rng)
+orderedExchange(Parents const &parents, Params const &params, XorShift128 &rng)
 {
     // Performs another binary tournament with the crossover results. This is
     // not unlike ``Genetic::crossoverOX`` in the baseline.
