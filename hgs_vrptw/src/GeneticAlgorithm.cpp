@@ -12,6 +12,10 @@
 
 Result GeneticAlgorithm::runUntil(clock::time_point const &timePoint)
 {
+    if (operators.empty())
+        throw std::runtime_error("Cannot run genetic algorithm without "
+                                 "crossover operators.");
+
     if (params.nbClients == 1)
         throw std::runtime_error("Cannot run genetic algorithm with one node.");
 
