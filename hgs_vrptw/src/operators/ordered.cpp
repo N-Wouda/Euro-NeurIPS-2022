@@ -7,9 +7,9 @@
 namespace
 {
 using Parents = std::pair<Individual const *, Individual const *>;
-using offsets = std::pair<unsigned, unsigned>;
+using Offsets = std::pair<unsigned, unsigned>;
 
-offsets getStartEnd(int n, XorShift128 &rng)
+Offsets getStartEnd(int n, XorShift128 &rng)
 {
     size_t start = rng.randint(n);
     size_t end = rng.randint(n);
@@ -21,23 +21,23 @@ offsets getStartEnd(int n, XorShift128 &rng)
 }
 
 Individual
-doOnce(Parents const &parents, Params const &params, offsets const &offsets)
+doOnce(Parents const &parents, Params const &params, Offsets const &offsets)
 {
     auto const &tour1 = parents.first->getTour();
     auto const &tour2 = parents.second->getTour();
 
-    std::vector<int> crossoverTour(params.nbClients);
+    std::vector<int> offspringTour(params.nbClients);
     std::vector<bool> copied(params.nbClients + 1, false);
 
     auto const [start, end] = offsets;
     auto const idx2client = [&](size_t idx) { return idx % params.nbClients; };
 
-    // Copy clients from start to end (possibly "wrapping around" the end)
+    // Copy clients of first parent from start to end (with wrap-around)
     size_t insertPos = start;
     for (; idx2client(insertPos) != idx2client(end + 1); ++insertPos)
     {
-        crossoverTour[idx2client(insertPos)] = tour1[idx2client(insertPos)];
-        copied[crossoverTour[idx2client(insertPos)]] = true;  // mark as copied
+        offspringTour[idx2client(insertPos)] = tour1[idx2client(insertPos)];
+        copied[offspringTour[idx2client(insertPos)]] = true;  // mark as copied
     }
 
     // Fill the remaining clients in the order given by the second parent
@@ -45,10 +45,10 @@ doOnce(Parents const &parents, Params const &params, offsets const &offsets)
     {
         int const client = tour2[idx2client(end + idx)];
         if (!copied[client])
-            crossoverTour[idx2client(insertPos++)] = client;
+            offspringTour[idx2client(insertPos++)] = client;
     }
 
-    return {&params, crossoverTour};
+    return {&params, offspringTour};
 }
 }  // namespace
 
