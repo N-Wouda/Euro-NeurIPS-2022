@@ -78,8 +78,8 @@ public:
     }
 
     /**
-     * Return a vector of current best objective value, one element for each
-     * iteration.
+     * Returns a vector of the best objective value at the current iteration,
+     * one element for each iteration.
      */
     [[nodiscard]] std::vector<double> const &currObjectives() const
     {

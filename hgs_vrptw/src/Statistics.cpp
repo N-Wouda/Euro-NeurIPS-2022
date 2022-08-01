@@ -35,7 +35,7 @@ void Statistics::collectFrom(Population const &population)
 
     if (!best.isFeasible())
     {
-        // avoids storing the possibly infeasible initial (random) solution
+        // Avoids storing the possibly infeasible initial (random) solution
         currObjectives_.push_back(std::nan(""));
     }
 
