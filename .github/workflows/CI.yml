@@ -46,4 +46,4 @@ jobs:
         with:
           source: 'hgs_vrptw/src hgs_vrptw/include hgs_vrptw/test'
           extensions: 'h,cpp'
-          clangFormatVersion: 10
+          clangFormatVersion: 11
