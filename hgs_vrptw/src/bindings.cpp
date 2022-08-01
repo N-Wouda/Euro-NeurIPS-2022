@@ -156,6 +156,7 @@ PYBIND11_MODULE(hgspy, m)
         .def("pop_sizes", &Statistics::popSizes)
         .def("feasible_pops", &Statistics::feasiblePops)
         .def("pop_diversity", &Statistics::popDiversity)
+        .def("curr_objectives", &Statistics::currObjectives)
         .def("best_objectives", &Statistics::bestObjectives);
 
     py::class_<Result>(m, "Result")

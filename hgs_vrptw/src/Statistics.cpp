@@ -12,10 +12,10 @@ void Statistics::collectFrom(Population const &population)
     iterTimes.push_back(diff.count());
     lastIter = clock::now();  // update for next call
 
-    auto const numFeas = std::count_if(
-        population.population.begin(),
-        population.population.end(),
-        [](Individual const *indiv) { return indiv->isFeasible(); });
+    auto const numFeas = std::count_if(population.population.begin(),
+                                       population.population.end(),
+                                       [](Individual const *indiv)
+                                       { return indiv->isFeasible(); });
 
     numFeasible.push_back(numFeas);
 
@@ -26,17 +26,25 @@ void Statistics::collectFrom(Population const &population)
         population.population.begin(),
         population.population.end(),
         0.,
-        [](double val, Individual const *indiv) {
-            return val + indiv->avgBrokenPairsDistanceClosest();
-        });
+        [](double val, Individual const *indiv)
+        { return val + indiv->avgBrokenPairsDistanceClosest(); });
 
     popDiversity_.push_back(totalDiversity / static_cast<double>(nPops));
 
     auto const &best = population.bestSol;
 
-    if (!best.isFeasible())  // avoids storing the possibly infeasible initial
-        return;              // (random) solution
+    if (!best.isFeasible())
+    {
+        // avoids storing the possibly infeasible initial (random) solution
+        currObjectives_.push_back(std::nan(""));
+    }
 
-    if (bestObjectives_.empty() || best.cost() < bestObjectives_.back().second)
-        bestObjectives_.emplace_back(clock::now(), best.cost());
+    else
+    {
+        currObjectives_.push_back(best.cost());
+
+        if (bestObjectives_.empty()
+            || best.cost() < bestObjectives_.back().second)
+            bestObjectives_.emplace_back(clock::now(), best.cost());
+    }
 }

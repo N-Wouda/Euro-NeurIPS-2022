@@ -20,6 +20,7 @@ class Statistics
     std::vector<size_t> numFeasible;
     std::vector<double> popDiversity_;
     std::vector<double> iterTimes;
+    std::vector<double> currObjectives_;
     timedDatapoints bestObjectives_;
 
 public:
@@ -74,6 +75,15 @@ public:
     [[nodiscard]] std::vector<double> const &popDiversity() const
     {
         return popDiversity_;
+    }
+
+    /**
+     * Return a vector of current best objective value, one element for each
+     * iteration.
+     */
+    [[nodiscard]] std::vector<double> const &currObjectives() const
+    {
+        return currObjectives_;
     }
 
     /**
