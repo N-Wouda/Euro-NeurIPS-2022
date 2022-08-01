@@ -14,7 +14,7 @@ using Routes = std::vector<Route>;
 
 struct InsertPos  // best insert position, used to plan unplanned clients
 {
-    int cost;
+    int deltaCost;
     Route *route;
     size_t offset;
 };
@@ -27,8 +27,8 @@ void addUnplannedToRoutes(ClientSet const &unplanned,
 {
     for (int client : unplanned)
     {
-        int twEarly = params.clients[client].twEarly;
-        int twLate = params.clients[client].twLate;
+        int clientEarly = params.clients[client].twEarly;
+        int clientLate = params.clients[client].twLate;
 
         InsertPos best = {INT_MAX, &routes.front(), 0};
 
@@ -39,56 +39,65 @@ void addUnplannedToRoutes(ClientSet const &unplanned,
 
             for (size_t idx = 0; idx <= route.size(); ++idx)
             {
+                int prev, next;
+
                 if (idx == 0)  // now depot -> [0]. Try depot -> client -> [0].
                 {
-                    int distFromInsert = params.dist(client, route[0]);
-                    int nextLate = params.clients[route[0]].twLate;
+                    prev = 0;
+                    next = route[0];
 
-                    if (twEarly + distFromInsert < nextLate)
+                    int distFromInsert = params.dist(client, next);
+                    int nextLate = params.clients[next].twLate;
+
+                    if (clientEarly + distFromInsert < nextLate)
                     {
-                        int deltaDist = params.dist(0, client) + distFromInsert
-                                        - params.dist(0, route[idx]);
+                        int deltaDist = params.dist(prev, client)
+                                        + distFromInsert
+                                        - params.dist(prev, next);
 
-                        if (deltaDist < best.cost)
+                        if (deltaDist < best.deltaCost)
                             best = {deltaDist, &route, idx};
                     }
-
-                    continue;
                 }
+                else if (idx == route.size())  // now [-1] -> depot. Try [-1] ->
+                {                              // client -> depot.
+                    prev = route.back();
+                    next = 0;
 
-                if (idx == route.size())  // now [-1] -> depot. Try [-1] ->
-                {                         // client -> depot.
-                    int distToInsert = params.dist(route.back(), client);
-                    int prevEarly = params.clients[route.back()].twEarly;
+                    int distToInsert = params.dist(prev, client);
+                    int prevEarly = params.clients[prev].twEarly;
 
-                    if (prevEarly + distToInsert < twLate)
+                    if (prevEarly + distToInsert < clientLate)
                     {
-                        int deltaDist = distToInsert + params.dist(client, 0)
-                                        - params.dist(route.back(), 0);
+                        int deltaDist = distToInsert + params.dist(client, next)
+                                        - params.dist(prev, next);
 
-                        if (deltaDist < best.cost)
-                            best = {deltaDist, &route, route.size()};
+                        if (deltaDist < best.deltaCost)
+                            best = {deltaDist, &route, idx};
                     }
-
-                    continue;
                 }
-
-                // Currently [idx - 1] -> [idx]. We try [idx - 1] -> client ->
-                // [idx].
-                int distFromInsert = params.dist(client, route[idx]);
-                int distToInsert = params.dist(route[idx], client);
-
-                int prevEarly = params.clients[idx].twEarly;
-                int nextLate = params.clients[route[idx]].twLate;
-
-                if (prevEarly + distToInsert < twLate
-                    && twEarly + distFromInsert < nextLate)
+                else
                 {
-                    int deltaDist = distToInsert + distFromInsert
-                                    - params.dist(route[idx - 1], route[idx]);
+                    prev = route[idx - 1];
+                    next = route[idx];
 
-                    if (deltaDist < best.cost)
-                        best = {deltaDist, &route, idx};
+                    // Currently [idx - 1] -> [idx]. We try [idx - 1] -> client
+                    // -> [idx].
+                    int distToInsert = params.dist(prev, client);
+                    int prevEarly = params.clients[prev].twEarly;
+
+                    int distFromInsert = params.dist(client, next);
+                    int nextLate = params.clients[next].twLate;
+
+                    if (prevEarly + distToInsert < clientLate
+                        && clientEarly + distFromInsert < nextLate)
+                    {
+                        int deltaDist = distToInsert + distFromInsert
+                                        - params.dist(prev, next);
+
+                        if (deltaDist < best.deltaCost)
+                            best = {deltaDist, &route, idx};
+                    }
                 }
             }
         }
