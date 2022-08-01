@@ -8,8 +8,9 @@
 
 namespace
 {
-using ClientSet = std::unordered_set<int>;
-using Route = std::vector<int>;
+using Client = int;
+using ClientSet = std::unordered_set<Client>;
+using Route = std::vector<Client>;
 using Routes = std::vector<Route>;
 
 struct InsertPos  // best insert position, used to plan unplanned clients
@@ -20,7 +21,7 @@ struct InsertPos  // best insert position, used to plan unplanned clients
 };
 
 // Evaluates the cost change of inserting client between prev and next.
-inline int deltaCost(int client, int prev, int next, Params const &params)
+int deltaCost(Client client, Client prev, Client next, Params const &params)
 {
     int clientLate = params.clients[client].twLate;
     int distToInsert = params.dist(prev, client);
@@ -45,7 +46,7 @@ void addUnplannedToRoutes(ClientSet const &unplanned,
                           Routes &routes,
                           Params const &params)
 {
-    for (int client : unplanned)
+    for (Client client : unplanned)
     {
         InsertPos best = {INT_MAX, &routes.front(), 0};
 
@@ -56,7 +57,7 @@ void addUnplannedToRoutes(ClientSet const &unplanned,
 
             for (size_t idx = 0; idx <= route.size(); ++idx)
             {
-                int prev, next;
+                Client prev, next;
 
                 if (idx == 0)  // Currently depot -> [0]. Try depot -> client
                 {              // -> [0].
@@ -91,70 +92,68 @@ Individual selectiveRouteExchange(
     Params const &params,
     XorShift128 &rng)
 {
-    // Get the number of routes of both parents
-    size_t nOfRoutesA = parents.first->numRoutes();
-    size_t nOfRoutesB = parents.second->numRoutes();
+    size_t nRoutesA = parents.first->numRoutes();
+    size_t nRoutesB = parents.second->numRoutes();
+
+    // Picking the start index of routes to replace of parent A. We like to
+    // replace routes with a large overlap of tasks, so we choose adjacent
+    // routes (they are sorted on polar angle by the local search/educate step).
+    size_t startA = rng.randint(nRoutesA);
+    size_t minRoutes = std::min(nRoutesA, nRoutesB);
+    size_t nMovedRoutes = rng.randint(minRoutes) + 1;  // at least one
+    size_t startB = startA < nRoutesB ? startA : 0;
 
     auto const &routesA = parents.first->getRoutes();
     auto const &routesB = parents.second->getRoutes();
 
-    // Picking the start index of routes to replace of parent A. We like to
-    // replace routes with a large overlap of tasks, so we choose adjacent
-    // routes (they are sorted on polar angle)
-    size_t startA = rng.randint(static_cast<int>(nOfRoutesA));
-    size_t nOfMovedRoutes
-        = std::min(nOfRoutesA, nOfRoutesB) == 1  // prevent moving no routes
-              ? 1
-              : rng() % (std::min(nOfRoutesA - 1, nOfRoutesB - 1)) + 1;
-    size_t startB = startA < nOfRoutesB ? startA : 0;
+    ClientSet selectedA;
+    ClientSet selectedB;
+    for (size_t r = 0; r < nMovedRoutes; r++)
+    {
+        selectedA.insert(routesA[(startA + r) % nRoutesA].begin(),
+                         routesA[(startA + r) % nRoutesA].end());
 
-    ClientSet clientsInSelectedA;
-    for (size_t r = 0; r < nOfMovedRoutes; r++)
-        clientsInSelectedA.insert(routesA[(startA + r) % nOfRoutesA].begin(),
-                                  routesA[(startA + r) % nOfRoutesA].end());
-
-    ClientSet clientsInSelectedB;
-    for (size_t r = 0; r < nOfMovedRoutes; r++)
-        clientsInSelectedB.insert(routesB[(startB + r) % nOfRoutesB].begin(),
-                                  routesB[(startB + r) % nOfRoutesB].end());
+        selectedB.insert(routesB[(startB + r) % nRoutesB].begin(),
+                         routesB[(startB + r) % nRoutesB].end());
+    }
 
     while (true)
     {
         // Difference for moving 'left' in parent A
         int differenceALeft = 0;
 
-        for (int c : routesA[(startA - 1 + nOfRoutesA) % nOfRoutesA])
-            differenceALeft += !clientsInSelectedB.contains(c);
+        for (Client c : routesA[(startA - 1 + nRoutesA) % nRoutesA])
+            differenceALeft += !selectedB.contains(c);
 
-        for (int c : routesA[(startA + nOfMovedRoutes - 1) % nOfRoutesA])
-            differenceALeft -= !clientsInSelectedB.contains(c);
+        for (Client c : routesA[(startA + nMovedRoutes - 1) % nRoutesA])
+            differenceALeft -= !selectedB.contains(c);
 
         // Difference for moving 'right' in parent A
         int differenceARight = 0;
 
-        for (int c : routesA[(startA + nOfMovedRoutes) % nOfRoutesA])
-            differenceARight += !clientsInSelectedB.contains(c);
+        for (Client c : routesA[(startA + nMovedRoutes) % nRoutesA])
+            differenceARight += !selectedB.contains(c);
 
-        for (int c : routesA[startA])
-            differenceARight -= !clientsInSelectedB.contains(c);
+        for (Client c : routesA[startA])
+            differenceARight -= !selectedB.contains(c);
 
         // Difference for moving 'left' in parent B
         int differenceBLeft = 0;
 
-        for (int c : routesB[(startB - 1 + nOfMovedRoutes) % nOfRoutesB])
-            differenceBLeft += clientsInSelectedA.contains(c);
+        for (Client c : routesB[(startB - 1 + nMovedRoutes) % nRoutesB])
+            differenceBLeft += selectedA.contains(c);
 
-        for (int c : routesB[(startB - 1 + nOfRoutesB) % nOfRoutesB])
-            differenceBLeft -= clientsInSelectedA.contains(c);
+        for (Client c : routesB[(startB - 1 + nRoutesB) % nRoutesB])
+            differenceBLeft -= selectedA.contains(c);
 
         // Difference for moving 'right' in parent B
         int differenceBRight = 0;
 
-        for (int c : routesB[startB])
-            differenceBRight += clientsInSelectedA.contains(c);
+        for (Client c : routesB[startB])
+            differenceBRight += selectedA.contains(c);
 
-        for (int c : routesB[(startB + nOfMovedRoutes) % nOfRoutesB])
-            differenceBRight -= clientsInSelectedA.contains(c);
+        for (Client c : routesB[(startB + nMovedRoutes) % nRoutesB])
+            differenceBRight -= selectedA.contains(c);
 
         int const bestDifference = std::min({differenceALeft,
                                              differenceARight,
@@ -166,61 +165,57 @@ Individual selectiveRouteExchange(
 
         if (bestDifference == differenceALeft)
         {
-            for (int c : routesA[(startA + nOfMovedRoutes - 1) % nOfRoutesA])
-                clientsInSelectedA.erase(clientsInSelectedA.find(c));
+            for (Client c : routesA[(startA + nMovedRoutes - 1) % nRoutesA])
+                selectedA.erase(c);
 
-            startA = (startA - 1 + nOfRoutesA) % nOfRoutesA;
-
-            for (int c : routesA[startA])
-                clientsInSelectedA.insert(c);
+            startA = (startA - 1 + nRoutesA) % nRoutesA;
+            selectedA.insert(routesA[startA].begin(), routesA[startA].end());
         }
         else if (bestDifference == differenceARight)
         {
-            for (int c : routesA[startA])
-                clientsInSelectedA.erase(clientsInSelectedA.find(c));
+            for (Client c : routesA[startA])
+                selectedA.erase(c);
 
-            startA = (startA + 1) % nOfRoutesA;
+            startA = (startA + 1) % nRoutesA;
 
-            for (int c : routesA[(startA + nOfMovedRoutes - 1) % nOfRoutesA])
-                clientsInSelectedA.insert(c);
+            for (Client c : routesA[(startA + nMovedRoutes - 1) % nRoutesA])
+                selectedA.insert(c);
         }
         else if (bestDifference == differenceBLeft)
         {
-            for (int c : routesB[(startB + nOfMovedRoutes - 1) % nOfRoutesB])
-                clientsInSelectedB.erase(clientsInSelectedB.find(c));
+            for (Client c : routesB[(startB + nMovedRoutes - 1) % nRoutesB])
+                selectedB.erase(c);
 
-            startB = (startB - 1 + nOfRoutesB) % nOfRoutesB;
-
-            for (int c : routesB[startB])
-                clientsInSelectedB.insert(c);
+            startB = (startB - 1 + nRoutesB) % nRoutesB;
+            selectedB.insert(routesB[startB].begin(), routesB[startB].end());
         }
         else if (bestDifference == differenceBRight)
         {
-            for (int c : routesB[startB])
-                clientsInSelectedB.erase(clientsInSelectedB.find(c));
+            for (Client c : routesB[startB])
+                selectedB.erase(c);
 
-            startB = (startB + 1) % nOfRoutesB;
-            for (int c : routesB[(startB + nOfMovedRoutes - 1) % nOfRoutesB])
-                clientsInSelectedB.insert(c);
+            startB = (startB + 1) % nRoutesB;
+            for (Client c : routesB[(startB + nMovedRoutes - 1) % nRoutesB])
+                selectedB.insert(c);
         }
     }
 
     // Identify differences between route sets
     ClientSet clientsInSelectedBNotA;
-    for (int c : clientsInSelectedB)
-        if (!clientsInSelectedA.contains(c))
+    for (Client c : selectedB)
+        if (!selectedA.contains(c))
             clientsInSelectedBNotA.insert(c);
 
     Routes routes1(params.nbVehicles);
     Routes routes2(params.nbVehicles);
 
     // Replace selected routes from parent A with routes from parent B
-    for (size_t r = 0; r < nOfMovedRoutes; r++)
+    for (size_t r = 0; r < nMovedRoutes; r++)
     {
-        size_t indexA = (startA + r) % nOfRoutesA;
-        size_t indexB = (startB + r) % nOfRoutesB;
+        size_t indexA = (startA + r) % nRoutesA;
+        size_t indexB = (startB + r) % nRoutesB;
 
-        for (int c : routesB[indexB])
+        for (Client c : routesB[indexB])
         {
             routes1[indexA].push_back(c);
 
@@ -230,11 +225,11 @@ Individual selectiveRouteExchange(
     }
 
     // Move routes from parent A that are kept
-    for (size_t r = nOfMovedRoutes; r < nOfRoutesA; r++)
+    for (size_t r = nMovedRoutes; r < nRoutesA; r++)
     {
-        size_t indexA = (startA + r) % nOfRoutesA;
+        size_t indexA = (startA + r) % nRoutesA;
 
-        for (int c : routesA[indexA])
+        for (Client c : routesA[indexA])
         {
             if (!clientsInSelectedBNotA.contains(c))
                 routes1[indexA].push_back(c);
@@ -246,8 +241,8 @@ Individual selectiveRouteExchange(
     // Insert unplanned clients (those that were in the removed routes of A, but
     // not the inserted routes of B).
     ClientSet unplanned;
-    for (int c : clientsInSelectedA)
-        if (!clientsInSelectedB.contains(c))
+    for (Client c : selectedA)
+        if (!selectedB.contains(c))
             unplanned.insert(c);
 
     addUnplannedToRoutes(unplanned, routes1, params);

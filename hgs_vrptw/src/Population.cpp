@@ -116,11 +116,11 @@ Individual const *Population::getBinaryTournament()
 {
     updateBiasedFitness();
 
-    auto const idx1 = rng.randint(static_cast<int>(population.size()));
+    auto const idx1 = rng.randint(population.size());
     auto const *individual1 = population[idx1];
     auto const fitness1 = fitness[idx1];
 
-    auto const idx2 = rng.randint(static_cast<int>(population.size()));
+    auto const idx2 = rng.randint(population.size());
     auto const *individual2 = population[idx2];
     auto const fitness2 = fitness[idx2];
 
