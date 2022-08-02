@@ -14,11 +14,10 @@ struct Config
     int timeLimit = INT_MAX;         // time limit in seconds
     bool collectStatistics = false;  // collect runtime statistics?
 
-    // This was the default until now, but with this value feasible
-    // individuals often become infeasible during the local search in
-    // educate. With initialTimeWarpPenalty = 10,
-    // this does not happen.
-    double initialTimeWarpPenalty = 1.0;
+    // This was the default until now, but with this value feasible individuals
+    // often become infeasible during the local search in educate. This does not
+    // happen with initialTimeWarpPenalty = 10.
+    size_t initialTimeWarpPenalty = 1;
 
     size_t nbPenaltyManagement = 100;  // manage penalties every # iterations
     double penaltyBooster = 2.0;       // special increase penalty if no feas
@@ -66,7 +65,7 @@ struct Config
                     size_t nbIter = 20'000,
                     int timeLimit = INT_MAX,
                     bool collectStatistics = false,
-                    double initialTimeWarpPenalty = 1.0,
+                    size_t initialTimeWarpPenalty = 1,
                     size_t nbPenaltyManagement = 100,
                     double penaltyBooster = 2.,
                     double penaltyIncrease = 1.2,

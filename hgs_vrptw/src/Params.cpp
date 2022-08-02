@@ -54,7 +54,7 @@ Params::Params(Config const &config, std::string const &instPath)
         getline(inputFile, content);
         getline(inputFile, content);
 
-        // Create a vector where all information on the Clients can be
+        // Create a vector where all information on the clients can be
         // stored and loop over all information in the file
         clients = std::vector<Client>(1001);
         nbClients = 0;
@@ -359,11 +359,10 @@ Params::Params(Config const &config, std::string const &instPath)
     }
 
     // A reasonable scale for the initial values of the penalties
-    penaltyCapacity = std::max(
-        0.1, std::min(1000., static_cast<double>(maxDist) / maxDemand));
+    penaltyCapacity = std::max(1, std::min(1000, maxDist / maxDemand));
 
     // Initial parameter values of this parameter is not argued
-    penaltyTimeWarp = config.initialTimeWarpPenalty;
+    penaltyTimeWarp = static_cast<int>(config.initialTimeWarpPenalty);
 }
 
 Params::Params(Config const &config,
@@ -374,13 +373,13 @@ Params::Params(Config const &config,
                std::vector<int> const &servDurs,
                std::vector<std::vector<int>> const &distMat,
                std::vector<int> const &releases)
-    : config(config), nbClients(coords.size() - 1), vehicleCapacity(vehicleCap)
+    : config(config),
+      nbClients(static_cast<int>(coords.size()) - 1),
+      vehicleCapacity(vehicleCap)
 {
-    int totalDemand = std::accumulate(demands.begin(), demands.end(), 0);
-    int maxDemand = *std::max_element(demands.begin(), demands.end());
-
     // Number of vehicles: 30% above LP bin packing heuristic, and three more
     // just in case.
+    int totalDemand = std::accumulate(demands.begin(), demands.end(), 0);
     auto const vehicleMargin = std::ceil(1.3 * totalDemand / vehicleCapacity);
     nbVehicles = static_cast<int>(vehicleMargin) + 3;
 
@@ -390,14 +389,12 @@ Params::Params(Config const &config,
         for (size_t j = 0; j != distMat[i].size(); ++j)
             dist(i, j) = distMat[i][j];
 
-    int maxDist = dist.max();
-
     // A reasonable scale for the initial values of the penalties
-    penaltyCapacity = std::max(
-        0.1, std::min(1000., static_cast<double>(maxDist) / maxDemand));
+    int maxDemand = *std::max_element(demands.begin(), demands.end());
+    penaltyCapacity = std::max(1, std::min(1000, dist.max() / maxDemand));
 
     // Initial parameter values of this parameter is not argued
-    penaltyTimeWarp = config.initialTimeWarpPenalty;
+    penaltyTimeWarp = static_cast<int>(config.initialTimeWarpPenalty);
 
     clients = std::vector<Client>(nbClients + 1);
 

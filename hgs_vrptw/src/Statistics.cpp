@@ -1,8 +1,6 @@
 #include "Statistics.h"
 #include "Population.h"
 
-#include <algorithm>
-#include <cmath>
 #include <numeric>
 
 void Statistics::collectFrom(Population const &population)
@@ -35,11 +33,8 @@ void Statistics::collectFrom(Population const &population)
 
     auto const &best = population.bestSol;
 
-    if (!best.isFeasible())
-    {
-        currObjectives_.push_back(NAN);
-        return;
-    }
+    if (!best.isFeasible())  // avoids storing the possibly infeasible initial
+        return;              // (random) solution
 
     currObjectives_.push_back(best.cost());
 
