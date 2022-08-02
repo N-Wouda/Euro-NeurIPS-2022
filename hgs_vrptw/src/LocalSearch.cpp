@@ -28,7 +28,9 @@ void LocalSearch::search()
     bool const shouldIntensify
         = rng.randint(100) < (unsigned)params.config.intensificationProbability;
 
-    searchCompleted = false;
+    bool searchCompleted = false;  // No further improving move?
+    int nbMoves = 0;               // Operator (RI and SWAP*) counter
+
     for (int step = 0; !searchCompleted; ++step)
     {
         if (step > 1)                // At least two loops as some moves with
@@ -62,21 +64,21 @@ void LocalSearch::search()
                                                // modified since last move
                                                // evaluations for nodeU
                 {
-                    if (MoveSingleClient())
+                    if (MoveSingleClient(nbMoves, searchCompleted))
                         continue;  // RELOCATE
-                    if (MoveTwoClients())
+                    if (MoveTwoClients(nbMoves, searchCompleted))
                         continue;  // RELOCATE
-                    if (MoveTwoClientsReversed())
+                    if (MoveTwoClientsReversed(nbMoves, searchCompleted))
                         continue;  // RELOCATE
-                    if (SwapTwoSingleClients())
+                    if (SwapTwoSingleClients(nbMoves, searchCompleted))
                         continue;  // SWAP
-                    if (SwapTwoClientsForOne())
+                    if (SwapTwoClientsForOne(nbMoves, searchCompleted))
                         continue;  // SWAP
-                    if (SwapTwoClientPairs())
+                    if (SwapTwoClientPairs(nbMoves, searchCompleted))
                         continue;  // SWAP
-                    if (TwoOptBetweenTrips())
+                    if (TwoOptBetweenTrips(nbMoves, searchCompleted))
                         continue;  // 2-OPT*
-                    if (TwoOptWithinTrip())
+                    if (TwoOptWithinTrip(nbMoves, searchCompleted))
                         continue;  // 2-OPT
 
                     // Trying moves that insert nodeU directly after the depot
@@ -86,13 +88,13 @@ void LocalSearch::search()
                         routeV = nodeV->route;
                         nodeY = nodeV->next;
 
-                        if (MoveSingleClient())
+                        if (MoveSingleClient(nbMoves, searchCompleted))
                             continue;  // RELOCATE
-                        if (MoveTwoClients())
+                        if (MoveTwoClients(nbMoves, searchCompleted))
                             continue;  // RELOCATE
-                        if (MoveTwoClientsReversed())
+                        if (MoveTwoClientsReversed(nbMoves, searchCompleted))
                             continue;  // RELOCATE
-                        if (TwoOptBetweenTrips())
+                        if (TwoOptBetweenTrips(nbMoves, searchCompleted))
                             continue;  // 2-OPT*
                     }
                 }
@@ -109,13 +111,13 @@ void LocalSearch::search()
                 routeV = nodeV->route;
                 nodeY = nodeV->next;
 
-                if (MoveSingleClient())
+                if (MoveSingleClient(nbMoves, searchCompleted))
                     continue;  // RELOCATE
-                if (MoveTwoClients())
+                if (MoveTwoClients(nbMoves, searchCompleted))
                     continue;  // RELOCATE
-                if (MoveTwoClientsReversed())
+                if (MoveTwoClientsReversed(nbMoves, searchCompleted))
                     continue;  // RELOCATE
-                if (TwoOptBetweenTrips())
+                if (TwoOptBetweenTrips(nbMoves, searchCompleted))
                     continue;  // 2-OPT*
             }
         }
@@ -150,17 +152,18 @@ void LocalSearch::search()
                             params.config.circleSectorOverlapTolerance))
                         continue;
 
-                    if (!RelocateStar())
-                        if (params.config.skipSwapStarDist || !swapStar(false))
-                            if (params.config.useSwapStarTW)
-                                swapStar(true);
+                    if (!RelocateStar(nbMoves, searchCompleted))
+                    {
+                        swapStar(false, nbMoves, searchCompleted);
+                        swapStar(true, nbMoves, searchCompleted);
+                    }
                 }
             }
         }
     }
 }
 
-bool LocalSearch::MoveSingleClient()
+bool LocalSearch::MoveSingleClient(int &nbMoves, bool &searchCompleted)
 {
     // If U already comes directly after V, this move has no effect
     if (nodeU->cour == nodeY->cour)
@@ -237,14 +240,14 @@ bool LocalSearch::MoveSingleClient()
     insertNode(nodeU, nodeV);
     nbMoves++;  // Increment move counter before updating route data
     searchCompleted = false;
-    updateRouteData(routeU);
+    updateRouteData(routeU, nbMoves);
     if (routeU != routeV)
-        updateRouteData(routeV);
+        updateRouteData(routeV, nbMoves);
 
     return true;
 }
 
-bool LocalSearch::MoveTwoClients()
+bool LocalSearch::MoveTwoClients(int &nbMoves, bool &searchCompleted)
 {
     if (nodeU == nodeY || nodeV == nodeX || nodeX->isDepot)
         return false;
@@ -326,14 +329,14 @@ bool LocalSearch::MoveTwoClients()
     insertNode(nodeX, nodeU);
     nbMoves++;  // Increment move counter before updating route data
     searchCompleted = false;
-    updateRouteData(routeU);
+    updateRouteData(routeU, nbMoves);
     if (routeU != routeV)
-        updateRouteData(routeV);
+        updateRouteData(routeV, nbMoves);
 
     return true;
 }
 
-bool LocalSearch::MoveTwoClientsReversed()
+bool LocalSearch::MoveTwoClientsReversed(int &nbMoves, bool &searchCompleted)
 {
     if (nodeU == nodeY || nodeX == nodeV || nodeX->isDepot)
         return false;
@@ -417,14 +420,14 @@ bool LocalSearch::MoveTwoClientsReversed()
     insertNode(nodeU, nodeX);
     nbMoves++;  // Increment move counter before updating route data
     searchCompleted = false;
-    updateRouteData(routeU);
+    updateRouteData(routeU, nbMoves);
     if (routeU != routeV)
-        updateRouteData(routeV);
+        updateRouteData(routeV, nbMoves);
 
     return true;
 }
 
-bool LocalSearch::SwapTwoSingleClients()
+bool LocalSearch::SwapTwoSingleClients(int &nbMoves, bool &searchCompleted)
 {
     if (nodeU->cour >= nodeV->cour)
         return false;
@@ -513,14 +516,14 @@ bool LocalSearch::SwapTwoSingleClients()
     swapNode(nodeU, nodeV);
     nbMoves++;  // Increment move counter before updating route data
     searchCompleted = false;
-    updateRouteData(routeU);
+    updateRouteData(routeU, nbMoves);
     if (routeU != routeV)
-        updateRouteData(routeV);
+        updateRouteData(routeV, nbMoves);
 
     return true;
 }
 
-bool LocalSearch::SwapTwoClientsForOne()
+bool LocalSearch::SwapTwoClientsForOne(int &nbMoves, bool &searchCompleted)
 {
     if (nodeU == nodeV->prev || nodeX == nodeV->prev || nodeU == nodeY
         || nodeX->isDepot)
@@ -613,14 +616,14 @@ bool LocalSearch::SwapTwoClientsForOne()
     insertNode(nodeX, nodeU);
     nbMoves++;  // Increment move counter before updating route data
     searchCompleted = false;
-    updateRouteData(routeU);
+    updateRouteData(routeU, nbMoves);
     if (routeU != routeV)
-        updateRouteData(routeV);
+        updateRouteData(routeV, nbMoves);
 
     return true;
 }
 
-bool LocalSearch::SwapTwoClientPairs()
+bool LocalSearch::SwapTwoClientPairs(int &nbMoves, bool &searchCompleted)
 {
     if (nodeU->cour >= nodeV->cour)
         return false;
@@ -715,14 +718,14 @@ bool LocalSearch::SwapTwoClientPairs()
     swapNode(nodeX, nodeY);
     nbMoves++;  // Increment move counter before updating route data
     searchCompleted = false;
-    updateRouteData(routeU);
+    updateRouteData(routeU, nbMoves);
     if (routeU != routeV)
-        updateRouteData(routeV);
+        updateRouteData(routeV, nbMoves);
 
     return true;
 }
 
-bool LocalSearch::TwoOptWithinTrip()
+bool LocalSearch::TwoOptWithinTrip(int &nbMoves, bool &searchCompleted)
 {
     if (routeU != routeV)
         return false;
@@ -772,12 +775,12 @@ bool LocalSearch::TwoOptWithinTrip()
 
     nbMoves++;  // Increment move counter before updating route data
     searchCompleted = false;
-    updateRouteData(routeU);
+    updateRouteData(routeU, nbMoves);
 
     return true;
 }
 
-bool LocalSearch::TwoOptBetweenTrips()
+bool LocalSearch::TwoOptBetweenTrips(int &nbMoves, bool &searchCompleted)
 {
     if (routeU->cour >= routeV->cour)
         return false;
@@ -832,13 +835,15 @@ bool LocalSearch::TwoOptBetweenTrips()
 
     nbMoves++;  // Increment move counter before updating route data
     searchCompleted = false;
-    updateRouteData(routeU);
-    updateRouteData(routeV);
+    updateRouteData(routeU, nbMoves);
+    updateRouteData(routeV, nbMoves);
 
     return true;
 }
 
-bool LocalSearch::swapStar(const bool withTW)
+bool LocalSearch::swapStar(bool const withTW,
+                           int &nbMoves,
+                           bool &searchCompleted)
 {
     SwapStarElement myBestSwapStar;
 
@@ -864,13 +869,13 @@ bool LocalSearch::swapStar(const bool withTW)
     // Preprocessing insertion costs
     if (withTW)
     {
-        preprocessInsertionsWithTW(routeU, routeV);
-        preprocessInsertionsWithTW(routeV, routeU);
+        preprocessInsertionsWithTW(routeU, routeV, nbMoves);
+        preprocessInsertionsWithTW(routeV, routeU, nbMoves);
     }
     else
     {
-        preprocessInsertions(routeU, routeV);
-        preprocessInsertions(routeV, routeU);
+        preprocessInsertions(routeU, routeV, nbMoves);
+        preprocessInsertions(routeV, routeU, nbMoves);
     }
 
     // Evaluating the moves
@@ -1075,13 +1080,13 @@ bool LocalSearch::swapStar(const bool withTW)
     insertNode(myBestSwapStar.V, myBestSwapStar.bestPositionV);
     nbMoves++;  // Increment move counter before updating route data
     searchCompleted = false;
-    updateRouteData(routeU);
-    updateRouteData(routeV);
+    updateRouteData(routeU, nbMoves);
+    updateRouteData(routeV, nbMoves);
 
     return true;
 }
 
-bool LocalSearch::RelocateStar()
+bool LocalSearch::RelocateStar(int &nbMoves, bool &searchCompleted)
 {
     int bestCost = 0;
     Node *insertionPoint = nullptr;
@@ -1130,8 +1135,8 @@ bool LocalSearch::RelocateStar()
     insertNode(nodeToInsert, insertionPoint);
     nbMoves++;  // Increment move counter before updating route data
     searchCompleted = false;
-    updateRouteData(routeU);
-    updateRouteData(insertionPoint->route);
+    updateRouteData(routeU, nbMoves);
+    updateRouteData(insertionPoint->route, nbMoves);
 
     return true;
 }
@@ -1218,7 +1223,7 @@ int LocalSearch::getCheapestInsertSimultRemovalWithTW(Node *U,
     return bestCost;
 }
 
-void LocalSearch::preprocessInsertions(Route *R1, Route *R2)
+void LocalSearch::preprocessInsertions(Route *R1, Route *R2, int nbMoves)
 {
     for (Node *U = R1->depot->next; !U->isDepot; U = U->next)
     {
@@ -1247,7 +1252,7 @@ void LocalSearch::preprocessInsertions(Route *R1, Route *R2)
     }
 }
 
-void LocalSearch::preprocessInsertionsWithTW(Route *R1, Route *R2)
+void LocalSearch::preprocessInsertionsWithTW(Route *R1, Route *R2, int nbMoves)
 {
     for (Node *U = R1->depot->next; !U->isDepot; U = U->next)
     {
@@ -1394,7 +1399,7 @@ void LocalSearch::swapNode(Node *U, Node *V)
     V->route = myRouteU;
 }
 
-void LocalSearch::updateRouteData(Route *myRoute)
+void LocalSearch::updateRouteData(Route *myRoute, int nbMoves)
 {
     int myplace = 0;
     int myload = 0;
@@ -1504,7 +1509,7 @@ void LocalSearch::updateRouteData(Route *myRoute)
 void LocalSearch::loadIndividual(Individual const &indiv)
 {
     emptyRoutes.clear();
-    nbMoves = 0;
+
     TimeWindowData depotTwData = {0,
                                   0,
                                   0,
@@ -1568,13 +1573,12 @@ void LocalSearch::loadIndividual(Individual const &indiv)
         myDepotFin->postfixTwData = depotTwData;
         myDepotFin->isSeed = false;
 
-        updateRouteData(&routes[r]);
+        updateRouteData(&routes[r], 0);
         routes[r].whenLastTestedLargeNb = -1;
         bestInsertInitializedForRoute[r] = false;
     }
 
-    for (int i = 1; i <= params.nbClients;
-         i++)  // Initializing memory structures
+    for (int i = 1; i <= params.nbClients; i++)
         clients[i].whenLastTestedRI = -1;
 }
 

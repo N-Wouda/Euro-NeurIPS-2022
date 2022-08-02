@@ -157,14 +157,8 @@ class LocalSearch
     };
 
     Penalties penalties;
-    Params &params;        // Problem parameters
-    XorShift128 &rng;      // Random number generator
-    bool searchCompleted;  // Tells whether all moves have been evaluated
-                           // without success
-
-    int nbMoves;  // Total number of moves (RI and SWAP*) applied during the
-                  // local search. Attention: this is not only a simple counter,
-                  // it is also used to avoid repeating move evaluations
+    Params &params;    // Problem parameters
+    XorShift128 &rng;  // Random number generator
 
     std::vector<int> orderNodes;   // random node order used in RI operators
     std::vector<int> orderRoutes;  // random route order used in SWAP* operators
@@ -194,38 +188,38 @@ class LocalSearch
     /* RELOCATE MOVES */
 
     // If U is a client node, remove U and insert it after V
-    bool MoveSingleClient();
+    bool MoveSingleClient(int &nbMoves, bool &searchCompleted);
 
     // If U and X are client nodes, remove them and insert (U,X) after V
-    bool MoveTwoClients();
+    bool MoveTwoClients(int &nbMoves, bool &searchCompleted);
 
     // If U and X are client nodes, remove them and insert (X,U) after V
-    bool MoveTwoClientsReversed();
+    bool MoveTwoClientsReversed(int &nbMoves, bool &searchCompleted);
 
     /* SWAP MOVES */
 
     // If U and V are client nodes, swap U and V
-    bool SwapTwoSingleClients();
+    bool SwapTwoSingleClients(int &nbMoves, bool &searchCompleted);
 
     // If U, X and V are client nodes, swap (U,X) and V
-    bool SwapTwoClientsForOne();
+    bool SwapTwoClientsForOne(int &nbMoves, bool &searchCompleted);
 
     // If (U,X) and (V,Y) are client nodes, swap  (U,X) and (V,Y)
-    bool SwapTwoClientPairs();
+    bool SwapTwoClientPairs(int &nbMoves, bool &searchCompleted);
 
     /* 2-OPT and 2-OPT* MOVES */
 
     // If route(U) == route(V), replace (U,X) and (V,Y) by (U,V) and (X,Y)
-    bool TwoOptWithinTrip();
+    bool TwoOptWithinTrip(int &nbMoves, bool &searchCompleted);
 
     // If route(U) != route(V), replace (U,X) and  (V,Y) by (U,Y) and (V,X)
-    bool TwoOptBetweenTrips();
+    bool TwoOptBetweenTrips(int &nbMoves, bool &searchCompleted);
 
     /* SUB-ROUTINES FOR EFFICIENT SWAP* EVALUATIONS */
 
     // Calculates all SWAP* between routeU and routeV and apply the best
     // improving move
-    bool swapStar(bool withTW);
+    bool swapStar(bool withTW, int &nbMoves, bool &searchCompleted);
 
     // Calculates the insertion cost and position in the route of V, where V is
     // omitted
@@ -237,15 +231,15 @@ class LocalSearch
     getCheapestInsertSimultRemovalWithTW(Node *U, Node *V, Node *&bestPosition);
 
     // Preprocess all insertion costs of nodes of route R1 in route R2
-    void preprocessInsertions(Route *R1, Route *R2);
+    void preprocessInsertions(Route *R1, Route *R2, int nbMoves);
 
     // Preprocess all insertion costs of nodes of route R1 in route R2
-    void preprocessInsertionsWithTW(Route *R1, Route *R2);
+    void preprocessInsertionsWithTW(Route *R1, Route *R2, int nbMoves);
 
     /* RELOCATE MOVES BETWEEN TRIPS*/
 
     // Calculates all SWAP* between nodeU and all routes recently changed
-    bool RelocateStar();
+    bool RelocateStar(int &nbMoves, bool &searchCompleted);
 
     /* SUB-ROUTINES FOR TIME WINDOWS */
 
@@ -279,7 +273,7 @@ class LocalSearch
     static void swapNode(Node *U, Node *V);
 
     // Updates the preprocessed data of a route
-    void updateRouteData(Route *myRoute);
+    void updateRouteData(Route *myRoute, int nbMoves);
 
     // Load an initial solution that we will attempt to improve
     void loadIndividual(Individual const &indiv);
