@@ -21,9 +21,18 @@ tqdm = "^4.64.0"
 
 
 [tool.poetry.dev-dependencies]
-
+black = "^22.6.0"
 
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 79
+exclude = '''
+hgs_vrptw
+| controller\.py
+| environment\.py
+| tools\.py
+'''

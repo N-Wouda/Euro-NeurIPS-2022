@@ -13,11 +13,11 @@ from environment import ControllerEnvironment, VRPEnvironment
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--strategy", type=str, default='greedy')
+    parser.add_argument("--strategy", type=str, default="greedy")
     parser.add_argument("--instance")
     parser.add_argument("--instance_seed", type=int, default=1)
     parser.add_argument("--solver_seed", type=int, default=1)
-    parser.add_argument("--static", action='store_true')
+    parser.add_argument("--static", action="store_true")
     parser.add_argument("--epoch_tlim", type=int, default=120)
     parser.add_argument("--plot_statistics", action="store_true")
 
@@ -68,11 +68,11 @@ def solve_static_vrptw(instance, time_limit=3600, seed=1, plot=False):
 
     # Prevent passing empty instances to the static solver, e.g. when
     # strategy decides to not dispatch any requests for the current epoch
-    if instance['coords'].shape[0] <= 1:
+    if instance["coords"].shape[0] <= 1:
         yield [], 0
         return
 
-    if instance['coords'].shape[0] <= 2:
+    if instance["coords"].shape[0] <= 2:
         solution = [[1]]
         cost = tools.validate_static_solution(instance, solution)
         yield solution, cost
@@ -114,22 +114,28 @@ def run_oracle(args, env):
     # First get hindsight problem (each request will have a release time)
     done = False
     observation, info = env.reset()
-    epoch_tlim = info['epoch_tlim']
+    epoch_tlim = info["epoch_tlim"]
     while not done:
         # Dummy solution: 1 route per request
-        epoch_solution = [[request_idx] for request_idx in
-                          observation['epoch_instance']['request_idx'][1:]]
+        epoch_solution = [
+            [request_idx]
+            for request_idx in observation["epoch_instance"]["request_idx"][1:]
+        ]
         observation, reward, done, info = env.step(epoch_solution)
     hindsight_problem = env.get_hindsight_problem()
 
-    oracle_solution = \
-        min(solve_static_vrptw(hindsight_problem, time_limit=epoch_tlim),
-            key=lambda x: x[1])[0]
-    oracle_cost = tools.validate_static_solution(hindsight_problem,
-                                                 oracle_solution)
+    oracle_solution = min(
+        solve_static_vrptw(hindsight_problem, time_limit=epoch_tlim),
+        key=lambda x: x[1],
+    )[0]
+    oracle_cost = tools.validate_static_solution(
+        hindsight_problem, oracle_solution
+    )
 
     total_reward = run_baseline(args, env, oracle_solution=oracle_solution)
-    assert -total_reward == oracle_cost, "Oracle solution does not match cost according to environment"
+    assert (
+        -total_reward == oracle_cost
+    ), "Oracle solution does not match cost according to environment"
     return total_reward
 
 
@@ -140,43 +146,56 @@ def run_baseline(args, env, oracle_solution=None):
     done = False
     # Note: info contains additional info that can be used by your solver
     observation, static_info = env.reset()
-    epoch_tlim = static_info['epoch_tlim']
+    epoch_tlim = static_info["epoch_tlim"]
 
     while not done:
-        epoch_instance = observation['epoch_instance']
+        epoch_instance = observation["epoch_instance"]
 
         if oracle_solution is not None:
-            request_idx = set(epoch_instance['request_idx'])
-            epoch_solution = [route for route in oracle_solution if
-                              len(request_idx.intersection(route)) == len(
-                                  route)]
-            cost = tools.validate_dynamic_epoch_solution(epoch_instance,
-                                                         epoch_solution)
+            request_idx = set(epoch_instance["request_idx"])
+            epoch_solution = [
+                route
+                for route in oracle_solution
+                if len(request_idx.intersection(route)) == len(route)
+            ]
+            cost = tools.validate_dynamic_epoch_solution(
+                epoch_instance, epoch_solution
+            )
         else:
             # Select the requests to dispatch using the strategy
             # TODO improved better strategy (machine learning model?) to decide which non-must requests to dispatch
-            epoch_instance_dispatch = STRATEGIES[args.strategy](epoch_instance,
-                                                                rng)
+            epoch_instance_dispatch = STRATEGIES[args.strategy](
+                epoch_instance, rng
+            )
 
             # Run HGS with time limit and get last solution (= best solution found)
             # Note we use the same solver_seed in each epoch: this is sufficient as for the static problem
             # we will exactly use the solver_seed whereas in the dynamic problem randomness is in the instance
-            solutions = list(solve_static_vrptw(epoch_instance_dispatch,
-                                                time_limit=epoch_tlim,
-                                                seed=args.solver_seed,
-                                                plot=args.plot_statistics))
-            assert len(
-                solutions) > 0, f"No solution found during epoch {observation['current_epoch']}"
+            solutions = list(
+                solve_static_vrptw(
+                    epoch_instance_dispatch,
+                    time_limit=epoch_tlim,
+                    seed=args.solver_seed,
+                    plot=args.plot_statistics,
+                )
+            )
+            assert (
+                len(solutions) > 0
+            ), f"No solution found during epoch {observation['current_epoch']}"
             epoch_solution, cost = solutions[-1]
 
             # Map HGS solution to indices of corresponding requests
-            epoch_solution = [epoch_instance_dispatch['request_idx'][route] for
-                              route in epoch_solution]
+            epoch_solution = [
+                epoch_instance_dispatch["request_idx"][route]
+                for route in epoch_solution
+            ]
 
         # Submit solution to environment
         observation, reward, done, info = env.step(epoch_solution)
-        assert cost is None or reward == -cost, "Reward should be negative cost of solution"
-        assert not info['error'], f"Environment error: {info['error']}"
+        assert (
+            cost is None or reward == -cost
+        ), "Reward should be negative cost of solution"
+        assert not info["error"], f"Environment error: {info['error']}"
 
         total_reward += reward
 
@@ -187,11 +206,16 @@ def main():
     args = parse_args()
 
     if args.instance is not None:
-        env = VRPEnvironment(seed=args.instance_seed,
-                             instance=tools.read_vrplib(args.instance),
-                             epoch_tlim=args.epoch_tlim, is_static=args.static)
+        env = VRPEnvironment(
+            seed=args.instance_seed,
+            instance=tools.read_vrplib(args.instance),
+            epoch_tlim=args.epoch_tlim,
+            is_static=args.static,
+        )
     else:
-        assert args.strategy != "oracle", "Oracle can not run with external controller"
+        assert (
+            args.strategy != "oracle"
+        ), "Oracle can not run with external controller"
         # Run within external controller
         env = ControllerEnvironment(sys.stdin, sys.stdout)
 
@@ -201,7 +225,7 @@ def main():
     args.static = None
     args.epoch_tlim = None
 
-    if args.strategy == 'oracle':
+    if args.strategy == "oracle":
         run_oracle(args, env)
     else:
         run_baseline(args, env)
