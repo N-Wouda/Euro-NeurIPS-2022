@@ -30,3 +30,9 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 79
+exclude = '''
+hgs_vrptw
+| controller\.py
+| environment\.py
+| tools\.py
+'''
