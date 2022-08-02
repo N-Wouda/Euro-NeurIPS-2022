@@ -248,8 +248,8 @@ Individual selectiveRouteExchange(
     addUnplannedToRoutes(unplanned, routes1, params);
     addUnplannedToRoutes(unplanned, routes2, params);
 
-    Individual indiv1{&params, parents.first->getTour(), routes1};
-    Individual indiv2{&params, parents.second->getTour(), routes2};
+    Individual indiv1{&params, routes1};
+    Individual indiv2{&params, routes2};
 
     return std::min(indiv1, indiv2);
 }

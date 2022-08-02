@@ -11,7 +11,7 @@ class Population;  // forward declaration
 class Statistics
 {
     using clock = std::chrono::system_clock;
-    using timedDatapoints = std::vector<std::pair<clock::time_point, double>>;
+    using timedDatapoints = std::vector<std::pair<clock::time_point, size_t>>;
 
     clock::time_point lastIter = clock::now();
     size_t numIters_ = 0;
@@ -20,7 +20,7 @@ class Statistics
     std::vector<size_t> numFeasible;
     std::vector<double> popDiversity_;
     std::vector<double> iterTimes;
-    std::vector<double> currObjectives_;
+    std::vector<size_t> currObjectives_;
     timedDatapoints bestObjectives_;
 
 public:
@@ -79,9 +79,12 @@ public:
 
     /**
      * Returns a vector of the best objective value at the current iteration,
-     * one element for each iteration.
+     * one element for each iteration where a feasible best solution exists.
+     * Early iterations where that might not be the case are missing from
+     * this vector: use ``numIters() - currObjectives().size()`` to determine
+     * the iteration from where on this information is available.
      */
-    [[nodiscard]] std::vector<double> const &currObjectives() const
+    [[nodiscard]] std::vector<size_t> const &currObjectives() const
     {
         return currObjectives_;
     }

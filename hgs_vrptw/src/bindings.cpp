@@ -27,15 +27,15 @@ PYBIND11_MODULE(hgspy, m)
         .def(py::init<Params *, std::vector<int>>(),
              py::arg("params"),
              py::arg("tour"))
-        .def(py::init<Params *,
-                      std::vector<int>,
-                      std::vector<std::vector<int>>>(),
+        .def(py::init<Params *, std::vector<std::vector<int>>>(),
              py::arg("params"),
-             py::arg("tour"),
              py::arg("routes"))
+        .def("cost", &Individual::cost)
         .def("get_routes", &Individual::getRoutes)
         .def("get_tour", &Individual::getTour)
-        .def("cost", &Individual::cost);
+        .def("is_feasible", &Individual::isFeasible)
+        .def("has_excess_capacity", &Individual::hasExcessCapacity)
+        .def("has_time_warp", &Individual::hasTimeWarp);
 
     py::class_<LocalSearch>(m, "LocalSearch")
         .def(py::init<Params &, XorShift128 &>(),
@@ -52,7 +52,7 @@ PYBIND11_MODULE(hgspy, m)
                       size_t,
                       int,
                       bool,
-                      double,
+                      size_t,
                       size_t,
                       double,
                       double,
@@ -77,7 +77,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("nbIter") = 20'000,
              py::arg("timeLimit") = INT_MAX,
              py::arg("collectStatistics") = false,
-             py::arg("initialTimeWarpPenalty") = 1.,
+             py::arg("initialTimeWarpPenalty") = 1,
              py::arg("nbPenaltyManagement") = 100,
              py::arg("penaltyBooster") = 2.,
              py::arg("penaltyIncrease") = 1.2,

@@ -97,15 +97,16 @@ void GeneticAlgorithm::educate(Individual &indiv)
 void GeneticAlgorithm::updatePenalties()
 {
     auto compute = [&](double currFeas, double currPenalty) {
+        // +- 1 to ensure we do not get stuck at the same integer values.
         if (currFeas < 0.01 && params.config.penaltyBooster > 0)
-            currPenalty *= params.config.penaltyBooster;
+            currPenalty = params.config.penaltyBooster * currPenalty + 1;
         else if (currFeas < params.config.targetFeasible - 0.05)
-            currPenalty *= params.config.penaltyIncrease;
+            currPenalty = params.config.penaltyIncrease * currPenalty + 1;
         else if (currFeas > params.config.targetFeasible + 0.05)
-            currPenalty *= params.config.penaltyDecrease;
+            currPenalty = params.config.penaltyDecrease * currPenalty - 1;
 
-        // Setting some bounds [0.1, 100000] to the penalty values for safety
-        return std::max(std::min(currPenalty, 100000.), 0.1);
+        // Setting some bounds [1, 100000] to the penalty values for safety
+        return static_cast<int>(std::max(std::min(currPenalty, 100000.), 1.));
     };
 
     double fracFeasLoad = std::accumulate(loadFeas.begin(), loadFeas.end(), 0.);
