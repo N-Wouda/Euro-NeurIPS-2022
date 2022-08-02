@@ -41,9 +41,19 @@ void LocalSearch::search()
             int lastTestRINodeU = nodeU->whenLastTestedRI;
             nodeU->whenLastTestedRI = nbMoves;
 
+            // Randomizing the order of the neighborhoods within this loop does
+            // not matter much as we are already randomizing the order of the
+            // node pairs (and it's not very common to find improving moves of
+            // different types for the same node pair)
             for (auto const &v : params.getNeighboursOf(nodeU->cour))
             {
+                routeU = nodeU->route;
+                nodeX = nodeU->next;
+
                 nodeV = &clients[v];
+                routeV = nodeV->route;
+                nodeY = nodeV->next;
+
                 if (step == 0
                     || std::max(nodeU->route->whenLastModified,
                                 nodeV->route->whenLastModified)
@@ -52,14 +62,6 @@ void LocalSearch::search()
                                                // modified since last move
                                                // evaluations for nodeU
                 {
-                    // Randomizing the order of the neighborhoods within this
-                    // loop does not matter much as we are already randomizing
-                    // the order of the node pairs (and it's not very common to
-                    // find improving moves of different types for the same node
-                    // pair)
-                    setLocalVariablesRouteU();
-                    setLocalVariablesRouteV();
-
                     if (MoveSingleClient())
                         continue;  // RELOCATE
                     if (MoveTwoClients())
@@ -81,7 +83,8 @@ void LocalSearch::search()
                     if (nodeV->prev->isDepot)
                     {
                         nodeV = nodeV->prev;
-                        setLocalVariablesRouteV();
+                        routeV = nodeV->route;
+                        nodeY = nodeV->next;
 
                         if (MoveSingleClient())
                             continue;  // RELOCATE
@@ -99,9 +102,12 @@ void LocalSearch::search()
              * AVOID INCREASING TOO MUCH THE FLEET SIZE */
             if (step > 0 && !emptyRoutes.empty())
             {
+                routeU = nodeU->route;
+                nodeX = nodeU->next;
+
                 nodeV = routes[*emptyRoutes.begin()].depot;
-                setLocalVariablesRouteU();
-                setLocalVariablesRouteV();
+                routeV = nodeV->route;
+                nodeY = nodeV->next;
 
                 if (MoveSingleClient())
                     continue;  // RELOCATE
@@ -152,18 +158,6 @@ void LocalSearch::search()
             }
         }
     }
-}
-
-void LocalSearch::setLocalVariablesRouteU()
-{
-    routeU = nodeU->route;
-    nodeX = nodeU->next;
-}
-
-void LocalSearch::setLocalVariablesRouteV()
-{
-    routeV = nodeV->route;
-    nodeY = nodeV->next;
 }
 
 bool LocalSearch::MoveSingleClient()
@@ -1094,7 +1088,8 @@ bool LocalSearch::RelocateStar()
     Node *nodeToInsert = nullptr;
     for (nodeU = routeU->depot->next; !nodeU->isDepot; nodeU = nodeU->next)
     {
-        setLocalVariablesRouteU();
+        routeU = nodeU->route;
+        nodeX = nodeU->next;
 
         TimeWindowData const routeUTwData = mergeTwDataRecursive(
             nodeU->prev->prefixTwData, nodeX->postfixTwData);

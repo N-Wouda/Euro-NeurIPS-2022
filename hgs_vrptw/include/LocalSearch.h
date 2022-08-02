@@ -191,15 +191,6 @@ class LocalSearch
     Route *routeU;
     Route *routeV;
 
-    void setLocalVariablesRouteU();  // Initializes some local variables and
-                                     // distances associated to routeU to avoid
-                                     // always querying the same values in the
-                                     // distance matrix
-    void setLocalVariablesRouteV();  // Initializes some local variables and
-                                     // distances associated to routeV to avoid
-                                     // always querying the same values in the
-                                     // distance matrix
-
     /* RELOCATE MOVES */
 
     // If U is a client node, remove U and insert it after V
