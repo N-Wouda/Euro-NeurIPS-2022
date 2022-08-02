@@ -59,6 +59,8 @@ public:
 
     /**
      * Returns the number of non-empty routes in this individual's solution.
+     * Such non-empty routes are all in the lower indices (guarantee) of the
+     * routes returned by ``getRoutes``.
      */
     [[nodiscard]] inline size_t numRoutes() const { return nbRoutes; }
 
