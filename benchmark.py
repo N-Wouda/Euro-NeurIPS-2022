@@ -8,6 +8,7 @@ import numpy as np
 from tqdm.contrib.concurrent import process_map
 
 import tools
+import sisr
 
 
 def parse_args():
@@ -36,10 +37,16 @@ def solve(loc: str, seed: int, time_limit: int):
     rng = hgspy.XorShift128(seed=seed)
     pop = hgspy.Population(params, rng)
     ls = hgspy.LocalSearch(params, rng)
+    rnd_state = np.random.default_rng(seed)
 
     algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
     algo.add_crossover_operator(hgspy.crossover.ordered_exchange)
-    algo.add_crossover_operator(hgspy.crossover.selective_route_exchange)
+    # algo.add_crossover_operator(hgspy.crossover.selective_route_exchange)
+    algo.add_crossover_operator(
+        lambda arg1, arg2, arg3: sisr.sisr_exchange(
+            arg1, arg2, arg3, instance, rnd_state
+        )
+    )
 
     res = algo.run_until(start + timedelta(seconds=time_limit))
 
@@ -88,6 +95,7 @@ def main():
     kwargs = dict(seed=args.seed, time_limit=args.time_limit)
     func = partial(solve, **kwargs)
     func_args = sorted(glob(args.instance_pattern))
+    # data = func(func_args[0])
 
     tqdm_kwargs = dict(max_workers=args.num_procs, unit="instance")
     data = process_map(func, func_args, **tqdm_kwargs)
