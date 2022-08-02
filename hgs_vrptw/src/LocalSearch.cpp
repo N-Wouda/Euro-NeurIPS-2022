@@ -12,8 +12,7 @@ void LocalSearch::operator()(Individual &indiv,
                              int excessCapacityPenalty,
                              int timeWarpPenalty)
 {
-    penaltyCapacityLS = excessCapacityPenalty;
-    penaltyTimeWarpLS = timeWarpPenalty;
+    penalties = {&params, excessCapacityPenalty, timeWarpPenalty};
 
     // Shuffling the node order beforehand adds diversity to the search
     std::shuffle(orderNodes.begin(), orderNodes.end(), rng);
@@ -208,11 +207,11 @@ bool LocalSearch::MoveSingleClient()
         auto routeVTwData = mergeTwDataRecursive(
             nodeV->prefixTwData, nodeU->twData, nodeY->postfixTwData);
 
-        costSuppU += penaltyExcessLoad(routeU->load - loadU)
-                     + penaltyTimeWindows(routeUTwData) - routeU->penalty;
+        costSuppU += penalties.load(routeU->load - loadU)
+                     + penalties.timeWarp(routeUTwData) - routeU->penalty;
 
-        costSuppV += penaltyExcessLoad(routeV->load + loadU)
-                     + penaltyTimeWindows(routeVTwData) - routeV->penalty;
+        costSuppV += penalties.load(routeV->load + loadU)
+                     + penalties.timeWarp(routeVTwData) - routeV->penalty;
     }
     else
     {
@@ -232,7 +231,7 @@ bool LocalSearch::MoveSingleClient()
                                        nodeU->twData,
                                        nodeY->postfixTwData);
 
-            costSuppU += penaltyTimeWindows(routeUTwData);
+            costSuppU += penalties.timeWarp(routeUTwData);
         }
         else
         {
@@ -244,11 +243,11 @@ bool LocalSearch::MoveSingleClient()
                 getRouteSegmentTwData(nodeY, nodeU->prev),
                 nodeX->postfixTwData);
 
-            costSuppU += penaltyTimeWindows(routeUTwData);
+            costSuppU += penalties.timeWarp(routeUTwData);
         }
 
         // Compute new total penalty
-        costSuppU += penaltyExcessLoad(routeU->load) - routeU->penalty;
+        costSuppU += penalties.load(routeU->load) - routeU->penalty;
     }
 
     if (costSuppU + costSuppV >= 0)
@@ -289,11 +288,11 @@ bool LocalSearch::MoveTwoClients()
                                                  getEdgeTwData(nodeU, nodeX),
                                                  nodeY->postfixTwData);
 
-        costSuppU += penaltyExcessLoad(routeU->load - loadU - loadX)
-                     + penaltyTimeWindows(routeUTwData) - routeU->penalty;
+        costSuppU += penalties.load(routeU->load - loadU - loadX)
+                     + penalties.timeWarp(routeUTwData) - routeU->penalty;
 
-        costSuppV += penaltyExcessLoad(routeV->load + loadU + loadX)
-                     + penaltyTimeWindows(routeVTwData) - routeV->penalty;
+        costSuppV += penalties.load(routeV->load + loadU + loadX)
+                     + penalties.timeWarp(routeVTwData) - routeV->penalty;
     }
     else
     {
@@ -314,7 +313,7 @@ bool LocalSearch::MoveTwoClients()
                 getEdgeTwData(nodeU, nodeX),
                 nodeY->postfixTwData);
 
-            costSuppU += penaltyTimeWindows(routeUTwData);
+            costSuppU += penalties.timeWarp(routeUTwData);
         }
         else
         {
@@ -327,11 +326,11 @@ bool LocalSearch::MoveTwoClients()
                 getRouteSegmentTwData(nodeY, nodeU->prev),
                 nodeX->next->postfixTwData);
 
-            costSuppU += penaltyTimeWindows(routeUTwData);
+            costSuppU += penalties.timeWarp(routeUTwData);
         }
 
         // Compute new total penalty
-        costSuppU += penaltyExcessLoad(routeU->load) - routeU->penalty;
+        costSuppU += penalties.load(routeU->load) - routeU->penalty;
     }
 
     if (costSuppU + costSuppV >= 0)
@@ -375,11 +374,11 @@ bool LocalSearch::MoveTwoClientsReversed()
                                                  getEdgeTwData(nodeX, nodeU),
                                                  nodeY->postfixTwData);
 
-        costSuppU += penaltyExcessLoad(routeU->load - loadU - loadX)
-                     + penaltyTimeWindows(routeUTwData) - routeU->penalty;
+        costSuppU += penalties.load(routeU->load - loadU - loadX)
+                     + penalties.timeWarp(routeUTwData) - routeU->penalty;
 
-        costSuppV += penaltyExcessLoad(routeV->load + loadU + loadX)
-                     + penaltyTimeWindows(routeVTwData) - routeV->penalty;
+        costSuppV += penalties.load(routeV->load + loadU + loadX)
+                     + penalties.timeWarp(routeVTwData) - routeV->penalty;
     }
     else
     {
@@ -400,7 +399,7 @@ bool LocalSearch::MoveTwoClientsReversed()
                 getEdgeTwData(nodeX, nodeU),
                 nodeY->postfixTwData);
 
-            costSuppU += penaltyTimeWindows(routeUTwData);
+            costSuppU += penalties.timeWarp(routeUTwData);
         }
         else
         {
@@ -413,11 +412,11 @@ bool LocalSearch::MoveTwoClientsReversed()
                 getRouteSegmentTwData(nodeY, nodeU->prev),
                 nodeX->next->postfixTwData);
 
-            costSuppU += penaltyTimeWindows(routeUTwData);
+            costSuppU += penalties.timeWarp(routeUTwData);
         }
 
         // Compute new total penalty
-        costSuppU += penaltyExcessLoad(routeU->load) - routeU->penalty;
+        costSuppU += penalties.load(routeU->load) - routeU->penalty;
     }
 
     if (costSuppU + costSuppV >= 0)
@@ -464,11 +463,11 @@ bool LocalSearch::SwapTwoSingleClients()
         auto routeVTwData = mergeTwDataRecursive(
             nodeV->prev->prefixTwData, nodeU->twData, nodeY->postfixTwData);
 
-        costSuppU += penaltyExcessLoad(routeU->load + loadV - loadU)
-                     + penaltyTimeWindows(routeUTwData) - routeU->penalty;
+        costSuppU += penalties.load(routeU->load + loadV - loadU)
+                     + penalties.timeWarp(routeUTwData) - routeU->penalty;
 
-        costSuppV += penaltyExcessLoad(routeV->load + loadU - loadV)
-                     + penaltyTimeWindows(routeVTwData) - routeV->penalty;
+        costSuppV += penalties.load(routeV->load + loadU - loadV)
+                     + penalties.timeWarp(routeVTwData) - routeV->penalty;
     }
     else
     {
@@ -490,7 +489,7 @@ bool LocalSearch::SwapTwoSingleClients()
                 nodeU->twData,
                 nodeY->postfixTwData);
 
-            costSuppU += penaltyTimeWindows(routeUTwData);
+            costSuppU += penalties.timeWarp(routeUTwData);
         }
         else
         {
@@ -504,11 +503,11 @@ bool LocalSearch::SwapTwoSingleClients()
                 nodeV->twData,
                 nodeX->postfixTwData);
 
-            costSuppU += penaltyTimeWindows(routeUTwData);
+            costSuppU += penalties.timeWarp(routeUTwData);
         }
 
         // Compute new total penalty
-        costSuppU += penaltyExcessLoad(routeU->load) - routeU->penalty;
+        costSuppU += penalties.load(routeU->load) - routeU->penalty;
     }
 
     if (costSuppU + costSuppV >= 0)
@@ -554,11 +553,11 @@ bool LocalSearch::SwapTwoClientsForOne()
                                                  getEdgeTwData(nodeU, nodeX),
                                                  nodeY->postfixTwData);
 
-        costSuppU += penaltyExcessLoad(routeU->load + loadV - loadU - loadX)
-                     + penaltyTimeWindows(routeUTwData) - routeU->penalty;
+        costSuppU += penalties.load(routeU->load + loadV - loadU - loadX)
+                     + penalties.timeWarp(routeUTwData) - routeU->penalty;
 
-        costSuppV += penaltyExcessLoad(routeV->load + loadU + loadX - loadV)
-                     + penaltyTimeWindows(routeVTwData) - routeV->penalty;
+        costSuppV += penalties.load(routeV->load + loadU + loadX - loadV)
+                     + penalties.timeWarp(routeVTwData) - routeV->penalty;
     }
     else
     {
@@ -579,7 +578,7 @@ bool LocalSearch::SwapTwoClientsForOne()
                 getEdgeTwData(nodeU, nodeX),
                 nodeY->postfixTwData);
 
-            costSuppU += penaltyTimeWindows(routeUTwData);
+            costSuppU += penalties.timeWarp(routeUTwData);
         }
         else
         {
@@ -592,11 +591,11 @@ bool LocalSearch::SwapTwoClientsForOne()
                 nodeV->twData,
                 nodeX->next->postfixTwData);
 
-            costSuppU += penaltyTimeWindows(routeUTwData);
+            costSuppU += penalties.timeWarp(routeUTwData);
         }
 
         // Compute new total penalty
-        costSuppU += penaltyExcessLoad(routeU->load) - routeU->penalty;
+        costSuppU += penalties.load(routeU->load) - routeU->penalty;
     }
 
     if (costSuppU + costSuppV >= 0)
@@ -650,12 +649,12 @@ bool LocalSearch::SwapTwoClientPairs()
                                                  nodeY->next->postfixTwData);
 
         costSuppU
-            += penaltyExcessLoad(routeU->load + loadV + loadY - loadU - loadX)
-               + penaltyTimeWindows(routeUTwData) - routeU->penalty;
+            += penalties.load(routeU->load + loadV + loadY - loadU - loadX)
+               + penalties.timeWarp(routeUTwData) - routeU->penalty;
 
         costSuppV
-            += penaltyExcessLoad(routeV->load + loadU + loadX - loadV - loadY)
-               + penaltyTimeWindows(routeVTwData) - routeV->penalty;
+            += penalties.load(routeV->load + loadU + loadX - loadV - loadY)
+               + penalties.timeWarp(routeVTwData) - routeV->penalty;
     }
     else
     {
@@ -676,7 +675,7 @@ bool LocalSearch::SwapTwoClientPairs()
                 getEdgeTwData(nodeU, nodeX),
                 nodeY->next->postfixTwData);
 
-            costSuppU += penaltyTimeWindows(routeUTwData);
+            costSuppU += penalties.timeWarp(routeUTwData);
         }
         else
         {
@@ -689,11 +688,11 @@ bool LocalSearch::SwapTwoClientPairs()
                 getEdgeTwData(nodeV, nodeY),
                 nodeX->next->postfixTwData);
 
-            costSuppU += penaltyTimeWindows(routeUTwData);
+            costSuppU += penalties.timeWarp(routeUTwData);
         }
 
         // Compute new total penalty
-        costSuppU += penaltyExcessLoad(routeU->load) - routeU->penalty;
+        costSuppU += penalties.load(routeU->load) - routeU->penalty;
     }
 
     if (costSuppU + costSuppV >= 0)
@@ -740,7 +739,7 @@ bool LocalSearch::TwoOptWithinTrip()
     routeTwData = mergeTwDataRecursive(routeTwData, nodeY->postfixTwData);
 
     // Compute new total penalty
-    cost += penaltyExcessLoad(routeU->load) + penaltyTimeWindows(routeTwData)
+    cost += penalties.load(routeU->load) + penalties.timeWarp(routeTwData)
             - routeU->penalty;
 
     if (cost >= 0)
@@ -786,13 +785,13 @@ bool LocalSearch::TwoOptBetweenTrips()
     auto routeVTwData
         = mergeTwDataRecursive(nodeV->prefixTwData, nodeX->postfixTwData);
 
-    costSuppU += penaltyExcessLoad(nodeU->cumulatedLoad + routeV->load
-                                   - nodeV->cumulatedLoad)
-                 + penaltyTimeWindows(routeUTwData) - routeU->penalty;
+    costSuppU += penalties.load(nodeU->cumulatedLoad + routeV->load
+                                - nodeV->cumulatedLoad)
+                 + penalties.timeWarp(routeUTwData) - routeU->penalty;
 
-    costSuppV += penaltyExcessLoad(nodeV->cumulatedLoad + routeU->load
-                                   - nodeU->cumulatedLoad)
-                 + penaltyTimeWindows(routeVTwData) - routeV->penalty;
+    costSuppV += penalties.load(nodeV->cumulatedLoad + routeU->load
+                                - nodeU->cumulatedLoad)
+                 + penalties.timeWarp(routeVTwData) - routeV->penalty;
 
     if (costSuppU + costSuppV >= 0)
         return false;
@@ -867,15 +866,15 @@ bool LocalSearch::swapStar(const bool withTW)
         {
             // We cannot determine impact on timewarp without adding too much
             // complexity (O(n^3) instead of O(n^2))
-            int const loadPenU = penaltyExcessLoad(
+            int const loadPenU = penalties.load(
                 routeU->load + params.clients[nodeV->cour].demand
                 - params.clients[nodeU->cour].demand);
-            int const loadPenV = penaltyExcessLoad(
+            int const loadPenV = penalties.load(
                 routeV->load + params.clients[nodeU->cour].demand
                 - params.clients[nodeV->cour].demand);
             int const deltaLoadPen = loadPenU + loadPenV
-                                     - penaltyExcessLoad(routeU->load)
-                                     - penaltyExcessLoad(routeV->load);
+                                     - penalties.load(routeU->load)
+                                     - penalties.load(routeV->load);
             const int deltaRemoval
                 = withTW ? nodeU->deltaRemovalTW + nodeV->deltaRemovalTW
                          : nodeU->deltaRemoval + nodeV->deltaRemoval;
@@ -988,7 +987,7 @@ bool LocalSearch::swapStar(const bool withTW)
                                    myBestSwapStar.V->twData,
                                    myBestSwapStar.U->next->postfixTwData);
 
-        costSuppU += penaltyTimeWindows(routeUTwData);
+        costSuppU += penalties.timeWarp(routeUTwData);
     }
     else if (myBestSwapStar.bestPositionV->position
              < myBestSwapStar.U->position)
@@ -1000,7 +999,7 @@ bool LocalSearch::swapStar(const bool withTW)
                                   myBestSwapStar.U->prev),
             myBestSwapStar.U->next->postfixTwData);
 
-        costSuppU += penaltyTimeWindows(routeUTwData);
+        costSuppU += penalties.timeWarp(routeUTwData);
     }
     else
     {
@@ -1011,7 +1010,7 @@ bool LocalSearch::swapStar(const bool withTW)
             myBestSwapStar.V->twData,
             myBestSwapStar.bestPositionV->next->postfixTwData);
 
-        costSuppU += penaltyTimeWindows(routeUTwData);
+        costSuppU += penalties.timeWarp(routeUTwData);
     }
 
     if (myBestSwapStar.bestPositionU->position
@@ -1023,7 +1022,7 @@ bool LocalSearch::swapStar(const bool withTW)
                                    myBestSwapStar.U->twData,
                                    myBestSwapStar.V->next->postfixTwData);
 
-        costSuppV += penaltyTimeWindows(routeVTwData);
+        costSuppV += penalties.timeWarp(routeVTwData);
     }
     else if (myBestSwapStar.bestPositionU->position
              < myBestSwapStar.V->position)
@@ -1035,7 +1034,7 @@ bool LocalSearch::swapStar(const bool withTW)
                                   myBestSwapStar.V->prev),
             myBestSwapStar.V->next->postfixTwData);
 
-        costSuppV += penaltyTimeWindows(routeVTwData);
+        costSuppV += penalties.timeWarp(routeVTwData);
     }
     else
     {
@@ -1046,7 +1045,7 @@ bool LocalSearch::swapStar(const bool withTW)
             myBestSwapStar.U->twData,
             myBestSwapStar.bestPositionU->next->postfixTwData);
 
-        costSuppV += penaltyTimeWindows(routeVTwData);
+        costSuppV += penalties.timeWarp(routeVTwData);
     }
 
     costSuppU += myBestSwapStar.loadPenU - routeU->penalty;
@@ -1082,8 +1081,8 @@ bool LocalSearch::RelocateStar()
         int const costSuppU = params.dist(nodeUPrevIndex, nodeXIndex)
                               - params.dist(nodeUPrevIndex, nodeUIndex)
                               - params.dist(nodeUIndex, nodeXIndex)
-                              + penaltyExcessLoad(routeU->load - loadU)
-                              + penaltyTimeWindows(routeUTwData)
+                              + penalties.load(routeU->load - loadU)
+                              + penalties.timeWarp(routeUTwData)
                               - routeU->penalty;
 
         for (Node *V = routeV->depot->next; !V->isDepot; V = V->next)
@@ -1093,8 +1092,8 @@ bool LocalSearch::RelocateStar()
             int const costSuppV = params.dist(V->cour, nodeUIndex)
                                   + params.dist(nodeUIndex, V->next->cour)
                                   - params.dist(V->cour, V->next->cour)
-                                  + penaltyExcessLoad(routeV->load + loadU)
-                                  + penaltyTimeWindows(routeVTwData)
+                                  + penalties.load(routeV->load + loadU)
+                                  + penalties.timeWarp(routeVTwData)
                                   - routeV->penalty;
             if (costSuppU + costSuppV < bestCost)
             {
@@ -1190,8 +1189,8 @@ int LocalSearch::getCheapestInsertSimultRemovalWithTW(Node *U,
     int deltaCost = params.dist(V->prev->cour, U->cour)
                     + params.dist(U->cour, V->next->cour)
                     - params.dist(V->prev->cour, V->next->cour)
-                    + penaltyTimeWindows(twData)
-                    - penaltyTimeWindows(V->route->twData);
+                    + penalties.timeWarp(twData)
+                    - penalties.timeWarp(V->route->twData);
 
     if (!found || deltaCost < bestCost)
     {
@@ -1249,8 +1248,8 @@ void LocalSearch::preprocessInsertionsWithTW(Route *R1, Route *R2)
             U->deltaRemovalTW = params.dist(U->prev->cour, U->next->cour)
                                 - params.dist(U->prev->cour, U->cour)
                                 - params.dist(U->cour, U->next->cour)
-                                + penaltyTimeWindows(twData)
-                                - penaltyTimeWindows(R1->twData);
+                                + penalties.timeWarp(twData)
+                                - penalties.timeWarp(R1->twData);
         }
         auto &currentOption = bestInsertClientTW[R2->cour][U->cour];
         if (R2->whenLastModified > currentOption.whenLastCalculated)
@@ -1268,8 +1267,8 @@ void LocalSearch::preprocessInsertionsWithTW(Route *R1, Route *R2)
             int cost = params.dist(0, U->cour)
                        + params.dist(U->cour, R2->depot->next->cour)
                        - params.dist(0, R2->depot->next->cour)
-                       + penaltyTimeWindows(twData)
-                       - penaltyTimeWindows(R2->twData);
+                       + penalties.timeWarp(twData)
+                       - penalties.timeWarp(R2->twData);
 
             currentOption.add(cost, R2->depot);
 
@@ -1281,8 +1280,8 @@ void LocalSearch::preprocessInsertionsWithTW(Route *R1, Route *R2)
                 int deltaCost = params.dist(V->cour, U->cour)
                                 + params.dist(U->cour, V->next->cour)
                                 - params.dist(V->cour, V->next->cour)
-                                + penaltyTimeWindows(twData)
-                                - penaltyTimeWindows(R2->twData);
+                                + penalties.timeWarp(twData)
+                                - penalties.timeWarp(R2->twData);
 
                 currentOption.add(deltaCost, V);
             }
@@ -1439,7 +1438,7 @@ void LocalSearch::updateRouteData(Route *myRoute)
     myRoute->load = myload;
     myRoute->twData = mynode->prefixTwData;
     myRoute->penalty
-        = penaltyExcessLoad(myload) + penaltyTimeWindows(myRoute->twData);
+        = penalties.load(myload) + penalties.timeWarp(myRoute->twData);
     myRoute->nbCustomers = myplace - 1;
     // Remember "when" this route has been last modified (will be used to filter
     // unnecessary move evaluations)
@@ -1591,7 +1590,8 @@ Individual LocalSearch::exportIndividual()
 }
 
 LocalSearch::LocalSearch(Params &params, XorShift128 &rng)
-    : params(params),
+    : penalties{&params, params.penaltyCapacity, params.penaltyTimeWarp},
+      params(params),
       rng(rng),
       orderNodes(params.nbClients),
       orderRoutes(params.nbVehicles)

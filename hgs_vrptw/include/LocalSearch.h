@@ -135,6 +135,28 @@ class LocalSearch
         Node *bestPositionV = nullptr;
     };
 
+    struct Penalties
+    {
+        Params const *params;
+        int loadPenalty;
+        int timePenalty;
+
+        // Computes the total excess capacity penalty for the given load
+        [[nodiscard]] inline int load(int currLoad) const
+        {
+            auto const excessLoad = currLoad - params->vehicleCapacity;
+            return std::max(excessLoad, 0) * loadPenalty;
+        }
+
+        // Computes the total time warp penalty for the given time window data
+        [[nodiscard]] inline int timeWarp(TimeWindowData const &twData) const
+        {
+            auto const releaseWarp = twData.latestReleaseTime - twData.twLate;
+            return (twData.timeWarp + std::max(releaseWarp, 0)) * timePenalty;
+        }
+    };
+
+    Penalties penalties;
     Params &params;        // Problem parameters
     XorShift128 &rng;      // Random number generator
     bool searchCompleted;  // Tells whether all moves have been evaluated
@@ -172,7 +194,6 @@ class LocalSearch
     int nodeVPrevIndex, nodeVIndex, nodeYIndex, nodeYNextIndex;
     int loadU, loadX, loadV, loadY;
     bool routeUTimeWarp, routeULoadPenalty, routeVTimeWarp, routeVLoadPenalty;
-    int penaltyCapacityLS, penaltyTimeWarpLS;
 
     void setLocalVariablesRouteU();  // Initializes some local variables and
                                      // distances associated to routeU to avoid
@@ -182,19 +203,6 @@ class LocalSearch
                                      // distances associated to routeV to avoid
                                      // always querying the same values in the
                                      // distance matrix
-
-    // Functions in charge of excess load penalty calculations
-    [[nodiscard]] inline int penaltyExcessLoad(int load) const
-    {
-        auto const excess = std::max(0, load - params.vehicleCapacity);
-        return excess * penaltyCapacityLS;
-    }
-
-    [[nodiscard]] inline int penaltyTimeWindows(const TimeWindowData &tw) const
-    {
-        auto const releaseWarp = std::max(tw.latestReleaseTime - tw.twLate, 0);
-        return (tw.timeWarp + releaseWarp) * penaltyTimeWarpLS;
-    }
 
     /* RELOCATE MOVES */
 
