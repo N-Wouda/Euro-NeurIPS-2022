@@ -162,7 +162,6 @@ void LocalSearch::setLocalVariablesRouteU()
     nodeUIndex = nodeU->cour;
     nodeUPrevIndex = nodeU->prev->cour;
     nodeXIndex = nodeX->cour;
-    routeUTimeWarp = routeU->twData.timeWarp > 0;
     routeULoadPenalty = routeU->load > params.vehicleCapacity;
 }
 
@@ -174,7 +173,6 @@ void LocalSearch::setLocalVariablesRouteV()
     nodeVIndex = nodeV->cour;
     nodeVPrevIndex = nodeV->prev->cour;
     nodeYIndex = nodeY->cour;
-    routeVTimeWarp = routeV->twData.timeWarp > 0;
     routeVLoadPenalty = routeV->load > params.vehicleCapacity;
 }
 
@@ -193,7 +191,8 @@ bool LocalSearch::MoveSingleClient()
 
     if (routeU != routeV)
     {
-        if (!routeULoadPenalty && !routeUTimeWarp && costSuppU + costSuppV >= 0)
+        if (!routeULoadPenalty && routeU->twData.timeWarp == 0
+            && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -213,7 +212,7 @@ bool LocalSearch::MoveSingleClient()
     }
     else
     {
-        if (!routeUTimeWarp && costSuppU + costSuppV >= 0)
+        if (routeU->twData.timeWarp == 0 && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -275,7 +274,8 @@ bool LocalSearch::MoveTwoClients()
 
     if (routeU != routeV)
     {
-        if (!routeULoadPenalty && !routeUTimeWarp && costSuppU + costSuppV >= 0)
+        if (!routeULoadPenalty && routeU->twData.timeWarp == 0
+            && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -298,7 +298,7 @@ bool LocalSearch::MoveTwoClients()
     }
     else
     {
-        if (!routeUTimeWarp && costSuppU + costSuppV >= 0)
+        if (routeU->twData.timeWarp == 0 && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -365,7 +365,8 @@ bool LocalSearch::MoveTwoClientsReversed()
 
     if (routeU != routeV)
     {
-        if (!routeULoadPenalty && !routeUTimeWarp && costSuppU + costSuppV >= 0)
+        if (!routeULoadPenalty && routeU->twData.timeWarp == 0
+            && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -388,7 +389,7 @@ bool LocalSearch::MoveTwoClientsReversed()
     }
     else
     {
-        if (!routeUTimeWarp && costSuppU + costSuppV >= 0)
+        if (routeU->twData.timeWarp == 0 && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -458,8 +459,9 @@ bool LocalSearch::SwapTwoSingleClients()
 
     if (routeU != routeV)
     {
-        if (!routeULoadPenalty && !routeUTimeWarp && !routeVLoadPenalty
-            && !routeVTimeWarp && costSuppU + costSuppV >= 0)
+        if (!routeULoadPenalty && routeU->twData.timeWarp == 0
+            && !routeVLoadPenalty && routeV->twData.timeWarp == 0
+            && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -481,7 +483,7 @@ bool LocalSearch::SwapTwoSingleClients()
     }
     else
     {
-        if (!routeUTimeWarp && costSuppU + costSuppV >= 0)
+        if (routeU->twData.timeWarp == 0 && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -550,8 +552,9 @@ bool LocalSearch::SwapTwoClientsForOne()
 
     if (routeU != routeV)
     {
-        if (!routeULoadPenalty && !routeUTimeWarp && !routeVLoadPenalty
-            && !routeVTimeWarp && costSuppU + costSuppV >= 0)
+        if (!routeULoadPenalty && routeU->twData.timeWarp == 0
+            && !routeVLoadPenalty && routeV->twData.timeWarp == 0
+            && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -577,7 +580,7 @@ bool LocalSearch::SwapTwoClientsForOne()
     }
     else
     {
-        if (!routeUTimeWarp && costSuppU + costSuppV >= 0)
+        if (routeU->twData.timeWarp == 0 && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -651,8 +654,9 @@ bool LocalSearch::SwapTwoClientPairs()
 
     if (routeU != routeV)
     {
-        if (!routeULoadPenalty && !routeUTimeWarp && !routeVLoadPenalty
-            && !routeVTimeWarp && costSuppU + costSuppV >= 0)
+        if (!routeULoadPenalty && routeU->twData.timeWarp == 0
+            && !routeVLoadPenalty && routeV->twData.timeWarp == 0
+            && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -680,7 +684,7 @@ bool LocalSearch::SwapTwoClientPairs()
     }
     else
     {
-        if (!routeUTimeWarp && costSuppU + costSuppV >= 0)
+        if (routeU->twData.timeWarp == 0 && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -746,7 +750,7 @@ bool LocalSearch::TwoOptWithinTrip()
                + nodeV->cumulatedReversalDistance
                - nodeX->cumulatedReversalDistance;
 
-    if (!routeUTimeWarp && cost >= 0)
+    if (routeU->twData.timeWarp == 0 && cost >= 0)
     {
         return false;
     }
@@ -796,8 +800,8 @@ bool LocalSearch::TwoOptBetweenTrips()
     int costSuppV = params.dist(nodeVIndex, nodeXIndex)
                     - params.dist(nodeVIndex, nodeYIndex);
 
-    if (!routeULoadPenalty && !routeUTimeWarp && !routeVLoadPenalty
-        && !routeVTimeWarp && costSuppU + costSuppV >= 0)
+    if (!routeULoadPenalty && routeU->twData.timeWarp == 0 && !routeVLoadPenalty
+        && routeV->twData.timeWarp == 0 && costSuppU + costSuppV >= 0)
     {
         return false;
     }
