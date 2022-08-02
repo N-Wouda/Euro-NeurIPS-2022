@@ -63,5 +63,5 @@ orderedExchange(Parents const &parents, Params const &params, XorShift128 &rng)
     auto const slice2 = getStartEnd(params.nbClients, rng);
     auto const indiv2 = doOnce(parents, params, slice2);
 
-    return indiv1 < indiv2 ? indiv1 : indiv2;
+    return std::min(indiv1, indiv2);
 }
