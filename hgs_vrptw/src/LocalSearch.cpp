@@ -280,25 +280,9 @@ void LocalSearch::search()
                                      routeU,
                                      routeV))
                         continue;
-                    if (swapStar(false,
-                                 nbMoves,
-                                 searchCompleted,
-                                 nodeU,
-                                 nodeV,
-                                 nodeX,
-                                 nodeY,
-                                 routeU,
-                                 routeV))
+                    if (swapStar(false, nbMoves, searchCompleted, nodeU, nodeV))
                         continue;
-                    if (swapStar(true,
-                                 nbMoves,
-                                 searchCompleted,
-                                 nodeU,
-                                 nodeV,
-                                 nodeX,
-                                 nodeY,
-                                 routeU,
-                                 routeV))
+                    if (swapStar(true, nbMoves, searchCompleted, nodeU, nodeV))
                         continue;
                 }
             }
@@ -1044,72 +1028,70 @@ bool LocalSearch::swapStar(bool const withTW,
                            int &nbMoves,
                            bool &searchCompleted,
                            Node *nodeU,
-                           Node *nodeV,
-                           Node *nodeX,
-                           Node *nodeY,
-                           Route *routeU,
-                           Route *routeV)
+                           Node *nodeV)
 {
     SwapStarElement myBestSwapStar;
 
-    if (!bestInsertInitializedForRoute[routeU->cour])
+    if (!bestInsertInitializedForRoute[nodeU->route->cour])
     {
-        bestInsertInitializedForRoute[routeU->cour] = true;
+        bestInsertInitializedForRoute[nodeU->route->cour] = true;
         for (int i = 1; i <= params.nbClients; i++)
         {
-            bestInsertClient[routeU->cour][i].whenLastCalculated = -1;
-            bestInsertClientTW[routeU->cour][i].whenLastCalculated = -1;
+            bestInsertClient[nodeU->route->cour][i].whenLastCalculated = -1;
+            bestInsertClientTW[nodeU->route->cour][i].whenLastCalculated = -1;
         }
     }
-    if (!bestInsertInitializedForRoute[routeV->cour])
+    if (!bestInsertInitializedForRoute[nodeV->route->cour])
     {
-        bestInsertInitializedForRoute[routeV->cour] = true;
+        bestInsertInitializedForRoute[nodeV->route->cour] = true;
         for (int i = 1; i <= params.nbClients; i++)
         {
-            bestInsertClient[routeV->cour][i].whenLastCalculated = -1;
-            bestInsertClientTW[routeV->cour][i].whenLastCalculated = -1;
+            bestInsertClient[nodeV->route->cour][i].whenLastCalculated = -1;
+            bestInsertClientTW[nodeV->route->cour][i].whenLastCalculated = -1;
         }
     }
 
     // Preprocessing insertion costs
     if (withTW)
     {
-        preprocessInsertionsWithTW(routeU, routeV, nbMoves);
-        preprocessInsertionsWithTW(routeV, routeU, nbMoves);
+        preprocessInsertionsWithTW(nodeU->route, nodeV->route, nbMoves);
+        preprocessInsertionsWithTW(nodeV->route, nodeU->route, nbMoves);
     }
     else
     {
-        preprocessInsertions(routeU, routeV, nbMoves);
-        preprocessInsertions(routeV, routeU, nbMoves);
+        preprocessInsertions(nodeU->route, nodeV->route, nbMoves);
+        preprocessInsertions(nodeV->route, nodeU->route, nbMoves);
     }
 
     // Evaluating the moves
-    for (nodeU = routeU->depot->next; !nodeU->isDepot; nodeU = nodeU->next)
+    for (Node *first = nodeU->route->depot->next; !first->isDepot;
+         first = first->next)
     {
-        for (nodeV = routeV->depot->next; !nodeV->isDepot; nodeV = nodeV->next)
+        for (Node *second = nodeV->route->depot->next; !second->isDepot;
+             second = second->next)
         {
             // We cannot determine impact on timewarp without adding too much
             // complexity (O(n^3) instead of O(n^2))
             int const loadPenU = penalties.load(
-                routeU->load + params.clients[nodeV->cour].demand
-                - params.clients[nodeU->cour].demand);
+                nodeU->route->load + params.clients[second->cour].demand
+                - params.clients[first->cour].demand);
             int const loadPenV = penalties.load(
-                routeV->load + params.clients[nodeU->cour].demand
-                - params.clients[nodeV->cour].demand);
+                nodeV->route->load + params.clients[first->cour].demand
+                - params.clients[second->cour].demand);
             int const deltaLoadPen = loadPenU + loadPenV
-                                     - penalties.load(routeU->load)
-                                     - penalties.load(routeV->load);
+                                     - penalties.load(nodeU->route->load)
+                                     - penalties.load(nodeV->route->load);
             const int deltaRemoval
-                = withTW ? nodeU->deltaRemovalTW + nodeV->deltaRemovalTW
-                         : nodeU->deltaRemoval + nodeV->deltaRemoval;
+                = withTW ? first->deltaRemovalTW + second->deltaRemovalTW
+                         : first->deltaRemoval + second->deltaRemoval;
 
             // Quick filter: possibly early elimination of many SWAP* due to the
             // capacity constraints/penalties and bounds on insertion costs
             if (deltaLoadPen + deltaRemoval <= 0)
             {
                 SwapStarElement mySwapStar;
-                mySwapStar.U = nodeU;
-                mySwapStar.V = nodeV;
+                mySwapStar.U = first;
+                mySwapStar.V = second;
 
                 int extraV, extraU;
                 if (withTW)
@@ -1117,24 +1099,24 @@ bool LocalSearch::swapStar(bool const withTW,
                     // Evaluate best reinsertion cost of U in the route of V
                     // where V has been removed
                     extraV = getCheapestInsertSimultRemovalWithTW(
-                        nodeU, nodeV, mySwapStar.bestPositionU);
+                        first, second, mySwapStar.bestPositionU);
 
                     // Evaluate best reinsertion cost of V in the route of U
                     // where U has been removed
                     extraU = getCheapestInsertSimultRemovalWithTW(
-                        nodeV, nodeU, mySwapStar.bestPositionV);
+                        second, first, mySwapStar.bestPositionV);
                 }
                 else
                 {
                     // Evaluate best reinsertion cost of U in the route of V
                     // where V has been removed
                     extraV = getCheapestInsertSimultRemoval(
-                        nodeU, nodeV, mySwapStar.bestPositionU);
+                        first, second, mySwapStar.bestPositionU);
 
                     // Evaluate best reinsertion cost of V in the route of U
                     // where U has been removed
                     extraU = getCheapestInsertSimultRemoval(
-                        nodeV, nodeU, mySwapStar.bestPositionV);
+                        second, first, mySwapStar.bestPositionV);
                 }
 
                 // Evaluating final cost
@@ -1272,8 +1254,8 @@ bool LocalSearch::swapStar(bool const withTW,
         costSuppV += penalties.timeWarp(routeVTwData);
     }
 
-    costSuppU += myBestSwapStar.loadPenU - routeU->penalty;
-    costSuppV += myBestSwapStar.loadPenV - routeV->penalty;
+    costSuppU += myBestSwapStar.loadPenU - nodeU->route->penalty;
+    costSuppV += myBestSwapStar.loadPenV - nodeV->route->penalty;
 
     if (costSuppU + costSuppV >= 0)
     {
@@ -1285,8 +1267,8 @@ bool LocalSearch::swapStar(bool const withTW,
     insertNode(myBestSwapStar.V, myBestSwapStar.bestPositionV);
     nbMoves++;  // Increment move counter before updating route data
     searchCompleted = false;
-    updateRouteData(routeU, nbMoves);
-    updateRouteData(routeV, nbMoves);
+    updateRouteData(nodeU->route, nbMoves);
+    updateRouteData(nodeV->route, nbMoves);
 
     return true;
 }

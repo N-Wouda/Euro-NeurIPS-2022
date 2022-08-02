@@ -271,11 +271,7 @@ class LocalSearch
                   int &nbMoves,
                   bool &searchCompleted,
                   Node *nodeU,
-                  Node *nodeV,
-                  Node *nodeX,
-                  Node *nodeY,
-                  Route *routeU,
-                  Route *routeV);
+                  Node *nodeV);
 
     // Calculates the insertion cost and position in the route of V, where V is
     // omitted
