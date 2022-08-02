@@ -31,6 +31,13 @@ void LocalSearch::search()
     bool searchCompleted = false;  // No further improving move?
     int nbMoves = 0;               // Operator (RI and SWAP*) counter
 
+    Node *nodeU;
+    Node *nodeV;
+    Node *nodeX;
+    Node *nodeY;
+    Route *routeU;
+    Route *routeV;
+
     for (int step = 0; !searchCompleted; ++step)
     {
         if (step > 1)                // At least two loops as some moves with
@@ -64,21 +71,77 @@ void LocalSearch::search()
                                                // modified since last move
                                                // evaluations for nodeU
                 {
-                    if (MoveSingleClient(nbMoves, searchCompleted))
+                    if (MoveSingleClient(nbMoves,
+                                         searchCompleted,
+                                         nodeU,
+                                         nodeV,
+                                         nodeX,
+                                         nodeY,
+                                         routeU,
+                                         routeV))
                         continue;  // RELOCATE
-                    if (MoveTwoClients(nbMoves, searchCompleted))
+                    if (MoveTwoClients(nbMoves,
+                                       searchCompleted,
+                                       nodeU,
+                                       nodeV,
+                                       nodeX,
+                                       nodeY,
+                                       routeU,
+                                       routeV))
                         continue;  // RELOCATE
-                    if (MoveTwoClientsReversed(nbMoves, searchCompleted))
+                    if (MoveTwoClientsReversed(nbMoves,
+                                               searchCompleted,
+                                               nodeU,
+                                               nodeV,
+                                               nodeX,
+                                               nodeY,
+                                               routeU,
+                                               routeV))
                         continue;  // RELOCATE
-                    if (SwapTwoSingleClients(nbMoves, searchCompleted))
+                    if (SwapTwoSingleClients(nbMoves,
+                                             searchCompleted,
+                                             nodeU,
+                                             nodeV,
+                                             nodeX,
+                                             nodeY,
+                                             routeU,
+                                             routeV))
                         continue;  // SWAP
-                    if (SwapTwoClientsForOne(nbMoves, searchCompleted))
+                    if (SwapTwoClientsForOne(nbMoves,
+                                             searchCompleted,
+                                             nodeU,
+                                             nodeV,
+                                             nodeX,
+                                             nodeY,
+                                             routeU,
+                                             routeV))
                         continue;  // SWAP
-                    if (SwapTwoClientPairs(nbMoves, searchCompleted))
+                    if (SwapTwoClientPairs(nbMoves,
+                                           searchCompleted,
+                                           nodeU,
+                                           nodeV,
+                                           nodeX,
+                                           nodeY,
+                                           routeU,
+                                           routeV))
                         continue;  // SWAP
-                    if (TwoOptBetweenTrips(nbMoves, searchCompleted))
+                    if (TwoOptBetweenTrips(nbMoves,
+                                           searchCompleted,
+                                           nodeU,
+                                           nodeV,
+                                           nodeX,
+                                           nodeY,
+                                           routeU,
+                                           routeV))
                         continue;  // 2-OPT*
-                    if (TwoOptWithinTrip(nbMoves, searchCompleted))
+                    if (TwoOptWithinTrip(nbMoves,
+                                         searchCompleted,
+                                         nodeU,
+                                         nodeV,
+                                         nodeX,
+                                         nodeY,
+                                         routeU,
+                                         routeV))
                         continue;  // 2-OPT
 
                     // Trying moves that insert nodeU directly after the depot
@@ -88,13 +151,41 @@ void LocalSearch::search()
                         routeV = nodeV->route;
                         nodeY = nodeV->next;
 
-                        if (MoveSingleClient(nbMoves, searchCompleted))
+                        if (MoveSingleClient(nbMoves,
+                                             searchCompleted,
+                                             nodeU,
+                                             nodeV,
+                                             nodeX,
+                                             nodeY,
+                                             routeU,
+                                             routeV))
                             continue;  // RELOCATE
-                        if (MoveTwoClients(nbMoves, searchCompleted))
+                        if (MoveTwoClients(nbMoves,
+                                           searchCompleted,
+                                           nodeU,
+                                           nodeV,
+                                           nodeX,
+                                           nodeY,
+                                           routeU,
+                                           routeV))
                             continue;  // RELOCATE
-                        if (MoveTwoClientsReversed(nbMoves, searchCompleted))
+                        if (MoveTwoClientsReversed(nbMoves,
+                                                   searchCompleted,
+                                                   nodeU,
+                                                   nodeV,
+                                                   nodeX,
+                                                   nodeY,
+                                                   routeU,
+                                                   routeV))
                             continue;  // RELOCATE
-                        if (TwoOptBetweenTrips(nbMoves, searchCompleted))
+                        if (TwoOptBetweenTrips(nbMoves,
+                                               searchCompleted,
+                                               nodeU,
+                                               nodeV,
+                                               nodeX,
+                                               nodeY,
+                                               routeU,
+                                               routeV))
                             continue;  // 2-OPT*
                     }
                 }
@@ -111,13 +202,41 @@ void LocalSearch::search()
                 routeV = nodeV->route;
                 nodeY = nodeV->next;
 
-                if (MoveSingleClient(nbMoves, searchCompleted))
+                if (MoveSingleClient(nbMoves,
+                                     searchCompleted,
+                                     nodeU,
+                                     nodeV,
+                                     nodeX,
+                                     nodeY,
+                                     routeU,
+                                     routeV))
                     continue;  // RELOCATE
-                if (MoveTwoClients(nbMoves, searchCompleted))
+                if (MoveTwoClients(nbMoves,
+                                   searchCompleted,
+                                   nodeU,
+                                   nodeV,
+                                   nodeX,
+                                   nodeY,
+                                   routeU,
+                                   routeV))
                     continue;  // RELOCATE
-                if (MoveTwoClientsReversed(nbMoves, searchCompleted))
+                if (MoveTwoClientsReversed(nbMoves,
+                                           searchCompleted,
+                                           nodeU,
+                                           nodeV,
+                                           nodeX,
+                                           nodeY,
+                                           routeU,
+                                           routeV))
                     continue;  // RELOCATE
-                if (TwoOptBetweenTrips(nbMoves, searchCompleted))
+                if (TwoOptBetweenTrips(nbMoves,
+                                       searchCompleted,
+                                       nodeU,
+                                       nodeV,
+                                       nodeX,
+                                       nodeY,
+                                       routeU,
+                                       routeV))
                     continue;  // 2-OPT*
             }
         }
@@ -152,18 +271,49 @@ void LocalSearch::search()
                             params.config.circleSectorOverlapTolerance))
                         continue;
 
-                    if (!RelocateStar(nbMoves, searchCompleted))
-                    {
-                        swapStar(false, nbMoves, searchCompleted);
-                        swapStar(true, nbMoves, searchCompleted);
-                    }
+                    if (RelocateStar(nbMoves,
+                                     searchCompleted,
+                                     nodeU,
+                                     nodeV,
+                                     nodeX,
+                                     nodeY,
+                                     routeU,
+                                     routeV))
+                        continue;
+                    if (swapStar(false,
+                                 nbMoves,
+                                 searchCompleted,
+                                 nodeU,
+                                 nodeV,
+                                 nodeX,
+                                 nodeY,
+                                 routeU,
+                                 routeV))
+                        continue;
+                    if (swapStar(true,
+                                 nbMoves,
+                                 searchCompleted,
+                                 nodeU,
+                                 nodeV,
+                                 nodeX,
+                                 nodeY,
+                                 routeU,
+                                 routeV))
+                        continue;
                 }
             }
         }
     }
 }
 
-bool LocalSearch::MoveSingleClient(int &nbMoves, bool &searchCompleted)
+bool LocalSearch::MoveSingleClient(int &nbMoves,
+                                   bool &searchCompleted,
+                                   Node *nodeU,
+                                   Node *nodeV,
+                                   Node *nodeX,
+                                   Node *nodeY,
+                                   Route *routeU,
+                                   Route *routeV)
 {
     // If U already comes directly after V, this move has no effect
     if (nodeU->cour == nodeY->cour)
@@ -247,7 +397,14 @@ bool LocalSearch::MoveSingleClient(int &nbMoves, bool &searchCompleted)
     return true;
 }
 
-bool LocalSearch::MoveTwoClients(int &nbMoves, bool &searchCompleted)
+bool LocalSearch::MoveTwoClients(int &nbMoves,
+                                 bool &searchCompleted,
+                                 Node *nodeU,
+                                 Node *nodeV,
+                                 Node *nodeX,
+                                 Node *nodeY,
+                                 Route *routeU,
+                                 Route *routeV)
 {
     if (nodeU == nodeY || nodeV == nodeX || nodeX->isDepot)
         return false;
@@ -336,7 +493,14 @@ bool LocalSearch::MoveTwoClients(int &nbMoves, bool &searchCompleted)
     return true;
 }
 
-bool LocalSearch::MoveTwoClientsReversed(int &nbMoves, bool &searchCompleted)
+bool LocalSearch::MoveTwoClientsReversed(int &nbMoves,
+                                         bool &searchCompleted,
+                                         Node *nodeU,
+                                         Node *nodeV,
+                                         Node *nodeX,
+                                         Node *nodeY,
+                                         Route *routeU,
+                                         Route *routeV)
 {
     if (nodeU == nodeY || nodeX == nodeV || nodeX->isDepot)
         return false;
@@ -427,7 +591,14 @@ bool LocalSearch::MoveTwoClientsReversed(int &nbMoves, bool &searchCompleted)
     return true;
 }
 
-bool LocalSearch::SwapTwoSingleClients(int &nbMoves, bool &searchCompleted)
+bool LocalSearch::SwapTwoSingleClients(int &nbMoves,
+                                       bool &searchCompleted,
+                                       Node *nodeU,
+                                       Node *nodeV,
+                                       Node *nodeX,
+                                       Node *nodeY,
+                                       Route *routeU,
+                                       Route *routeV)
 {
     if (nodeU->cour >= nodeV->cour)
         return false;
@@ -523,7 +694,14 @@ bool LocalSearch::SwapTwoSingleClients(int &nbMoves, bool &searchCompleted)
     return true;
 }
 
-bool LocalSearch::SwapTwoClientsForOne(int &nbMoves, bool &searchCompleted)
+bool LocalSearch::SwapTwoClientsForOne(int &nbMoves,
+                                       bool &searchCompleted,
+                                       Node *nodeU,
+                                       Node *nodeV,
+                                       Node *nodeX,
+                                       Node *nodeY,
+                                       Route *routeU,
+                                       Route *routeV)
 {
     if (nodeU == nodeV->prev || nodeX == nodeV->prev || nodeU == nodeY
         || nodeX->isDepot)
@@ -623,7 +801,14 @@ bool LocalSearch::SwapTwoClientsForOne(int &nbMoves, bool &searchCompleted)
     return true;
 }
 
-bool LocalSearch::SwapTwoClientPairs(int &nbMoves, bool &searchCompleted)
+bool LocalSearch::SwapTwoClientPairs(int &nbMoves,
+                                     bool &searchCompleted,
+                                     Node *nodeU,
+                                     Node *nodeV,
+                                     Node *nodeX,
+                                     Node *nodeY,
+                                     Route *routeU,
+                                     Route *routeV)
 {
     if (nodeU->cour >= nodeV->cour)
         return false;
@@ -725,7 +910,14 @@ bool LocalSearch::SwapTwoClientPairs(int &nbMoves, bool &searchCompleted)
     return true;
 }
 
-bool LocalSearch::TwoOptWithinTrip(int &nbMoves, bool &searchCompleted)
+bool LocalSearch::TwoOptWithinTrip(int &nbMoves,
+                                   bool &searchCompleted,
+                                   Node *nodeU,
+                                   Node *nodeV,
+                                   Node *nodeX,
+                                   Node *nodeY,
+                                   Route *routeU,
+                                   Route *routeV)
 {
     if (routeU != routeV)
         return false;
@@ -780,7 +972,14 @@ bool LocalSearch::TwoOptWithinTrip(int &nbMoves, bool &searchCompleted)
     return true;
 }
 
-bool LocalSearch::TwoOptBetweenTrips(int &nbMoves, bool &searchCompleted)
+bool LocalSearch::TwoOptBetweenTrips(int &nbMoves,
+                                     bool &searchCompleted,
+                                     Node *nodeU,
+                                     Node *nodeV,
+                                     Node *nodeX,
+                                     Node *nodeY,
+                                     Route *routeU,
+                                     Route *routeV)
 {
     if (routeU->cour >= routeV->cour)
         return false;
@@ -843,7 +1042,13 @@ bool LocalSearch::TwoOptBetweenTrips(int &nbMoves, bool &searchCompleted)
 
 bool LocalSearch::swapStar(bool const withTW,
                            int &nbMoves,
-                           bool &searchCompleted)
+                           bool &searchCompleted,
+                           Node *nodeU,
+                           Node *nodeV,
+                           Node *nodeX,
+                           Node *nodeY,
+                           Route *routeU,
+                           Route *routeV)
 {
     SwapStarElement myBestSwapStar;
 
@@ -1086,7 +1291,14 @@ bool LocalSearch::swapStar(bool const withTW,
     return true;
 }
 
-bool LocalSearch::RelocateStar(int &nbMoves, bool &searchCompleted)
+bool LocalSearch::RelocateStar(int &nbMoves,
+                               bool &searchCompleted,
+                               Node *nodeU,
+                               Node *nodeV,
+                               Node *nodeX,
+                               Node *nodeY,
+                               Route *routeU,
+                               Route *routeV)
 {
     int bestCost = 0;
     Node *insertionPoint = nullptr;

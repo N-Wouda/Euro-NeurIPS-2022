@@ -177,49 +177,105 @@ class LocalSearch
         bestInsertClientTW;  // (SWAP*) For each route and node, storing the
                              // cheapest insertion cost (including TW)
 
-    /* TEMPORARY VARIABLES USED IN THE LOCAL SEARCH LOOPS */
-    Node *nodeU;
-    Node *nodeX;
-    Node *nodeV;
-    Node *nodeY;
-    Route *routeU;
-    Route *routeV;
-
     /* RELOCATE MOVES */
 
     // If U is a client node, remove U and insert it after V
-    bool MoveSingleClient(int &nbMoves, bool &searchCompleted);
+    bool MoveSingleClient(int &nbMoves,
+                          bool &searchCompleted,
+                          Node *nodeU,
+                          Node *nodeV,
+                          Node *nodeX,
+                          Node *nodeY,
+                          Route *routeU,
+                          Route *routeV);
 
     // If U and X are client nodes, remove them and insert (U,X) after V
-    bool MoveTwoClients(int &nbMoves, bool &searchCompleted);
+    bool MoveTwoClients(int &nbMoves,
+                        bool &searchCompleted,
+                        Node *nodeU,
+                        Node *nodeV,
+                        Node *nodeX,
+                        Node *nodeY,
+                        Route *routeU,
+                        Route *routeV);
 
     // If U and X are client nodes, remove them and insert (X,U) after V
-    bool MoveTwoClientsReversed(int &nbMoves, bool &searchCompleted);
+    bool MoveTwoClientsReversed(int &nbMoves,
+                                bool &searchCompleted,
+                                Node *nodeU,
+                                Node *nodeV,
+                                Node *nodeX,
+                                Node *nodeY,
+                                Route *routeU,
+                                Route *routeV);
 
     /* SWAP MOVES */
 
     // If U and V are client nodes, swap U and V
-    bool SwapTwoSingleClients(int &nbMoves, bool &searchCompleted);
+    bool SwapTwoSingleClients(int &nbMoves,
+                              bool &searchCompleted,
+                              Node *nodeU,
+                              Node *nodeV,
+                              Node *nodeX,
+                              Node *nodeY,
+                              Route *routeU,
+                              Route *routeV);
 
     // If U, X and V are client nodes, swap (U,X) and V
-    bool SwapTwoClientsForOne(int &nbMoves, bool &searchCompleted);
+    bool SwapTwoClientsForOne(int &nbMoves,
+                              bool &searchCompleted,
+                              Node *nodeU,
+                              Node *nodeV,
+                              Node *nodeX,
+                              Node *nodeY,
+                              Route *routeU,
+                              Route *routeV);
 
     // If (U,X) and (V,Y) are client nodes, swap  (U,X) and (V,Y)
-    bool SwapTwoClientPairs(int &nbMoves, bool &searchCompleted);
+    bool SwapTwoClientPairs(int &nbMoves,
+                            bool &searchCompleted,
+                            Node *nodeU,
+                            Node *nodeV,
+                            Node *nodeX,
+                            Node *nodeY,
+                            Route *routeU,
+                            Route *routeV);
 
     /* 2-OPT and 2-OPT* MOVES */
 
     // If route(U) == route(V), replace (U,X) and (V,Y) by (U,V) and (X,Y)
-    bool TwoOptWithinTrip(int &nbMoves, bool &searchCompleted);
+    bool TwoOptWithinTrip(int &nbMoves,
+                          bool &searchCompleted,
+                          Node *nodeU,
+                          Node *nodeV,
+                          Node *nodeX,
+                          Node *nodeY,
+                          Route *routeU,
+                          Route *routeV);
 
     // If route(U) != route(V), replace (U,X) and  (V,Y) by (U,Y) and (V,X)
-    bool TwoOptBetweenTrips(int &nbMoves, bool &searchCompleted);
+    bool TwoOptBetweenTrips(int &nbMoves,
+                            bool &searchCompleted,
+                            Node *nodeU,
+                            Node *nodeV,
+                            Node *nodeX,
+                            Node *nodeY,
+                            Route *routeU,
+                            Route *routeV);
 
     /* SUB-ROUTINES FOR EFFICIENT SWAP* EVALUATIONS */
 
     // Calculates all SWAP* between routeU and routeV and apply the best
     // improving move
-    bool swapStar(bool withTW, int &nbMoves, bool &searchCompleted);
+    bool swapStar(bool withTW,
+                  int &nbMoves,
+                  bool &searchCompleted,
+                  Node *nodeU,
+                  Node *nodeV,
+                  Node *nodeX,
+                  Node *nodeY,
+                  Route *routeU,
+                  Route *routeV);
 
     // Calculates the insertion cost and position in the route of V, where V is
     // omitted
@@ -239,12 +295,19 @@ class LocalSearch
     /* RELOCATE MOVES BETWEEN TRIPS*/
 
     // Calculates all SWAP* between nodeU and all routes recently changed
-    bool RelocateStar(int &nbMoves, bool &searchCompleted);
+    bool RelocateStar(int &nbMoves,
+                      bool &searchCompleted,
+                      Node *nodeU,
+                      Node *nodeV,
+                      Node *nodeX,
+                      Node *nodeY,
+                      Route *routeU,
+                      Route *routeV);
 
     /* SUB-ROUTINES FOR TIME WINDOWS */
 
-    // Calculates time window data for edge between U and V, does not have to be
-    // currently adjacent
+    // Calculates time window data for edge between U and V, does not have
+    // to be currently adjacent
     TimeWindowData getEdgeTwData(Node *U, Node *V);
 
     // Calculates time window data for segment in single route
