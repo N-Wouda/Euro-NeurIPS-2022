@@ -149,6 +149,7 @@ void Individual::makeRoutes()
         end = begin;
     }
 
+    assert(end == 0);
     evaluateCompleteCost();
 }
 
@@ -303,7 +304,7 @@ std::vector<std::pair<int, int>> Individual::getNeighbours() const
     return neighbours;
 }
 
-Individual::Individual(Params *params, XorShift128 *rng)
+Individual::Individual(Params const *params, XorShift128 *rng)
     : params(params),
       tourChrom(params->nbClients),
       routeChrom(params->nbVehicles)
@@ -314,15 +315,21 @@ Individual::Individual(Params *params, XorShift128 *rng)
     makeRoutes();
 }
 
-Individual::Individual(Params *params, Tour tour)
+Individual::Individual(Params const *params, Tour tour)
     : params(params), tourChrom(std::move(tour)), routeChrom(params->nbVehicles)
 {
     makeRoutes();
 }
 
-Individual::Individual(Params *params, Routes routes)
+Individual::Individual(Params const *params, Routes routes)
     : params(params), tourChrom(), routeChrom(std::move(routes))
 {
+    // a precedes b only when a is not empty and b is. Combined with a stable
+    // sort, this ensures we keep the original sorting as much as possible, but
+    // also make sure all empty routes are at the end of routeChrom.
+    auto comp = [](auto &a, auto &b) { return !a.empty() && b.empty(); };
+    std::stable_sort(routeChrom.begin(), routeChrom.end(), comp);
+
     tourChrom.reserve(params->nbClients);
 
     for (auto const &route : routeChrom)

@@ -7,8 +7,10 @@
 #include "Result.h"
 #include "Statistics.h"
 #include "XorShift128.h"
+#include "crossover.h"
 
 #include <pybind11/chrono.h>
+#include <pybind11/functional.h>
 #include <pybind11/stl.h>
 
 namespace py = pybind11;
@@ -59,7 +61,6 @@ PYBIND11_MODULE(hgspy, m)
                       size_t,
                       size_t,
                       size_t,
-                      size_t,
                       double,
                       size_t,
                       double,
@@ -83,7 +84,6 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("penaltyDecrease") = 0.85,
              py::arg("minimumPopulationSize") = 25,
              py::arg("generationSize") = 40,
-             py::arg("nbCrossover") = 16,
              py::arg("nbElite") = 4,
              py::arg("nbClose") = 5,
              py::arg("targetFeasible") = 0.2,
@@ -109,7 +109,6 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("penaltyDecrease", &Config::penaltyDecrease)
         .def_readonly("minimumPopulationSize", &Config::minimumPopulationSize)
         .def_readonly("generationSize", &Config::generationSize)
-        .def_readonly("nbCrossover", &Config::nbCrossover)
         .def_readonly("nbElite", &Config::nbElite)
         .def_readonly("nbClose", &Config::nbClose)
         .def_readonly("targetFeasible", &Config::targetFeasible)
@@ -173,5 +172,23 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("rng"),
              py::arg("population"),
              py::arg("local_search"))
+        .def("add_crossover_operator",
+             &GeneticAlgorithm::addCrossoverOperator,
+             py::arg("op"))
         .def("run_until", &GeneticAlgorithm::runUntil, py::arg("time_point"));
+
+    // Crossover operators (as a submodule)
+    py::module xOps = m.def_submodule("crossover");
+
+    xOps.def("ordered_exchange",
+             &orderedExchange,
+             py::arg("parents"),
+             py::arg("params"),
+             py::arg("rng"));
+
+    xOps.def("selective_route_exchange",
+             &selectiveRouteExchange,
+             py::arg("parents"),
+             py::arg("params"),
+             py::arg("rng"));
 }

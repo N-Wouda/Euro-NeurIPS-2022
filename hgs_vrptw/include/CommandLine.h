@@ -66,8 +66,6 @@ public:
                     = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-generationSize")
                 config.generationSize = static_cast<size_t>(atoi(argv[i + 1]));
-            else if (std::string(argv[i]) == "-nbCrossover")
-                config.nbCrossover = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-nbElite")
                 config.nbElite = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-nbClose")

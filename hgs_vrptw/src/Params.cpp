@@ -138,7 +138,11 @@ Params::Params(Config const &config, std::string const &instPath)
             }
             else if (content == "VEHICLES" || content == "SALESMAN")
             {
-                inputFile >> content2 >> nbVehicles;
+                // EURO/NeurIPS allows unlimited vehicles, so this is a no-op.
+                std::string content2_;
+                int nbVehicles_;
+
+                inputFile >> content2_ >> nbVehicles_;
             }
             // Read the data on the service time (used when the service time
             // is constant for all clients)

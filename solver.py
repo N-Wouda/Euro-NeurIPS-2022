@@ -89,6 +89,9 @@ def solve_static_vrptw(instance, time_limit=3600, seed=1, plot=False):
     ls = hgspy.LocalSearch(params, rng)
 
     algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
+    algo.add_crossover_operator(hgspy.crossover.ordered_exchange)
+    algo.add_crossover_operator(hgspy.crossover.selective_route_exchange)
+
     res = algo.run_until(start + timedelta(seconds=time_limit))
 
     best = res.get_best_found()

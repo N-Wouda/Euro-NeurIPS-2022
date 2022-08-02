@@ -25,7 +25,7 @@ class Individual
     // based on the value of the first pair)
     std::multiset<std::pair<double, Individual *>> indivsPerProximity;
 
-    Params *params;  // Problem parameters
+    Params const *params;  // Problem parameters
 
     // Giant tour representing the individual: list of integers representing
     // clients (can not be the depot 0). Size is nbClients.
@@ -59,6 +59,13 @@ public:
                + timeWarp * params->penaltyTimeWarp;
         // clang-format on
     }
+
+    /**
+     * Returns the number of non-empty routes in this individual's solution.
+     * Such non-empty routes are all in the lower indices (guarantee) of the
+     * routes returned by ``getRoutes``.
+     */
+    [[nodiscard]] inline size_t numRoutes() const { return nbRoutes; }
 
     /**
      * Returns this individual's routing decisions.
@@ -103,11 +110,16 @@ public:
     // computational time).
     void exportCVRPLibFormat(std::string const &path, double time) const;
 
-    Individual(Params *params, XorShift128 *rng);  // random individual
+    bool operator<(Individual const &other) const
+    {
+        return cost() < other.cost();
+    }
 
-    Individual(Params *params, Tour tour);
+    Individual(Params const *params, XorShift128 *rng);  // random individual
 
-    Individual(Params *params, Routes routes);
+    Individual(Params const *params, Tour tour);
+
+    Individual(Params const *params, Routes routes);
 
     ~Individual();
 };

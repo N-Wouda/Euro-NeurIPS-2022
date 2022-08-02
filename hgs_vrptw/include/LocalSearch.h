@@ -186,15 +186,14 @@ class LocalSearch
     // Functions in charge of excess load penalty calculations
     [[nodiscard]] inline int penaltyExcessLoad(int load) const
     {
-        return std::max(0, load - params.vehicleCapacity) * penaltyCapacityLS;
+        auto const excess = std::max(0, load - params.vehicleCapacity);
+        return excess * penaltyCapacityLS;
     }
 
-    [[nodiscard]] inline int
-    penaltyTimeWindows(const TimeWindowData &twData) const
+    [[nodiscard]] inline int penaltyTimeWindows(const TimeWindowData &tw) const
     {
-        return (twData.timeWarp
-                + std::max(twData.latestReleaseTime - twData.twLate, 0))
-               * penaltyTimeWarpLS;
+        auto const releaseWarp = std::max(tw.latestReleaseTime - tw.twLate, 0);
+        return (tw.timeWarp + releaseWarp) * penaltyTimeWarpLS;
     }
 
     /* RELOCATE MOVES */

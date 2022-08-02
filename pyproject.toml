@@ -3,6 +3,7 @@ name = "euro-neurips-2022"
 version = "0.1.0"
 description = ""
 authors = [
+    "Charaf, Sara <s.charaf@tue.nl>",
     "Doorn, Jasper van <j.m.h.van.doorn@vu.nl>",
     "Heide, Lieke van der <l.m.van.der.heide@rug.nl>",
     "Jansen, Yde <yde_jansen@hotmail.com>",
