@@ -162,7 +162,6 @@ void LocalSearch::setLocalVariablesRouteU()
     nodeUIndex = nodeU->cour;
     nodeUPrevIndex = nodeU->prev->cour;
     nodeXIndex = nodeX->cour;
-    routeULoadPenalty = routeU->load > params.vehicleCapacity;
 }
 
 void LocalSearch::setLocalVariablesRouteV()
@@ -173,7 +172,6 @@ void LocalSearch::setLocalVariablesRouteV()
     nodeVIndex = nodeV->cour;
     nodeVPrevIndex = nodeV->prev->cour;
     nodeYIndex = nodeY->cour;
-    routeVLoadPenalty = routeV->load > params.vehicleCapacity;
 }
 
 bool LocalSearch::MoveSingleClient()
@@ -191,8 +189,8 @@ bool LocalSearch::MoveSingleClient()
 
     if (routeU != routeV)
     {
-        if (!routeULoadPenalty && routeU->twData.timeWarp == 0
-            && costSuppU + costSuppV >= 0)
+        if (routeU->load <= params.vehicleCapacity
+            && routeU->twData.timeWarp == 0 && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -274,8 +272,8 @@ bool LocalSearch::MoveTwoClients()
 
     if (routeU != routeV)
     {
-        if (!routeULoadPenalty && routeU->twData.timeWarp == 0
-            && costSuppU + costSuppV >= 0)
+        if (routeU->load <= params.vehicleCapacity
+            && routeU->twData.timeWarp == 0 && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -365,8 +363,8 @@ bool LocalSearch::MoveTwoClientsReversed()
 
     if (routeU != routeV)
     {
-        if (!routeULoadPenalty && routeU->twData.timeWarp == 0
-            && costSuppU + costSuppV >= 0)
+        if (routeU->load <= params.vehicleCapacity
+            && routeU->twData.timeWarp == 0 && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -459,9 +457,10 @@ bool LocalSearch::SwapTwoSingleClients()
 
     if (routeU != routeV)
     {
-        if (!routeULoadPenalty && routeU->twData.timeWarp == 0
-            && !routeVLoadPenalty && routeV->twData.timeWarp == 0
-            && costSuppU + costSuppV >= 0)
+        if (routeU->load <= params.vehicleCapacity
+            && routeU->twData.timeWarp == 0
+            && routeV->load <= params.vehicleCapacity
+            && routeV->twData.timeWarp == 0 && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -552,9 +551,10 @@ bool LocalSearch::SwapTwoClientsForOne()
 
     if (routeU != routeV)
     {
-        if (!routeULoadPenalty && routeU->twData.timeWarp == 0
-            && !routeVLoadPenalty && routeV->twData.timeWarp == 0
-            && costSuppU + costSuppV >= 0)
+        if (routeU->load <= params.vehicleCapacity
+            && routeU->twData.timeWarp == 0
+            && routeV->load <= params.vehicleCapacity
+            && routeV->twData.timeWarp == 0 && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -654,9 +654,10 @@ bool LocalSearch::SwapTwoClientPairs()
 
     if (routeU != routeV)
     {
-        if (!routeULoadPenalty && routeU->twData.timeWarp == 0
-            && !routeVLoadPenalty && routeV->twData.timeWarp == 0
-            && costSuppU + costSuppV >= 0)
+        if (routeU->load <= params.vehicleCapacity
+            && routeU->twData.timeWarp == 0
+            && routeV->load <= params.vehicleCapacity
+            && routeV->twData.timeWarp == 0 && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -800,7 +801,8 @@ bool LocalSearch::TwoOptBetweenTrips()
     int costSuppV = params.dist(nodeVIndex, nodeXIndex)
                     - params.dist(nodeVIndex, nodeYIndex);
 
-    if (!routeULoadPenalty && routeU->twData.timeWarp == 0 && !routeVLoadPenalty
+    if (routeU->load <= params.vehicleCapacity && routeU->twData.timeWarp == 0
+        && routeV->load <= params.vehicleCapacity
         && routeV->twData.timeWarp == 0 && costSuppU + costSuppV >= 0)
     {
         return false;

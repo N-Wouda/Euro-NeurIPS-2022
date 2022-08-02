@@ -192,7 +192,6 @@ class LocalSearch
     Route *routeV;
     int nodeUPrevIndex, nodeUIndex, nodeXIndex, nodeXNextIndex;
     int nodeVPrevIndex, nodeVIndex, nodeYIndex, nodeYNextIndex;
-    bool routeULoadPenalty, routeVLoadPenalty;
 
     void setLocalVariablesRouteU();  // Initializes some local variables and
                                      // distances associated to routeU to avoid
