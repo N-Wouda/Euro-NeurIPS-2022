@@ -270,8 +270,8 @@ class LocalSearch
     bool swapStar(bool withTW,
                   int &nbMoves,
                   bool &searchCompleted,
-                  Node *nodeU,
-                  Node *nodeV);
+                  Route *routeU,
+                  Route *routeV);
 
     // Calculates the insertion cost and position in the route of V, where V is
     // omitted
@@ -293,10 +293,6 @@ class LocalSearch
     // Calculates all SWAP* between nodeU and all routes recently changed
     bool RelocateStar(int &nbMoves,
                       bool &searchCompleted,
-                      Node *nodeU,
-                      Node *nodeV,
-                      Node *nodeX,
-                      Node *nodeY,
                       Route *routeU,
                       Route *routeV);
 
