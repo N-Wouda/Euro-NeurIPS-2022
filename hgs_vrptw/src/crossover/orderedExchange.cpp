@@ -21,7 +21,7 @@ Offsets getStartEnd(int n, XorShift128 &rng)
 }
 
 Individual
-doOnce(Parents const &parents, Params const &params, Offsets const &offsets)
+doExchange(Parents const &parents, Params const &params, Offsets const &offsets)
 {
     auto const &tour1 = parents.first->getTour();
     auto const &tour2 = parents.second->getTour();
@@ -58,10 +58,10 @@ orderedExchange(Parents const &parents, Params const &params, XorShift128 &rng)
     // Performs another binary tournament with the crossover results. This is
     // not unlike ``Genetic::crossoverOX`` in the baseline.
     auto const slice1 = getStartEnd(params.nbClients, rng);
-    auto const indiv1 = doOnce(parents, params, slice1);
+    auto const indiv1 = doExchange(parents, params, slice1);
 
     auto const slice2 = getStartEnd(params.nbClients, rng);
-    auto const indiv2 = doOnce(parents, params, slice2);
+    auto const indiv2 = doExchange(parents, params, slice2);
 
     return std::min(indiv1, indiv2);
 }
