@@ -105,8 +105,8 @@ void GeneticAlgorithm::updatePenalties()
         else if (currFeas > params.config.targetFeasible + 0.05)
             currPenalty = params.config.penaltyDecrease * currPenalty - 1;
 
-        // Setting some bounds [1, 100000] to the penalty values for safety
-        return static_cast<int>(std::max(std::min(currPenalty, 100000.), 1.));
+        // Bound the penalty term to avoid overflow in later cost computations.
+        return static_cast<int>(std::max(std::min(currPenalty, 1000.), 1.));
     };
 
     double fracFeasLoad = std::accumulate(loadFeas.begin(), loadFeas.end(), 0.);
