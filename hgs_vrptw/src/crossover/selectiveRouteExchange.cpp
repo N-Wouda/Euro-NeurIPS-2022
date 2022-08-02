@@ -251,5 +251,5 @@ Individual selectiveRouteExchange(
     Individual indiv1{&params, parents.first->getTour(), routes1};
     Individual indiv2{&params, parents.second->getTour(), routes2};
 
-    return indiv1.cost() < indiv2.cost() ? indiv1 : indiv2;
+    return indiv1 < indiv2 ? indiv1 : indiv2;
 }

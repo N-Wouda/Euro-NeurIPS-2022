@@ -66,8 +66,7 @@ Individual GeneticAlgorithm::crossover() const
     for (auto const &op : operators)
         offspring.push_back(op(parents, params, rng));
 
-    auto comp = [](auto &a, auto &b) { return a.cost() < b.cost(); };
-    return *std::max_element(offspring.begin(), offspring.end(), comp);
+    return *std::min_element(offspring.begin(), offspring.end());
 }
 
 void GeneticAlgorithm::educate(Individual &indiv)

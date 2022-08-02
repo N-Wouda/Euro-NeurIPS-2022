@@ -108,6 +108,11 @@ public:
     // computational time).
     void exportCVRPLibFormat(std::string const &path, double time) const;
 
+    bool operator<(Individual const &other) const
+    {
+        return cost() < other.cost();
+    }
+
     Individual(Params const *params, XorShift128 *rng);  // random individual
 
     Individual(Params const *params, Clients tour);  // from tour

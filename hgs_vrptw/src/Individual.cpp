@@ -328,6 +328,12 @@ Individual::Individual(Params const *params,
                        std::vector<Clients> routes)
     : params(params), tourChrom(std::move(tour)), routeChrom(std::move(routes))
 {
+    // a precedes b only when a is not empty and b is. Combined with a stable
+    // sort, this ensures we keep the original sorting as much as possible, but
+    // also make sure all empty routes are at the end of routeChrom.
+    auto comp = [](auto &a, auto &b) { return !a.empty() && b.empty(); };
+    std::stable_sort(routeChrom.begin(), routeChrom.end(), comp);
+
     evaluateCompleteCost();
 }
 

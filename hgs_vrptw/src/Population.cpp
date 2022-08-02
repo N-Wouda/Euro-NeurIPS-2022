@@ -40,7 +40,7 @@ void Population::addIndividual(Individual const &indiv)
         while (population.size() > params.config.minimumPopulationSize)
             removeWorstBiasedFitness();
 
-    if (indiv.isFeasible() && indiv.cost() < bestSol.cost())
+    if (indiv.isFeasible() && indiv < bestSol)
         bestSol = indiv;
 }
 
