@@ -25,11 +25,8 @@ PYBIND11_MODULE(hgspy, m)
         .def(py::init<Params *, std::vector<int>>(),
              py::arg("params"),
              py::arg("tour"))
-        .def(py::init<Params *,
-                      std::vector<int>,
-                      std::vector<std::vector<int>>>(),
+        .def(py::init<Params *, std::vector<std::vector<int>>>(),
              py::arg("params"),
-             py::arg("tour"),
              py::arg("routes"))
         .def("cost", &Individual::cost)
         .def("get_routes", &Individual::getRoutes)

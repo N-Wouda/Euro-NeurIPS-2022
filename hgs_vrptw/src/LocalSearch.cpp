@@ -1574,9 +1574,6 @@ Individual LocalSearch::exportIndividual()
     // appear at the end
     std::sort(routePolarAngles.begin(), routePolarAngles.end());
 
-    std::vector<int> tour;
-    tour.reserve(params.nbClients);
-
     std::vector<std::vector<int>> indivRoutes(params.nbVehicles);
 
     for (int r = 0; r < params.nbVehicles; r++)
@@ -1585,13 +1582,12 @@ Individual LocalSearch::exportIndividual()
 
         while (!node->isDepot)
         {
-            tour.push_back(node->cour);
             indivRoutes[r].push_back(node->cour);
             node = node->next;
         }
     }
 
-    return {&params, tour, indivRoutes};
+    return {&params, indivRoutes};
 }
 
 LocalSearch::LocalSearch(Params &params, XorShift128 &rng)

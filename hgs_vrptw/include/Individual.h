@@ -107,7 +107,7 @@ public:
 
     Individual(Params *params, Tour tour);
 
-    Individual(Params *params, Tour tour, Routes routes);
+    Individual(Params *params, Routes routes);
 
     ~Individual();
 };

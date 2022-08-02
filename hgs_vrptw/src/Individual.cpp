@@ -141,14 +141,12 @@ void Individual::makeRoutes()
     int end = params->nbClients;
     for (auto &route : routeChrom)
     {
-        route.clear();
+        if (end == 0)
+            break;
 
-        if (end != 0)  // assign routes
-        {
-            int begin = splits.predecessors[end];
-            route = {tourChrom.begin() + begin, tourChrom.begin() + end};
-            end = begin;
-        }
+        int begin = splits.predecessors[end];
+        route = {tourChrom.begin() + begin, tourChrom.begin() + end};
+        end = begin;
     }
 
     evaluateCompleteCost();
@@ -322,9 +320,15 @@ Individual::Individual(Params *params, Tour tour)
     makeRoutes();
 }
 
-Individual::Individual(Params *params, Tour tour, Routes routes)
-    : params(params), tourChrom(std::move(tour)), routeChrom(std::move(routes))
+Individual::Individual(Params *params, Routes routes)
+    : params(params), tourChrom(), routeChrom(std::move(routes))
 {
+    tourChrom.reserve(params->nbClients);
+
+    for (auto const &route : routeChrom)
+        for (Client c : route)
+            tourChrom.push_back(c);
+
     evaluateCompleteCost();
 }
 
