@@ -162,8 +162,6 @@ void LocalSearch::setLocalVariablesRouteU()
     nodeUIndex = nodeU->cour;
     nodeUPrevIndex = nodeU->prev->cour;
     nodeXIndex = nodeX->cour;
-    loadU = params.clients[nodeUIndex].demand;
-    loadX = params.clients[nodeXIndex].demand;
     routeUTimeWarp = routeU->twData.timeWarp > 0;
     routeULoadPenalty = routeU->load > params.vehicleCapacity;
 }
@@ -176,8 +174,6 @@ void LocalSearch::setLocalVariablesRouteV()
     nodeVIndex = nodeV->cour;
     nodeVPrevIndex = nodeV->prev->cour;
     nodeYIndex = nodeY->cour;
-    loadV = params.clients[nodeVIndex].demand;
-    loadY = params.clients[nodeYIndex].demand;
     routeVTimeWarp = routeV->twData.timeWarp > 0;
     routeVLoadPenalty = routeV->load > params.vehicleCapacity;
 }
@@ -207,11 +203,13 @@ bool LocalSearch::MoveSingleClient()
         auto routeVTwData = mergeTwDataRecursive(
             nodeV->prefixTwData, nodeU->twData, nodeY->postfixTwData);
 
-        costSuppU += penalties.load(routeU->load - loadU)
-                     + penalties.timeWarp(routeUTwData) - routeU->penalty;
+        costSuppU
+            += penalties.load(routeU->load - params.clients[nodeUIndex].demand)
+               + penalties.timeWarp(routeUTwData) - routeU->penalty;
 
-        costSuppV += penalties.load(routeV->load + loadU)
-                     + penalties.timeWarp(routeVTwData) - routeV->penalty;
+        costSuppV
+            += penalties.load(routeV->load + params.clients[nodeUIndex].demand)
+               + penalties.timeWarp(routeVTwData) - routeV->penalty;
     }
     else
     {
@@ -288,11 +286,15 @@ bool LocalSearch::MoveTwoClients()
                                                  getEdgeTwData(nodeU, nodeX),
                                                  nodeY->postfixTwData);
 
-        costSuppU += penalties.load(routeU->load - loadU - loadX)
-                     + penalties.timeWarp(routeUTwData) - routeU->penalty;
+        costSuppU
+            += penalties.load(routeU->load - params.clients[nodeUIndex].demand
+                              - params.clients[nodeXIndex].demand)
+               + penalties.timeWarp(routeUTwData) - routeU->penalty;
 
-        costSuppV += penalties.load(routeV->load + loadU + loadX)
-                     + penalties.timeWarp(routeVTwData) - routeV->penalty;
+        costSuppV
+            += penalties.load(routeV->load + params.clients[nodeUIndex].demand
+                              + params.clients[nodeXIndex].demand)
+               + penalties.timeWarp(routeVTwData) - routeV->penalty;
     }
     else
     {
@@ -374,11 +376,15 @@ bool LocalSearch::MoveTwoClientsReversed()
                                                  getEdgeTwData(nodeX, nodeU),
                                                  nodeY->postfixTwData);
 
-        costSuppU += penalties.load(routeU->load - loadU - loadX)
-                     + penalties.timeWarp(routeUTwData) - routeU->penalty;
+        costSuppU
+            += penalties.load(routeU->load - params.clients[nodeUIndex].demand
+                              - params.clients[nodeXIndex].demand)
+               + penalties.timeWarp(routeUTwData) - routeU->penalty;
 
-        costSuppV += penalties.load(routeV->load + loadU + loadX)
-                     + penalties.timeWarp(routeVTwData) - routeV->penalty;
+        costSuppV
+            += penalties.load(routeV->load + params.clients[nodeUIndex].demand
+                              + params.clients[nodeXIndex].demand)
+               + penalties.timeWarp(routeVTwData) - routeV->penalty;
     }
     else
     {
@@ -463,11 +469,15 @@ bool LocalSearch::SwapTwoSingleClients()
         auto routeVTwData = mergeTwDataRecursive(
             nodeV->prev->prefixTwData, nodeU->twData, nodeY->postfixTwData);
 
-        costSuppU += penalties.load(routeU->load + loadV - loadU)
-                     + penalties.timeWarp(routeUTwData) - routeU->penalty;
+        costSuppU
+            += penalties.load(routeU->load + params.clients[nodeVIndex].demand
+                              - params.clients[nodeUIndex].demand)
+               + penalties.timeWarp(routeUTwData) - routeU->penalty;
 
-        costSuppV += penalties.load(routeV->load + loadU - loadV)
-                     + penalties.timeWarp(routeVTwData) - routeV->penalty;
+        costSuppV
+            += penalties.load(routeV->load + params.clients[nodeUIndex].demand
+                              - params.clients[nodeVIndex].demand)
+               + penalties.timeWarp(routeVTwData) - routeV->penalty;
     }
     else
     {
@@ -553,11 +563,17 @@ bool LocalSearch::SwapTwoClientsForOne()
                                                  getEdgeTwData(nodeU, nodeX),
                                                  nodeY->postfixTwData);
 
-        costSuppU += penalties.load(routeU->load + loadV - loadU - loadX)
-                     + penalties.timeWarp(routeUTwData) - routeU->penalty;
+        costSuppU
+            += penalties.load(routeU->load + params.clients[nodeVIndex].demand
+                              - params.clients[nodeUIndex].demand
+                              - params.clients[nodeXIndex].demand)
+               + penalties.timeWarp(routeUTwData) - routeU->penalty;
 
-        costSuppV += penalties.load(routeV->load + loadU + loadX - loadV)
-                     + penalties.timeWarp(routeVTwData) - routeV->penalty;
+        costSuppV
+            += penalties.load(routeV->load + params.clients[nodeUIndex].demand
+                              + params.clients[nodeXIndex].demand
+                              - params.clients[nodeVIndex].demand)
+               + penalties.timeWarp(routeVTwData) - routeV->penalty;
     }
     else
     {
@@ -649,11 +665,17 @@ bool LocalSearch::SwapTwoClientPairs()
                                                  nodeY->next->postfixTwData);
 
         costSuppU
-            += penalties.load(routeU->load + loadV + loadY - loadU - loadX)
+            += penalties.load(routeU->load + params.clients[nodeVIndex].demand
+                              + params.clients[nodeYIndex].demand
+                              - params.clients[nodeUIndex].demand
+                              - params.clients[nodeXIndex].demand)
                + penalties.timeWarp(routeUTwData) - routeU->penalty;
 
         costSuppV
-            += penalties.load(routeV->load + loadU + loadX - loadV - loadY)
+            += penalties.load(routeV->load + params.clients[nodeUIndex].demand
+                              + params.clients[nodeXIndex].demand
+                              - params.clients[nodeVIndex].demand
+                              - params.clients[nodeYIndex].demand)
                + penalties.timeWarp(routeVTwData) - routeV->penalty;
     }
     else
@@ -1078,23 +1100,24 @@ bool LocalSearch::RelocateStar()
 
         TimeWindowData const routeUTwData = mergeTwDataRecursive(
             nodeU->prev->prefixTwData, nodeX->postfixTwData);
-        int const costSuppU = params.dist(nodeUPrevIndex, nodeXIndex)
-                              - params.dist(nodeUPrevIndex, nodeUIndex)
-                              - params.dist(nodeUIndex, nodeXIndex)
-                              + penalties.load(routeU->load - loadU)
-                              + penalties.timeWarp(routeUTwData)
-                              - routeU->penalty;
+        int const costSuppU
+            = params.dist(nodeUPrevIndex, nodeXIndex)
+              - params.dist(nodeUPrevIndex, nodeUIndex)
+              - params.dist(nodeUIndex, nodeXIndex)
+              + penalties.load(routeU->load - params.clients[nodeUIndex].demand)
+              + penalties.timeWarp(routeUTwData) - routeU->penalty;
 
         for (Node *V = routeV->depot->next; !V->isDepot; V = V->next)
         {
             TimeWindowData const routeVTwData = mergeTwDataRecursive(
                 V->prefixTwData, nodeU->twData, V->next->postfixTwData);
-            int const costSuppV = params.dist(V->cour, nodeUIndex)
-                                  + params.dist(nodeUIndex, V->next->cour)
-                                  - params.dist(V->cour, V->next->cour)
-                                  + penalties.load(routeV->load + loadU)
-                                  + penalties.timeWarp(routeVTwData)
-                                  - routeV->penalty;
+            int const costSuppV
+                = params.dist(V->cour, nodeUIndex)
+                  + params.dist(nodeUIndex, V->next->cour)
+                  - params.dist(V->cour, V->next->cour)
+                  + penalties.load(routeV->load
+                                   + params.clients[nodeUIndex].demand)
+                  + penalties.timeWarp(routeVTwData) - routeV->penalty;
             if (costSuppU + costSuppV < bestCost)
             {
                 bestCost = costSuppU + costSuppV;
