@@ -16,8 +16,9 @@ def parse_args():
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--time_limit", type=int, default=10)
     parser.add_argument("--num_procs", type=int, default=4)
-    parser.add_argument("--instance_pattern",
-                        default="instances/ORTEC-VRPTW-ASYM-*.txt")
+    parser.add_argument(
+        "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
+    )
 
     return parser.parse_args()
 
@@ -65,11 +66,15 @@ def tabulate(headers, rows) -> str:
         for idx, cell in enumerate(row):
             lengths[idx] = max(lengths[idx], len(str(cell)))
 
-    lines = ["  ".join(f"{h:<{l}s}" for l, h in zip(lengths, headers)),
-             "  ".join("-" * l for l in lengths)]
+    lines = [
+        "  ".join(f"{h:<{l}s}" for l, h in zip(lengths, headers)),
+        "  ".join("-" * l for l in lengths),
+    ]
 
     for row in rows:
-        lines.append("  ".join(f"{str(c):>{l}s}" for l, c in zip(lengths, row)))
+        lines.append(
+            "  ".join(f"{str(c):>{l}s}" for l, c in zip(lengths, row))
+        )
 
     return "\n".join(lines)
 
@@ -84,20 +89,22 @@ def main():
     tqdm_kwargs = dict(max_workers=args.num_procs, unit="instance")
     data = process_map(func, func_args, **tqdm_kwargs)
 
-    dtypes = [('inst', 'U37'),
-              ('ok', 'U1'),
-              ('obj', int),
-              ('iters', int),
-              ('nb_improv', int)]
+    dtypes = [
+        ("inst", "U37"),
+        ("ok", "U1"),
+        ("obj", int),
+        ("iters", int),
+        ("nb_improv", int),
+    ]
     data = np.array(data, dtype=dtypes)
 
     headers = ["Instance", "OK?", "Objective", "Iters. (#)", "Improv. (#)"]
     table = tabulate(headers, data)
 
-    print('\n', table, '\n', sep="")
+    print("\n", table, "\n", sep="")
 
-    obj_all = data['obj']
-    obj_feas = data[data['ok'] == 'Y']['obj']
+    obj_all = data["obj"]
+    obj_feas = data[data["ok"] == "Y"]["obj"]
 
     print(f"      Avg. objective: {obj_all.mean():.0f}", end=" ")
     print(f"(w/o infeas: {obj_feas.mean():.0f})" if obj_feas.size > 0 else "")
