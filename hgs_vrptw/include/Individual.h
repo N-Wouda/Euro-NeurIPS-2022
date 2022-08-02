@@ -12,7 +12,8 @@
 class Individual
 {
     using Client = int;
-    using Clients = std::vector<Client>;
+    using Tour = std::vector<Client>;
+    using Routes = std::vector<Tour>;
 
     size_t nbRoutes = 0;        // Number of routes
     size_t distance = 0;        // Total distance
@@ -28,12 +29,12 @@ class Individual
 
     // Giant tour representing the individual: list of integers representing
     // clients (can not be the depot 0). Size is nbClients.
-    Clients tourChrom;
+    Tour tourChrom;
 
     // For each vehicle, the associated sequence of deliveries (complete
     // solution). Size is nbVehicles, but quite a few routes are likely empty
     // - the numRoutes() member indicates the number of nonempty routes.
-    std::vector<Clients> routeChrom;
+    Routes routeChrom;
 
     // Splits the tour chromosome into routes using the linear split algorithm
     void makeRoutes();
@@ -50,25 +51,24 @@ public:
     /**
      * Returns this individual's objective (penalized cost).
      */
-    [[nodiscard]] inline double cost() const
+    [[nodiscard]] inline size_t cost() const
     {
-        return static_cast<double>(distance)
-               + static_cast<double>(capacityExcess) * params->penaltyCapacity
-               + static_cast<double>(timeWarp) * params->penaltyTimeWarp;
+        // clang-format off
+        return distance
+               + capacityExcess * params->penaltyCapacity
+               + timeWarp * params->penaltyTimeWarp;
+        // clang-format on
     }
 
     /**
      * Returns this individual's routing decisions.
      */
-    [[nodiscard]] inline std::vector<Clients> const &getRoutes() const
-    {
-        return routeChrom;
-    }
+    [[nodiscard]] inline Routes const &getRoutes() const { return routeChrom; }
 
     /**
      * Returns this individual's giant tour chromosome.
      */
-    [[nodiscard]] inline Clients const &getTour() const { return tourChrom; }
+    [[nodiscard]] inline Tour const &getTour() const { return tourChrom; }
 
     /**
      * Returns true when this solution is feasible; false otherwise.
@@ -105,11 +105,9 @@ public:
 
     Individual(Params *params, XorShift128 *rng);  // random individual
 
-    Individual(Params *params, Clients tour);  // from tour
+    Individual(Params *params, Tour tour);
 
-    Individual(Params *params,  // from tour and routes
-               Clients tour,
-               std::vector<Clients> routes);
+    Individual(Params *params, Tour tour, Routes routes);
 
     ~Individual();
 };

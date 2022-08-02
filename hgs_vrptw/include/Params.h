@@ -8,8 +8,6 @@
 #include <iosfwd>
 #include <vector>
 
-#define MY_EPSILON 0.00001  // Used to avoid numerical instabilities
-
 // Class that stores all the parameters (from the command line) (in Config) and
 // data of the instance needed by the algorithm
 class Params
@@ -51,8 +49,8 @@ public:
 
     Config const config;  // Stores all the parameter values
 
-    double penaltyCapacity;  // Excess capacity penalty (per unit)
-    double penaltyTimeWarp;  // Time warp penalty (per unit)
+    int penaltyCapacity;  // Excess capacity penalty (per unit)
+    int penaltyTimeWarp;  // Time warp penalty (per unit)
 
     int nbClients;        // Number of clients (excluding the depot)
     int nbVehicles;       // Number of vehicles
