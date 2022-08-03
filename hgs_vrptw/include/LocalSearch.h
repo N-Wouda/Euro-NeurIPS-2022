@@ -214,7 +214,6 @@ class LocalSearch
                               Node *nodeU,
                               Node *nodeV,
                               Node *nodeX,
-                              Node *nodeY,
                               Route *routeU,
                               Route *routeV);
 
@@ -224,7 +223,6 @@ class LocalSearch
                               Node *nodeU,
                               Node *nodeV,
                               Node *nodeX,
-                              Node *nodeY,
                               Route *routeU,
                               Route *routeV);
 
@@ -234,7 +232,6 @@ class LocalSearch
                             Node *nodeU,
                             Node *nodeV,
                             Node *nodeX,
-                            Node *nodeY,
                             Route *routeU,
                             Route *routeV);
 
