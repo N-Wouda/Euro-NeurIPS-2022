@@ -50,6 +50,34 @@ void printRoute(Route const route, std::string text)
     //     printf("%d-", c);
     // printf("\n");
 }
+
+// Selects a substring of the route to be removed
+std::vector<int>
+selectString(Route route, Client client, int card, XorShift128 &rng)
+{
+    std::vector<int>::iterator itr
+        = std::find(route.begin(), route.end(), client);
+    int idx = std::distance(route.begin(), itr);
+    auto pos = rng.randint(card);
+    auto start = idx - pos;
+
+    std::vector<int> idcs;
+    for (auto i = start; i < start + card; i++)
+        idcs.push_back(i % route.size());
+    // printRoute(route, std::string("Old route: "));
+
+    // printf("String indices: ");
+    // for (auto i : idcs)
+    //     printf("%d-", i);
+    // printf("\n");
+
+    // printf("Route string: ");
+    // for (auto i : idcs)
+    //     printf("%d-", route[i]);
+    // printf("\n");
+
+    return idcs;
+}
 Destroyed stringRemoval(Routes routes,
                         Client center,
                         Params const &params,
@@ -97,56 +125,28 @@ Destroyed stringRemoval(Routes routes,
                                 static_cast<size_t>(route.size()), maxCard))
                             + 1;
 
-                std::vector<int>::iterator itr
-                    = std::find(route.begin(), route.end(), client);
-                int idx = std::distance(route.begin(), itr);
-                auto pos = rng.randint(card);
-                auto start = idx - pos;
-
-                std::vector<int> idcs;
-                for (auto i = start; i < start + card; i++)
-                    idcs.push_back(i % route.size());
-
-                // printRoute(route, std::string("Old route: "));
-
-                // printf("String indices: ");
-                // for (auto i : idcs)
-                //     printf("%d-", i);
-                // printf("\n");
-
-                // printf("Route string: ");
-                // for (auto i : idcs)
-                //     printf("%d-", route[i]);
-                // printf("\n");
+                // TODO add split string procedure
+                std::vector<int> idcs = selectString(route, client, card, rng);
 
                 ClientSet removed;
                 for (auto idx : idcs)
                     removed.insert(route[idx]);
 
-                // TODO Hoe do I remove these clients?
+                // TODO How to refactor? (Got segmentation fault if merged)
                 for (auto c : removed)
                 {
                     std::vector<int>::iterator position
                         = std::find(route.begin(), route.end(), c);
                     route.erase(position);
+                    removedClients.insert(c);
                 }
 
-                // printRoute(route, std::string("New route: "));
-
-                // if (rng.randint(0) <= params.config.splitRate)
-                // auto idcs = selectString(currCurrRoute, client, card, rng);
-
-                // // TODO split string
-
                 destroyedRoutes.push_back(route);
-                for (auto c : removed)
-                    removedClients.insert(c);
-                break;
             }
         }
 
-        // printf("Removed clients: %d\n", removedClients.size());
-        // printRouteSize(routes, std::string("Size just before returning: "));
+        printf("Removed clients: %d\n", removedClients.size());
+        printRouteSize(routes, std::string("Size just before returning: "));
         return std::make_pair(routes, removedClients);
     }
 }
@@ -177,11 +177,11 @@ Individual greedyRepairWithBlinks(Routes &routes,
 
 {
     // Sort clients
-    // TODO how to add more sorting options?
     std::vector unplanned(unplannedSet.begin(), unplannedSet.end());
-    printRouteSize(routes, std::string("Initial: "));
     std::vector<int> indices(unplanned.size());
     std::iota(indices.begin(), indices.end(), 0);
+
+    // TODO how to add more sorting options?
     std::sort(indices.begin(),
               indices.end(),
               [&](int A, int B) -> bool
@@ -228,7 +228,6 @@ Individual greedyRepairWithBlinks(Routes &routes,
 
         auto const [_, route, offset] = best;
         route->insert(route->begin() + static_cast<long>(offset), client);
-        printRouteSize(routes, std::string("After:"));
     }
     return {&params, routes};
 }
