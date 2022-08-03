@@ -61,9 +61,9 @@ struct Config
     int minCircleSectorSize = static_cast<int>(15 / 360. * 65536);
 
     // SISR related parameters
-    size_t avgDestruction = 10;
+    size_t avgDestruction = 8;
     size_t maxStringCard = 10;
-    size_t splitRate = 5;
+    size_t splitRate = 50;
     size_t splitDepth = 1;
     size_t blinkRate = 1;
 
