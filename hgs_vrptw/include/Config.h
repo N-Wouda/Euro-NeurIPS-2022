@@ -63,9 +63,9 @@ struct Config
     // SISR related parameters
     size_t avgDestruction = 10;
     size_t maxStringCard = 10;
-    double splitRate = 0.5;
-    double splitDepth = 0.01;
-    double blinkRate = 0.01;
+    size_t splitRate = 5;
+    size_t splitDepth = 1;
+    size_t blinkRate = 1;
 
     explicit Config(int seed = 0,
                     size_t nbIter = 20'000,
@@ -94,9 +94,9 @@ struct Config
                     int minCircleSectorSizeDegrees = 15,
                     size_t avgDestruction = 10,
                     size_t maxStringCard = 10,
-                    double splitRate = 0.5,
-                    double splitDepth = 0.01,
-                    double blinkRate = 0.01)
+                    size_t splitRate = 50,
+                    size_t splitDepth = 1,
+                    size_t blinkRate = 1)
         : seed(seed),
           nbIter(nbIter),
           timeLimit(timeLimit),

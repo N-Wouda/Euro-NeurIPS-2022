@@ -72,7 +72,12 @@ PYBIND11_MODULE(hgspy, m)
                       bool,
                       bool,
                       int,
-                      int>(),
+                      int,
+                      size_t,
+                      size_t,
+                      size_t,
+                      size_t,
+                      size_t>(),
              py::arg("seed") = 0,
              py::arg("nbIter") = 20'000,
              py::arg("timeLimit") = INT_MAX,
@@ -97,7 +102,12 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("useSwapStarTW") = true,
              py::arg("skipSwapStarDist") = false,
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
-             py::arg("minCircleSectorSizeDegrees") = 15)
+             py::arg("minCircleSectorSizeDegrees") = 15,
+             py::arg("avgDestruction") = 10,
+             py::arg("maxStringCard") = 10,
+             py::arg("splitRate") = 50,
+             py::arg("splitDepth") = 1,
+             py::arg("blinkRate") = 1)
         .def_readonly("seed", &Config::seed)
         .def_readonly("nbIter", &Config::nbIter)
         .def_readonly("timeLimit", &Config::timeLimit)
