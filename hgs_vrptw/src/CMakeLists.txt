@@ -18,7 +18,8 @@ set(localSearchSources
         operators/swapTwoClientsForOne.cpp
         operators/swapTwoSingleClients.cpp
         operators/twoOptBetweenTrips.cpp
-        operators/twoOptWithinTrip.cpp)
+        operators/twoOptWithinTrip.cpp
+        operators/relocateStar.cpp)
 
 set(paramsSources
         Params.cpp)

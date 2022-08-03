@@ -498,58 +498,8 @@ bool LocalSearch::RelocateStar(int &nbMoves,
                                Route *routeU,
                                Route *routeV)
 {
-    int bestCost = 0;
-    Node *insertionPoint = nullptr;
-    Node *nodeToInsert = nullptr;
-    for (Node *nodeU = routeU->depot->next; !nodeU->isDepot;
-         nodeU = nodeU->next)
-    {
-        routeU = nodeU->route;
-        Node *nodeX = nodeU->next;
-
-        TimeWindowData const routeUTwData = TimeWindowData::merge(
-            nodeU->prev->prefixTwData, nodeX->postfixTwData);
-        int const costSuppU
-            = params.dist(nodeU->prev->cour, nodeX->cour)
-              - params.dist(nodeU->prev->cour, nodeU->cour)
-              - params.dist(nodeU->cour, nodeX->cour)
-              + penalties.load(routeU->load
-                               - params.clients[nodeU->cour].demand)
-              + penalties.timeWarp(routeUTwData) - routeU->penalty;
-
-        for (Node *V = routeV->depot->next; !V->isDepot; V = V->next)
-        {
-            TimeWindowData const routeVTwData = TimeWindowData::merge(
-                V->prefixTwData, nodeU->twData, V->next->postfixTwData);
-            int const costSuppV
-                = params.dist(V->cour, nodeU->cour)
-                  + params.dist(nodeU->cour, V->next->cour)
-                  - params.dist(V->cour, V->next->cour)
-                  + penalties.load(routeV->load
-                                   + params.clients[nodeU->cour].demand)
-                  + penalties.timeWarp(routeVTwData) - routeV->penalty;
-            if (costSuppU + costSuppV < bestCost)
-            {
-                bestCost = costSuppU + costSuppV;
-                insertionPoint = V;
-                nodeToInsert = nodeU;
-            }
-        }
-    }
-
-    if (!insertionPoint)
-    {
-        return false;
-    }
-
-    routeU = nodeToInsert->route;
-    insertNode(nodeToInsert, insertionPoint);
-    nbMoves++;  // Increment move counter before updating route data
-    searchCompleted = false;
-    updateRouteData(routeU, nbMoves);
-    updateRouteData(insertionPoint->route, nbMoves);
-
-    return true;
+    return relocateStar(
+        nbMoves, searchCompleted, routeU, routeV, penalties, params);
 }
 
 int LocalSearch::getCheapestInsertSimultRemoval(Node *U,

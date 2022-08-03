@@ -109,4 +109,14 @@ bool twoOptWithinTrip(int &nbMoves,
                       LocalSearch::Penalties const &penalties,
                       Params const &params);
 
+/**
+ * Performs the best moveSingleClient move between routes U and V.
+ */
+bool relocateStar(int &nbMoves,
+                  bool &searchCompleted,
+                  LocalSearch::Route *routeU,
+                  LocalSearch::Route *routeV,
+                  LocalSearch::Penalties const &penalties,
+                  Params const &params);
+
 #endif  // OPERATORS_H
