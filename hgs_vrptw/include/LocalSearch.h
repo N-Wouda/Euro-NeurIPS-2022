@@ -183,25 +183,19 @@ class LocalSearch
     bool MoveSingleClient(int &nbMoves,
                           bool &searchCompleted,
                           Node *nodeU,
-                          Node *nodeV,
-                          Route *routeU,
-                          Route *routeV);
+                          Node *nodeV);
 
     // If U and X are client nodes, remove them and insert (U,X) after V
     bool MoveTwoClients(int &nbMoves,
                         bool &searchCompleted,
                         Node *nodeU,
-                        Node *nodeV,
-                        Route *routeU,
-                        Route *routeV);
+                        Node *nodeV);
 
     // If U and X are client nodes, remove them and insert (X,U) after V
     bool MoveTwoClientsReversed(int &nbMoves,
                                 bool &searchCompleted,
                                 Node *nodeU,
-                                Node *nodeV,
-                                Route *routeU,
-                                Route *routeV);
+                                Node *nodeV);
 
     /* SWAP MOVES */
 
@@ -209,25 +203,19 @@ class LocalSearch
     bool SwapTwoSingleClients(int &nbMoves,
                               bool &searchCompleted,
                               Node *nodeU,
-                              Node *nodeV,
-                              Route *routeU,
-                              Route *routeV);
+                              Node *nodeV);
 
     // If U, X and V are client nodes, swap (U,X) and V
     bool SwapTwoClientsForOne(int &nbMoves,
                               bool &searchCompleted,
                               Node *nodeU,
-                              Node *nodeV,
-                              Route *routeU,
-                              Route *routeV);
+                              Node *nodeV);
 
     // If (U,X) and (V,Y) are client nodes, swap  (U,X) and (V,Y)
     bool SwapTwoClientPairs(int &nbMoves,
                             bool &searchCompleted,
                             Node *nodeU,
-                            Node *nodeV,
-                            Route *routeU,
-                            Route *routeV);
+                            Node *nodeV);
 
     /* 2-OPT and 2-OPT* MOVES */
 
@@ -235,17 +223,13 @@ class LocalSearch
     bool TwoOptWithinTrip(int &nbMoves,
                           bool &searchCompleted,
                           Node *nodeU,
-                          Node *nodeV,
-                          Route *routeU,
-                          Route *routeV);
+                          Node *nodeV);
 
     // If route(U) != route(V), replace (U,X) and  (V,Y) by (U,Y) and (V,X)
     bool TwoOptBetweenTrips(int &nbMoves,
                             bool &searchCompleted,
                             Node *nodeU,
-                            Node *nodeV,
-                            Route *routeU,
-                            Route *routeV);
+                            Node *nodeV);
 
     /* SUB-ROUTINES FOR EFFICIENT SWAP* EVALUATIONS */
 
