@@ -56,4 +56,14 @@ bool moveTwoClientsReversed(int &nbMoves,
                             LocalSearch::Penalties const &penalties,
                             Params const &params);
 
+/**
+ * Swaps U and V, if that is an improving move.
+ */
+bool swapTwoSingleClients(int &nbMoves,
+                          bool &searchCompleted,
+                          LocalSearch::Node *nodeU,
+                          LocalSearch::Node *nodeV,
+                          LocalSearch::Penalties const &penalties,
+                          Params const &params);
+
 #endif  // OPERATORS_H

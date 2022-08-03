@@ -13,7 +13,8 @@ set(localSearchSources
         operators/operators.cpp
         operators/moveSingleClient.cpp
         operators/moveTwoClients.cpp
-        operators/moveTwoClientsReversed.cpp)
+        operators/moveTwoClientsReversed.cpp
+        operators/swapTwoSingleClients.cpp)
 
 set(paramsSources
         Params.cpp)
