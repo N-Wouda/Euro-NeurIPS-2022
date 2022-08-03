@@ -7,15 +7,21 @@
 #include "XorShift128.h"
 
 #include <array>
+#include <cassert>
 #include <set>
 #include <vector>
 
 class LocalSearch
 {
-    struct Node;
-
     struct TimeWindowData
     {
+        // Note: [twEarly, twLate] represent the time in which we can
+        // arrive at the first node and execute the min cost route. Arriving
+        // later would lead to (additional) time warp and arriving earlier would
+        // lead to (additional) waiting time, not necessarily at the first node.
+
+        Params const *params;
+
         int idxFirst;
         int idxLast;
         int duration;  // Cumulative duration, including waiting and servicing
@@ -28,11 +34,38 @@ class LocalSearch
         int latestReleaseTime;  // Latest of all release times of customers in
                                 // sequence, so route cannot dispatch before
 
-        // Note: [twEarly, twLate] represent the time in which we can
-        // arrive at the first node and execute the min cost route. Arriving
-        // later would lead to (additional) time warp and arriving earlier would
-        // lead to (additional) waiting time, not necessarily at the first node.
+        [[nodiscard]] inline TimeWindowData
+        merge(TimeWindowData const &other) const
+        {
+            int dist = params->dist(idxLast, other.idxFirst);
+            int delta = duration - timeWarp + dist;
+            int deltaWaitTime = std::max(other.twEarly - delta - twLate, 0);
+            int deltaTimeWarp = std::max(twEarly + delta - other.twLate, 0);
+
+            return {params,
+                    idxFirst,
+                    other.idxLast,
+                    duration + other.duration + dist + deltaWaitTime,
+                    timeWarp + other.timeWarp + deltaTimeWarp,
+                    std::max(other.twEarly - delta, twEarly) - deltaWaitTime,
+                    std::min(other.twLate - delta, twLate) + deltaTimeWarp,
+                    std::max(latestReleaseTime, other.latestReleaseTime)};
+        }
+
+        template <typename... Args>
+        [[nodiscard]] inline static TimeWindowData merge(
+            TimeWindowData const &tw1, TimeWindowData const &tw2, Args... args)
+        {
+            auto const res = tw1.merge(tw2);
+
+            if constexpr (sizeof...(args) == 0)
+                return res;
+            else
+                return merge(res, args...);
+        }
     };
+
+    struct Node;
 
     struct Route
     {
@@ -84,6 +117,39 @@ class LocalSearch
             toNextSeedTwD;  // TimeWindowData for subsequence (cour...cour+4)
                             // excluding self, including cour + 4
         Node *nextSeed;     // next seeded node if available (nullptr otherwise)
+
+        // Calculates time window data for segment [self, other] in same route
+        TimeWindowData getRouteSegmentTwData(Node *other)
+        {
+            assert(route == other->route);
+
+            if (isDepot)
+                return other->prefixTwData;
+
+            if (other->isDepot)
+                return postfixTwData;
+
+            Node *node = this;
+            TimeWindowData data = twData;
+
+            int const targetPos = other->position;
+
+            while (node != other)
+            {
+                if (node->isSeed && node->position + 4 <= targetPos)
+                {
+                    data = TimeWindowData::merge(data, node->toNextSeedTwD);
+                    node = node->nextSeed;
+                }
+                else
+                {
+                    node = node->next;
+                    data = TimeWindowData::merge(data, node->twData);
+                }
+            }
+
+            return data;
+        }
     };
 
     // Structure used in SWAP* to remember the three best insertion positions of
@@ -263,29 +329,6 @@ class LocalSearch
                       bool &searchCompleted,
                       Route *routeU,
                       Route *routeV);
-
-    /* SUB-ROUTINES FOR TIME WINDOWS */
-
-    // Calculates time window data for edge between U and V, does not have
-    // to be currently adjacent
-    TimeWindowData getEdgeTwData(Node *U, Node *V);
-
-    // Calculates time window data for segment in single route
-    TimeWindowData getRouteSegmentTwData(Node *U, Node *V);
-
-    [[nodiscard]] inline TimeWindowData
-    mergeTwDataRecursive(TimeWindowData const &twData1,
-                         TimeWindowData const &twData2) const;
-
-    template <typename... Args>
-    [[nodiscard]] inline TimeWindowData
-    mergeTwDataRecursive(TimeWindowData const &first,
-                         TimeWindowData const &second,
-                         Args... args) const
-    {
-        TimeWindowData const result = mergeTwDataRecursive(first, second);
-        return mergeTwDataRecursive(result, args...);
-    }
 
     /* ROUTINES TO UPDATE THE SOLUTIONS */
 
