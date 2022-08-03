@@ -230,7 +230,12 @@ void LocalSearch::search()
                             params.config.circleSectorOverlapTolerance))
                         continue;
 
-                    if (RelocateStar(nbMoves, searchCompleted, routeU, routeV))
+                    if (relocateStar(nbMoves,
+                                     searchCompleted,
+                                     routeU,
+                                     routeV,
+                                     penalties,
+                                     params))
                         continue;
                     if (swapStar(
                             false, nbMoves, searchCompleted, routeU, routeV))
@@ -491,15 +496,6 @@ bool LocalSearch::swapStar(bool const withTW,
     updateRouteData(routeV, nbMoves);
 
     return true;
-}
-
-bool LocalSearch::RelocateStar(int &nbMoves,
-                               bool &searchCompleted,
-                               Route *routeU,
-                               Route *routeV)
-{
-    return relocateStar(
-        nbMoves, searchCompleted, routeU, routeV, penalties, params);
 }
 
 int LocalSearch::getCheapestInsertSimultRemoval(Node *U,

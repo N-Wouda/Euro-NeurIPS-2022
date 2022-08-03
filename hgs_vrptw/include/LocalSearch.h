@@ -268,14 +268,6 @@ private:
     // Preprocess all insertion costs of nodes of route R1 in route R2
     void preprocessInsertionsWithTW(Route *R1, Route *R2, int nbMoves);
 
-    /* RELOCATE MOVES BETWEEN TRIPS*/
-
-    // Calculates all SWAP* between nodeU and all routes recently changed
-    bool RelocateStar(int &nbMoves,
-                      bool &searchCompleted,
-                      Route *routeU,
-                      Route *routeV);
-
     /* ROUTINES TO UPDATE THE SOLUTIONS */
 
     // Solution update: Insert U after V
