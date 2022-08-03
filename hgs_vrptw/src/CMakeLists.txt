@@ -9,7 +9,9 @@ set(individualSources
         Individual.cpp)
 
 set(localSearchSources
-        LocalSearch.cpp)
+        LocalSearch.cpp
+        operators/operators.cpp
+        operators/moveSingleClient.cpp)
 
 set(paramsSources
         Params.cpp)

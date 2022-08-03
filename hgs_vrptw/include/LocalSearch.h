@@ -13,6 +13,7 @@
 
 class LocalSearch
 {
+public:
     struct TimeWindowData
     {
         // Note: [twEarly, twLate] represent the time in which we can
@@ -151,6 +152,28 @@ class LocalSearch
         }
     };
 
+    struct Penalties
+    {
+        Params const *params;
+        int loadPenalty;
+        int timePenalty;
+
+        // Computes the total excess capacity penalty for the given load
+        [[nodiscard]] inline int load(int currLoad) const
+        {
+            auto const excessLoad = currLoad - params->vehicleCapacity;
+            return std::max(excessLoad, 0) * loadPenalty;
+        }
+
+        // Computes the total time warp penalty for the given time window data
+        [[nodiscard]] inline int timeWarp(TimeWindowData const &twData) const
+        {
+            auto const releaseWarp = twData.latestReleaseTime - twData.twLate;
+            return (twData.timeWarp + std::max(releaseWarp, 0)) * timePenalty;
+        }
+    };
+
+private:
     // Structure used in SWAP* to remember the three best insertion positions of
     // a client in a given route
     struct ThreeBestInsert
@@ -198,27 +221,6 @@ class LocalSearch
         Node *bestPositionU = nullptr;
         Node *V = nullptr;
         Node *bestPositionV = nullptr;
-    };
-
-    struct Penalties
-    {
-        Params const *params;
-        int loadPenalty;
-        int timePenalty;
-
-        // Computes the total excess capacity penalty for the given load
-        [[nodiscard]] inline int load(int currLoad) const
-        {
-            auto const excessLoad = currLoad - params->vehicleCapacity;
-            return std::max(excessLoad, 0) * loadPenalty;
-        }
-
-        // Computes the total time warp penalty for the given time window data
-        [[nodiscard]] inline int timeWarp(TimeWindowData const &twData) const
-        {
-            auto const releaseWarp = twData.latestReleaseTime - twData.twLate;
-            return (twData.timeWarp + std::max(releaseWarp, 0)) * timePenalty;
-        }
     };
 
     Penalties penalties;

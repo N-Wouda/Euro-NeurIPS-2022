@@ -3,6 +3,7 @@
 #include "CircleSector.h"
 #include "Individual.h"
 #include "Params.h"
+#include "operators.h"
 
 #include <cmath>
 #include <numeric>
@@ -180,88 +181,8 @@ bool LocalSearch::MoveSingleClient(int &nbMoves,
                                    Node *nodeU,
                                    Node *nodeV)
 {
-    // If U already comes directly after V, this move has no effect
-    if (nodeU->cour == nodeV->next->cour)
-        return false;
-
-    int costSuppU = params.dist(nodeU->prev->cour, nodeU->next->cour)
-                    - params.dist(nodeU->prev->cour, nodeU->cour)
-                    - params.dist(nodeU->cour, nodeU->next->cour);
-    int costSuppV = params.dist(nodeV->cour, nodeU->cour)
-                    + params.dist(nodeU->cour, nodeV->next->cour)
-                    - params.dist(nodeV->cour, nodeV->next->cour);
-
-    if (nodeU->route != nodeV->route)
-    {
-        if (nodeU->route->load <= params.vehicleCapacity
-            && nodeU->route->twData.timeWarp == 0 && costSuppU + costSuppV >= 0)
-        {
-            return false;
-        }
-
-        auto routeUTwData = TimeWindowData::merge(nodeU->prev->prefixTwData,
-                                                  nodeU->next->postfixTwData);
-        auto routeVTwData = TimeWindowData::merge(
-            nodeV->prefixTwData, nodeU->twData, nodeV->next->postfixTwData);
-
-        costSuppU += penalties.load(nodeU->route->load
-                                    - params.clients[nodeU->cour].demand)
-                     + penalties.timeWarp(routeUTwData) - nodeU->route->penalty;
-
-        costSuppV += penalties.load(nodeV->route->load
-                                    + params.clients[nodeU->cour].demand)
-                     + penalties.timeWarp(routeVTwData) - nodeV->route->penalty;
-    }
-    else
-    {
-        if (nodeU->route->twData.timeWarp == 0 && costSuppU + costSuppV >= 0)
-        {
-            return false;
-        }
-
-        // Move within the same route
-        if (nodeU->position < nodeV->position)
-        {
-            // Edge case V directly after U, so X == V, this works
-            // start - ... - UPrev - X - ... - V - U - Y - ... - end
-            auto const routeUTwData
-                = TimeWindowData::merge(nodeU->prev->prefixTwData,
-                                        nodeU->next->mergeSegmentTwData(nodeV),
-                                        nodeU->twData,
-                                        nodeV->next->postfixTwData);
-
-            costSuppU += penalties.timeWarp(routeUTwData);
-        }
-        else
-        {
-            // Edge case U directly after V is excluded from beginning of
-            // function start - ... - V - U - Y - ... - UPrev - X - ... - end
-            auto const routeUTwData = TimeWindowData::merge(
-                nodeV->prefixTwData,
-                nodeU->twData,
-                nodeV->next->mergeSegmentTwData(nodeU->prev),
-                nodeU->next->postfixTwData);
-
-            costSuppU += penalties.timeWarp(routeUTwData);
-        }
-
-        // Compute new total penalty
-        costSuppU += penalties.load(nodeU->route->load) - nodeU->route->penalty;
-    }
-
-    if (costSuppU + costSuppV >= 0)
-        return false;
-
-    auto *routeU = nodeU->route;
-
-    insertNode(nodeU, nodeV);
-    nbMoves++;  // Increment move counter before updating route data
-    searchCompleted = false;
-    updateRouteData(routeU, nbMoves);
-    if (routeU != nodeV->route)
-        updateRouteData(nodeV->route, nbMoves);
-
-    return true;
+    return moveSingleClient(
+        nbMoves, searchCompleted, nodeU, nodeV, penalties, params);
 }
 
 bool LocalSearch::MoveTwoClients(int &nbMoves,
