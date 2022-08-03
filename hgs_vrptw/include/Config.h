@@ -61,8 +61,8 @@ struct Config
     int minCircleSectorSize = static_cast<int>(15 / 360. * 65536);
 
     // SISR related parameters
-    int avgDestruction = 10;
-    int maxStringCard = 10;
+    size_t avgDestruction = 10;
+    size_t maxStringCard = 10;
     double splitRate = 0.5;
     double splitDepth = 0.01;
     double blinkRate = 0.01;
@@ -92,8 +92,8 @@ struct Config
                     bool skipSwapStarDist = false,
                     int circleSectorOverlapToleranceDegrees = 0,
                     int minCircleSectorSizeDegrees = 15,
-                    int avgDestruction = 10,
-                    int maxStringCard = 10,
+                    size_t avgDestruction = 10,
+                    size_t maxStringCard = 10,
                     double splitRate = 0.5,
                     double splitDepth = 0.01,
                     double blinkRate = 0.01)
