@@ -243,60 +243,6 @@ private:
         bestInsertClientTW;  // (SWAP*) For each route and node, storing the
                              // cheapest insertion cost (including TW)
 
-    /* RELOCATE MOVES */
-
-    // If U is a client node, remove U and insert it after V
-    bool MoveSingleClient(int &nbMoves,
-                          bool &searchCompleted,
-                          Node *nodeU,
-                          Node *nodeV);
-
-    // If U and X are client nodes, remove them and insert (U,X) after V
-    bool MoveTwoClients(int &nbMoves,
-                        bool &searchCompleted,
-                        Node *nodeU,
-                        Node *nodeV);
-
-    // If U and X are client nodes, remove them and insert (X,U) after V
-    bool MoveTwoClientsReversed(int &nbMoves,
-                                bool &searchCompleted,
-                                Node *nodeU,
-                                Node *nodeV);
-
-    /* SWAP MOVES */
-
-    // If U and V are client nodes, swap U and V
-    bool SwapTwoSingleClients(int &nbMoves,
-                              bool &searchCompleted,
-                              Node *nodeU,
-                              Node *nodeV);
-
-    // If U, X and V are client nodes, swap (U,X) and V
-    bool SwapTwoClientsForOne(int &nbMoves,
-                              bool &searchCompleted,
-                              Node *nodeU,
-                              Node *nodeV);
-
-    // If (U,X) and (V,Y) are client nodes, swap  (U,X) and (V,Y)
-    bool SwapTwoClientPairs(int &nbMoves,
-                            bool &searchCompleted,
-                            Node *nodeU,
-                            Node *nodeV);
-
-    /* 2-OPT and 2-OPT* MOVES */
-
-    // If route(U) == route(V), replace (U,X) and (V,Y) by (U,V) and (X,Y)
-    bool TwoOptWithinTrip(int &nbMoves,
-                          bool &searchCompleted,
-                          Node *nodeU,
-                          Node *nodeV);
-
-    // If route(U) != route(V), replace (U,X) and  (V,Y) by (U,Y) and (V,X)
-    bool TwoOptBetweenTrips(int &nbMoves,
-                            bool &searchCompleted,
-                            Node *nodeU,
-                            Node *nodeV);
-
     /* SUB-ROUTINES FOR EFFICIENT SWAP* EVALUATIONS */
 
     // Calculates all SWAP* between routeU and routeV and apply the best
@@ -334,9 +280,6 @@ private:
 
     // Solution update: Insert U after V
     static void insertNode(Node *U, Node *V);
-
-    // Solution update: Swap U and V
-    static void swapNode(Node *U, Node *V);
 
     // Updates the preprocessed data of a route
     void updateRouteData(Route *myRoute, int nbMoves);
