@@ -11,7 +11,8 @@ set(individualSources
 set(localSearchSources
         LocalSearch.cpp
         operators/operators.cpp
-        operators/moveSingleClient.cpp)
+        operators/moveSingleClient.cpp
+        operators/moveTwoClients.cpp)
 
 set(paramsSources
         Params.cpp)
