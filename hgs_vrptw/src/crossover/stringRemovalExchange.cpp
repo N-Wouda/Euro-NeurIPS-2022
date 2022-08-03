@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <numeric>
 #include <string>
 #include <unordered_set>
 
@@ -171,15 +172,25 @@ int deltaCost(Client client, Client prev, Client next, Params const &params)
 }
 
 Individual greedyRepairWithBlinks(Routes &routes,
-                                  ClientSet unplanned,
+                                  ClientSet unplannedSet,
                                   Params const &params,
                                   XorShift128 &rng)
 
 {
+    // Sort clients
+    // TODO how to add more sorting options?
+    std::vector unplanned(unplannedSet.begin(), unplannedSet.end());
     printRouteSize(routes, std::string("Initial: "));
-    // TODO sort clients
-    for (Client client : unplanned)
+    std::vector<int> indices(unplanned.size());
+    std::iota(indices.begin(), indices.end(), 0);
+    std::sort(indices.begin(),
+              indices.end(),
+              [&](int A, int B) -> bool
+              { return params.clients[A].demand < params.clients[B].demand; });
+
+    for (int idx : indices)
     {
+        Client client = unplanned[idx];
         InsertPos best = {INT_MAX, &routes.front(), 0};
 
         for (auto &route : routes)
@@ -189,29 +200,30 @@ Individual greedyRepairWithBlinks(Routes &routes,
 
             for (size_t idx = 0; idx <= route.size(); ++idx)
             {
-                // TODO add blinks
-                Client prev, next;
+                if (rng.randint() > params.config.blinkRate)
+                {
+                    Client prev, next;
 
-                if (idx == 0)  // Currently depot -> [0]. Try depot -> client
-                {              // -> [0].
-                    prev = 0;
-                    next = route[0];
-                }
-                else if (idx == route.size())  // Currently [-1] -> depot. Try
-                {                              // [-1] -> client -> depot.
-                    prev = route.back();
-                    next = 0;
-                }
-                else  // Currently [idx - 1] -> [idx]. Try [idx - 1] ->
-                      // client
-                {     // -> [idx].
-                    prev = route[idx - 1];
-                    next = route[idx];
-                }
+                    if (idx == 0)
+                    {
+                        prev = 0;
+                        next = route[0];
+                    }
+                    else if (idx == route.size())
+                    {
+                        prev = route.back();
+                        next = 0;
+                    }
+                    else
+                    {
+                        prev = route[idx - 1];
+                        next = route[idx];
+                    }
 
-                int const cost = deltaCost(client, prev, next, params);
-                if (cost < best.deltaCost)
-                    best = {cost, &route, idx};
+                    int const cost = deltaCost(client, prev, next, params);
+                    if (cost < best.deltaCost)
+                        best = {cost, &route, idx};
+                }
             }
         }
 
