@@ -106,9 +106,15 @@ void LocalSearch::search()
 
             /* MOVES INVOLVING AN EMPTY ROUTE -- NOT TESTED IN THE FIRST LOOP TO
              * AVOID INCREASING TOO MUCH THE FLEET SIZE */
-            if (step > 0 && !emptyRoutes.empty())
+            if (step > 0)
             {
-                Node *nodeV = routes[*emptyRoutes.begin()].depot;
+                auto pred = [](auto &route) { return route.nbCustomers == 0; };
+                auto empty = std::find_if(routes.begin(), routes.end(), pred);
+
+                if (empty == routes.end())
+                    continue;
+
+                Node *nodeV = empty->depot;
 
                 if (MoveSingleClient(nbMoves, searchCompleted, nodeU, nodeV))
                     continue;  // RELOCATE
@@ -1499,7 +1505,6 @@ void LocalSearch::updateRouteData(Route *myRoute, int nbMoves)
     if (myRoute->nbCustomers == 0)
     {
         myRoute->polarAngleBarycenter = 1.e30;
-        emptyRoutes.insert(myRoute->cour);
     }
     else
     {
@@ -1523,14 +1528,11 @@ void LocalSearch::updateRouteData(Route *myRoute, int nbMoves)
                 myRoute->sector.extend(myRoute->sector.end + growSectorBy);
             }
         }
-        emptyRoutes.erase(myRoute->cour);
     }
 }
 
 void LocalSearch::loadIndividual(Individual const &indiv)
 {
-    emptyRoutes.clear();
-
     TimeWindowData depotTwData = {&params,
                                   0,
                                   0,

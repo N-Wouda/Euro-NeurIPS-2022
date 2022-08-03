@@ -227,7 +227,6 @@ class LocalSearch
 
     std::vector<int> orderNodes;   // random node order used in RI operators
     std::vector<int> orderRoutes;  // random route order used in SWAP* operators
-    std::set<int> emptyRoutes;     // indices of all empty routes
 
     /* THE SOLUTION IS REPRESENTED AS A LINKED LIST OF ELEMENTS */
     std::vector<Node> clients;    // Note that clients[0] is a sentinel value
