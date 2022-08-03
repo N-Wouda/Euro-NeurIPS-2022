@@ -57,6 +57,16 @@ bool moveTwoClientsReversed(int &nbMoves,
                             Params const &params);
 
 /**
+ * Swaps (U -> X) and V, if that is an improving move.
+ */
+bool swapTwoClientsForOne(int &nbMoves,
+                          bool &searchCompleted,
+                          LocalSearch::Node *nodeU,
+                          LocalSearch::Node *nodeV,
+                          LocalSearch::Penalties const &penalties,
+                          Params const &params);
+
+/**
  * Swaps U and V, if that is an improving move.
  */
 bool swapTwoSingleClients(int &nbMoves,
