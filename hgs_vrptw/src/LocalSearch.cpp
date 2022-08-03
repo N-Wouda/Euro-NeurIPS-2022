@@ -698,19 +698,19 @@ bool LocalSearch::SwapTwoClientPairs(int &nbMoves,
                                    getEdgeTwData(nodeU, nodeU->next),
                                    nodeV->next->next->postfixTwData);
 
-        costSuppU
-            += penalties.load(nodeU->route->load + params.clients[nodeV->cour].demand
-                              + params.clients[nodeV->next->cour].demand
-                              - params.clients[nodeU->cour].demand
-                              - params.clients[nodeU->next->cour].demand)
-               + penalties.timeWarp(routeUTwData) - nodeU->route->penalty;
+        costSuppU += penalties.load(nodeU->route->load
+                                    + params.clients[nodeV->cour].demand
+                                    + params.clients[nodeV->next->cour].demand
+                                    - params.clients[nodeU->cour].demand
+                                    - params.clients[nodeU->next->cour].demand)
+                     + penalties.timeWarp(routeUTwData) - nodeU->route->penalty;
 
-        costSuppV
-            += penalties.load(nodeV->route->load + params.clients[nodeU->cour].demand
-                              + params.clients[nodeU->next->cour].demand
-                              - params.clients[nodeV->cour].demand
-                              - params.clients[nodeV->next->cour].demand)
-               + penalties.timeWarp(routeVTwData) - nodeV->route->penalty;
+        costSuppV += penalties.load(nodeV->route->load
+                                    + params.clients[nodeU->cour].demand
+                                    + params.clients[nodeU->next->cour].demand
+                                    - params.clients[nodeV->cour].demand
+                                    - params.clients[nodeV->next->cour].demand)
+                     + penalties.timeWarp(routeVTwData) - nodeV->route->penalty;
     }
     else
     {
