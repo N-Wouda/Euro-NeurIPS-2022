@@ -16,7 +16,8 @@ set(localSearchSources
         operators/moveTwoClientsReversed.cpp
         operators/swapTwoClientPairs.cpp
         operators/swapTwoClientsForOne.cpp
-        operators/swapTwoSingleClients.cpp)
+        operators/swapTwoSingleClients.cpp
+        operators/twoOptWithinTrip.cpp)
 
 set(paramsSources
         Params.cpp)
