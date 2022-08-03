@@ -124,7 +124,12 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("skipSwapStarDist", &Config::skipSwapStarDist)
         .def_readonly("circleSectorOverlapTolerance",
                       &Config::circleSectorOverlapTolerance)
-        .def_readonly("minCircleSectorSize", &Config::minCircleSectorSize);
+        .def_readonly("minCircleSectorSize", &Config::minCircleSectorSize)
+        .def_readonly("avgDestruction", &Config::avgDestruction)
+        .def_readonly("maxStringCard", &Config::maxStringCard)
+        .def_readonly("splitRate", &Config::splitRate)
+        .def_readonly("splitDepth", &Config::splitDepth)
+        .def_readonly("blinkRate", &Config::blinkRate);
 
     py::class_<Params>(m, "Params")
         .def(py::init<Config const &,
