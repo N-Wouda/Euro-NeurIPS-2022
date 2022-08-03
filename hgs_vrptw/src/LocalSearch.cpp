@@ -218,11 +218,11 @@ bool LocalSearch::MoveSingleClient(int &nbMoves,
         {
             // Edge case V directly after U, so X == V, this works
             // start - ... - UPrev - X - ... - V - U - Y - ... - end
-            auto const routeUTwData = TimeWindowData::merge(
-                nodeU->prev->prefixTwData,
-                nodeU->next->getRouteSegmentTwData(nodeV),
-                nodeU->twData,
-                nodeV->next->postfixTwData);
+            auto const routeUTwData
+                = TimeWindowData::merge(nodeU->prev->prefixTwData,
+                                        nodeU->next->mergeSegmentTwData(nodeV),
+                                        nodeU->twData,
+                                        nodeV->next->postfixTwData);
 
             costSuppU += penalties.timeWarp(routeUTwData);
         }
@@ -233,7 +233,7 @@ bool LocalSearch::MoveSingleClient(int &nbMoves,
             auto const routeUTwData = TimeWindowData::merge(
                 nodeV->prefixTwData,
                 nodeU->twData,
-                nodeV->next->getRouteSegmentTwData(nodeU->prev),
+                nodeV->next->mergeSegmentTwData(nodeU->prev),
                 nodeU->next->postfixTwData);
 
             costSuppU += penalties.timeWarp(routeUTwData);
@@ -313,7 +313,7 @@ bool LocalSearch::MoveTwoClients(int &nbMoves,
             // - U - X - Y - ... - end
             auto const routeUTwData = TimeWindowData::merge(
                 nodeU->prev->prefixTwData,
-                nodeU->next->next->getRouteSegmentTwData(nodeV),
+                nodeU->next->next->mergeSegmentTwData(nodeV),
                 nodeU->twData,
                 nodeU->next->twData,
                 nodeV->next->postfixTwData);
@@ -329,7 +329,7 @@ bool LocalSearch::MoveTwoClients(int &nbMoves,
                 nodeV->prefixTwData,
                 nodeU->twData,
                 nodeU->next->twData,
-                nodeV->next->getRouteSegmentTwData(nodeU->prev),
+                nodeV->next->mergeSegmentTwData(nodeU->prev),
                 nodeU->next->next->postfixTwData);
 
             costSuppU += penalties.timeWarp(routeUTwData);
@@ -413,7 +413,7 @@ bool LocalSearch::MoveTwoClientsReversed(int &nbMoves,
             // - X - U - Y - ... - end
             auto const routeUTwData = TimeWindowData::merge(
                 nodeU->prev->prefixTwData,
-                nodeU->next->next->getRouteSegmentTwData(nodeV),
+                nodeU->next->next->mergeSegmentTwData(nodeV),
                 nodeU->next->twData,
                 nodeU->twData,
                 nodeV->next->postfixTwData);
@@ -429,7 +429,7 @@ bool LocalSearch::MoveTwoClientsReversed(int &nbMoves,
                 nodeV->prefixTwData,
                 nodeU->next->twData,
                 nodeU->twData,
-                nodeV->next->getRouteSegmentTwData(nodeU->prev),
+                nodeV->next->mergeSegmentTwData(nodeU->prev),
                 nodeU->next->next->postfixTwData);
 
             costSuppU += penalties.timeWarp(routeUTwData);
@@ -520,7 +520,7 @@ bool LocalSearch::SwapTwoSingleClients(int &nbMoves,
             auto const routeUTwData = TimeWindowData::merge(
                 nodeU->prev->prefixTwData,
                 nodeV->twData,
-                nodeU->next->getRouteSegmentTwData(nodeV->prev),
+                nodeU->next->mergeSegmentTwData(nodeV->prev),
                 nodeU->twData,
                 nodeV->next->postfixTwData);
 
@@ -534,7 +534,7 @@ bool LocalSearch::SwapTwoSingleClients(int &nbMoves,
             auto const routeUTwData = TimeWindowData::merge(
                 nodeV->prev->prefixTwData,
                 nodeU->twData,
-                nodeV->next->getRouteSegmentTwData(nodeU->prev),
+                nodeV->next->mergeSegmentTwData(nodeU->prev),
                 nodeV->twData,
                 nodeU->next->postfixTwData);
 
@@ -622,7 +622,7 @@ bool LocalSearch::SwapTwoClientsForOne(int &nbMoves,
             auto const routeUTwData = TimeWindowData::merge(
                 nodeU->prev->prefixTwData,
                 nodeV->twData,
-                nodeU->next->next->getRouteSegmentTwData(nodeV->prev),
+                nodeU->next->next->mergeSegmentTwData(nodeV->prev),
                 nodeU->twData,
                 nodeU->next->twData,
                 nodeV->next->postfixTwData);
@@ -637,7 +637,7 @@ bool LocalSearch::SwapTwoClientsForOne(int &nbMoves,
                 nodeV->prev->prefixTwData,
                 nodeU->twData,
                 nodeU->next->twData,
-                nodeV->next->getRouteSegmentTwData(nodeU->prev),
+                nodeV->next->mergeSegmentTwData(nodeU->prev),
                 nodeV->twData,
                 nodeU->next->next->postfixTwData);
 
@@ -736,7 +736,7 @@ bool LocalSearch::SwapTwoClientPairs(int &nbMoves,
                 nodeU->prev->prefixTwData,
                 nodeV->twData,
                 nodeV->next->twData,
-                nodeU->next->next->getRouteSegmentTwData(nodeV->prev),
+                nodeU->next->next->mergeSegmentTwData(nodeV->prev),
                 nodeU->twData,
                 nodeU->next->twData,
                 nodeV->next->next->postfixTwData);
@@ -751,7 +751,7 @@ bool LocalSearch::SwapTwoClientPairs(int &nbMoves,
                 nodeV->prev->prefixTwData,
                 nodeU->twData,
                 nodeU->next->twData,
-                nodeV->next->next->getRouteSegmentTwData(nodeU->prev),
+                nodeV->next->next->mergeSegmentTwData(nodeU->prev),
                 nodeV->twData,
                 nodeV->next->twData,
                 nodeU->next->next->postfixTwData);
@@ -1083,7 +1083,7 @@ bool LocalSearch::swapStar(bool const withTW,
         auto const routeUTwData = TimeWindowData::merge(
             myBestSwapStar.bestPositionV->prefixTwData,
             myBestSwapStar.V->twData,
-            myBestSwapStar.bestPositionV->next->getRouteSegmentTwData(
+            myBestSwapStar.bestPositionV->next->mergeSegmentTwData(
                 myBestSwapStar.U->prev),
             myBestSwapStar.U->next->postfixTwData);
 
@@ -1093,7 +1093,7 @@ bool LocalSearch::swapStar(bool const withTW,
     {
         auto const routeUTwData = TimeWindowData::merge(
             myBestSwapStar.U->prev->prefixTwData,
-            myBestSwapStar.U->next->getRouteSegmentTwData(
+            myBestSwapStar.U->next->mergeSegmentTwData(
                 myBestSwapStar.bestPositionV),
             myBestSwapStar.V->twData,
             myBestSwapStar.bestPositionV->next->postfixTwData);
@@ -1118,7 +1118,7 @@ bool LocalSearch::swapStar(bool const withTW,
         auto const routeVTwData = TimeWindowData::merge(
             myBestSwapStar.bestPositionU->prefixTwData,
             myBestSwapStar.U->twData,
-            myBestSwapStar.bestPositionU->next->getRouteSegmentTwData(
+            myBestSwapStar.bestPositionU->next->mergeSegmentTwData(
                 myBestSwapStar.V->prev),
             myBestSwapStar.V->next->postfixTwData);
 
@@ -1128,7 +1128,7 @@ bool LocalSearch::swapStar(bool const withTW,
     {
         auto const routeVTwData = TimeWindowData::merge(
             myBestSwapStar.V->prev->prefixTwData,
-            myBestSwapStar.V->next->getRouteSegmentTwData(
+            myBestSwapStar.V->next->mergeSegmentTwData(
                 myBestSwapStar.bestPositionU),
             myBestSwapStar.U->twData,
             myBestSwapStar.bestPositionU->next->postfixTwData);

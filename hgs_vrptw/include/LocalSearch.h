@@ -119,9 +119,10 @@ class LocalSearch
         Node *nextSeed;     // next seeded node if available (nullptr otherwise)
 
         // Calculates time window data for segment [self, other] in same route
-        TimeWindowData getRouteSegmentTwData(Node *other)
+        TimeWindowData mergeSegmentTwData(Node *other)
         {
             assert(route == other->route);
+            assert(position < other->position);
 
             if (isDepot)
                 return other->prefixTwData;
