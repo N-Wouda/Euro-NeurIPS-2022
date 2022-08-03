@@ -17,7 +17,6 @@ using Client = int;
 using ClientSet = std::unordered_set<Client>;
 using Route = std::vector<Client>;
 using Routes = std::vector<Route>;
-using RouteSet = std::vector<Route>;  // TODO Make an unordered_set
 using Destroyed = std::pair<Routes, ClientSet>;
 
 struct InsertPos  // best insert position, used to plan unplanned clients
@@ -72,7 +71,7 @@ Destroyed stringRemoval(Routes routes,
                        (4 * params.config.avgDestruction) / (1 + maxCard) - 1))
           + 1;
 
-    RouteSet destroyedRoutes;
+    std::vector<Route> destroyedRoutes;  // TODO Use set instead?
     ClientSet removedClients;
 
     for (auto client : params.getNeighboursOf(center))
@@ -200,7 +199,7 @@ Individual greedyRepairWithBlinks(Routes &routes,
 
             for (size_t idx = 0; idx <= route.size(); ++idx)
             {
-                if (rng.randint() > params.config.blinkRate)
+                if (rng.randint(100) > params.config.blinkRate)
                 {
                     Client prev, next;
 
