@@ -47,10 +47,6 @@ struct Config
 
     // Probability intensification moves are performed during LS ([0-100])
     int intensificationProbability = 15;
-    bool useSwapStarTW = true;
-
-    // Skip normal swap star based on distance
-    bool skipSwapStarDist = false;
 
     // Margin to take (in degrees 0 - 359 as ints [0 - 65536]) to determine
     // overlap of circle sectors for SWAP*
@@ -81,8 +77,6 @@ struct Config
                     int weightWaitTime = 2,
                     int weightTimeWarp = 10,
                     int intensificationProbability = 15,
-                    bool useSwapStarTW = true,
-                    bool skipSwapStarDist = false,
                     int circleSectorOverlapToleranceDegrees = 0,
                     int minCircleSectorSizeDegrees = 15)
         : seed(seed),
@@ -106,8 +100,6 @@ struct Config
           weightWaitTime(weightWaitTime),
           weightTimeWarp(weightTimeWarp),
           intensificationProbability(intensificationProbability),
-          useSwapStarTW(useSwapStarTW),
-          skipSwapStarDist(skipSwapStarDist),
           circleSectorOverlapTolerance(circleSectorOverlapToleranceDegrees)
     {
         auto const overlap = circleSectorOverlapToleranceDegrees / 360. * 65536;
