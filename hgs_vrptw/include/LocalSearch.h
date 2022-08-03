@@ -184,7 +184,6 @@ class LocalSearch
                           bool &searchCompleted,
                           Node *nodeU,
                           Node *nodeV,
-                          Node *nodeX,
                           Route *routeU,
                           Route *routeV);
 
@@ -193,7 +192,6 @@ class LocalSearch
                         bool &searchCompleted,
                         Node *nodeU,
                         Node *nodeV,
-                        Node *nodeX,
                         Route *routeU,
                         Route *routeV);
 
@@ -202,7 +200,6 @@ class LocalSearch
                                 bool &searchCompleted,
                                 Node *nodeU,
                                 Node *nodeV,
-                                Node *nodeX,
                                 Route *routeU,
                                 Route *routeV);
 
@@ -213,7 +210,6 @@ class LocalSearch
                               bool &searchCompleted,
                               Node *nodeU,
                               Node *nodeV,
-                              Node *nodeX,
                               Route *routeU,
                               Route *routeV);
 
@@ -222,7 +218,6 @@ class LocalSearch
                               bool &searchCompleted,
                               Node *nodeU,
                               Node *nodeV,
-                              Node *nodeX,
                               Route *routeU,
                               Route *routeV);
 
@@ -231,7 +226,6 @@ class LocalSearch
                             bool &searchCompleted,
                             Node *nodeU,
                             Node *nodeV,
-                            Node *nodeX,
                             Route *routeU,
                             Route *routeV);
 
@@ -242,7 +236,6 @@ class LocalSearch
                           bool &searchCompleted,
                           Node *nodeU,
                           Node *nodeV,
-                          Node *nodeX,
                           Route *routeU,
                           Route *routeV);
 
@@ -251,7 +244,6 @@ class LocalSearch
                             bool &searchCompleted,
                             Node *nodeU,
                             Node *nodeV,
-                            Node *nodeX,
                             Route *routeU,
                             Route *routeV);
 

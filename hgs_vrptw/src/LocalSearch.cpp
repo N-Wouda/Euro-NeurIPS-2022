@@ -49,11 +49,9 @@ void LocalSearch::search()
             // different types for the same node pair)
             for (auto const &v : params.getNeighboursOf(nodeU->cour))
             {
-                Route *routeU = nodeU->route;
-                Node *nodeX = nodeU->next;
-
                 Node *nodeV = &clients[v];
                 Route *routeV = nodeV->route;
+                Route *routeU = nodeU->route;
 
                 if (step == 0
                     || std::max(nodeU->route->whenLastModified,
@@ -67,7 +65,6 @@ void LocalSearch::search()
                                          searchCompleted,
                                          nodeU,
                                          nodeV,
-                                         nodeX,
                                          routeU,
                                          routeV))
                         continue;  // RELOCATE
@@ -75,7 +72,6 @@ void LocalSearch::search()
                                        searchCompleted,
                                        nodeU,
                                        nodeV,
-                                       nodeX,
                                        routeU,
                                        routeV))
                         continue;  // RELOCATE
@@ -83,7 +79,6 @@ void LocalSearch::search()
                                                searchCompleted,
                                                nodeU,
                                                nodeV,
-                                               nodeX,
                                                routeU,
                                                routeV))
                         continue;  // RELOCATE
@@ -91,7 +86,6 @@ void LocalSearch::search()
                                              searchCompleted,
                                              nodeU,
                                              nodeV,
-                                             nodeX,
                                              routeU,
                                              routeV))
                         continue;  // SWAP
@@ -99,7 +93,6 @@ void LocalSearch::search()
                                              searchCompleted,
                                              nodeU,
                                              nodeV,
-                                             nodeX,
                                              routeU,
                                              routeV))
                         continue;  // SWAP
@@ -107,7 +100,6 @@ void LocalSearch::search()
                                            searchCompleted,
                                            nodeU,
                                            nodeV,
-                                           nodeX,
                                            routeU,
                                            routeV))
                         continue;  // SWAP
@@ -115,7 +107,6 @@ void LocalSearch::search()
                                            searchCompleted,
                                            nodeU,
                                            nodeV,
-                                           nodeX,
                                            routeU,
                                            routeV))
                         continue;  // 2-OPT*
@@ -123,7 +114,6 @@ void LocalSearch::search()
                                          searchCompleted,
                                          nodeU,
                                          nodeV,
-                                         nodeX,
                                          routeU,
                                          routeV))
                         continue;  // 2-OPT
@@ -138,7 +128,6 @@ void LocalSearch::search()
                                              searchCompleted,
                                              nodeU,
                                              nodeV,
-                                             nodeX,
                                              routeU,
                                              routeV))
                             continue;  // RELOCATE
@@ -146,7 +135,6 @@ void LocalSearch::search()
                                            searchCompleted,
                                            nodeU,
                                            nodeV,
-                                           nodeX,
                                            routeU,
                                            routeV))
                             continue;  // RELOCATE
@@ -154,7 +142,6 @@ void LocalSearch::search()
                                                    searchCompleted,
                                                    nodeU,
                                                    nodeV,
-                                                   nodeX,
                                                    routeU,
                                                    routeV))
                             continue;  // RELOCATE
@@ -162,7 +149,6 @@ void LocalSearch::search()
                                                searchCompleted,
                                                nodeU,
                                                nodeV,
-                                               nodeX,
                                                routeU,
                                                routeV))
                             continue;  // 2-OPT*
@@ -174,43 +160,21 @@ void LocalSearch::search()
              * AVOID INCREASING TOO MUCH THE FLEET SIZE */
             if (step > 0 && !emptyRoutes.empty())
             {
-                Route *routeU = nodeU->route;
-                Node *nodeX = nodeU->next;
-
                 Node *nodeV = routes[*emptyRoutes.begin()].depot;
                 Route *routeV = nodeV->route;
+                Route *routeU = nodeU->route;
 
-                if (MoveSingleClient(nbMoves,
-                                     searchCompleted,
-                                     nodeU,
-                                     nodeV,
-                                     nodeX,
-                                     routeU,
-                                     routeV))
+                if (MoveSingleClient(
+                        nbMoves, searchCompleted, nodeU, nodeV, routeU, routeV))
                     continue;  // RELOCATE
-                if (MoveTwoClients(nbMoves,
-                                   searchCompleted,
-                                   nodeU,
-                                   nodeV,
-                                   nodeX,
-                                   routeU,
-                                   routeV))
+                if (MoveTwoClients(
+                        nbMoves, searchCompleted, nodeU, nodeV, routeU, routeV))
                     continue;  // RELOCATE
-                if (MoveTwoClientsReversed(nbMoves,
-                                           searchCompleted,
-                                           nodeU,
-                                           nodeV,
-                                           nodeX,
-                                           routeU,
-                                           routeV))
+                if (MoveTwoClientsReversed(
+                        nbMoves, searchCompleted, nodeU, nodeV, routeU, routeV))
                     continue;  // RELOCATE
-                if (TwoOptBetweenTrips(nbMoves,
-                                       searchCompleted,
-                                       nodeU,
-                                       nodeV,
-                                       nodeX,
-                                       routeU,
-                                       routeV))
+                if (TwoOptBetweenTrips(
+                        nbMoves, searchCompleted, nodeU, nodeV, routeU, routeV))
                     continue;  // 2-OPT*
             }
         }
@@ -263,7 +227,6 @@ bool LocalSearch::MoveSingleClient(int &nbMoves,
                                    bool &searchCompleted,
                                    Node *nodeU,
                                    Node *nodeV,
-                                   Node *nodeX,
                                    Route *routeU,
                                    Route *routeV)
 {
@@ -271,9 +234,9 @@ bool LocalSearch::MoveSingleClient(int &nbMoves,
     if (nodeU->cour == nodeV->next->cour)
         return false;
 
-    int costSuppU = params.dist(nodeU->prev->cour, nodeX->cour)
+    int costSuppU = params.dist(nodeU->prev->cour, nodeU->next->cour)
                     - params.dist(nodeU->prev->cour, nodeU->cour)
-                    - params.dist(nodeU->cour, nodeX->cour);
+                    - params.dist(nodeU->cour, nodeU->next->cour);
     int costSuppV = params.dist(nodeV->cour, nodeU->cour)
                     + params.dist(nodeU->cour, nodeV->next->cour)
                     - params.dist(nodeV->cour, nodeV->next->cour);
@@ -287,7 +250,7 @@ bool LocalSearch::MoveSingleClient(int &nbMoves,
         }
 
         auto routeUTwData = mergeTwDataRecursive(nodeU->prev->prefixTwData,
-                                                 nodeX->postfixTwData);
+                                                 nodeU->next->postfixTwData);
         auto routeVTwData = mergeTwDataRecursive(
             nodeV->prefixTwData, nodeU->twData, nodeV->next->postfixTwData);
 
@@ -311,11 +274,11 @@ bool LocalSearch::MoveSingleClient(int &nbMoves,
         {
             // Edge case V directly after U, so X == V, this works
             // start - ... - UPrev - X - ... - V - U - Y - ... - end
-            auto const routeUTwData
-                = mergeTwDataRecursive(nodeU->prev->prefixTwData,
-                                       getRouteSegmentTwData(nodeX, nodeV),
-                                       nodeU->twData,
-                                       nodeV->next->postfixTwData);
+            auto const routeUTwData = mergeTwDataRecursive(
+                nodeU->prev->prefixTwData,
+                getRouteSegmentTwData(nodeU->next, nodeV),
+                nodeU->twData,
+                nodeV->next->postfixTwData);
 
             costSuppU += penalties.timeWarp(routeUTwData);
         }
@@ -327,7 +290,7 @@ bool LocalSearch::MoveSingleClient(int &nbMoves,
                 nodeV->prefixTwData,
                 nodeU->twData,
                 getRouteSegmentTwData(nodeV->next, nodeU->prev),
-                nodeX->postfixTwData);
+                nodeU->next->postfixTwData);
 
             costSuppU += penalties.timeWarp(routeUTwData);
         }
@@ -353,18 +316,17 @@ bool LocalSearch::MoveTwoClients(int &nbMoves,
                                  bool &searchCompleted,
                                  Node *nodeU,
                                  Node *nodeV,
-                                 Node *nodeX,
                                  Route *routeU,
                                  Route *routeV)
 {
-    if (nodeU == nodeV->next || nodeV == nodeX || nodeX->isDepot)
+    if (nodeU == nodeV->next || nodeV == nodeU->next || nodeU->next->isDepot)
         return false;
 
-    int costSuppU = params.dist(nodeU->prev->cour, nodeX->next->cour)
+    int costSuppU = params.dist(nodeU->prev->cour, nodeU->next->next->cour)
                     - params.dist(nodeU->prev->cour, nodeU->cour)
-                    - params.dist(nodeX->cour, nodeX->next->cour);
+                    - params.dist(nodeU->next->cour, nodeU->next->next->cour);
     int costSuppV = params.dist(nodeV->cour, nodeU->cour)
-                    + params.dist(nodeX->cour, nodeV->next->cour)
+                    + params.dist(nodeU->next->cour, nodeV->next->cour)
                     - params.dist(nodeV->cour, nodeV->next->cour);
 
     if (routeU != routeV)
@@ -375,20 +337,21 @@ bool LocalSearch::MoveTwoClients(int &nbMoves,
             return false;
         }
 
-        auto routeUTwData = mergeTwDataRecursive(nodeU->prev->prefixTwData,
-                                                 nodeX->next->postfixTwData);
-        auto routeVTwData = mergeTwDataRecursive(nodeV->prefixTwData,
-                                                 getEdgeTwData(nodeU, nodeX),
-                                                 nodeV->next->postfixTwData);
+        auto routeUTwData = mergeTwDataRecursive(
+            nodeU->prev->prefixTwData, nodeU->next->next->postfixTwData);
+        auto routeVTwData
+            = mergeTwDataRecursive(nodeV->prefixTwData,
+                                   getEdgeTwData(nodeU, nodeU->next),
+                                   nodeV->next->postfixTwData);
 
         costSuppU
             += penalties.load(routeU->load - params.clients[nodeU->cour].demand
-                              - params.clients[nodeX->cour].demand)
+                              - params.clients[nodeU->next->cour].demand)
                + penalties.timeWarp(routeUTwData) - routeU->penalty;
 
         costSuppV
             += penalties.load(routeV->load + params.clients[nodeU->cour].demand
-                              + params.clients[nodeX->cour].demand)
+                              + params.clients[nodeU->next->cour].demand)
                + penalties.timeWarp(routeVTwData) - routeV->penalty;
     }
     else
@@ -406,8 +369,8 @@ bool LocalSearch::MoveTwoClients(int &nbMoves,
             // - U - X - Y - ... - end
             auto const routeUTwData = mergeTwDataRecursive(
                 nodeU->prev->prefixTwData,
-                getRouteSegmentTwData(nodeX->next, nodeV),
-                getEdgeTwData(nodeU, nodeX),
+                getRouteSegmentTwData(nodeU->next->next, nodeV),
+                getEdgeTwData(nodeU, nodeU->next),
                 nodeV->next->postfixTwData);
 
             costSuppU += penalties.timeWarp(routeUTwData);
@@ -419,9 +382,9 @@ bool LocalSearch::MoveTwoClients(int &nbMoves,
             // - end
             auto const routeUTwData = mergeTwDataRecursive(
                 nodeV->prefixTwData,
-                getEdgeTwData(nodeU, nodeX),
+                getEdgeTwData(nodeU, nodeU->next),
                 getRouteSegmentTwData(nodeV->next, nodeU->prev),
-                nodeX->next->postfixTwData);
+                nodeU->next->next->postfixTwData);
 
             costSuppU += penalties.timeWarp(routeUTwData);
         }
@@ -433,9 +396,10 @@ bool LocalSearch::MoveTwoClients(int &nbMoves,
     if (costSuppU + costSuppV >= 0)
         return false;
 
-    insertNode(nodeU, nodeV);
-    insertNode(nodeX, nodeU);
-    nbMoves++;  // Increment move counter before updating route data
+    insertNode(nodeU->next, nodeV);  // insert X after V
+    insertNode(nodeU, nodeV);        // insert U after V (so V -> U -> X)
+
+    nbMoves++;
     searchCompleted = false;
     updateRouteData(routeU, nbMoves);
     if (routeU != routeV)
@@ -448,19 +412,18 @@ bool LocalSearch::MoveTwoClientsReversed(int &nbMoves,
                                          bool &searchCompleted,
                                          Node *nodeU,
                                          Node *nodeV,
-                                         Node *nodeX,
                                          Route *routeU,
                                          Route *routeV)
 {
-    if (nodeU == nodeV->next || nodeX == nodeV || nodeX->isDepot)
+    if (nodeU == nodeV->next || nodeU->next == nodeV || nodeU->next->isDepot)
         return false;
 
-    int costSuppU = params.dist(nodeU->prev->cour, nodeX->next->cour)
+    int costSuppU = params.dist(nodeU->prev->cour, nodeU->next->next->cour)
                     - params.dist(nodeU->prev->cour, nodeU->cour)
-                    - params.dist(nodeU->cour, nodeX->cour)
-                    - params.dist(nodeX->cour, nodeX->next->cour);
-    int costSuppV = params.dist(nodeV->cour, nodeX->cour)
-                    + params.dist(nodeX->cour, nodeU->cour)
+                    - params.dist(nodeU->cour, nodeU->next->cour)
+                    - params.dist(nodeU->next->cour, nodeU->next->next->cour);
+    int costSuppV = params.dist(nodeV->cour, nodeU->next->cour)
+                    + params.dist(nodeU->next->cour, nodeU->cour)
                     + params.dist(nodeU->cour, nodeV->next->cour)
                     - params.dist(nodeV->cour, nodeV->next->cour);
 
@@ -472,20 +435,21 @@ bool LocalSearch::MoveTwoClientsReversed(int &nbMoves,
             return false;
         }
 
-        auto routeUTwData = mergeTwDataRecursive(nodeU->prev->prefixTwData,
-                                                 nodeX->next->postfixTwData);
-        auto routeVTwData = mergeTwDataRecursive(nodeV->prefixTwData,
-                                                 getEdgeTwData(nodeX, nodeU),
-                                                 nodeV->next->postfixTwData);
+        auto routeUTwData = mergeTwDataRecursive(
+            nodeU->prev->prefixTwData, nodeU->next->next->postfixTwData);
+        auto routeVTwData
+            = mergeTwDataRecursive(nodeV->prefixTwData,
+                                   getEdgeTwData(nodeU->next, nodeU),
+                                   nodeV->next->postfixTwData);
 
         costSuppU
             += penalties.load(routeU->load - params.clients[nodeU->cour].demand
-                              - params.clients[nodeX->cour].demand)
+                              - params.clients[nodeU->next->cour].demand)
                + penalties.timeWarp(routeUTwData) - routeU->penalty;
 
         costSuppV
             += penalties.load(routeV->load + params.clients[nodeU->cour].demand
-                              + params.clients[nodeX->cour].demand)
+                              + params.clients[nodeU->next->cour].demand)
                + penalties.timeWarp(routeVTwData) - routeV->penalty;
     }
     else
@@ -503,8 +467,8 @@ bool LocalSearch::MoveTwoClientsReversed(int &nbMoves,
             // - X - U - Y - ... - end
             auto const routeUTwData = mergeTwDataRecursive(
                 nodeU->prev->prefixTwData,
-                getRouteSegmentTwData(nodeX->next, nodeV),
-                getEdgeTwData(nodeX, nodeU),
+                getRouteSegmentTwData(nodeU->next->next, nodeV),
+                getEdgeTwData(nodeU->next, nodeU),
                 nodeV->next->postfixTwData);
 
             costSuppU += penalties.timeWarp(routeUTwData);
@@ -516,9 +480,9 @@ bool LocalSearch::MoveTwoClientsReversed(int &nbMoves,
             // - end
             auto const routeUTwData = mergeTwDataRecursive(
                 nodeV->prefixTwData,
-                getEdgeTwData(nodeX, nodeU),
+                getEdgeTwData(nodeU->next, nodeU),
                 getRouteSegmentTwData(nodeV->next, nodeU->prev),
-                nodeX->next->postfixTwData);
+                nodeU->next->next->postfixTwData);
 
             costSuppU += penalties.timeWarp(routeUTwData);
         }
@@ -530,9 +494,12 @@ bool LocalSearch::MoveTwoClientsReversed(int &nbMoves,
     if (costSuppU + costSuppV >= 0)
         return false;
 
-    insertNode(nodeX, nodeV);
-    insertNode(nodeU, nodeX);
-    nbMoves++;  // Increment move counter before updating route data
+    auto *nodeX = nodeU->next;
+
+    insertNode(nodeU, nodeV);  // insert U after V
+    insertNode(nodeX, nodeV);  // insert X after V (so V -> X -> U)
+
+    nbMoves++;
     searchCompleted = false;
     updateRouteData(routeU, nbMoves);
     if (routeU != routeV)
@@ -545,7 +512,6 @@ bool LocalSearch::SwapTwoSingleClients(int &nbMoves,
                                        bool &searchCompleted,
                                        Node *nodeU,
                                        Node *nodeV,
-                                       Node *nodeX,
                                        Route *routeU,
                                        Route *routeV)
 {
@@ -556,9 +522,9 @@ bool LocalSearch::SwapTwoSingleClients(int &nbMoves,
         return false;
 
     int costSuppU = params.dist(nodeU->prev->cour, nodeV->cour)
-                    + params.dist(nodeV->cour, nodeX->cour)
+                    + params.dist(nodeV->cour, nodeU->next->cour)
                     - params.dist(nodeU->prev->cour, nodeU->cour)
-                    - params.dist(nodeU->cour, nodeX->cour);
+                    - params.dist(nodeU->cour, nodeU->next->cour);
     int costSuppV = params.dist(nodeV->prev->cour, nodeU->cour)
                     + params.dist(nodeU->cour, nodeV->next->cour)
                     - params.dist(nodeV->prev->cour, nodeV->cour)
@@ -574,10 +540,12 @@ bool LocalSearch::SwapTwoSingleClients(int &nbMoves,
             return false;
         }
 
-        auto routeUTwData = mergeTwDataRecursive(
-            nodeU->prev->prefixTwData, nodeV->twData, nodeX->postfixTwData);
-        auto routeVTwData = mergeTwDataRecursive(
-            nodeV->prev->prefixTwData, nodeU->twData, nodeV->next->postfixTwData);
+        auto routeUTwData = mergeTwDataRecursive(nodeU->prev->prefixTwData,
+                                                 nodeV->twData,
+                                                 nodeU->next->postfixTwData);
+        auto routeVTwData = mergeTwDataRecursive(nodeV->prev->prefixTwData,
+                                                 nodeU->twData,
+                                                 nodeV->next->postfixTwData);
 
         costSuppU
             += penalties.load(routeU->load + params.clients[nodeV->cour].demand
@@ -605,7 +573,7 @@ bool LocalSearch::SwapTwoSingleClients(int &nbMoves,
             auto const routeUTwData = mergeTwDataRecursive(
                 nodeU->prev->prefixTwData,
                 nodeV->twData,
-                getRouteSegmentTwData(nodeX, nodeV->prev),
+                getRouteSegmentTwData(nodeU->next, nodeV->prev),
                 nodeU->twData,
                 nodeV->next->postfixTwData);
 
@@ -621,7 +589,7 @@ bool LocalSearch::SwapTwoSingleClients(int &nbMoves,
                 nodeU->twData,
                 getRouteSegmentTwData(nodeV->next, nodeU->prev),
                 nodeV->twData,
-                nodeX->postfixTwData);
+                nodeU->next->postfixTwData);
 
             costSuppU += penalties.timeWarp(routeUTwData);
         }
@@ -647,20 +615,19 @@ bool LocalSearch::SwapTwoClientsForOne(int &nbMoves,
                                        bool &searchCompleted,
                                        Node *nodeU,
                                        Node *nodeV,
-                                       Node *nodeX,
                                        Route *routeU,
                                        Route *routeV)
 {
-    if (nodeU == nodeV->prev || nodeX == nodeV->prev || nodeU == nodeV->next
-        || nodeX->isDepot)
+    if (nodeU == nodeV->prev || nodeU->next == nodeV->prev || nodeU == nodeV->next
+        || nodeU->next->isDepot)
         return false;
 
     int costSuppU = params.dist(nodeU->prev->cour, nodeV->cour)
-                    + params.dist(nodeV->cour, nodeX->next->cour)
+                    + params.dist(nodeV->cour, nodeU->next->next->cour)
                     - params.dist(nodeU->prev->cour, nodeU->cour)
-                    - params.dist(nodeX->cour, nodeX->next->cour);
+                    - params.dist(nodeU->next->cour, nodeU->next->next->cour);
     int costSuppV = params.dist(nodeV->prev->cour, nodeU->cour)
-                    + params.dist(nodeX->cour, nodeV->next->cour)
+                    + params.dist(nodeU->next->cour, nodeV->next->cour)
                     - params.dist(nodeV->prev->cour, nodeV->cour)
                     - params.dist(nodeV->cour, nodeV->next->cour);
 
@@ -676,20 +643,20 @@ bool LocalSearch::SwapTwoClientsForOne(int &nbMoves,
 
         auto routeUTwData = mergeTwDataRecursive(nodeU->prev->prefixTwData,
                                                  nodeV->twData,
-                                                 nodeX->next->postfixTwData);
+                                                 nodeU->next->next->postfixTwData);
         auto routeVTwData = mergeTwDataRecursive(nodeV->prev->prefixTwData,
-                                                 getEdgeTwData(nodeU, nodeX),
+                                                 getEdgeTwData(nodeU, nodeU->next),
                                                  nodeV->next->postfixTwData);
 
         costSuppU
             += penalties.load(routeU->load + params.clients[nodeV->cour].demand
                               - params.clients[nodeU->cour].demand
-                              - params.clients[nodeX->cour].demand)
+                              - params.clients[nodeU->next->cour].demand)
                + penalties.timeWarp(routeUTwData) - routeU->penalty;
 
         costSuppV
             += penalties.load(routeV->load + params.clients[nodeU->cour].demand
-                              + params.clients[nodeX->cour].demand
+                              + params.clients[nodeU->next->cour].demand
                               - params.clients[nodeV->cour].demand)
                + penalties.timeWarp(routeVTwData) - routeV->penalty;
     }
@@ -708,8 +675,8 @@ bool LocalSearch::SwapTwoClientsForOne(int &nbMoves,
             auto const routeUTwData = mergeTwDataRecursive(
                 nodeU->prev->prefixTwData,
                 nodeV->twData,
-                getRouteSegmentTwData(nodeX->next, nodeV->prev),
-                getEdgeTwData(nodeU, nodeX),
+                getRouteSegmentTwData(nodeU->next->next, nodeV->prev),
+                getEdgeTwData(nodeU, nodeU->next),
                 nodeV->next->postfixTwData);
 
             costSuppU += penalties.timeWarp(routeUTwData);
@@ -720,10 +687,10 @@ bool LocalSearch::SwapTwoClientsForOne(int &nbMoves,
             // end
             auto const routeUTwData = mergeTwDataRecursive(
                 nodeV->prev->prefixTwData,
-                getEdgeTwData(nodeU, nodeX),
+                getEdgeTwData(nodeU, nodeU->next),
                 getRouteSegmentTwData(nodeV->next, nodeU->prev),
                 nodeV->twData,
-                nodeX->next->postfixTwData);
+                nodeU->next->next->postfixTwData);
 
             costSuppU += penalties.timeWarp(routeUTwData);
         }
@@ -735,12 +702,10 @@ bool LocalSearch::SwapTwoClientsForOne(int &nbMoves,
     if (costSuppU + costSuppV >= 0)
         return false;
 
-    // Note: next two lines are a bit inefficient but we only update
-    // occasionally and updateRouteData is much more costly anyway, efficient
-    // checks are more important
+    insertNode(nodeU->next, nodeV);
     swapNode(nodeU, nodeV);
-    insertNode(nodeX, nodeU);
-    nbMoves++;  // Increment move counter before updating route data
+
+    nbMoves++;
     searchCompleted = false;
     updateRouteData(routeU, nbMoves);
     if (routeU != routeV)
@@ -753,23 +718,22 @@ bool LocalSearch::SwapTwoClientPairs(int &nbMoves,
                                      bool &searchCompleted,
                                      Node *nodeU,
                                      Node *nodeV,
-                                     Node *nodeX,
                                      Route *routeU,
                                      Route *routeV)
 {
     if (nodeU->cour >= nodeV->cour)
         return false;
 
-    if (nodeX->isDepot || nodeV->next->isDepot || nodeV->next == nodeU->prev
-        || nodeU == nodeV->next || nodeX == nodeV || nodeV == nodeX->next)
+    if (nodeU->next->isDepot || nodeV->next->isDepot || nodeV->next == nodeU->prev
+        || nodeU == nodeV->next || nodeU->next == nodeV || nodeV == nodeU->next->next)
         return false;
 
     int costSuppU = params.dist(nodeU->prev->cour, nodeV->cour)
-                    + params.dist(nodeV->next->cour, nodeX->next->cour)
+                    + params.dist(nodeV->next->cour, nodeU->next->next->cour)
                     - params.dist(nodeU->prev->cour, nodeU->cour)
-                    - params.dist(nodeX->cour, nodeX->next->cour);
+                    - params.dist(nodeU->next->cour, nodeU->next->next->cour);
     int costSuppV = params.dist(nodeV->prev->cour, nodeU->cour)
-                    + params.dist(nodeX->cour, nodeV->next->next->cour)
+                    + params.dist(nodeU->next->cour, nodeV->next->next->cour)
                     - params.dist(nodeV->prev->cour, nodeV->cour)
                     - params.dist(nodeV->next->cour, nodeV->next->next->cour);
 
@@ -786,22 +750,22 @@ bool LocalSearch::SwapTwoClientPairs(int &nbMoves,
         auto routeUTwData
             = mergeTwDataRecursive(nodeU->prev->prefixTwData,
                                    getEdgeTwData(nodeV, nodeV->next),
-                                   nodeX->next->postfixTwData);
+                                   nodeU->next->next->postfixTwData);
         auto routeVTwData
             = mergeTwDataRecursive(nodeV->prev->prefixTwData,
-                                   getEdgeTwData(nodeU, nodeX),
+                                   getEdgeTwData(nodeU, nodeU->next),
                                    nodeV->next->next->postfixTwData);
 
         costSuppU
             += penalties.load(routeU->load + params.clients[nodeV->cour].demand
                               + params.clients[nodeV->next->cour].demand
                               - params.clients[nodeU->cour].demand
-                              - params.clients[nodeX->cour].demand)
+                              - params.clients[nodeU->next->cour].demand)
                + penalties.timeWarp(routeUTwData) - routeU->penalty;
 
         costSuppV
             += penalties.load(routeV->load + params.clients[nodeU->cour].demand
-                              + params.clients[nodeX->cour].demand
+                              + params.clients[nodeU->next->cour].demand
                               - params.clients[nodeV->cour].demand
                               - params.clients[nodeV->next->cour].demand)
                + penalties.timeWarp(routeVTwData) - routeV->penalty;
@@ -821,8 +785,8 @@ bool LocalSearch::SwapTwoClientPairs(int &nbMoves,
             auto const routeUTwData = mergeTwDataRecursive(
                 nodeU->prev->prefixTwData,
                 getEdgeTwData(nodeV, nodeV->next),
-                getRouteSegmentTwData(nodeX->next, nodeV->prev),
-                getEdgeTwData(nodeU, nodeX),
+                getRouteSegmentTwData(nodeU->next->next, nodeV->prev),
+                getEdgeTwData(nodeU, nodeU->next),
                 nodeV->next->next->postfixTwData);
 
             costSuppU += penalties.timeWarp(routeUTwData);
@@ -833,10 +797,10 @@ bool LocalSearch::SwapTwoClientPairs(int &nbMoves,
             // - ... - end
             auto const routeUTwData = mergeTwDataRecursive(
                 nodeV->prev->prefixTwData,
-                getEdgeTwData(nodeU, nodeX),
+                getEdgeTwData(nodeU, nodeU->next),
                 getRouteSegmentTwData(nodeV->next->next, nodeU->prev),
                 getEdgeTwData(nodeV, nodeV->next),
-                nodeX->next->postfixTwData);
+                nodeU->next->next->postfixTwData);
 
             costSuppU += penalties.timeWarp(routeUTwData);
         }
@@ -848,7 +812,7 @@ bool LocalSearch::SwapTwoClientPairs(int &nbMoves,
     if (costSuppU + costSuppV >= 0)
         return false;
 
-    swapNode(nodeX, nodeV->next);
+    swapNode(nodeU->next, nodeV->next);
     swapNode(nodeU, nodeV);
     nbMoves++;  // Increment move counter before updating route data
     searchCompleted = false;
@@ -863,7 +827,6 @@ bool LocalSearch::TwoOptWithinTrip(int &nbMoves,
                                    bool &searchCompleted,
                                    Node *nodeU,
                                    Node *nodeV,
-                                   Node *nodeX,
                                    Route *routeU,
                                    Route *routeV)
 {
@@ -874,11 +837,11 @@ bool LocalSearch::TwoOptWithinTrip(int &nbMoves,
         return false;
 
     int cost = params.dist(nodeU->cour, nodeV->cour)
-               + params.dist(nodeX->cour, nodeV->next->cour)
-               - params.dist(nodeU->cour, nodeX->cour)
+               + params.dist(nodeU->next->cour, nodeV->next->cour)
+               - params.dist(nodeU->cour, nodeU->next->cour)
                - params.dist(nodeV->cour, nodeV->next->cour)
                + nodeV->cumulatedReversalDistance
-               - nodeX->cumulatedReversalDistance;
+               - nodeU->next->cumulatedReversalDistance;
 
     if (routeU->twData.timeWarp == 0 && cost >= 0)
     {
@@ -904,8 +867,10 @@ bool LocalSearch::TwoOptWithinTrip(int &nbMoves,
     }
 
     itRoute = nodeV;
-    Node *insertionPoint = nodeU;
-    while (itRoute != nodeX)  // No need to move x, we pivot around it
+    auto *insertionPoint = nodeU;
+    auto *currNext = nodeU->next;
+
+    while (itRoute != currNext)  // No need to move x, we pivot around it
     {
         Node *current = itRoute;
         itRoute = itRoute->prev;
@@ -924,7 +889,6 @@ bool LocalSearch::TwoOptBetweenTrips(int &nbMoves,
                                      bool &searchCompleted,
                                      Node *nodeU,
                                      Node *nodeV,
-                                     Node *nodeX,
                                      Route *routeU,
                                      Route *routeV)
 {
@@ -932,8 +896,8 @@ bool LocalSearch::TwoOptBetweenTrips(int &nbMoves,
         return false;
 
     int costSuppU = params.dist(nodeU->cour, nodeV->next->cour)
-                    - params.dist(nodeU->cour, nodeX->cour);
-    int costSuppV = params.dist(nodeV->cour, nodeX->cour)
+                    - params.dist(nodeU->cour, nodeU->next->cour);
+    int costSuppV = params.dist(nodeV->cour, nodeU->next->cour)
                     - params.dist(nodeV->cour, nodeV->next->cour);
 
     if (routeU->load <= params.vehicleCapacity && routeU->twData.timeWarp == 0
@@ -946,7 +910,7 @@ bool LocalSearch::TwoOptBetweenTrips(int &nbMoves,
     auto routeUTwData
         = mergeTwDataRecursive(nodeU->prefixTwData, nodeV->next->postfixTwData);
     auto routeVTwData
-        = mergeTwDataRecursive(nodeV->prefixTwData, nodeX->postfixTwData);
+        = mergeTwDataRecursive(nodeV->prefixTwData, nodeU->next->postfixTwData);
 
     costSuppU += penalties.load(nodeU->cumulatedLoad + routeV->load
                                 - nodeV->cumulatedLoad)
@@ -959,7 +923,9 @@ bool LocalSearch::TwoOptBetweenTrips(int &nbMoves,
     if (costSuppU + costSuppV >= 0)
         return false;
 
-    Node *itRouteV = nodeV->next;
+    Node *itRouteU = nodeU->next;  // these values change in the following, so
+    Node *itRouteV = nodeV->next;  // must be set here already.
+
     Node *insertLocation = nodeU;
     while (!itRouteV->isDepot)
     {
@@ -969,7 +935,6 @@ bool LocalSearch::TwoOptBetweenTrips(int &nbMoves,
         insertLocation = current;
     }
 
-    Node *itRouteU = nodeX;
     insertLocation = nodeV;
     while (!itRouteU->isDepot)
     {
