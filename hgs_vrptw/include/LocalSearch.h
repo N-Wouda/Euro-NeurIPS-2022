@@ -122,7 +122,7 @@ class LocalSearch
         TimeWindowData mergeSegmentTwData(Node *other)
         {
             assert(route == other->route);
-            assert(position < other->position);
+            assert(position <= other->position);
 
             if (isDepot)
                 return other->prefixTwData;
