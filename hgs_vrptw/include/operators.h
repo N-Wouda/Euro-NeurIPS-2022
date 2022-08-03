@@ -87,6 +87,18 @@ bool swapTwoSingleClients(int &nbMoves,
                           Params const &params);
 
 /**
+ * Replaces U -> X and V -> Y by U -> Y and V -> X, if that is an improving
+ * move. Assumes U and V do not belong to the same route (if they do, this is a
+ * no-op).
+ */
+bool twoOptBetweenTrips(int &nbMoves,
+                        bool &searchCompleted,
+                        LocalSearch::Node *nodeU,
+                        LocalSearch::Node *nodeV,
+                        LocalSearch::Penalties const &penalties,
+                        Params const &params);
+
+/**
  * Replaces U -> X and V -> Y by U -> V and X -> Y, if that is an improving
  * move. Assumes U and V belong to the same route (if not, this is a no-op).
  */
