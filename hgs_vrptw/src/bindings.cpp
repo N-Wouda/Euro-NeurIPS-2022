@@ -191,4 +191,10 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("parents"),
              py::arg("params"),
              py::arg("rng"));
+
+    xOps.def("string_removal_exchange",
+             &stringRemovalExchange,
+             py::arg("parents"),
+             py::arg("params"),
+             py::arg("rng"));
 }

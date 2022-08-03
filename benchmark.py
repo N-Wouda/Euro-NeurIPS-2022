@@ -41,12 +41,13 @@ def solve(loc: str, seed: int, time_limit: int):
 
     algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
     algo.add_crossover_operator(hgspy.crossover.ordered_exchange)
-    # algo.add_crossover_operator(hgspy.crossover.selective_route_exchange)
-    algo.add_crossover_operator(
-        lambda arg1, arg2, arg3: sisr.sisr_exchange(
-            arg1, arg2, arg3, instance, rnd_state
-        )
-    )
+    algo.add_crossover_operator(hgspy.crossover.selective_route_exchange)
+    algo.add_crossover_operator(hgspy.crossover.string_removal_exchange)
+    # algo.add_crossover_operator(
+    #     lambda arg1, arg2, arg3: sisr.sisr_exchange(
+    #         arg1, arg2, arg3, instance, rnd_state
+    #     )
+    # )
 
     res = algo.run_until(start + timedelta(seconds=time_limit))
 

@@ -27,4 +27,12 @@ Individual selectiveRouteExchange(
     Params const &params,
     XorShift128 &rng);
 
+/**
+ * Performs two SISRX crossovers of the given parents (binary tournament).
+ * */
+Individual stringRemovalExchange(
+    std::pair<Individual const *, Individual const *> const &parents,
+    Params const &params,
+    XorShift128 &rng);
+
 #endif  // CROSSOVER_H

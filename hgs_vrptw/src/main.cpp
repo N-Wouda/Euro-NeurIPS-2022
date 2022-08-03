@@ -26,6 +26,7 @@ try
     GeneticAlgorithm solver(params, rng, pop, ls);
     solver.addCrossoverOperator(orderedExchange);
     solver.addCrossoverOperator(selectiveRouteExchange);
+    solver.addCrossoverOperator(stringRemovalExchange);
 
     auto const until = start + std::chrono::seconds(config.timeLimit);
     auto const res = solver.runUntil(until);
