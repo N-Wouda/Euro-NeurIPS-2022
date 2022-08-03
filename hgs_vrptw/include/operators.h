@@ -46,4 +46,14 @@ bool moveTwoClients(int &nbMoves,
                     LocalSearch::Penalties const &penalties,
                     Params const &params);
 
+/**
+ * Inserts U -> X after V (as V -> X -> U), if that is an improving move.
+ */
+bool moveTwoClientsReversed(int &nbMoves,
+                            bool &searchCompleted,
+                            LocalSearch::Node *nodeU,
+                            LocalSearch::Node *nodeV,
+                            LocalSearch::Penalties const &penalties,
+                            Params const &params);
+
 #endif  // OPERATORS_H
