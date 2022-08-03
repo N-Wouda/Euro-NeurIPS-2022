@@ -618,8 +618,8 @@ bool LocalSearch::SwapTwoClientsForOne(int &nbMoves,
                                        Route *routeU,
                                        Route *routeV)
 {
-    if (nodeU == nodeV->prev || nodeU->next == nodeV->prev || nodeU == nodeV->next
-        || nodeU->next->isDepot)
+    if (nodeU == nodeV->prev || nodeU->next == nodeV->prev
+        || nodeU == nodeV->next || nodeU->next->isDepot)
         return false;
 
     int costSuppU = params.dist(nodeU->prev->cour, nodeV->cour)
@@ -641,12 +641,14 @@ bool LocalSearch::SwapTwoClientsForOne(int &nbMoves,
             return false;
         }
 
-        auto routeUTwData = mergeTwDataRecursive(nodeU->prev->prefixTwData,
-                                                 nodeV->twData,
-                                                 nodeU->next->next->postfixTwData);
-        auto routeVTwData = mergeTwDataRecursive(nodeV->prev->prefixTwData,
-                                                 getEdgeTwData(nodeU, nodeU->next),
-                                                 nodeV->next->postfixTwData);
+        auto routeUTwData
+            = mergeTwDataRecursive(nodeU->prev->prefixTwData,
+                                   nodeV->twData,
+                                   nodeU->next->next->postfixTwData);
+        auto routeVTwData
+            = mergeTwDataRecursive(nodeV->prev->prefixTwData,
+                                   getEdgeTwData(nodeU, nodeU->next),
+                                   nodeV->next->postfixTwData);
 
         costSuppU
             += penalties.load(routeU->load + params.clients[nodeV->cour].demand
@@ -724,8 +726,9 @@ bool LocalSearch::SwapTwoClientPairs(int &nbMoves,
     if (nodeU->cour >= nodeV->cour)
         return false;
 
-    if (nodeU->next->isDepot || nodeV->next->isDepot || nodeV->next == nodeU->prev
-        || nodeU == nodeV->next || nodeU->next == nodeV || nodeV == nodeU->next->next)
+    if (nodeU->next->isDepot || nodeV->next->isDepot
+        || nodeV->next == nodeU->prev || nodeU == nodeV->next
+        || nodeU->next == nodeV || nodeV == nodeU->next->next)
         return false;
 
     int costSuppU = params.dist(nodeU->prev->cour, nodeV->cour)
