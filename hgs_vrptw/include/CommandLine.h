@@ -93,8 +93,17 @@ public:
                 auto const minCircleSize = atoi(argv[i + 1]) / 360. * 65536;
                 config.minCircleSectorSize = static_cast<int>(minCircleSize);
             }
+            else if (std::string(argv[i]) == "-avgDestruction")
+                config.avgDestruction = atoi(argv[i + 1]);
+            else if (std::string(argv[i]) == "-maxStringCard")
+                config.maxStringCard = atoi(argv[i + 1]);
+            else if (std::string(argv[i]) == "-splitRate")
+                config.splitRate = atof(argv[i + 1]);
+            else if (std::string(argv[i]) == "-splitDepth")
+                config.splitDepth = atof(argv[i + 1]);
+            else if (std::string(argv[i]) == "-blinkRate")
+                config.blinkRate = atof(argv[i + 1]);
         }
-
         return config;
     }
 };

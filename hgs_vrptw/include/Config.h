@@ -60,6 +60,13 @@ struct Config
     // that even small circle sectors have 'overlap'
     int minCircleSectorSize = static_cast<int>(15 / 360. * 65536);
 
+    // SISR related parameters
+    int avgDestruction = 10;
+    int maxStringCard = 10;
+    double splitRate = 0.5;
+    double splitDepth = 0.01;
+    double blinkRate = 0.01;
+
     explicit Config(int seed = 0,
                     size_t nbIter = 20'000,
                     int timeLimit = INT_MAX,
@@ -84,7 +91,12 @@ struct Config
                     bool useSwapStarTW = true,
                     bool skipSwapStarDist = false,
                     int circleSectorOverlapToleranceDegrees = 0,
-                    int minCircleSectorSizeDegrees = 15)
+                    int minCircleSectorSizeDegrees = 15,
+                    int avgDestruction = 10,
+                    int maxStringCard = 10,
+                    double splitRate = 0.5,
+                    double splitDepth = 0.01,
+                    double blinkRate = 0.01)
         : seed(seed),
           nbIter(nbIter),
           timeLimit(timeLimit),
@@ -108,7 +120,12 @@ struct Config
           intensificationProbability(intensificationProbability),
           useSwapStarTW(useSwapStarTW),
           skipSwapStarDist(skipSwapStarDist),
-          circleSectorOverlapTolerance(circleSectorOverlapToleranceDegrees)
+          circleSectorOverlapTolerance(circleSectorOverlapToleranceDegrees),
+          avgDestruction(avgDestruction),
+          maxStringCard(maxStringCard),
+          splitRate(splitRate),
+          splitDepth(splitDepth),
+          blinkRate(blinkRate)
     {
         auto const overlap = circleSectorOverlapToleranceDegrees / 360. * 65536;
         circleSectorOverlapTolerance = static_cast<int>(overlap);
