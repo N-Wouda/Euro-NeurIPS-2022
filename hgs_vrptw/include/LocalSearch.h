@@ -133,11 +133,9 @@ class LocalSearch
             Node *node = this;
             TimeWindowData data = twData;
 
-            int const targetPos = other->position;
-
             while (node != other)
             {
-                if (node->isSeed && node->position + 4 <= targetPos)
+                if (node->isSeed && node->position + 4 <= other->position)
                 {
                     data = TimeWindowData::merge(data, node->toNextSeedTwD);
                     node = node->nextSeed;
