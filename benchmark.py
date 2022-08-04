@@ -8,7 +8,6 @@ import numpy as np
 from tqdm.contrib.concurrent import process_map
 
 import tools
-import sisr
 
 
 def parse_args():
@@ -37,7 +36,6 @@ def solve(loc: str, seed: int, time_limit: int):
     rng = hgspy.XorShift128(seed=seed)
     pop = hgspy.Population(params, rng)
     ls = hgspy.LocalSearch(params, rng)
-    rnd_state = np.random.default_rng(seed)
 
     algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
     algo.add_crossover_operator(hgspy.crossover.ordered_exchange)
