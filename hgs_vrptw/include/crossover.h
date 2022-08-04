@@ -28,8 +28,16 @@ Individual selectiveRouteExchange(
     XorShift128 &rng);
 
 /**
- * Performs two SISRX crossovers of the given parents (binary tournament).
- * */
+ * Performs two SISRX crossovers of the given parents (binary tournament). SISRX
+ * first removes strings of clients from each parent based on "Slack Induction
+ * String Removals (SISR)" [2]. Removed clients from one parent are then
+ * also removed from the other parent. Both parents are repaired to complete
+ * solutions by greedily re-inserting the unassinged clients.
+ * <br />
+ * [2]: Christiaens, J., & Vanden Berghe, G. (2020). Slack induction by string
+ * removals for vehicle routing problems. Transportation Science, 54(2),
+ * 417-433.
+ */
 Individual stringRemovalExchange(
     std::pair<Individual const *, Individual const *> const &parents,
     Params const &params,
