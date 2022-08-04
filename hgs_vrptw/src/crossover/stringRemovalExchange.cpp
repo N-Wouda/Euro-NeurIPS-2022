@@ -59,7 +59,7 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
     auto maxStringRemovals = (4 * params.config.avgDestruction) / (1 + maxCard);
     auto nbStringRemovals = rng.randint(maxStringRemovals) + 1;
 
-    std::vector<Route> destroyedRoutes;  // TODO Use set instead?
+    std::set<Route> destroyedRoutes;
     ClientSet removedClients;
 
     for (auto client : params.getNeighboursOf(center))
@@ -75,9 +75,7 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
         {
             if (std::find(route.begin(), route.end(), client) != route.end())
             {
-                if (std::find(
-                        destroyedRoutes.begin(), destroyedRoutes.end(), route)
-                    != destroyedRoutes.end())
+                if (destroyedRoutes.contains(route))
                     continue;
 
                 // Remove string from the route
@@ -121,7 +119,7 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
                     removedClients.insert(c);
                 }
 
-                destroyedRoutes.push_back(route);
+                destroyedRoutes.insert(route);
             }
         }
 
