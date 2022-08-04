@@ -27,25 +27,25 @@ struct InsertPos  // best insert position, used to plan unplanned clients
 
 // Returns the indices of a random (sub)string with length card that
 // contains the client
-std::vector<int>
-selectString(Route route, Client client, int card, XorShift128 &rng)
+std::vector<size_t>
+selectString(Route const &route, Client client, size_t card, XorShift128 &rng)
 {
-    std::vector<int>::iterator itr
-        = std::find(route.begin(), route.end(), client);
-    int routePos = std::distance(route.begin(), itr);
+    auto itr = std::find(route.begin(), route.end(), client);
+    auto routePos = std::distance(route.begin(), itr);
     auto stringPos = rng.randint(card);
     auto startIdx = routePos - stringPos;
 
-    std::vector<int> indices;
+    std::vector<size_t> indices;
     for (auto i = startIdx; i < startIdx + card; i++)
         indices.push_back(i % route.size());
 
     return indices;
 }
-Destroyed stringRemoval(Routes routes,
-                        Client center,
-                        Params const &params,
-                        XorShift128 &rng)
+
+std::pair<Routes, ClientSet> stringRemoval(Routes routes,
+                                           Client center,
+                                           Params const &params,
+                                           XorShift128 &rng)
 {
     // Compute the maximum string cardinality to be removed
     size_t avgRouteSize = 0;
@@ -56,12 +56,11 @@ Destroyed stringRemoval(Routes routes,
     avgRouteSize = avgRouteSize / routes.size();
     auto maxCard = std::min(params.config.maxStringCard, avgRouteSize);
 
-    // BUG This is incorrect. Need randint(1, val+1).
     // Compute the number of strings to remove
-    size_t nbStringRemovals
+    auto nbStringRemovals
         = rng.randint(
               std::max(static_cast<size_t>(1),
-                       (4 * params.config.avgDestruction) / (1 + maxCard) - 1))
+                       (4 * params.config.avgDestruction) / (1 + maxCard) + 1))
           + 1;
 
     std::vector<Route> destroyedRoutes;  // TODO Use set instead?
@@ -90,12 +89,12 @@ Destroyed stringRemoval(Routes routes,
                                 static_cast<size_t>(route.size()), maxCard))
                             + 1;
 
-                std::vector<int> removalIndices;
+                std::vector<size_t> removalIndices;
                 if (rng.randint(100) <= params.config.splitRate)
                     removalIndices = selectString(route, client, card, rng);
                 else
                 {
-                    int subSize = 1;
+                    auto subSize = 1;
                     while (rng.randint(100) > params.config.splitDepth
                            and subSize < route.size() - card)
                     {
@@ -121,8 +120,7 @@ Destroyed stringRemoval(Routes routes,
 
                 for (auto c : removed)
                 {
-                    std::vector<int>::iterator position
-                        = std::find(route.begin(), route.end(), c);
+                    auto position = std::find(route.begin(), route.end(), c);
                     route.erase(position);
                     removedClients.insert(c);
                 }
@@ -154,7 +152,7 @@ int deltaCost(Client client, Client prev, Client next, Params const &params)
     return distToInsert + distFromInsert - params.dist(prev, next);
 }
 
-void removeClients(Routes &routes, ClientSet &clients)
+void removeClients(Routes &routes, ClientSet const &clients)
 {
     for (Client c : clients)
     {
@@ -162,9 +160,7 @@ void removeClients(Routes &routes, ClientSet &clients)
         {
             if (std::find(route.begin(), route.end(), c) != route.end())
             {
-                printf("%d removed\n", c);
-                std::vector<int>::iterator position
-                    = std::find(route.begin(), route.end(), c);
+                auto position = std::find(route.begin(), route.end(), c);
                 route.erase(position);
                 break;
             }
@@ -172,7 +168,7 @@ void removeClients(Routes &routes, ClientSet &clients)
     }
 }
 Individual greedyRepairWithBlinks(Routes &routes,
-                                  ClientSet unplannedSet,
+                                  ClientSet const unplannedSet,
                                   Params const &params,
                                   XorShift128 &rng)
 
@@ -183,12 +179,13 @@ Individual greedyRepairWithBlinks(Routes &routes,
     std::iota(indices.begin(), indices.end(), 0);
 
     // TODO how to add more sorting options in a neat way?
-    std::sort(indices.begin(), indices.end(), [&](int A, int B) -> bool {
-        return params.clients[A].demand < params.clients[B].demand;
-    });
+    std::sort(indices.begin(),
+              indices.end(),
+              [&](int A, int B)
+              { return params.clients[A].demand < params.clients[B].demand; });
 
     // NOTE Copied largely from SREX
-    for (int idx : indices)
+    for (auto idx : indices)
     {
         Client client = unplanned[idx];
         InsertPos best = {INT_MAX, &routes.front(), 0};
@@ -198,7 +195,7 @@ Individual greedyRepairWithBlinks(Routes &routes,
             if (route.empty())
                 break;
 
-            for (size_t idx = 0; idx <= route.size(); ++idx)
+            for (auto idx = 0; idx <= route.size(); ++idx)
             {
                 if (rng.randint(100) > params.config.blinkRate)
                 {
@@ -242,18 +239,16 @@ Individual stringRemovalExchange(Parents const &parents,
     auto const &routes2 = parents.second->getRoutes();
 
     // Find a center node around which substrings will be removed
-    Client center = rng.randint(params.nbClients) + 1;
+    Client const center = rng.randint(params.nbClients) + 1;
 
     auto [destroyed1, removed1] = stringRemoval(routes1, center, params, rng);
     auto [destroyed2, removed2] = stringRemoval(routes2, center, params, rng);
 
-    printRouteSize(destroyed1, "Indiv1 post-remove1 size: ");
     // Remove clients from other destroyed parent
     removeClients(destroyed1, removed2);
     removeClients(destroyed2, removed1);
 
-    printRouteSize(destroyed1, "Indiv1 post-remove2 size: ");
-
+    // TODO Use a set union operation
     ClientSet removed;
     for (Client c : removed1)
         removed.insert(c);
@@ -264,9 +259,6 @@ Individual stringRemovalExchange(Parents const &parents,
         = greedyRepairWithBlinks(destroyed1, removed, params, rng);
     Individual indiv2
         = greedyRepairWithBlinks(destroyed2, removed, params, rng);
-
-    printRouteSize(indiv1.getRoutes(), "Indiv1 post-route size: ");
-    printf("%d\n", removed.size());
 
     return std::min(indiv1, indiv2);
 }
