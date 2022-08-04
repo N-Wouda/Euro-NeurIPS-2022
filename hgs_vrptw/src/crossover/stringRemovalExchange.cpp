@@ -51,32 +51,22 @@ void printRoute(Route const route, std::string text)
     // printf("\n");
 }
 
-// Selects a substring of the route to be removed
+// Returns the indices of a random (sub)string with length card that
+// contains the client
 std::vector<int>
 selectString(Route route, Client client, int card, XorShift128 &rng)
 {
     std::vector<int>::iterator itr
         = std::find(route.begin(), route.end(), client);
-    int idx = std::distance(route.begin(), itr);
-    auto pos = rng.randint(card);
-    auto start = idx - pos;
+    int routePos = std::distance(route.begin(), itr);
+    auto stringPos = rng.randint(card);
+    auto startIdx = routePos - stringPos;
 
-    std::vector<int> idcs;
-    for (auto i = start; i < start + card; i++)
-        idcs.push_back(i % route.size());
-    // printRoute(route, std::string("Old route: "));
+    std::vector<int> indices;
+    for (auto i = startIdx; i < startIdx + card; i++)
+        indices.push_back(i % route.size());
 
-    // printf("String indices: ");
-    // for (auto i : idcs)
-    //     printf("%d-", i);
-    // printf("\n");
-
-    // printf("Route string: ");
-    // for (auto i : idcs)
-    //     printf("%d-", route[i]);
-    // printf("\n");
-
-    return idcs;
+    return indices;
 }
 Destroyed stringRemoval(Routes routes,
                         Client center,
@@ -125,14 +115,35 @@ Destroyed stringRemoval(Routes routes,
                                 static_cast<size_t>(route.size()), maxCard))
                             + 1;
 
-                // TODO add split string procedure
-                std::vector<int> idcs = selectString(route, client, card, rng);
+                std::vector<int> removalIndices;
+                if (rng.randint(100) <= params.config.splitRate)
+                    removalIndices = selectString(route, client, card, rng);
+                else
+                {
+                    int subSize = 1;
+                    while (rng.randint(100) > params.config.splitDepth
+                           and subSize < route.size() - card)
+                    {
+                        subSize++;
+                    }
 
+                    auto strIndices
+                        = selectString(route, client, card + subSize, rng);
+                    auto subPos = rng.randint(strIndices.size() - subSize);
+
+                    removalIndices = strIndices;
+                    for (auto i = 0; i < strIndices.size(); i++)
+                    {
+                        if (i < subPos or i >= subPos + card)
+                            removalIndices.push_back(strIndices[i]);
+                    }
+                }
+
+                // TODO Get rid of `removed`
                 ClientSet removed;
-                for (auto idx : idcs)
+                for (auto idx : removalIndices)
                     removed.insert(route[idx]);
 
-                // TODO How to refactor? (Got segmentation fault if merged)
                 for (auto c : removed)
                 {
                     std::vector<int>::iterator position
@@ -145,8 +156,6 @@ Destroyed stringRemoval(Routes routes,
             }
         }
 
-        printf("Removed clients: %d\n", removedClients.size());
-        printRouteSize(routes, std::string("Size just before returning: "));
         return std::make_pair(routes, removedClients);
     }
 }
@@ -181,12 +190,13 @@ Individual greedyRepairWithBlinks(Routes &routes,
     std::vector<int> indices(unplanned.size());
     std::iota(indices.begin(), indices.end(), 0);
 
-    // TODO how to add more sorting options?
+    // TODO how to add more sorting options in a neat way?
     std::sort(indices.begin(),
               indices.end(),
               [&](int A, int B) -> bool
               { return params.clients[A].demand < params.clients[B].demand; });
 
+    // NOTE Copied largely from SREX
     for (int idx : indices)
     {
         Client client = unplanned[idx];
