@@ -185,7 +185,7 @@ Individual greedyRepairWithBlinks(Routes &routes,
               { return params.clients[A].demand < params.clients[B].demand; });
 
     // NOTE Copied largely from SREX
-    for (auto idx : indices)
+    for (int idx : indices)
     {
         Client client = unplanned[idx];
         InsertPos best = {INT_MAX, &routes.front(), 0};
@@ -195,7 +195,7 @@ Individual greedyRepairWithBlinks(Routes &routes,
             if (route.empty())
                 break;
 
-            for (auto idx = 0; idx <= route.size(); ++idx)
+            for (size_t idx = 0; idx <= route.size(); ++idx)
             {
                 if (rng.randint(100) > params.config.blinkRate)
                 {
@@ -248,12 +248,8 @@ Individual stringRemovalExchange(Parents const &parents,
     removeClients(destroyed1, removed2);
     removeClients(destroyed2, removed1);
 
-    // TODO Use a set union operation
-    ClientSet removed;
-    for (Client c : removed1)
-        removed.insert(c);
-    for (Client c : removed2)
-        removed.insert(c);
+    auto removed = removed1;
+    removed.insert(removed2.begin(), removed2.end());
 
     Individual indiv1
         = greedyRepairWithBlinks(destroyed1, removed, params, rng);
