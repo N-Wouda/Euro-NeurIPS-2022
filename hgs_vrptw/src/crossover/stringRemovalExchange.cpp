@@ -36,7 +36,7 @@ selectString(Route const &route, Client client, size_t card, XorShift128 &rng)
     auto startIdx = routePos - stringPos;
 
     std::vector<size_t> indices;
-    for (auto i = startIdx; i < startIdx + card; i++)
+    for (auto i = startIdx; i != startIdx + card; i++)
         indices.push_back(i % route.size());
 
     return indices;
@@ -91,24 +91,23 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
                     auto subSize = 1;
                     while (rng.randint(100) > params.config.splitDepth
                            and subSize < route.size() - card)
-                    {
                         subSize++;
-                    }
 
                     auto strIndices
                         = selectString(route, client, card + subSize, rng);
-                    auto subPos = rng.randint(strIndices.size() - subSize);
+                    auto subPos = rng.randint(strIndices.size() - subSize + 1);
 
-                    removalIndices = strIndices;
-                    for (auto i = 0; i < strIndices.size(); i++)
-                    {
-                        if (i < subPos or i >= subPos + card)
-                            removalIndices.push_back(strIndices[i]);
-                    }
+                    for (auto i = 0; i <= subPos; i++)
+                        removalIndices.push_back(strIndices[i]);
+                    for (auto i = subPos + card; i <= strIndices.size(); i++)
+                        removalIndices.push_back(strIndices[i]);
+
+                    removalIndices = selectString(route, client, card, rng);
                 }
 
                 // TODO Get rid of `removed`
                 ClientSet removed;
+
                 for (auto idx : removalIndices)
                     removed.insert(route[idx]);
 
@@ -173,10 +172,9 @@ Individual greedyRepairWithBlinks(Routes &routes,
     std::iota(indices.begin(), indices.end(), 0);
 
     // TODO how to add more sorting options in a neat way?
-    std::sort(indices.begin(),
-              indices.end(),
-              [&](int A, int B)
-              { return params.clients[A].demand < params.clients[B].demand; });
+    std::sort(indices.begin(), indices.end(), [&](int A, int B) {
+        return params.clients[A].demand < params.clients[B].demand;
+    });
 
     // NOTE Copied largely from SREX
     for (int idx : indices)
