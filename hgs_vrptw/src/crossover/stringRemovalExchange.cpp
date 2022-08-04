@@ -17,7 +17,6 @@ using Client = int;
 using ClientSet = std::unordered_set<Client>;
 using Route = std::vector<Client>;
 using Routes = std::vector<Route>;
-using Destroyed = std::pair<Routes, ClientSet>;
 
 struct InsertPos  // best insert position, used to plan unplanned clients
 {
