@@ -26,31 +26,6 @@ struct InsertPos  // best insert position, used to plan unplanned clients
     size_t offset;
 };
 
-void printRouteSize(Routes const routes, std::string text)
-{
-    // std::cout << text;
-    // int tot = 0;
-    // for (auto &route : routes)
-    //     tot += route.size();
-    // printf("%d\n", tot);
-}
-
-void printClientSet(ClientSet const route, std::string text)
-{
-    // std::cout << text;
-    // for (auto c : route)
-    //     printf("%d-", c);
-    // printf("\n");
-}
-
-void printRoute(Route const route, std::string text)
-{
-    // std::cout << text;
-    // for (auto c : route)
-    //     printf("%d-", c);
-    // printf("\n");
-}
-
 // Returns the indices of a random (sub)string with length card that
 // contains the client
 std::vector<int>
@@ -82,6 +57,7 @@ Destroyed stringRemoval(Routes routes,
     avgRouteSize = avgRouteSize / routes.size();
     auto maxCard = std::min(params.config.maxStringCard, avgRouteSize);
 
+    // BUG This is incorrect. Need randint(1, val+1).
     // Compute the number of strings to remove
     size_t nbStringRemovals
         = rng.randint(
