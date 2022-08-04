@@ -5,6 +5,7 @@
 #include "XorShift128.h"
 
 #include <algorithm>
+#include <functional>
 #include <iostream>
 #include <numeric>
 #include <string>
@@ -105,17 +106,14 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
                     removalIndices = selectString(route, client, card, rng);
                 }
 
-                // TODO Get rid of `removed`
-                ClientSet removed;
+                std::sort(removalIndices.begin(),
+                          removalIndices.end(),
+                          std::greater<>());
 
                 for (auto idx : removalIndices)
-                    removed.insert(route[idx]);
-
-                for (auto c : removed)
                 {
-                    auto position = std::find(route.begin(), route.end(), c);
-                    route.erase(position);
-                    removedClients.insert(c);
+                    removedClients.insert(route[idx]);
+                    route.erase(route.begin() + idx);
                 }
 
                 destroyedRoutes.insert(route);
