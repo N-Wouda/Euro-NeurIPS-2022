@@ -155,6 +155,23 @@ int deltaCost(Client client, Client prev, Client next, Params const &params)
     return distToInsert + distFromInsert - params.dist(prev, next);
 }
 
+void removeClients(Routes &routes, ClientSet &clients)
+{
+    for (Client c : clients)
+    {
+        for (auto &route : routes)
+        {
+            if (std::find(route.begin(), route.end(), c) != route.end())
+            {
+                printf("%d removed\n", c);
+                std::vector<int>::iterator position
+                    = std::find(route.begin(), route.end(), c);
+                route.erase(position);
+                break;
+            }
+        }
+    }
+}
 Individual greedyRepairWithBlinks(Routes &routes,
                                   ClientSet unplannedSet,
                                   Params const &params,
@@ -228,48 +245,29 @@ Individual stringRemovalExchange(Parents const &parents,
     // Find a center node around which substrings will be removed
     Client center = rng.randint(params.nbClients) + 1;
 
-    Destroyed destroyed1 = stringRemoval(routes1, center, params, rng);
-    Destroyed destroyed2 = stringRemoval(routes2, center, params, rng);
+    auto [destroyed1, removed1] = stringRemoval(routes1, center, params, rng);
+    auto [destroyed2, removed2] = stringRemoval(routes2, center, params, rng);
 
+    printRouteSize(destroyed1, "Indiv1 post-remove1 size: ");
     // Remove clients from other destroyed parent
-    for (Client c : destroyed2.second)
-    {
-        for (auto &route : destroyed1.first)
-        {
-            if (std::find(route.begin(), route.end(), c) != route.end())
-            {
-                std::vector<int>::iterator position
-                    = std::find(route.begin(), route.end(), c);
-                route.erase(position);
-                break;
-            }
-        }
-    }
+    removeClients(destroyed1, removed2);
+    removeClients(destroyed2, removed1);
 
-    for (Client c : destroyed1.second)
-    {
-        for (auto &route : destroyed2.first)
-        {
-            if (std::find(route.begin(), route.end(), c) != route.end())
-            {
-                std::vector<int>::iterator position
-                    = std::find(route.begin(), route.end(), c);
-                route.erase(position);
-                break;
-            }
-        }
-    }
+    printRouteSize(destroyed1, "Indiv1 post-remove2 size: ");
 
     ClientSet removed;
-    for (Client c : destroyed1.second)
+    for (Client c : removed1)
         removed.insert(c);
-    for (Client c : destroyed2.second)
+    for (Client c : removed2)
         removed.insert(c);
 
     Individual indiv1
-        = greedyRepairWithBlinks(destroyed1.first, removed, params, rng);
+        = greedyRepairWithBlinks(destroyed1, removed, params, rng);
     Individual indiv2
-        = greedyRepairWithBlinks(destroyed2.first, removed, params, rng);
+        = greedyRepairWithBlinks(destroyed2, removed, params, rng);
+
+    printRouteSize(indiv1.getRoutes(), "Indiv1 post-route size: ");
+    printf("%d\n", removed.size());
 
     return std::min(indiv1, indiv2);
 }
