@@ -69,8 +69,6 @@ PYBIND11_MODULE(hgspy, m)
                       int,
                       int,
                       int,
-                      bool,
-                      bool,
                       int,
                       int,
                       size_t,
@@ -99,8 +97,6 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("weightWaitTime") = 2,
              py::arg("weightTimeWarp") = 10,
              py::arg("intensificationProbability") = 15,
-             py::arg("useSwapStarTW") = true,
-             py::arg("skipSwapStarDist") = false,
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
              py::arg("minCircleSectorSizeDegrees") = 15,
              py::arg("avgDestruction") = 10,
@@ -130,8 +126,6 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("weightTimeWarp", &Config::weightTimeWarp)
         .def_readonly("intensificationProbability",
                       &Config::intensificationProbability)
-        .def_readonly("useSwapStarTW", &Config::useSwapStarTW)
-        .def_readonly("skipSwapStarDist", &Config::skipSwapStarDist)
         .def_readonly("circleSectorOverlapTolerance",
                       &Config::circleSectorOverlapTolerance)
         .def_readonly("minCircleSectorSize", &Config::minCircleSectorSize)

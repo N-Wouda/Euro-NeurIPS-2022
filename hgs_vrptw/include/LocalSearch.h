@@ -7,15 +7,21 @@
 #include "XorShift128.h"
 
 #include <array>
+#include <cassert>
 #include <set>
 #include <vector>
 
 class LocalSearch
 {
-    struct Node;
-
     struct TimeWindowData
     {
+        // Note: [twEarly, twLate] represent the time in which we can
+        // arrive at the first node and execute the min cost route. Arriving
+        // later would lead to (additional) time warp and arriving earlier would
+        // lead to (additional) waiting time, not necessarily at the first node.
+
+        Params const *params;
+
         int idxFirst;
         int idxLast;
         int duration;  // Cumulative duration, including waiting and servicing
@@ -28,11 +34,38 @@ class LocalSearch
         int latestReleaseTime;  // Latest of all release times of customers in
                                 // sequence, so route cannot dispatch before
 
-        // Note: [twEarly, twLate] represent the time in which we can
-        // arrive at the first node and execute the min cost route. Arriving
-        // later would lead to (additional) time warp and arriving earlier would
-        // lead to (additional) waiting time, not necessarily at the first node.
+        [[nodiscard]] inline TimeWindowData
+        merge(TimeWindowData const &other) const
+        {
+            int dist = params->dist(idxLast, other.idxFirst);
+            int delta = duration - timeWarp + dist;
+            int deltaWaitTime = std::max(other.twEarly - delta - twLate, 0);
+            int deltaTimeWarp = std::max(twEarly + delta - other.twLate, 0);
+
+            return {params,
+                    idxFirst,
+                    other.idxLast,
+                    duration + other.duration + dist + deltaWaitTime,
+                    timeWarp + other.timeWarp + deltaTimeWarp,
+                    std::max(other.twEarly - delta, twEarly) - deltaWaitTime,
+                    std::min(other.twLate - delta, twLate) + deltaTimeWarp,
+                    std::max(latestReleaseTime, other.latestReleaseTime)};
+        }
+
+        template <typename... Args>
+        [[nodiscard]] inline static TimeWindowData merge(
+            TimeWindowData const &tw1, TimeWindowData const &tw2, Args... args)
+        {
+            auto const res = tw1.merge(tw2);
+
+            if constexpr (sizeof...(args) == 0)
+                return res;
+            else
+                return merge(res, args...);
+        }
     };
+
+    struct Node;
 
     struct Route
     {
@@ -84,6 +117,38 @@ class LocalSearch
             toNextSeedTwD;  // TimeWindowData for subsequence (cour...cour+4)
                             // excluding self, including cour + 4
         Node *nextSeed;     // next seeded node if available (nullptr otherwise)
+
+        // Calculates time window data for segment [self, other] in same route
+        TimeWindowData mergeSegmentTwData(Node *other)
+        {
+            assert(route == other->route);
+            assert(position <= other->position);
+
+            if (isDepot)
+                return other->prefixTwData;
+
+            if (other->isDepot)
+                return postfixTwData;
+
+            Node *node = this;
+            TimeWindowData data = twData;
+
+            while (node != other)
+            {
+                if (node->isSeed && node->position + 4 <= other->position)
+                {
+                    data = TimeWindowData::merge(data, node->toNextSeedTwD);
+                    node = node->nextSeed;
+                }
+                else
+                {
+                    node = node->next;
+                    data = TimeWindowData::merge(data, node->twData);
+                }
+            }
+
+            return data;
+        }
     };
 
     // Structure used in SWAP* to remember the three best insertion positions of
@@ -135,18 +200,33 @@ class LocalSearch
         Node *bestPositionV = nullptr;
     };
 
-    Params &params;        // Problem parameters
-    XorShift128 &rng;      // Random number generator
-    bool searchCompleted;  // Tells whether all moves have been evaluated
-                           // without success
+    struct Penalties
+    {
+        Params const *params;
+        int loadPenalty;
+        int timePenalty;
 
-    int nbMoves;  // Total number of moves (RI and SWAP*) applied during the
-                  // local search. Attention: this is not only a simple counter,
-                  // it is also used to avoid repeating move evaluations
+        // Computes the total excess capacity penalty for the given load
+        [[nodiscard]] inline int load(int currLoad) const
+        {
+            auto const excessLoad = currLoad - params->vehicleCapacity;
+            return std::max(excessLoad, 0) * loadPenalty;
+        }
+
+        // Computes the total time warp penalty for the given time window data
+        [[nodiscard]] inline int timeWarp(TimeWindowData const &twData) const
+        {
+            auto const releaseWarp = twData.latestReleaseTime - twData.twLate;
+            return (twData.timeWarp + std::max(releaseWarp, 0)) * timePenalty;
+        }
+    };
+
+    Penalties penalties;
+    Params &params;    // Problem parameters
+    XorShift128 &rng;  // Random number generator
 
     std::vector<int> orderNodes;   // random node order used in RI operators
     std::vector<int> orderRoutes;  // random route order used in SWAP* operators
-    std::set<int> emptyRoutes;     // indices of all empty routes
 
     /* THE SOLUTION IS REPRESENTED AS A LINKED LIST OF ELEMENTS */
     std::vector<Node> clients;    // Note that clients[0] is a sentinel value
@@ -161,76 +241,69 @@ class LocalSearch
         bestInsertClientTW;  // (SWAP*) For each route and node, storing the
                              // cheapest insertion cost (including TW)
 
-    /* TEMPORARY VARIABLES USED IN THE LOCAL SEARCH LOOPS */
-    Node *nodeU;
-    Node *nodeX;
-    Node *nodeV;
-    Node *nodeY;
-    Route *routeU;
-    Route *routeV;
-    int nodeUPrevIndex, nodeUIndex, nodeXIndex, nodeXNextIndex;
-    int nodeVPrevIndex, nodeVIndex, nodeYIndex, nodeYNextIndex;
-    int loadU, loadX, loadV, loadY;
-    bool routeUTimeWarp, routeULoadPenalty, routeVTimeWarp, routeVLoadPenalty;
-    int penaltyCapacityLS, penaltyTimeWarpLS;
-
-    void setLocalVariablesRouteU();  // Initializes some local variables and
-                                     // distances associated to routeU to avoid
-                                     // always querying the same values in the
-                                     // distance matrix
-    void setLocalVariablesRouteV();  // Initializes some local variables and
-                                     // distances associated to routeV to avoid
-                                     // always querying the same values in the
-                                     // distance matrix
-
-    // Functions in charge of excess load penalty calculations
-    [[nodiscard]] inline int penaltyExcessLoad(int load) const
-    {
-        auto const excess = std::max(0, load - params.vehicleCapacity);
-        return excess * penaltyCapacityLS;
-    }
-
-    [[nodiscard]] inline int penaltyTimeWindows(const TimeWindowData &tw) const
-    {
-        auto const releaseWarp = std::max(tw.latestReleaseTime - tw.twLate, 0);
-        return (tw.timeWarp + releaseWarp) * penaltyTimeWarpLS;
-    }
-
     /* RELOCATE MOVES */
 
     // If U is a client node, remove U and insert it after V
-    bool MoveSingleClient();
+    bool MoveSingleClient(int &nbMoves,
+                          bool &searchCompleted,
+                          Node *nodeU,
+                          Node *nodeV);
 
     // If U and X are client nodes, remove them and insert (U,X) after V
-    bool MoveTwoClients();
+    bool MoveTwoClients(int &nbMoves,
+                        bool &searchCompleted,
+                        Node *nodeU,
+                        Node *nodeV);
 
     // If U and X are client nodes, remove them and insert (X,U) after V
-    bool MoveTwoClientsReversed();
+    bool MoveTwoClientsReversed(int &nbMoves,
+                                bool &searchCompleted,
+                                Node *nodeU,
+                                Node *nodeV);
 
     /* SWAP MOVES */
 
     // If U and V are client nodes, swap U and V
-    bool SwapTwoSingleClients();
+    bool SwapTwoSingleClients(int &nbMoves,
+                              bool &searchCompleted,
+                              Node *nodeU,
+                              Node *nodeV);
 
     // If U, X and V are client nodes, swap (U,X) and V
-    bool SwapTwoClientsForOne();
+    bool SwapTwoClientsForOne(int &nbMoves,
+                              bool &searchCompleted,
+                              Node *nodeU,
+                              Node *nodeV);
 
     // If (U,X) and (V,Y) are client nodes, swap  (U,X) and (V,Y)
-    bool SwapTwoClientPairs();
+    bool SwapTwoClientPairs(int &nbMoves,
+                            bool &searchCompleted,
+                            Node *nodeU,
+                            Node *nodeV);
 
     /* 2-OPT and 2-OPT* MOVES */
 
     // If route(U) == route(V), replace (U,X) and (V,Y) by (U,V) and (X,Y)
-    bool TwoOptWithinTrip();
+    bool TwoOptWithinTrip(int &nbMoves,
+                          bool &searchCompleted,
+                          Node *nodeU,
+                          Node *nodeV);
 
     // If route(U) != route(V), replace (U,X) and  (V,Y) by (U,Y) and (V,X)
-    bool TwoOptBetweenTrips();
+    bool TwoOptBetweenTrips(int &nbMoves,
+                            bool &searchCompleted,
+                            Node *nodeU,
+                            Node *nodeV);
 
     /* SUB-ROUTINES FOR EFFICIENT SWAP* EVALUATIONS */
 
     // Calculates all SWAP* between routeU and routeV and apply the best
     // improving move
-    bool swapStar(bool withTW);
+    bool swapStar(bool withTW,
+                  int &nbMoves,
+                  bool &searchCompleted,
+                  Route *routeU,
+                  Route *routeV);
 
     // Calculates the insertion cost and position in the route of V, where V is
     // omitted
@@ -242,38 +315,18 @@ class LocalSearch
     getCheapestInsertSimultRemovalWithTW(Node *U, Node *V, Node *&bestPosition);
 
     // Preprocess all insertion costs of nodes of route R1 in route R2
-    void preprocessInsertions(Route *R1, Route *R2);
+    void preprocessInsertions(Route *R1, Route *R2, int nbMoves);
 
     // Preprocess all insertion costs of nodes of route R1 in route R2
-    void preprocessInsertionsWithTW(Route *R1, Route *R2);
+    void preprocessInsertionsWithTW(Route *R1, Route *R2, int nbMoves);
 
     /* RELOCATE MOVES BETWEEN TRIPS*/
 
     // Calculates all SWAP* between nodeU and all routes recently changed
-    bool RelocateStar();
-
-    /* SUB-ROUTINES FOR TIME WINDOWS */
-
-    // Calculates time window data for edge between U and V, does not have to be
-    // currently adjacent
-    TimeWindowData getEdgeTwData(Node *U, Node *V);
-
-    // Calculates time window data for segment in single route
-    TimeWindowData getRouteSegmentTwData(Node *U, Node *V);
-
-    [[nodiscard]] inline TimeWindowData
-    mergeTwDataRecursive(TimeWindowData const &twData1,
-                         TimeWindowData const &twData2) const;
-
-    template <typename... Args>
-    [[nodiscard]] inline TimeWindowData
-    mergeTwDataRecursive(TimeWindowData const &first,
-                         TimeWindowData const &second,
-                         Args... args) const
-    {
-        TimeWindowData const result = mergeTwDataRecursive(first, second);
-        return mergeTwDataRecursive(result, args...);
-    }
+    bool RelocateStar(int &nbMoves,
+                      bool &searchCompleted,
+                      Route *routeU,
+                      Route *routeV);
 
     /* ROUTINES TO UPDATE THE SOLUTIONS */
 
@@ -284,7 +337,7 @@ class LocalSearch
     static void swapNode(Node *U, Node *V);
 
     // Updates the preprocessed data of a route
-    void updateRouteData(Route *myRoute);
+    void updateRouteData(Route *myRoute, int nbMoves);
 
     // Load an initial solution that we will attempt to improve
     void loadIndividual(Individual const &indiv);

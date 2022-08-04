@@ -84,8 +84,8 @@ void GeneticAlgorithm::educate(Individual &indiv)
         && rng.randint(100) < params.config.repairProbability)
     {
         localSearch(indiv,  // re-run, but penalise infeasibility more
-                    params.penaltyCapacity * 10.,
-                    params.penaltyTimeWarp * 10.);
+                    10 * params.penaltyCapacity,
+                    10 * params.penaltyTimeWarp);
 
         if (indiv.isFeasible())
             // TODO should we also register this individual in the load/time

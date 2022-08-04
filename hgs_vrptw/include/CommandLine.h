@@ -78,10 +78,6 @@ public:
                 config.intensificationProbability = atoi(argv[i + 1]);
             else if (std::string(argv[i]) == "-diversityWeight")
                 config.diversityWeight = atof(argv[i + 1]);
-            else if (std::string(argv[i]) == "-useSwapStarTW")
-                config.useSwapStarTW = atoi(argv[i + 1]) != 0;
-            else if (std::string(argv[i]) == "-skipSwapStarDist")
-                config.skipSwapStarDist = atoi(argv[i + 1]) != 0;
             else if (std::string(argv[i])
                      == "-circleSectorOverlapToleranceDegrees")
             {
