@@ -1,8 +1,6 @@
 from copy import copy, deepcopy
 import numpy as np
 
-import logging
-
 import tools
 
 
@@ -13,16 +11,6 @@ def sisr_exchange(parents, params, xor_shift, instance, rnd_state):
     hgspy = tools.get_hgspy_module()
     one, two = parents
 
-    # custs = list(range(1, len(instance["coords"])))
-    # rnd_state.shuffle(custs)
-    # temp = hgspy.Individual(params, [custs])
-    # debug(temp)
-    # return temp
-
-    # temp = hgspy.Individual(params, xor_shift)
-    # debug(temp)
-    # return temp
-
     # Compute the center client
     center = rnd_state.integers(1, len(instance["coords"]))
 
@@ -30,18 +18,11 @@ def sisr_exchange(parents, params, xor_shift, instance, rnd_state):
     dest1, rem1 = string_removal(one.get_routes(), center, rnd_state, instance)
     dest2, rem2 = string_removal(two.get_routes(), center, rnd_state, instance)
 
-    print(rem1, rem2)
-    # breakpoint()
-
-    # # Remove the substrings from the other parents
+    # Remove other parent's substrings
     dest1 = remove(dest1, rem2)
     dest2 = remove(dest2, rem1)
 
     rem = list(set(rem1 + rem2))
-    n_overlap = len(rem1) + len(rem2) - len(rem)
-    print(
-        f"{len(rem)=:02d}, {n_overlap=:02d}, {len(rem1)=:02d}, {len(rem2)=:02d}"
-    )
 
     cand1 = greedy_repair_with_blinks(
         dest1, rem, rnd_state, instance, params, hgspy
@@ -50,20 +31,10 @@ def sisr_exchange(parents, params, xor_shift, instance, rnd_state):
         dest2, rem, rnd_state, instance, params, hgspy
     )
 
-    # debug(cand1)
-    # debug(cand2)
-
     if cand1.cost() < cand2.cost():
         return cand1
     else:
         return cand2
-
-
-def debug(cand):
-    print(f"{cand.cost()=}")
-    print(f"{cand.get_routes()=}")
-    print(f"{cand.get_tour()=}")
-    print(f"{len(cand.get_tour())=}")
 
 
 # Algorithm parameters
