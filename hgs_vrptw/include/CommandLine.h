@@ -90,15 +90,15 @@ public:
                 config.minCircleSectorSize = static_cast<int>(minCircleSize);
             }
             else if (std::string(argv[i]) == "-avgDestruction")
-                config.avgDestruction = atoi(argv[i + 1]);
+                config.avgDestruction = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-maxStringCard")
-                config.maxStringCard = atoi(argv[i + 1]);
+                config.maxStringCard = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-splitRate")
-                config.splitRate = atof(argv[i + 1]);
+                config.splitRate = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-splitDepth")
-                config.splitDepth = atof(argv[i + 1]);
+                config.splitDepth = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-blinkRate")
-                config.blinkRate = atof(argv[i + 1]);
+                config.blinkRate = static_cast<size_t>(atoi(argv[i + 1]));
         }
         return config;
     }
