@@ -10,15 +10,15 @@ bool moveSingleClient(int &nbMoves,
                       Params const &params)
 {
     // If U already comes directly after V, this move has no effect
-    if (nodeU->cour == nodeV->next->cour)
+    if (nodeU->client == nodeV->next->client)
         return false;
 
-    int costSuppU = params.dist(nodeU->prev->cour, nodeU->next->cour)
-                    - params.dist(nodeU->prev->cour, nodeU->cour)
-                    - params.dist(nodeU->cour, nodeU->next->cour);
-    int costSuppV = params.dist(nodeV->cour, nodeU->cour)
-                    + params.dist(nodeU->cour, nodeV->next->cour)
-                    - params.dist(nodeV->cour, nodeV->next->cour);
+    int costSuppU = params.dist(nodeU->prev->client, nodeU->next->client)
+                    - params.dist(nodeU->prev->client, nodeU->client)
+                    - params.dist(nodeU->client, nodeU->next->client);
+    int costSuppV = params.dist(nodeV->client, nodeU->client)
+                    + params.dist(nodeU->client, nodeV->next->client)
+                    - params.dist(nodeV->client, nodeV->next->client);
 
     if (nodeU->route != nodeV->route)
     {
@@ -29,17 +29,17 @@ bool moveSingleClient(int &nbMoves,
             return false;
         }
 
-        auto routeUTwData = TimeWindowSegment::merge(nodeU->prev->prefixTwData,
-                                                  nodeU->next->postfixTwData);
+        auto routeUTwData = TimeWindowSegment::merge(nodeU->prev->twBefore,
+                                                  nodeU->next->twAfter);
         auto routeVTwData = TimeWindowSegment::merge(
-            nodeV->prefixTwData, nodeU->twData, nodeV->next->postfixTwData);
+            nodeV->twBefore, nodeU->tw, nodeV->next->twAfter);
 
         costSuppU += penalties.load(nodeU->route->load
-                                    - params.clients[nodeU->cour].demand)
+                                    - params.clients[nodeU->client].demand)
                      + penalties.timeWarp(routeUTwData) - nodeU->route->penalty;
 
         costSuppV += penalties.load(nodeV->route->load
-                                    + params.clients[nodeU->cour].demand)
+                                    + params.clients[nodeU->client].demand)
                      + penalties.timeWarp(routeVTwData) - nodeV->route->penalty;
     }
     else
@@ -55,10 +55,10 @@ bool moveSingleClient(int &nbMoves,
             // Edge case V directly after U, so X == V, this works
             // start - ... - UPrev - X - ... - V - U - Y - ... - end
             auto const routeUTwData
-                = TimeWindowSegment::merge(nodeU->prev->prefixTwData,
+                = TimeWindowSegment::merge(nodeU->prev->twBefore,
                                         nodeU->next->mergeSegmentTwData(nodeV),
-                                        nodeU->twData,
-                                        nodeV->next->postfixTwData);
+                                        nodeU->tw,
+                                        nodeV->next->twAfter);
 
             costSuppU += penalties.timeWarp(routeUTwData);
         }
@@ -67,10 +67,10 @@ bool moveSingleClient(int &nbMoves,
             // Edge case U directly after V is excluded from beginning of
             // function start - ... - V - U - Y - ... - UPrev - X - ... - end
             auto const routeUTwData = TimeWindowSegment::merge(
-                nodeV->prefixTwData,
-                nodeU->twData,
+                nodeV->twBefore,
+                nodeU->tw,
                 nodeV->next->mergeSegmentTwData(nodeU->prev),
-                nodeU->next->postfixTwData);
+                nodeU->next->twAfter);
 
             costSuppU += penalties.timeWarp(routeUTwData);
         }

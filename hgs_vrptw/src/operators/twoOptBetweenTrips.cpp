@@ -9,13 +9,13 @@ bool twoOptBetweenTrips(int &nbMoves,
                         LocalSearch::Penalties const &penalties,
                         Params const &params)
 {
-    if (nodeU->route->cour >= nodeV->route->cour)
+    if (nodeU->route->idx >= nodeV->route->idx)
         return false;
 
-    int costSuppU = params.dist(nodeU->cour, nodeV->next->cour)
-                    - params.dist(nodeU->cour, nodeU->next->cour);
-    int costSuppV = params.dist(nodeV->cour, nodeU->next->cour)
-                    - params.dist(nodeV->cour, nodeV->next->cour);
+    int costSuppU = params.dist(nodeU->client, nodeV->next->client)
+                    - params.dist(nodeU->client, nodeU->next->client);
+    int costSuppV = params.dist(nodeV->client, nodeU->next->client)
+                    - params.dist(nodeV->client, nodeV->next->client);
 
     if (nodeU->route->load <= params.vehicleCapacity
         && !nodeU->route->twData.hasTimeWarp()
@@ -25,10 +25,10 @@ bool twoOptBetweenTrips(int &nbMoves,
         return false;
     }
 
-    auto routeUTwData = TimeWindowSegment::merge(nodeU->prefixTwData,
-                                              nodeV->next->postfixTwData);
-    auto routeVTwData = TimeWindowSegment::merge(nodeV->prefixTwData,
-                                              nodeU->next->postfixTwData);
+    auto routeUTwData = TimeWindowSegment::merge(nodeU->twBefore,
+                                              nodeV->next->twAfter);
+    auto routeVTwData = TimeWindowSegment::merge(nodeV->twBefore,
+                                              nodeU->next->twAfter);
 
     costSuppU += penalties.load(nodeU->cumulatedLoad + nodeV->route->load
                                 - nodeV->cumulatedLoad)

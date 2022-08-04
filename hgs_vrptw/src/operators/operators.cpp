@@ -38,96 +38,94 @@ void operators::swapNode(LocalSearch::Node *U, LocalSearch::Node *V)
     V->route = myRouteU;
 }
 
-void operators::updateRouteData(LocalSearch::Route *myRoute,
+void operators::updateRouteData(LocalSearch::Route *route,
                                 int nbMoves,
                                 LocalSearch::Penalties const &penalties,
                                 Params const &params)
 {
-    int myplace = 0;
-    int myload = 0;
-    int myReversalDistance = 0;
+    int place = 0;
+    int load = 0;
+    int reverseDistance = 0;
     int cumulatedX = 0;
     int cumulatedY = 0;
 
-    auto *mynode = myRoute->depot;
-    mynode->position = 0;
-    mynode->cumulatedLoad = 0;
-    mynode->cumulatedReversalDistance = 0;
+    auto *node = route->depot;
+    node->position = 0;
+    node->cumulatedLoad = 0;
+    node->cumulatedReversalDistance = 0;
 
     bool firstIt = true;
-    auto seedTwD = mynode->twData;
+    auto seedTwD = node->tw;
     LocalSearch::Node *seedNode = nullptr;
 
-    while (!mynode->isDepot || firstIt)
+    while (!node->isDepot || firstIt)
     {
-        mynode = mynode->next;
-        myplace++;
-        mynode->position = myplace;
-        myload += params.clients[mynode->cour].demand;
-        myReversalDistance += params.dist(mynode->cour, mynode->prev->cour)
-                              - params.dist(mynode->prev->cour, mynode->cour);
-        mynode->cumulatedLoad = myload;
-        mynode->cumulatedReversalDistance = myReversalDistance;
-        mynode->prefixTwData
-            = TimeWindowSegment::merge(mynode->prev->prefixTwData, mynode->twData);
-        mynode->isSeed = false;
-        mynode->nextSeed = nullptr;
-        if (!mynode->isDepot)
+        node = node->next;
+        place++;
+        node->position = place;
+        load += params.clients[node->client].demand;
+        reverseDistance += params.dist(node->client, node->prev->client)
+                           - params.dist(node->prev->client, node->client);
+        node->cumulatedLoad = load;
+        node->cumulatedReversalDistance = reverseDistance;
+        node->twBefore
+            = TimeWindowSegment::merge(node->prev->twBefore, node->tw);
+        node->isSeed = false;
+        node->nextSeed = nullptr;
+        if (!node->isDepot)
         {
-            cumulatedX += params.clients[mynode->cour].x;
-            cumulatedY += params.clients[mynode->cour].y;
+            cumulatedX += params.clients[node->client].x;
+            cumulatedY += params.clients[node->client].y;
             if (firstIt)
-                myRoute->sector.initialize(params.clients[mynode->cour].angle);
+                route->sector.initialize(params.clients[node->client].angle);
             else
-                myRoute->sector.extend(params.clients[mynode->cour].angle);
+                route->sector.extend(params.clients[node->client].angle);
 
-            if (myplace % 4 == 0)
+            if (place % 4 == 0)
             {
                 if (seedNode != nullptr)
                 {
                     seedNode->isSeed = true;
                     seedNode->toNextSeedTwD
-                        = TimeWindowSegment::merge(seedTwD, mynode->twData);
-                    seedNode->nextSeed = mynode;
+                        = TimeWindowSegment::merge(seedTwD, node->tw);
+                    seedNode->nextSeed = node;
                 }
-                seedNode = mynode;
+                seedNode = node;
             }
-            else if (myplace % 4 == 1)
-                seedTwD = mynode->twData;
+            else if (place % 4 == 1)
+                seedTwD = node->tw;
             else
-                seedTwD = TimeWindowSegment::merge(seedTwD, mynode->twData);
+                seedTwD = TimeWindowSegment::merge(seedTwD, node->tw);
         }
         firstIt = false;
     }
 
-    myRoute->load = myload;
-    myRoute->twData = mynode->prefixTwData;
-    myRoute->penalty
-        = penalties.load(myload) + penalties.timeWarp(myRoute->twData);
-    myRoute->nbCustomers = myplace - 1;
+    route->load = load;
+    route->twData = node->twBefore;
+    route->penalty = penalties.load(load) + penalties.timeWarp(route->twData);
+    route->nbCustomers = place - 1;
     // Remember "when" this route has been last modified (will be used to filter
     // unnecessary move evaluations)
-    myRoute->whenLastModified = nbMoves;
-    myRoute->isDeltaRemovalTWOutdated = true;
+    route->whenLastModified = nbMoves;
+    route->isDeltaRemovalTWOutdated = true;
 
-    // Time window data in reverse direction, mynode should be end depot now
+    // Time window data in reverse direction, node should be end depot now
     do
     {
-        mynode = mynode->prev;
-        mynode->postfixTwData = TimeWindowSegment::merge(
-            mynode->twData, mynode->next->postfixTwData);
-    } while (!mynode->isDepot);
+        node = node->prev;
+        node->twAfter = TimeWindowSegment::merge(node->tw, node->next->twAfter);
+    } while (!node->isDepot);
 
-    if (myRoute->nbCustomers == 0)
+    if (route->nbCustomers == 0)
     {
-        myRoute->polarAngleBarycenter = 1.e30;
+        route->polarAngleBarycenter = 1.e30;
     }
     else
     {
-        myRoute->polarAngleBarycenter
-            = atan2(cumulatedY / static_cast<double>(myRoute->nbCustomers)
+        route->polarAngleBarycenter
+            = atan2(cumulatedY / static_cast<double>(route->nbCustomers)
                         - params.clients[0].y,
-                    cumulatedX / static_cast<double>(myRoute->nbCustomers)
+                    cumulatedX / static_cast<double>(route->nbCustomers)
                         - params.clients[0].x);
 
         // Enforce minimum size of circle sector
@@ -135,13 +133,13 @@ void operators::updateRouteData(LocalSearch::Route *myRoute,
         {
             const int growSectorBy
                 = (params.config.minCircleSectorSize
-                   - CircleSector::positive_mod(myRoute->sector) + 1)
+                   - CircleSector::positive_mod(route->sector) + 1)
                   / 2;
 
             if (growSectorBy > 0)
             {
-                myRoute->sector.extend(myRoute->sector.start - growSectorBy);
-                myRoute->sector.extend(myRoute->sector.end + growSectorBy);
+                route->sector.extend(route->sector.start - growSectorBy);
+                route->sector.extend(route->sector.end + growSectorBy);
             }
         }
     }

@@ -15,25 +15,25 @@ bool twoOptWithinTrip(int &nbMoves,
     if (nodeU->position >= nodeV->position - 1)
         return false;
 
-    int cost = params.dist(nodeU->cour, nodeV->cour)
-               + params.dist(nodeU->next->cour, nodeV->next->cour)
-               - params.dist(nodeU->cour, nodeU->next->cour)
-               - params.dist(nodeV->cour, nodeV->next->cour)
+    int cost = params.dist(nodeU->client, nodeV->client)
+               + params.dist(nodeU->next->client, nodeV->next->client)
+               - params.dist(nodeU->client, nodeU->next->client)
+               - params.dist(nodeV->client, nodeV->next->client)
                + nodeV->cumulatedReversalDistance
                - nodeU->next->cumulatedReversalDistance;
 
     if (!nodeU->route->twData.hasTimeWarp() && cost >= 0)
         return false;
 
-    auto routeTwData = nodeU->prefixTwData;
+    auto routeTwData = nodeU->twBefore;
     auto *itRoute = nodeV;
     while (itRoute != nodeU)
     {
-        routeTwData = TimeWindowSegment::merge(routeTwData, itRoute->twData);
+        routeTwData = TimeWindowSegment::merge(routeTwData, itRoute->tw);
         itRoute = itRoute->prev;
     }
     routeTwData
-        = TimeWindowSegment::merge(routeTwData, nodeV->next->postfixTwData);
+        = TimeWindowSegment::merge(routeTwData, nodeV->next->twAfter);
 
     // Compute new total penalty
     cost += penalties.load(nodeU->route->load) + penalties.timeWarp(routeTwData)

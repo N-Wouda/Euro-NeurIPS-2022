@@ -20,7 +20,7 @@ void swapNode(LocalSearch::Node *U, LocalSearch::Node *V);
  * Updates the given route. To be called after swapping nodes/changing the
  * solution.
  */
-void updateRouteData(LocalSearch::Route *myRoute,
+void updateRouteData(LocalSearch::Route *route,
                      int nbMoves,
                      LocalSearch::Penalties const &penalties,
                      Params const &params);

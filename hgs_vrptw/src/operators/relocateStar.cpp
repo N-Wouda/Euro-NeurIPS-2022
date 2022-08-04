@@ -20,26 +20,26 @@ bool relocateStar(int &nbMoves,
         auto *nodeX = nodeU->next;
 
         auto const routeUTwData = TimeWindowSegment::merge(
-            nodeU->prev->prefixTwData, nodeX->postfixTwData);
+            nodeU->prev->twBefore, nodeX->twAfter);
         int const costSuppU
-            = params.dist(nodeU->prev->cour, nodeX->cour)
-              - params.dist(nodeU->prev->cour, nodeU->cour)
-              - params.dist(nodeU->cour, nodeX->cour)
+            = params.dist(nodeU->prev->client, nodeX->client)
+              - params.dist(nodeU->prev->client, nodeU->client)
+              - params.dist(nodeU->client, nodeX->client)
               + penalties.load(routeU->load
-                               - params.clients[nodeU->cour].demand)
+                               - params.clients[nodeU->client].demand)
               + penalties.timeWarp(routeUTwData) - routeU->penalty;
 
         for (auto *V = routeV->depot->next; !V->isDepot; V = V->next)
         {
             auto const routeVTwData = TimeWindowSegment::merge(
-                V->prefixTwData, nodeU->twData, V->next->postfixTwData);
+                V->twBefore, nodeU->tw, V->next->twAfter);
 
             int const costSuppV
-                = params.dist(V->cour, nodeU->cour)
-                  + params.dist(nodeU->cour, V->next->cour)
-                  - params.dist(V->cour, V->next->cour)
+                = params.dist(V->client, nodeU->client)
+                  + params.dist(nodeU->client, V->next->client)
+                  - params.dist(V->client, V->next->client)
                   + penalties.load(routeV->load
-                                   + params.clients[nodeU->cour].demand)
+                                   + params.clients[nodeU->client].demand)
                   + penalties.timeWarp(routeVTwData) - routeV->penalty;
 
             if (costSuppU + costSuppV < bestCost)

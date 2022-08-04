@@ -19,7 +19,7 @@ public:
 
     struct Route
     {
-        int cour;                   // Route index
+        int idx;                    // Route index
         int nbCustomers;            // Number of customers visited in the route
         int whenLastModified;       // "When" this route has been last modified
         int whenLastTestedLargeNb;  // "When" the large neighborhood moves for
@@ -38,7 +38,7 @@ public:
     struct Node
     {
         bool isDepot;  // Tells whether this node represents a depot or not
-        int cour;      // Node index
+        int client;    // Node index
         int position;  // Position in the route
         int whenLastTestedRI;  // "When" the RI moves for this node have been
                                // last tested
@@ -48,26 +48,25 @@ public:
         int cumulatedLoad;     // Cumulated load on this route until the client
                                // (including itself)
         int cumulatedReversalDistance;  // Difference of cost if the segment of
-                                        // route (0...cour) is reversed (useful
-                                        // for 2-opt moves with asymmetric
-                                        // problems)
-        int deltaRemoval;    // Difference of cost in the current route if the
-                             // node is removed (used in SWAP*)
-        int deltaRemovalTW;  // Difference of cost in the current route if the
-                             // node is removed, including TimeWarp (used in
-                             // SWAP*)
-        TimeWindowSegment
-            twData;  // TimeWindowSegment for individual node (cour)
-        TimeWindowSegment prefixTwData;   // TimeWindowSegment for subsequence
-                                          // (0...cour) including self
-        TimeWindowSegment postfixTwData;  // TimeWindowSegment for subsequence
-                                          // (cour...0) including self
-        bool isSeed;  // Tells whether a nextSeed is available (faster twData
+                                        // route (0...client) is reversed
+                                        // (useful for 2-opt moves with
+                                        // asymmetric problems)
+        int deltaRemoval;      // Difference of cost in the current route if the
+                               // node is removed (used in SWAP*)
+        int deltaRemovalTW;    // Difference of cost in the current route if the
+                               // node is removed, including TimeWarp (used in
+                               // SWAP*)
+        TimeWindowSegment tw;  // TimeWindowSegment for individual node (client)
+        TimeWindowSegment twBefore;  // TimeWindowSegment for subsequence
+                                     // (0...client) including self
+        TimeWindowSegment twAfter;   // TimeWindowSegment for subsequence
+                                     // (client...0) including self
+        bool isSeed;  // Tells whether a nextSeed is available (faster tw
                       // calculations)
-        TimeWindowSegment
-            toNextSeedTwD;  // TimeWindowSegment for subsequence (cour...cour+4)
-                            // excluding self, including cour + 4
-        Node *nextSeed;     // next seeded node if available (nullptr otherwise)
+        TimeWindowSegment toNextSeedTwD;  // TimeWindowSegment for subsequence
+                                          // (client...client+4) excluding self,
+                                          // including client + 4
+        Node *nextSeed;  // next seeded node if available (nullptr otherwise)
 
         // Calculates time window data for segment [self, other] in same route
         TimeWindowSegment mergeSegmentTwData(Node *other)
@@ -76,13 +75,13 @@ public:
             assert(position <= other->position);
 
             if (isDepot)
-                return other->prefixTwData;
+                return other->twBefore;
 
             if (other->isDepot)
-                return postfixTwData;
+                return twAfter;
 
             Node *node = this;
-            TimeWindowSegment data = twData;
+            TimeWindowSegment data = tw;
 
             while (node != other)
             {
@@ -94,7 +93,7 @@ public:
                 else
                 {
                     node = node->next;
-                    data = TimeWindowSegment::merge(data, node->twData);
+                    data = TimeWindowSegment::merge(data, node->tw);
                 }
             }
 

@@ -12,14 +12,14 @@ bool moveTwoClientsReversed(int &nbMoves,
     if (nodeU == nodeV->next || nodeU->next == nodeV || nodeU->next->isDepot)
         return false;
 
-    int costSuppU = params.dist(nodeU->prev->cour, nodeU->next->next->cour)
-                    - params.dist(nodeU->prev->cour, nodeU->cour)
-                    - params.dist(nodeU->cour, nodeU->next->cour)
-                    - params.dist(nodeU->next->cour, nodeU->next->next->cour);
-    int costSuppV = params.dist(nodeV->cour, nodeU->next->cour)
-                    + params.dist(nodeU->next->cour, nodeU->cour)
-                    + params.dist(nodeU->cour, nodeV->next->cour)
-                    - params.dist(nodeV->cour, nodeV->next->cour);
+    int costSuppU = params.dist(nodeU->prev->client, nodeU->next->next->client)
+                    - params.dist(nodeU->prev->client, nodeU->client)
+                    - params.dist(nodeU->client, nodeU->next->client)
+                    - params.dist(nodeU->next->client, nodeU->next->next->client);
+    int costSuppV = params.dist(nodeV->client, nodeU->next->client)
+                    + params.dist(nodeU->next->client, nodeU->client)
+                    + params.dist(nodeU->client, nodeV->next->client)
+                    - params.dist(nodeV->client, nodeV->next->client);
 
     if (nodeU->route != nodeV->route)
     {
@@ -31,20 +31,20 @@ bool moveTwoClientsReversed(int &nbMoves,
         }
 
         auto routeUTwData = TimeWindowSegment::merge(
-            nodeU->prev->prefixTwData, nodeU->next->next->postfixTwData);
-        auto routeVTwData = TimeWindowSegment::merge(nodeV->prefixTwData,
-                                                  nodeU->next->twData,
-                                                  nodeU->twData,
-                                                  nodeV->next->postfixTwData);
+            nodeU->prev->twBefore, nodeU->next->next->twAfter);
+        auto routeVTwData = TimeWindowSegment::merge(nodeV->twBefore,
+                                                  nodeU->next->tw,
+                                                  nodeU->tw,
+                                                  nodeV->next->twAfter);
 
         costSuppU += penalties.load(nodeU->route->load
-                                    - params.clients[nodeU->cour].demand
-                                    - params.clients[nodeU->next->cour].demand)
+                                    - params.clients[nodeU->client].demand
+                                    - params.clients[nodeU->next->client].demand)
                      + penalties.timeWarp(routeUTwData) - nodeU->route->penalty;
 
         costSuppV += penalties.load(nodeV->route->load
-                                    + params.clients[nodeU->cour].demand
-                                    + params.clients[nodeU->next->cour].demand)
+                                    + params.clients[nodeU->client].demand
+                                    + params.clients[nodeU->next->client].demand)
                      + penalties.timeWarp(routeVTwData) - nodeV->route->penalty;
     }
     else
@@ -61,11 +61,11 @@ bool moveTwoClientsReversed(int &nbMoves,
             // after X so XNext == V works start - ... - UPrev - XNext - ... - V
             // - X - U - Y - ... - end
             auto const routeUTwData = TimeWindowSegment::merge(
-                nodeU->prev->prefixTwData,
+                nodeU->prev->twBefore,
                 nodeU->next->next->mergeSegmentTwData(nodeV),
-                nodeU->next->twData,
-                nodeU->twData,
-                nodeV->next->postfixTwData);
+                nodeU->next->tw,
+                nodeU->tw,
+                nodeV->next->twAfter);
 
             costSuppU += penalties.timeWarp(routeUTwData);
         }
@@ -75,11 +75,11 @@ bool moveTwoClientsReversed(int &nbMoves,
             // function start - ... - V - X - U - Y - ... - UPrev - XNext - ...
             // - end
             auto const routeUTwData = TimeWindowSegment::merge(
-                nodeV->prefixTwData,
-                nodeU->next->twData,
-                nodeU->twData,
+                nodeV->twBefore,
+                nodeU->next->tw,
+                nodeU->tw,
                 nodeV->next->mergeSegmentTwData(nodeU->prev),
-                nodeU->next->next->postfixTwData);
+                nodeU->next->next->twAfter);
 
             costSuppU += penalties.timeWarp(routeUTwData);
         }
