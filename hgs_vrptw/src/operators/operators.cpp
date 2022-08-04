@@ -1,5 +1,7 @@
 #include "operators.h"
 
+#include "TimeWindowSegment.h"
+
 #include <cmath>
 
 void operators::insertNode(LocalSearch::Node *U, LocalSearch::Node *V)
@@ -66,7 +68,8 @@ void operators::updateRouteData(LocalSearch::Route *myRoute,
                               - params.dist(mynode->prev->cour, mynode->cour);
         mynode->cumulatedLoad = myload;
         mynode->cumulatedReversalDistance = myReversalDistance;
-        mynode->prefixTwData = mynode->prev->prefixTwData.merge(mynode->twData);
+        mynode->prefixTwData
+            = TimeWindowSegment::merge(mynode->prev->prefixTwData, mynode->twData);
         mynode->isSeed = false;
         mynode->nextSeed = nullptr;
         if (!mynode->isDepot)
@@ -83,7 +86,8 @@ void operators::updateRouteData(LocalSearch::Route *myRoute,
                 if (seedNode != nullptr)
                 {
                     seedNode->isSeed = true;
-                    seedNode->toNextSeedTwD = seedTwD.merge(mynode->twData);
+                    seedNode->toNextSeedTwD
+                        = TimeWindowSegment::merge(seedTwD, mynode->twData);
                     seedNode->nextSeed = mynode;
                 }
                 seedNode = mynode;
@@ -91,7 +95,7 @@ void operators::updateRouteData(LocalSearch::Route *myRoute,
             else if (myplace % 4 == 1)
                 seedTwD = mynode->twData;
             else
-                seedTwD = seedTwD.merge(mynode->twData);
+                seedTwD = TimeWindowSegment::merge(seedTwD, mynode->twData);
         }
         firstIt = false;
     }
@@ -110,7 +114,7 @@ void operators::updateRouteData(LocalSearch::Route *myRoute,
     do
     {
         mynode = mynode->prev;
-        mynode->postfixTwData = LocalSearch::TimeWindowData::merge(
+        mynode->postfixTwData = TimeWindowSegment::merge(
             mynode->twData, mynode->next->postfixTwData);
     } while (!mynode->isDepot);
 

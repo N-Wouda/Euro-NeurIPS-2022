@@ -1,5 +1,7 @@
 #include "operators.h"
 
+#include "TimeWindowSegment.h"
+
 bool moveTwoClientsReversed(int &nbMoves,
                             bool &searchCompleted,
                             LocalSearch::Node *nodeU,
@@ -22,18 +24,18 @@ bool moveTwoClientsReversed(int &nbMoves,
     if (nodeU->route != nodeV->route)
     {
         if (nodeU->route->load <= params.vehicleCapacity
-            && nodeU->route->twData.timeWarp == 0 && costSuppU + costSuppV >= 0)
+            && !nodeU->route->twData.hasTimeWarp()
+            && costSuppU + costSuppV >= 0)
         {
             return false;
         }
 
-        auto routeUTwData
-            = nodeU->prev->prefixTwData.merge(nodeU->next->next->postfixTwData);
-        auto routeVTwData
-            = LocalSearch::TimeWindowData::merge(nodeV->prefixTwData,
-                                                 nodeU->next->twData,
-                                                 nodeU->twData,
-                                                 nodeV->next->postfixTwData);
+        auto routeUTwData = TimeWindowSegment::merge(
+            nodeU->prev->prefixTwData, nodeU->next->next->postfixTwData);
+        auto routeVTwData = TimeWindowSegment::merge(nodeV->prefixTwData,
+                                                  nodeU->next->twData,
+                                                  nodeU->twData,
+                                                  nodeV->next->postfixTwData);
 
         costSuppU += penalties.load(nodeU->route->load
                                     - params.clients[nodeU->cour].demand
@@ -47,7 +49,7 @@ bool moveTwoClientsReversed(int &nbMoves,
     }
     else
     {
-        if (nodeU->route->twData.timeWarp == 0 && costSuppU + costSuppV >= 0)
+        if (!nodeU->route->twData.hasTimeWarp() && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -58,7 +60,7 @@ bool moveTwoClientsReversed(int &nbMoves,
             // Edge case V directly after U, so X == V is excluded, V directly
             // after X so XNext == V works start - ... - UPrev - XNext - ... - V
             // - X - U - Y - ... - end
-            auto const routeUTwData = LocalSearch::TimeWindowData::merge(
+            auto const routeUTwData = TimeWindowSegment::merge(
                 nodeU->prev->prefixTwData,
                 nodeU->next->next->mergeSegmentTwData(nodeV),
                 nodeU->next->twData,
@@ -72,7 +74,7 @@ bool moveTwoClientsReversed(int &nbMoves,
             // Edge case U directly after V is excluded from beginning of
             // function start - ... - V - X - U - Y - ... - UPrev - XNext - ...
             // - end
-            auto const routeUTwData = LocalSearch::TimeWindowData::merge(
+            auto const routeUTwData = TimeWindowSegment::merge(
                 nodeV->prefixTwData,
                 nodeU->next->twData,
                 nodeU->twData,

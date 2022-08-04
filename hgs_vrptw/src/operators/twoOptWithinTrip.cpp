@@ -1,5 +1,7 @@
 #include "operators.h"
 
+#include "TimeWindowSegment.h"
+
 bool twoOptWithinTrip(int &nbMoves,
                       bool &searchCompleted,
                       LocalSearch::Node *nodeU,
@@ -20,28 +22,25 @@ bool twoOptWithinTrip(int &nbMoves,
                + nodeV->cumulatedReversalDistance
                - nodeU->next->cumulatedReversalDistance;
 
-    if (nodeU->route->twData.timeWarp == 0 && cost >= 0)
-    {
+    if (!nodeU->route->twData.hasTimeWarp() && cost >= 0)
         return false;
-    }
 
     auto routeTwData = nodeU->prefixTwData;
     auto *itRoute = nodeV;
     while (itRoute != nodeU)
     {
-        routeTwData = routeTwData.merge(itRoute->twData);
+        routeTwData = TimeWindowSegment::merge(routeTwData, itRoute->twData);
         itRoute = itRoute->prev;
     }
-    routeTwData = routeTwData.merge(nodeV->next->postfixTwData);
+    routeTwData
+        = TimeWindowSegment::merge(routeTwData, nodeV->next->postfixTwData);
 
     // Compute new total penalty
     cost += penalties.load(nodeU->route->load) + penalties.timeWarp(routeTwData)
             - nodeU->route->penalty;
 
     if (cost >= 0)
-    {
         return false;
-    }
 
     itRoute = nodeV;
     auto *insertionPoint = nodeU;

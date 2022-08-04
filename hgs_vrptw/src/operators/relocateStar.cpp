@@ -1,5 +1,7 @@
 #include "operators.h"
 
+#include "TimeWindowSegment.h"
+
 bool relocateStar(int &nbMoves,
                   bool &searchCompleted,
                   LocalSearch::Route *routeU,
@@ -17,7 +19,7 @@ bool relocateStar(int &nbMoves,
         routeU = nodeU->route;
         auto *nodeX = nodeU->next;
 
-        auto const routeUTwData = LocalSearch::TimeWindowData::merge(
+        auto const routeUTwData = TimeWindowSegment::merge(
             nodeU->prev->prefixTwData, nodeX->postfixTwData);
         int const costSuppU
             = params.dist(nodeU->prev->cour, nodeX->cour)
@@ -29,7 +31,7 @@ bool relocateStar(int &nbMoves,
 
         for (auto *V = routeV->depot->next; !V->isDepot; V = V->next)
         {
-            auto const routeVTwData = LocalSearch::TimeWindowData::merge(
+            auto const routeVTwData = TimeWindowSegment::merge(
                 V->prefixTwData, nodeU->twData, V->next->postfixTwData);
 
             int const costSuppV

@@ -1,5 +1,7 @@
 #include "operators.h"
 
+#include "TimeWindowSegment.h"
+
 bool twoOptBetweenTrips(int &nbMoves,
                         bool &searchCompleted,
                         LocalSearch::Node *nodeU,
@@ -16,15 +18,17 @@ bool twoOptBetweenTrips(int &nbMoves,
                     - params.dist(nodeV->cour, nodeV->next->cour);
 
     if (nodeU->route->load <= params.vehicleCapacity
-        && nodeU->route->twData.timeWarp == 0
+        && !nodeU->route->twData.hasTimeWarp()
         && nodeV->route->load <= params.vehicleCapacity
-        && nodeV->route->twData.timeWarp == 0 && costSuppU + costSuppV >= 0)
+        && !nodeV->route->twData.hasTimeWarp() && costSuppU + costSuppV >= 0)
     {
         return false;
     }
 
-    auto routeUTwData = nodeU->prefixTwData.merge(nodeV->next->postfixTwData);
-    auto routeVTwData = nodeV->prefixTwData.merge(nodeU->next->postfixTwData);
+    auto routeUTwData = TimeWindowSegment::merge(nodeU->prefixTwData,
+                                              nodeV->next->postfixTwData);
+    auto routeVTwData = TimeWindowSegment::merge(nodeV->prefixTwData,
+                                              nodeU->next->postfixTwData);
 
     costSuppU += penalties.load(nodeU->cumulatedLoad + nodeV->route->load
                                 - nodeV->cumulatedLoad)

@@ -1,5 +1,7 @@
 #include "operators.h"
 
+#include "TimeWindowSegment.h"
+
 bool swapTwoClientPairs(int &nbMoves,
                         bool &searchCompleted,
                         LocalSearch::Node *nodeU,
@@ -27,19 +29,19 @@ bool swapTwoClientPairs(int &nbMoves,
     if (nodeU->route != nodeV->route)
     {
         if (nodeU->route->load <= params.vehicleCapacity
-            && nodeU->route->twData.timeWarp == 0
+            && !nodeU->route->twData.hasTimeWarp()
             && nodeV->route->load <= params.vehicleCapacity
-            && nodeV->route->twData.timeWarp == 0 && costSuppU + costSuppV >= 0)
+            && !nodeV->route->twData.hasTimeWarp() && costSuppU + costSuppV >= 0)
         {
             return false;
         }
 
-        auto routeUTwData = LocalSearch::TimeWindowData::merge(
+        auto routeUTwData = TimeWindowSegment::merge(
             nodeU->prev->prefixTwData,
             nodeV->twData,
             nodeV->next->twData,
             nodeU->next->next->postfixTwData);
-        auto routeVTwData = LocalSearch::TimeWindowData::merge(
+        auto routeVTwData = TimeWindowSegment::merge(
             nodeV->prev->prefixTwData,
             nodeU->twData,
             nodeU->next->twData,
@@ -61,7 +63,7 @@ bool swapTwoClientPairs(int &nbMoves,
     }
     else
     {
-        if (nodeU->route->twData.timeWarp == 0 && costSuppU + costSuppV >= 0)
+        if (!nodeU->route->twData.hasTimeWarp() && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -71,7 +73,7 @@ bool swapTwoClientPairs(int &nbMoves,
         {
             // start - ... - UPrev - V - Y - XNext - ... - VPrev - U - X - YNext
             // - ... - end
-            auto const routeUTwData = LocalSearch::TimeWindowData::merge(
+            auto const routeUTwData = TimeWindowSegment::merge(
                 nodeU->prev->prefixTwData,
                 nodeV->twData,
                 nodeV->next->twData,
@@ -86,7 +88,7 @@ bool swapTwoClientPairs(int &nbMoves,
         {
             // start - ... - VPrev - U - X - YNext - ... - UPrev - V - Y - XNext
             // - ... - end
-            auto const routeUTwData = LocalSearch::TimeWindowData::merge(
+            auto const routeUTwData = TimeWindowSegment::merge(
                 nodeV->prev->prefixTwData,
                 nodeU->twData,
                 nodeU->next->twData,

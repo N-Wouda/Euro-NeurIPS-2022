@@ -1,5 +1,7 @@
 #include "operators.h"
 
+#include "TimeWindowSegment.h"
+
 bool swapTwoSingleClients(int &nbMoves,
                           bool &searchCompleted,
                           LocalSearch::Node *nodeU,
@@ -25,21 +27,20 @@ bool swapTwoSingleClients(int &nbMoves,
     if (nodeU->route != nodeV->route)
     {
         if (nodeU->route->load <= params.vehicleCapacity
-            && nodeU->route->twData.timeWarp == 0
+            && !nodeU->route->twData.hasTimeWarp()
             && nodeV->route->load <= params.vehicleCapacity
-            && nodeV->route->twData.timeWarp == 0 && costSuppU + costSuppV >= 0)
+            && !nodeV->route->twData.hasTimeWarp()
+            && costSuppU + costSuppV >= 0)
         {
             return false;
         }
 
-        auto routeUTwData
-            = LocalSearch::TimeWindowData::merge(nodeU->prev->prefixTwData,
-                                                 nodeV->twData,
-                                                 nodeU->next->postfixTwData);
-        auto routeVTwData
-            = LocalSearch::TimeWindowData::merge(nodeV->prev->prefixTwData,
-                                                 nodeU->twData,
-                                                 nodeV->next->postfixTwData);
+        auto routeUTwData = TimeWindowSegment::merge(nodeU->prev->prefixTwData,
+                                                  nodeV->twData,
+                                                  nodeU->next->postfixTwData);
+        auto routeVTwData = TimeWindowSegment::merge(nodeV->prev->prefixTwData,
+                                                  nodeU->twData,
+                                                  nodeV->next->postfixTwData);
 
         costSuppU += penalties.load(nodeU->route->load
                                     + params.clients[nodeV->cour].demand
@@ -53,7 +54,7 @@ bool swapTwoSingleClients(int &nbMoves,
     }
     else
     {
-        if (nodeU->route->twData.timeWarp == 0 && costSuppU + costSuppV >= 0)
+        if (!nodeU->route->twData.hasTimeWarp() && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -64,7 +65,7 @@ bool swapTwoSingleClients(int &nbMoves,
             // Edge case V directly after U, so X == V is excluded, V directly
             // after X so XNext == V works start - ... - UPrev - V - X - ... -
             // VPrev - U - Y - ... - end
-            auto const routeUTwData = LocalSearch::TimeWindowData::merge(
+            auto const routeUTwData = TimeWindowSegment::merge(
                 nodeU->prev->prefixTwData,
                 nodeV->twData,
                 nodeU->next->mergeSegmentTwData(nodeV->prev),
@@ -78,7 +79,7 @@ bool swapTwoSingleClients(int &nbMoves,
             // Edge case U directly after V is excluded from beginning of
             // function start - ... - VPrev - U - Y - ... - UPrev - V - X - ...
             // - end
-            auto const routeUTwData = LocalSearch::TimeWindowData::merge(
+            auto const routeUTwData = TimeWindowSegment::merge(
                 nodeV->prev->prefixTwData,
                 nodeU->twData,
                 nodeV->next->mergeSegmentTwData(nodeU->prev),

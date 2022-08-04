@@ -4,6 +4,7 @@
 #include "CircleSector.h"
 #include "Individual.h"
 #include "Params.h"
+#include "TimeWindowSegment.h"
 #include "XorShift128.h"
 
 #include <array>
@@ -14,58 +15,6 @@
 class LocalSearch
 {
 public:
-    struct TimeWindowData
-    {
-        // Note: [twEarly, twLate] represent the time in which we can
-        // arrive at the first node and execute the min cost route. Arriving
-        // later would lead to (additional) time warp and arriving earlier would
-        // lead to (additional) waiting time, not necessarily at the first node.
-
-        Params const *params;
-
-        int idxFirst;
-        int idxLast;
-        int duration;  // Cumulative duration, including waiting and servicing
-        int timeWarp;  // Cumulative time warp
-        int twEarly;   // Earliest start of servicing first node in sequence,
-                       // given a min cost route sequence
-        int twLate;    // Latest start of servicing first node in sequence,
-                       // given a min cost route sequence
-
-        int latestReleaseTime;  // Latest of all release times of customers in
-                                // sequence, so route cannot dispatch before
-
-        [[nodiscard]] inline TimeWindowData
-        merge(TimeWindowData const &other) const
-        {
-            int dist = params->dist(idxLast, other.idxFirst);
-            int delta = duration - timeWarp + dist;
-            int deltaWaitTime = std::max(other.twEarly - delta - twLate, 0);
-            int deltaTimeWarp = std::max(twEarly + delta - other.twLate, 0);
-
-            return {params,
-                    idxFirst,
-                    other.idxLast,
-                    duration + other.duration + dist + deltaWaitTime,
-                    timeWarp + other.timeWarp + deltaTimeWarp,
-                    std::max(other.twEarly - delta, twEarly) - deltaWaitTime,
-                    std::min(other.twLate - delta, twLate) + deltaTimeWarp,
-                    std::max(latestReleaseTime, other.latestReleaseTime)};
-        }
-
-        template <typename... Args>
-        [[nodiscard]] inline static TimeWindowData merge(
-            TimeWindowData const &tw1, TimeWindowData const &tw2, Args... args)
-        {
-            auto const res = tw1.merge(tw2);
-
-            if constexpr (sizeof...(args) == 0)
-                return res;
-            else
-                return merge(res, args...);
-        }
-    };
-
     struct Node;
 
     struct Route
@@ -79,7 +28,7 @@ public:
                                         // of nodes is outdated
         Node *depot;                    // Pointer to the associated depot
         int load;                       // Total load on the route
-        TimeWindowData twData;          // Time window data of the route
+        TimeWindowSegment twData;       // Time window data of the route
         int penalty;  // Current sum of load, duration and time window penalties
         double
             polarAngleBarycenter;  // Polar angle of the barycenter of the route
@@ -107,20 +56,21 @@ public:
         int deltaRemovalTW;  // Difference of cost in the current route if the
                              // node is removed, including TimeWarp (used in
                              // SWAP*)
-        TimeWindowData twData;  // TimeWindowData for individual node (cour)
-        TimeWindowData prefixTwData;   // TimeWindowData for subsequence
-                                       // (0...cour) including self
-        TimeWindowData postfixTwData;  // TimeWindowData for subsequence
-                                       // (cour...0) including self
+        TimeWindowSegment
+            twData;  // TimeWindowSegment for individual node (cour)
+        TimeWindowSegment prefixTwData;   // TimeWindowSegment for subsequence
+                                          // (0...cour) including self
+        TimeWindowSegment postfixTwData;  // TimeWindowSegment for subsequence
+                                          // (cour...0) including self
         bool isSeed;  // Tells whether a nextSeed is available (faster twData
                       // calculations)
-        TimeWindowData
-            toNextSeedTwD;  // TimeWindowData for subsequence (cour...cour+4)
+        TimeWindowSegment
+            toNextSeedTwD;  // TimeWindowSegment for subsequence (cour...cour+4)
                             // excluding self, including cour + 4
         Node *nextSeed;     // next seeded node if available (nullptr otherwise)
 
         // Calculates time window data for segment [self, other] in same route
-        TimeWindowData mergeSegmentTwData(Node *other)
+        TimeWindowSegment mergeSegmentTwData(Node *other)
         {
             assert(route == other->route);
             assert(position <= other->position);
@@ -132,19 +82,19 @@ public:
                 return postfixTwData;
 
             Node *node = this;
-            TimeWindowData data = twData;
+            TimeWindowSegment data = twData;
 
             while (node != other)
             {
                 if (node->isSeed && node->position + 4 <= other->position)
                 {
-                    data = TimeWindowData::merge(data, node->toNextSeedTwD);
+                    data = TimeWindowSegment::merge(data, node->toNextSeedTwD);
                     node = node->nextSeed;
                 }
                 else
                 {
                     node = node->next;
-                    data = TimeWindowData::merge(data, node->twData);
+                    data = TimeWindowSegment::merge(data, node->twData);
                 }
             }
 
@@ -166,10 +116,9 @@ public:
         }
 
         // Computes the total time warp penalty for the given time window data
-        [[nodiscard]] inline int timeWarp(TimeWindowData const &twData) const
+        [[nodiscard]] inline int timeWarp(TimeWindowSegment const &twData) const
         {
-            auto const releaseWarp = twData.latestReleaseTime - twData.twLate;
-            return (twData.timeWarp + std::max(releaseWarp, 0)) * timePenalty;
+            return twData.totalTimeWarp() * timePenalty;
         }
     };
 

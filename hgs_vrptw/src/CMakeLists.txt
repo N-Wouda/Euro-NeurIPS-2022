@@ -33,6 +33,9 @@ set(resultSources
 set(statisticsSources
         Statistics.cpp)
 
+set(timeWindowSegmentSources
+        TimeWindowSegment.cpp)
+
 # (Internal) library
 add_library(hgs
         ${geneticSources}
@@ -41,7 +44,8 @@ add_library(hgs
         ${paramsSources}
         ${populationSources}
         ${resultSources}
-        ${statisticsSources})
+        ${statisticsSources}
+        ${timeWindowSegmentSources})
 
 # Executable
 add_executable(genvrp main.cpp)
