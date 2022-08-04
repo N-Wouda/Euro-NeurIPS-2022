@@ -191,10 +191,9 @@ Individual greedyRepairWithBlinks(Routes &routes,
     std::iota(indices.begin(), indices.end(), 0);
 
     // TODO how to add more sorting options in a neat way?
-    std::sort(indices.begin(),
-              indices.end(),
-              [&](int A, int B) -> bool
-              { return params.clients[A].demand < params.clients[B].demand; });
+    std::sort(indices.begin(), indices.end(), [&](int A, int B) -> bool {
+        return params.clients[A].demand < params.clients[B].demand;
+    });
 
     // NOTE Copied largely from SREX
     for (int idx : indices)
