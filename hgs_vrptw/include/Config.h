@@ -56,11 +56,11 @@ struct Config
     // that even small circle sectors have 'overlap'
     int minCircleSectorSize = static_cast<int>(15 / 360. * 65536);
 
-    // SISR related parametersm, see Christiaens 2020.
+    // SISR related parameters, see Christiaens 2020.
     size_t avgDestruction = 6;
-    size_t maxStringCard = 8;
+    size_t maxStringCard = 10;
     size_t splitRate = 50;
-    size_t splitDepth = 1;
+    size_t splitDepth = 25;
     size_t blinkRate = 1;
 
     explicit Config(int seed = 0,
@@ -86,10 +86,10 @@ struct Config
                     int intensificationProbability = 15,
                     int circleSectorOverlapToleranceDegrees = 0,
                     int minCircleSectorSizeDegrees = 15,
-                    size_t avgDestruction = 7,
+                    size_t avgDestruction = 6,
                     size_t maxStringCard = 10,
-                    size_t splitRate = 100,
-                    size_t splitDepth = 1,
+                    size_t splitRate = 50,
+                    size_t splitDepth = 25,
                     size_t blinkRate = 1)
         : seed(seed),
           nbIter(nbIter),
