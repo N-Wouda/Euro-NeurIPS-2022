@@ -66,7 +66,6 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
 
     for (auto client : params.getNeighboursOf(center))
     {
-
         if (destroyedRoutes.size() >= nbStringRemovals)
             break;
 
@@ -77,6 +76,7 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
         {
             if (std::find(route.begin(), route.end(), client) != route.end())
             {
+
                 if (destroyedRoutes.contains(route))
                     continue;
 
@@ -118,11 +118,12 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
                 }
 
                 destroyedRoutes.insert(route);
+                break;
             }
         }
-
-        return std::make_pair(routes, removedClients);
     }
+
+    return std::make_pair(routes, removedClients);
 }
 
 void removeClients(Routes &routes, ClientSet const &clients)
@@ -148,8 +149,9 @@ sortClients(ClientSet const clientSet, Params const &params, XorShift128 &rng)
     std::vector<int> indices(clients.size());
     std::iota(indices.begin(), indices.end(), 0);
 
-    auto const highestDemand = [&](int A, int B)
-    { return params.clients[A].demand > params.clients[B].demand; };
+    auto const highestDemand = [&](int A, int B) {
+        return params.clients[A].demand > params.clients[B].demand;
+    };
 
     auto const furtherToDepot
         = [&](int A, int B) { return params.dist(0, A) > params.dist(0, B); };
@@ -157,17 +159,18 @@ sortClients(ClientSet const clientSet, Params const &params, XorShift128 &rng)
     auto const closestToDepot
         = [&](int A, int B) { return params.dist(0, A) < params.dist(0, B); };
 
-    auto const largestTw = [&](int A, int B)
-    {
+    auto const largestTw = [&](int A, int B) {
         return params.clients[A].twLate - params.clients[A].twEarly
                > params.clients[B].twLate - params.clients[B].twEarly;
     };
 
-    auto const smallestTwEarly = [&](int A, int B)
-    { return params.clients[A].twEarly < params.clients[B].twEarly; };
+    auto const smallestTwEarly = [&](int A, int B) {
+        return params.clients[A].twEarly < params.clients[B].twEarly;
+    };
 
-    auto const smallestTwLate = [&](int A, int B)
-    { return params.clients[A].twLate < params.clients[B].twEarly; };
+    auto const smallestTwLate = [&](int A, int B) {
+        return params.clients[A].twLate < params.clients[B].twEarly;
+    };
 
     // TODO How to make this non-uniform?
     auto draw = rng.randint(7);
