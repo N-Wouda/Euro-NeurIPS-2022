@@ -20,7 +20,12 @@ using ClientSet = std::unordered_set<Client>;
 using Route = std::vector<Client>;
 using Routes = std::vector<Route>;
 
-;
+struct InsertPos  // best insert position, used to plan unplanned clients
+{
+    int deltaCost;
+    std::vector<int> *route;
+    size_t offset;
+};
 
 // Returns the indices of a random (sub)string with length card that
 // contains the client

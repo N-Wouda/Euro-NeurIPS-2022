@@ -15,8 +15,8 @@ Individual orderedExchange(
     XorShift128 &rng);
 
 /**
- * Performs two SREX [1] crossovers the given parents (binary tournament). This
- * was one of ORTEC's DIMACS contributions.
+ * Performs two SREX [1] crossovers of the given parents (binary tournament).
+ * This was one of ORTEC's DIMACS contributions.
  * <br />
  * [1]: Yuichi Nagata and Shigenobu Kobayashi. "A memetic algorithm for the
  * pickup and delivery problem with time windows using selective route exchange
@@ -29,9 +29,9 @@ Individual selectiveRouteExchange(
     XorShift128 &rng);
 
 /**
- * Performs two SISRX crossovers of the given parents (binary tournament). SISRX
+ * Performs a SISRX crossover of the given parents (binary tournament). SISRX
  * first removes strings of clients from each parent based on "Slack Induction
- * String Removals (SISR)" [2]. Removed clients from one parent are then
+ * String Removals (SISRs)" [2]. Removed clients from one parent are then
  * also removed from the other parent. Both parents are repaired to complete
  * solutions by greedily re-inserting the unassinged clients.
  * <br />
@@ -43,13 +43,6 @@ Individual stringRemovalExchange(
     std::pair<Individual const *, Individual const *> const &parents,
     Params const &params,
     XorShift128 &rng);
-
-struct InsertPos  // best insert position, used to plan unplanned clients
-{
-    int deltaCost;
-    std::vector<int> *route;
-    size_t offset;
-};
 
 /**
  * Evaluates the cost change of inserting client between prev and next.
