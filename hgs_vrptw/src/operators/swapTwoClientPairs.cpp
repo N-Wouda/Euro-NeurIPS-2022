@@ -2,11 +2,9 @@
 
 #include "TimeWindowSegment.h"
 
-bool swapTwoClientPairs(int &nbMoves,
-                        bool &searchCompleted,
-                        Node *nodeU,
+bool swapTwoClientPairs(Node *nodeU,
                         Node *nodeV,
-                        LocalSearch::Penalties const &penalties)
+                        Penalties const &penalties)
 {
     auto const &params = *nodeU->params;
 
@@ -110,13 +108,6 @@ bool swapTwoClientPairs(int &nbMoves,
 
     operators::swapNode(nodeU->next, nodeV->next);
     operators::swapNode(nodeU, nodeV);
-
-    nbMoves++;  // Increment move counter before updating route data
-    searchCompleted = false;
-
-    operators::updateRouteData(nodeU->route, nbMoves, penalties);
-    if (nodeU->route != nodeV->route)
-        operators::updateRouteData(nodeV->route, nbMoves, penalties);
 
     return true;
 }

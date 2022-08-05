@@ -2,11 +2,9 @@
 
 #include "TimeWindowSegment.h"
 
-bool moveSingleClient(int &nbMoves,
-                      bool &searchCompleted,
-                      Node *nodeU,
+bool moveSingleClient(Node *nodeU,
                       Node *nodeV,
-                      LocalSearch::Penalties const &penalties)
+                      Penalties const &penalties)
 {
     auto const &params = *nodeU->params;
 
@@ -46,9 +44,7 @@ bool moveSingleClient(int &nbMoves,
     else
     {
         if (!nodeU->route->twData.hasTimeWarp() && costSuppU + costSuppV >= 0)
-        {
             return false;
-        }
 
         // Move within the same route
         if (nodeU->position < nodeV->position)
@@ -83,14 +79,7 @@ bool moveSingleClient(int &nbMoves,
     if (costSuppU + costSuppV >= 0)
         return false;
 
-    auto *routeU = nodeU->route;
-
     operators::insertNode(nodeU, nodeV);
-    nbMoves++;  // Increment move counter before updating route data
-    searchCompleted = false;
-    operators::updateRouteData(routeU, nbMoves, penalties);
-    if (routeU != nodeV->route)
-        operators::updateRouteData(nodeV->route, nbMoves, penalties);
 
     return true;
 }

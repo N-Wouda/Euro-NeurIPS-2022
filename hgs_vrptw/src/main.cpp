@@ -5,6 +5,7 @@
 #include "Population.h"
 #include "XorShift128.h"
 #include "crossover.h"
+#include "operators.h"
 
 #include <chrono>
 #include <iostream>
@@ -21,7 +22,17 @@ try
     XorShift128 rng(config.seed);
     Params params(config, args.instPath());
     Population pop(params, rng);
+
     LocalSearch ls(params, rng);
+    ls.addNodeOperator(moveSingleClient);
+    ls.addNodeOperator(moveTwoClients);
+    ls.addNodeOperator(moveTwoClientsReversed);
+    ls.addNodeOperator(swapTwoClientPairs);
+    ls.addNodeOperator(swapTwoClientsForOne);
+    ls.addNodeOperator(swapTwoSingleClients);
+    ls.addNodeOperator(twoOptBetweenTrips);
+    ls.addNodeOperator(twoOptWithinTrip);
+    ls.addRouteOperator(relocateStar);
 
     GeneticAlgorithm solver(params, rng, pop, ls);
     solver.addCrossoverOperator(orderedExchange);

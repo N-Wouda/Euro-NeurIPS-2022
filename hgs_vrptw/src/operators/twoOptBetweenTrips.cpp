@@ -2,11 +2,9 @@
 
 #include "TimeWindowSegment.h"
 
-bool twoOptBetweenTrips(int &nbMoves,
-                        bool &searchCompleted,
-                        Node *nodeU,
+bool twoOptBetweenTrips(Node *nodeU,
                         Node *nodeV,
-                        LocalSearch::Penalties const &penalties)
+                        Penalties const &penalties)
 {
     auto const &params = *nodeU->params;
 
@@ -42,8 +40,6 @@ bool twoOptBetweenTrips(int &nbMoves,
     if (costSuppU + costSuppV >= 0)
         return false;
 
-    auto *routeU = nodeU->route;  // these values change in the following, so
-    auto *routeV = nodeV->route;  // must be set here already.
     auto *itRouteU = nodeU->next;
     auto *itRouteV = nodeV->next;
 
@@ -64,11 +60,6 @@ bool twoOptBetweenTrips(int &nbMoves,
         operators::insertNode(current, insertLocation);
         insertLocation = current;
     }
-
-    nbMoves++;
-    searchCompleted = false;
-    operators::updateRouteData(routeU, nbMoves, penalties);
-    operators::updateRouteData(routeV, nbMoves, penalties);
 
     return true;
 }

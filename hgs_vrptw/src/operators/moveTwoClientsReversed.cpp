@@ -2,11 +2,9 @@
 
 #include "TimeWindowSegment.h"
 
-bool moveTwoClientsReversed(int &nbMoves,
-                            bool &searchCompleted,
-                            Node *nodeU,
+bool moveTwoClientsReversed(Node *nodeU,
                             Node *nodeV,
-                            LocalSearch::Penalties const &penalties)
+                            Penalties const &penalties)
 {
     auto const &params = *nodeU->params;
 
@@ -93,16 +91,9 @@ bool moveTwoClientsReversed(int &nbMoves,
         return false;
 
     auto *nodeX = nodeU->next;
-    auto *routeU = nodeU->route;
 
     operators::insertNode(nodeU, nodeV);  // insert U after V
     operators::insertNode(nodeX, nodeV);  // insert X after V (so V -> X -> U)
-
-    nbMoves++;
-    searchCompleted = false;
-    operators::updateRouteData(routeU, nbMoves, penalties);
-    if (routeU != nodeV->route)
-        operators::updateRouteData(nodeV->route, nbMoves, penalties);
 
     return true;
 }

@@ -2,11 +2,9 @@
 
 #include "TimeWindowSegment.h"
 
-bool moveTwoClients(int &nbMoves,
-                    bool &searchCompleted,
-                    Node *nodeU,
+bool moveTwoClients(Node *nodeU,
                     Node *nodeV,
-                    LocalSearch::Penalties const &penalties)
+                    Penalties const &penalties)
 {
     auto const &params = *nodeU->params;
 
@@ -90,16 +88,8 @@ bool moveTwoClients(int &nbMoves,
     if (costSuppU + costSuppV >= 0)
         return false;
 
-    auto *routeU = nodeU->route;
-
     operators::insertNode(nodeU->next, nodeV);  // insert X after V, and U after
     operators::insertNode(nodeU, nodeV);        // V, so we get V -> U -> X.
-
-    nbMoves++;
-    searchCompleted = false;
-    operators::updateRouteData(routeU, nbMoves, penalties);
-    if (routeU != nodeV->route)
-        operators::updateRouteData(nodeV->route, nbMoves, penalties);
 
     return true;
 }

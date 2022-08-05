@@ -8,6 +8,7 @@
 #include "Statistics.h"
 #include "XorShift128.h"
 #include "crossover.h"
+#include "operators.h"
 
 #include <pybind11/chrono.h>
 #include <pybind11/functional.h>
@@ -41,6 +42,9 @@ PYBIND11_MODULE(hgspy, m)
         .def(py::init<Params &, XorShift128 &>(),
              py::arg("params"),
              py::arg("rng"))
+        .def("add_node_operator", &LocalSearch::addNodeOperator, py::arg("op"))
+        .def(
+            "add_route_operator", &LocalSearch::addRouteOperator, py::arg("op"))
         .def("__call__",
              &LocalSearch::operator(),
              py::arg("indiv"),
@@ -174,15 +178,20 @@ PYBIND11_MODULE(hgspy, m)
     // Crossover operators (as a submodule)
     py::module xOps = m.def_submodule("crossover");
 
-    xOps.def("ordered_exchange",
-             &orderedExchange,
-             py::arg("parents"),
-             py::arg("params"),
-             py::arg("rng"));
+    xOps.def("ordered_exchange", &orderedExchange);
+    xOps.def("selective_route_exchange", &selectiveRouteExchange);
 
-    xOps.def("selective_route_exchange",
-             &selectiveRouteExchange,
-             py::arg("parents"),
-             py::arg("params"),
-             py::arg("rng"));
+    // Local search operators (as a submodule)
+    py::module lsOps = m.def_submodule("operators");
+
+    lsOps.def("move_single_client", &moveSingleClient);
+    lsOps.def("move_two_clients", &moveTwoClients);
+    lsOps.def("move_two_clients_reversed", &moveTwoClientsReversed);
+    lsOps.def("swap_two_client_pairs", &swapTwoClientPairs);
+    lsOps.def("swap_two_clients_for_one", &swapTwoClientsForOne);
+    lsOps.def("swap_two_single_clients", &swapTwoSingleClients);
+    lsOps.def("two_opt_between_trips", &twoOptBetweenTrips);
+    lsOps.def("two_opt_within_trip", &twoOptWithinTrip);
+
+    lsOps.def("relocate_star", &relocateStar);
 }

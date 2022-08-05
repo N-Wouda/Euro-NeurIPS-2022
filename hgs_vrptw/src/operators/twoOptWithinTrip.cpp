@@ -2,11 +2,9 @@
 
 #include "TimeWindowSegment.h"
 
-bool twoOptWithinTrip(int &nbMoves,
-                      bool &searchCompleted,
-                      Node *nodeU,
+bool twoOptWithinTrip(Node *nodeU,
                       Node *nodeV,
-                      LocalSearch::Penalties const &penalties)
+                      Penalties const &penalties)
 {
     auto const &params = *nodeU->params;
 
@@ -54,10 +52,6 @@ bool twoOptWithinTrip(int &nbMoves,
         operators::insertNode(current, insertionPoint);
         insertionPoint = current;
     }
-
-    nbMoves++;
-    searchCompleted = false;
-    operators::updateRouteData(nodeU->route, nbMoves, penalties);
 
     return true;
 }

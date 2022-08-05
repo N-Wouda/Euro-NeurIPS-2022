@@ -1,8 +1,10 @@
 #ifndef NODE_H
 #define NODE_H
 
-#include "Route.h"
 #include "TimeWindowSegment.h"
+#include <iostream>
+
+struct Route;
 
 struct Node
 {

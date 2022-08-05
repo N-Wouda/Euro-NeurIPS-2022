@@ -2,11 +2,9 @@
 
 #include "TimeWindowSegment.h"
 
-bool relocateStar(int &nbMoves,
-                  bool &searchCompleted,
-                  Route *routeU,
+bool relocateStar(Route *routeU,
                   Route *routeV,
-                  LocalSearch::Penalties const &penalties)
+                  Penalties const &penalties)
 {
     auto const &params = *routeU->params;
 
@@ -55,13 +53,7 @@ bool relocateStar(int &nbMoves,
     if (!insertionPoint)
         return false;
 
-    routeU = nodeToInsert->route;
     operators::insertNode(nodeToInsert, insertionPoint);
-    nbMoves++;  // Increment move counter before updating route data
-    searchCompleted = false;
-    operators::updateRouteData(routeU, nbMoves, penalties);
-    operators::updateRouteData(
-        insertionPoint->route, nbMoves, penalties);
 
     return true;
 }
