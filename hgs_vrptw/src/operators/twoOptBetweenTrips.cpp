@@ -6,9 +6,10 @@ bool twoOptBetweenTrips(int &nbMoves,
                         bool &searchCompleted,
                         Node *nodeU,
                         Node *nodeV,
-                        LocalSearch::Penalties const &penalties,
-                        Params const &params)
+                        LocalSearch::Penalties const &penalties)
 {
+    auto const &params = *nodeU->params;
+
     if (nodeU->route->idx >= nodeV->route->idx)
         return false;
 
@@ -66,8 +67,8 @@ bool twoOptBetweenTrips(int &nbMoves,
 
     nbMoves++;
     searchCompleted = false;
-    operators::updateRouteData(routeU, nbMoves, penalties, params);
-    operators::updateRouteData(routeV, nbMoves, penalties, params);
+    operators::updateRouteData(routeU, nbMoves, penalties);
+    operators::updateRouteData(routeV, nbMoves, penalties);
 
     return true;
 }

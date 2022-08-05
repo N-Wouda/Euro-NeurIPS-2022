@@ -4,10 +4,10 @@
 #include "Route.h"
 #include "TimeWindowSegment.h"
 
-#include <cassert>
-
 struct Node
 {
+    Params const *params;
+
     bool isDepot;          // Tells whether this node represents a depot or not
     int client;            // Node index
     int position;          // Position in the route
@@ -40,36 +40,7 @@ struct Node
     Node *nextSeed;  // next seeded node if available (nullptr otherwise)
 
     // Calculates time window data for segment [self, other] in same route
-    TimeWindowSegment mergeSegmentTwData(Node *other)
-    {
-        assert(route == other->route);
-        assert(position <= other->position);
-
-        if (isDepot)
-            return other->twBefore;
-
-        if (other->isDepot)
-            return twAfter;
-
-        Node *node = this;
-        TimeWindowSegment data = tw;
-
-        while (node != other)
-        {
-            if (node->isSeed && node->position + 4 <= other->position)
-            {
-                data = TimeWindowSegment::merge(data, node->toNextSeedTwD);
-                node = node->nextSeed;
-            }
-            else
-            {
-                node = node->next;
-                data = TimeWindowSegment::merge(data, node->tw);
-            }
-        }
-
-        return data;
-    }
+    TimeWindowSegment mergeSegmentTwData(Node const *other) const;
 };
 
 #endif  // NODE_H

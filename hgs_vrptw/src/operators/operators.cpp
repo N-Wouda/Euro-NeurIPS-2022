@@ -42,9 +42,10 @@ void operators::swapNode(Node *U, Node *V)
 
 void operators::updateRouteData(Route *route,
                                 int nbMoves,
-                                LocalSearch::Penalties const &penalties,
-                                Params const &params)
+                                LocalSearch::Penalties const &penalties)
 {
+    auto const &params = *route->params;
+
     int place = 0;
     int load = 0;
     int reverseDistance = 0;

@@ -21,6 +21,9 @@ set(localSearchSources
         operators/twoOptWithinTrip.cpp
         operators/relocateStar.cpp)
 
+set(nodeSources
+        Node.cpp)
+
 set(paramsSources
         Params.cpp)
 
@@ -29,6 +32,9 @@ set(populationSources
 
 set(resultSources
         Result.cpp)
+
+set(routeSources
+        Route.cpp)
 
 set(statisticsSources
         Statistics.cpp)
@@ -41,9 +47,11 @@ add_library(hgs
         ${geneticSources}
         ${individualSources}
         ${localSearchSources}
+        ${nodeSources}
         ${paramsSources}
         ${populationSources}
         ${resultSources}
+        ${routeSources}
         ${statisticsSources}
         ${timeWindowSegmentSources})
 

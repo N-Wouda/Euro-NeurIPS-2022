@@ -6,9 +6,10 @@ bool twoOptWithinTrip(int &nbMoves,
                       bool &searchCompleted,
                       Node *nodeU,
                       Node *nodeV,
-                      LocalSearch::Penalties const &penalties,
-                      Params const &params)
+                      LocalSearch::Penalties const &penalties)
 {
+    auto const &params = *nodeU->params;
+
     if (nodeU->route != nodeV->route)
         return false;
 
@@ -56,7 +57,7 @@ bool twoOptWithinTrip(int &nbMoves,
 
     nbMoves++;
     searchCompleted = false;
-    operators::updateRouteData(nodeU->route, nbMoves, penalties, params);
+    operators::updateRouteData(nodeU->route, nbMoves, penalties);
 
     return true;
 }

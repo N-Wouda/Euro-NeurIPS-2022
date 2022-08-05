@@ -61,61 +61,29 @@ void LocalSearch::search()
                                                // modified since last move
                                                // evaluations for nodeU
                 {
-                    if (moveSingleClient(nbMoves,
-                                         searchCompleted,
-                                         nodeU,
-                                         nodeV,
-                                         penalties,
-                                         params))
+                    if (moveSingleClient(
+                            nbMoves, searchCompleted, nodeU, nodeV, penalties))
                         continue;  // RELOCATE
-                    if (moveTwoClients(nbMoves,
-                                       searchCompleted,
-                                       nodeU,
-                                       nodeV,
-                                       penalties,
-                                       params))
+                    if (moveTwoClients(
+                            nbMoves, searchCompleted, nodeU, nodeV, penalties))
                         continue;  // RELOCATE
-                    if (moveTwoClientsReversed(nbMoves,
-                                               searchCompleted,
-                                               nodeU,
-                                               nodeV,
-                                               penalties,
-                                               params))
+                    if (moveTwoClientsReversed(
+                            nbMoves, searchCompleted, nodeU, nodeV, penalties))
                         continue;  // RELOCATE
-                    if (swapTwoSingleClients(nbMoves,
-                                             searchCompleted,
-                                             nodeU,
-                                             nodeV,
-                                             penalties,
-                                             params))
+                    if (swapTwoSingleClients(
+                            nbMoves, searchCompleted, nodeU, nodeV, penalties))
                         continue;  // SWAP
-                    if (swapTwoClientsForOne(nbMoves,
-                                             searchCompleted,
-                                             nodeU,
-                                             nodeV,
-                                             penalties,
-                                             params))
+                    if (swapTwoClientsForOne(
+                            nbMoves, searchCompleted, nodeU, nodeV, penalties))
                         continue;  // SWAP
-                    if (swapTwoClientPairs(nbMoves,
-                                           searchCompleted,
-                                           nodeU,
-                                           nodeV,
-                                           penalties,
-                                           params))
+                    if (swapTwoClientPairs(
+                            nbMoves, searchCompleted, nodeU, nodeV, penalties))
                         continue;  // SWAP
-                    if (twoOptBetweenTrips(nbMoves,
-                                           searchCompleted,
-                                           nodeU,
-                                           nodeV,
-                                           penalties,
-                                           params))
+                    if (twoOptBetweenTrips(
+                            nbMoves, searchCompleted, nodeU, nodeV, penalties))
                         continue;  // 2-OPT*
-                    if (twoOptWithinTrip(nbMoves,
-                                         searchCompleted,
-                                         nodeU,
-                                         nodeV,
-                                         penalties,
-                                         params))
+                    if (twoOptWithinTrip(
+                            nbMoves, searchCompleted, nodeU, nodeV, penalties))
                         continue;  // 2-OPT
 
                     // Trying moves that insert nodeU directly after the depot
@@ -127,29 +95,25 @@ void LocalSearch::search()
                                              searchCompleted,
                                              nodeU,
                                              nodeV,
-                                             penalties,
-                                             params))
+                                             penalties))
                             continue;  // RELOCATE
                         if (moveTwoClients(nbMoves,
                                            searchCompleted,
                                            nodeU,
                                            nodeV,
-                                           penalties,
-                                           params))
+                                           penalties))
                             continue;  // RELOCATE
                         if (moveTwoClientsReversed(nbMoves,
                                                    searchCompleted,
                                                    nodeU,
                                                    nodeV,
-                                                   penalties,
-                                                   params))
+                                                   penalties))
                             continue;  // RELOCATE
                         if (twoOptBetweenTrips(nbMoves,
                                                searchCompleted,
                                                nodeU,
                                                nodeV,
-                                               penalties,
-                                               params))
+                                               penalties))
                             continue;  // 2-OPT*
                     }
                 }
@@ -167,33 +131,17 @@ void LocalSearch::search()
 
                 Node *nodeV = empty->depot;
 
-                if (moveSingleClient(nbMoves,
-                                     searchCompleted,
-                                     nodeU,
-                                     nodeV,
-                                     penalties,
-                                     params))
+                if (moveSingleClient(
+                        nbMoves, searchCompleted, nodeU, nodeV, penalties))
                     continue;  // RELOCATE
-                if (moveTwoClients(nbMoves,
-                                   searchCompleted,
-                                   nodeU,
-                                   nodeV,
-                                   penalties,
-                                   params))
+                if (moveTwoClients(
+                        nbMoves, searchCompleted, nodeU, nodeV, penalties))
                     continue;  // RELOCATE
-                if (moveTwoClientsReversed(nbMoves,
-                                           searchCompleted,
-                                           nodeU,
-                                           nodeV,
-                                           penalties,
-                                           params))
+                if (moveTwoClientsReversed(
+                        nbMoves, searchCompleted, nodeU, nodeV, penalties))
                     continue;  // RELOCATE
-                if (twoOptBetweenTrips(nbMoves,
-                                       searchCompleted,
-                                       nodeU,
-                                       nodeV,
-                                       penalties,
-                                       params))
+                if (twoOptBetweenTrips(
+                        nbMoves, searchCompleted, nodeU, nodeV, penalties))
                     continue;  // 2-OPT*
             }
         }
@@ -234,8 +182,7 @@ void LocalSearch::search()
                                      searchCompleted,
                                      routeU,
                                      routeV,
-                                     penalties,
-                                     params))
+                                     penalties))
                         continue;
                     if (swapStar(
                             false, nbMoves, searchCompleted, routeU, routeV))
@@ -912,12 +859,14 @@ LocalSearch::LocalSearch(Params &params, XorShift128 &rng)
 
     for (int i = 0; i <= params.nbClients; i++)
     {
+        clients[i].params = &params;
         clients[i].client = i;
         clients[i].isDepot = false;
     }
 
     for (int i = 0; i < params.nbVehicles; i++)
     {
+        routes[i].params = &params;
         routes[i].idx = i;
         routes[i].depot = &depots[i];
         depots[i].client = 0;

@@ -6,9 +6,10 @@ bool moveSingleClient(int &nbMoves,
                       bool &searchCompleted,
                       Node *nodeU,
                       Node *nodeV,
-                      LocalSearch::Penalties const &penalties,
-                      Params const &params)
+                      LocalSearch::Penalties const &penalties)
 {
+    auto const &params = *nodeU->params;
+
     // If U already comes directly after V, this move has no effect
     if (nodeU->client == nodeV->next->client)
         return false;
@@ -87,9 +88,9 @@ bool moveSingleClient(int &nbMoves,
     operators::insertNode(nodeU, nodeV);
     nbMoves++;  // Increment move counter before updating route data
     searchCompleted = false;
-    operators::updateRouteData(routeU, nbMoves, penalties, params);
+    operators::updateRouteData(routeU, nbMoves, penalties);
     if (routeU != nodeV->route)
-        operators::updateRouteData(nodeV->route, nbMoves, penalties, params);
+        operators::updateRouteData(nodeV->route, nbMoves, penalties);
 
     return true;
 }

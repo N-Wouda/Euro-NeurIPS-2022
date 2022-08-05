@@ -6,9 +6,10 @@ bool relocateStar(int &nbMoves,
                   bool &searchCompleted,
                   Route *routeU,
                   Route *routeV,
-                  LocalSearch::Penalties const &penalties,
-                  Params const &params)
+                  LocalSearch::Penalties const &penalties)
 {
+    auto const &params = *routeU->params;
+
     int bestCost = 0;
     Node *insertionPoint = nullptr;
     Node *nodeToInsert = nullptr;
@@ -58,9 +59,9 @@ bool relocateStar(int &nbMoves,
     operators::insertNode(nodeToInsert, insertionPoint);
     nbMoves++;  // Increment move counter before updating route data
     searchCompleted = false;
-    operators::updateRouteData(routeU, nbMoves, penalties, params);
+    operators::updateRouteData(routeU, nbMoves, penalties);
     operators::updateRouteData(
-        insertionPoint->route, nbMoves, penalties, params);
+        insertionPoint->route, nbMoves, penalties);
 
     return true;
 }

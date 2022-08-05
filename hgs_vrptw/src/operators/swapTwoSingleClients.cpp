@@ -6,9 +6,10 @@ bool swapTwoSingleClients(int &nbMoves,
                           bool &searchCompleted,
                           Node *nodeU,
                           Node *nodeV,
-                          LocalSearch::Penalties const &penalties,
-                          Params const &params)
+                          LocalSearch::Penalties const &penalties)
 {
+    auto const &params = *nodeU->params;
+
     if (nodeU->client >= nodeV->client)
         return false;
 
@@ -100,9 +101,9 @@ bool swapTwoSingleClients(int &nbMoves,
     operators::swapNode(nodeU, nodeV);
     nbMoves++;
     searchCompleted = false;
-    operators::updateRouteData(nodeU->route, nbMoves, penalties, params);
+    operators::updateRouteData(nodeU->route, nbMoves, penalties);
     if (nodeU->route != nodeV->route)
-        operators::updateRouteData(nodeV->route, nbMoves, penalties, params);
+        operators::updateRouteData(nodeV->route, nbMoves, penalties);
 
     return true;
 }

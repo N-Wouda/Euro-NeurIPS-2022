@@ -6,9 +6,10 @@ bool moveTwoClientsReversed(int &nbMoves,
                             bool &searchCompleted,
                             Node *nodeU,
                             Node *nodeV,
-                            LocalSearch::Penalties const &penalties,
-                            Params const &params)
+                            LocalSearch::Penalties const &penalties)
 {
+    auto const &params = *nodeU->params;
+
     if (nodeU == nodeV->next || nodeU->next == nodeV || nodeU->next->isDepot)
         return false;
 
@@ -99,9 +100,9 @@ bool moveTwoClientsReversed(int &nbMoves,
 
     nbMoves++;
     searchCompleted = false;
-    operators::updateRouteData(routeU, nbMoves, penalties, params);
+    operators::updateRouteData(routeU, nbMoves, penalties);
     if (routeU != nodeV->route)
-        operators::updateRouteData(nodeV->route, nbMoves, penalties, params);
+        operators::updateRouteData(nodeV->route, nbMoves, penalties);
 
     return true;
 }
