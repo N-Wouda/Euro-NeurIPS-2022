@@ -30,7 +30,7 @@ selectString(Route const &route, Client client, size_t card, XorShift128 &rng)
     auto startIdx = routePos - stringPos;
 
     std::vector<size_t> indices;
-    for (auto i = startIdx; i != startIdx + card; i++)
+    for (size_t i = startIdx; i != startIdx + card; i++)
         indices.push_back(i % route.size());
 
     return indices;
@@ -83,7 +83,7 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
                     removalIndices = selectString(route, client, card, rng);
                 else
                 {
-                    auto subSize = 1;
+                    size_t subSize = 1;
                     while (rng.randint(100) > params.config.splitDepth
                            and subSize < route.size() - card)
                         subSize++;
@@ -92,7 +92,7 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
                         = selectString(route, client, card + subSize, rng);
                     auto subPos = rng.randint(strIndices.size() - subSize + 1);
 
-                    for (auto i = 0; i <= subPos; i++)
+                    for (size_t i = 0; i <= subPos; i++)
                         removalIndices.push_back(strIndices[i]);
                     for (auto i = subPos + card; i <= strIndices.size(); i++)
                         removalIndices.push_back(strIndices[i]);
@@ -135,7 +135,7 @@ void removeClients(Routes &routes, ClientSet const &clients)
         }
     }
 }
-Clients
+std::vector<int>
 sortClients(ClientSet const clientSet, Params const &params, XorShift128 &rng)
 {
     std::vector clients(clientSet.begin(), clientSet.end());
