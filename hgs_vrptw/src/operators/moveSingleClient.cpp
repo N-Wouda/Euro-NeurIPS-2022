@@ -4,8 +4,8 @@
 
 bool moveSingleClient(int &nbMoves,
                       bool &searchCompleted,
-                      LocalSearch::Node *nodeU,
-                      LocalSearch::Node *nodeV,
+                      Node *nodeU,
+                      Node *nodeV,
                       LocalSearch::Penalties const &penalties,
                       Params const &params)
 {
@@ -30,7 +30,7 @@ bool moveSingleClient(int &nbMoves,
         }
 
         auto routeUTwData = TimeWindowSegment::merge(nodeU->prev->twBefore,
-                                                  nodeU->next->twAfter);
+                                                     nodeU->next->twAfter);
         auto routeVTwData = TimeWindowSegment::merge(
             nodeV->twBefore, nodeU->tw, nodeV->next->twAfter);
 
@@ -54,11 +54,11 @@ bool moveSingleClient(int &nbMoves,
         {
             // Edge case V directly after U, so X == V, this works
             // start - ... - UPrev - X - ... - V - U - Y - ... - end
-            auto const routeUTwData
-                = TimeWindowSegment::merge(nodeU->prev->twBefore,
-                                        nodeU->next->mergeSegmentTwData(nodeV),
-                                        nodeU->tw,
-                                        nodeV->next->twAfter);
+            auto const routeUTwData = TimeWindowSegment::merge(
+                nodeU->prev->twBefore,
+                nodeU->next->mergeSegmentTwData(nodeV),
+                nodeU->tw,
+                nodeV->next->twAfter);
 
             costSuppU += penalties.timeWarp(routeUTwData);
         }

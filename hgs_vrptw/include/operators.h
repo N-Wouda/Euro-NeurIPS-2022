@@ -2,25 +2,27 @@
 #define OPERATORS_H
 
 #include "LocalSearch.h"
+#include "Node.h"
 #include "Params.h"
+#include "Route.h"
 
 namespace operators
 {
 /**
  * Inserts U after V, and updates the solution.
  */
-void insertNode(LocalSearch::Node *U, LocalSearch::Node *V);
+void insertNode(Node *U, Node *V);
 
 /**
  * Swaps U and V, and updates the solution.
  */
-void swapNode(LocalSearch::Node *U, LocalSearch::Node *V);
+void swapNode(Node *U, Node *V);
 
 /**
  * Updates the given route. To be called after swapping nodes/changing the
  * solution.
  */
-void updateRouteData(LocalSearch::Route *route,
+void updateRouteData(Route *route,
                      int nbMoves,
                      LocalSearch::Penalties const &penalties,
                      Params const &params);
@@ -31,8 +33,8 @@ void updateRouteData(LocalSearch::Route *route,
  */
 bool moveSingleClient(int &nbMoves,
                       bool &searchCompleted,
-                      LocalSearch::Node *nodeU,
-                      LocalSearch::Node *nodeV,
+                      Node *nodeU,
+                      Node *nodeV,
                       LocalSearch::Penalties const &penalties,
                       Params const &params);
 
@@ -41,8 +43,8 @@ bool moveSingleClient(int &nbMoves,
  */
 bool moveTwoClients(int &nbMoves,
                     bool &searchCompleted,
-                    LocalSearch::Node *nodeU,
-                    LocalSearch::Node *nodeV,
+                    Node *nodeU,
+                    Node *nodeV,
                     LocalSearch::Penalties const &penalties,
                     Params const &params);
 
@@ -51,8 +53,8 @@ bool moveTwoClients(int &nbMoves,
  */
 bool moveTwoClientsReversed(int &nbMoves,
                             bool &searchCompleted,
-                            LocalSearch::Node *nodeU,
-                            LocalSearch::Node *nodeV,
+                            Node *nodeU,
+                            Node *nodeV,
                             LocalSearch::Penalties const &penalties,
                             Params const &params);
 
@@ -61,8 +63,8 @@ bool moveTwoClientsReversed(int &nbMoves,
  */
 bool swapTwoClientPairs(int &nbMoves,
                         bool &searchCompleted,
-                        LocalSearch::Node *nodeU,
-                        LocalSearch::Node *nodeV,
+                        Node *nodeU,
+                        Node *nodeV,
                         LocalSearch::Penalties const &penalties,
                         Params const &params);
 
@@ -71,8 +73,8 @@ bool swapTwoClientPairs(int &nbMoves,
  */
 bool swapTwoClientsForOne(int &nbMoves,
                           bool &searchCompleted,
-                          LocalSearch::Node *nodeU,
-                          LocalSearch::Node *nodeV,
+                          Node *nodeU,
+                          Node *nodeV,
                           LocalSearch::Penalties const &penalties,
                           Params const &params);
 
@@ -81,8 +83,8 @@ bool swapTwoClientsForOne(int &nbMoves,
  */
 bool swapTwoSingleClients(int &nbMoves,
                           bool &searchCompleted,
-                          LocalSearch::Node *nodeU,
-                          LocalSearch::Node *nodeV,
+                          Node *nodeU,
+                          Node *nodeV,
                           LocalSearch::Penalties const &penalties,
                           Params const &params);
 
@@ -93,8 +95,8 @@ bool swapTwoSingleClients(int &nbMoves,
  */
 bool twoOptBetweenTrips(int &nbMoves,
                         bool &searchCompleted,
-                        LocalSearch::Node *nodeU,
-                        LocalSearch::Node *nodeV,
+                        Node *nodeU,
+                        Node *nodeV,
                         LocalSearch::Penalties const &penalties,
                         Params const &params);
 
@@ -104,8 +106,8 @@ bool twoOptBetweenTrips(int &nbMoves,
  */
 bool twoOptWithinTrip(int &nbMoves,
                       bool &searchCompleted,
-                      LocalSearch::Node *nodeU,
-                      LocalSearch::Node *nodeV,
+                      Node *nodeU,
+                      Node *nodeV,
                       LocalSearch::Penalties const &penalties,
                       Params const &params);
 
@@ -114,8 +116,8 @@ bool twoOptWithinTrip(int &nbMoves,
  */
 bool relocateStar(int &nbMoves,
                   bool &searchCompleted,
-                  LocalSearch::Route *routeU,
-                  LocalSearch::Route *routeV,
+                  Route *routeU,
+                  Route *routeV,
                   LocalSearch::Penalties const &penalties,
                   Params const &params);
 

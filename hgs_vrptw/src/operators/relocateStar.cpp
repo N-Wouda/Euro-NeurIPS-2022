@@ -4,14 +4,14 @@
 
 bool relocateStar(int &nbMoves,
                   bool &searchCompleted,
-                  LocalSearch::Route *routeU,
-                  LocalSearch::Route *routeV,
+                  Route *routeU,
+                  Route *routeV,
                   LocalSearch::Penalties const &penalties,
                   Params const &params)
 {
     int bestCost = 0;
-    LocalSearch::Node *insertionPoint = nullptr;
-    LocalSearch::Node *nodeToInsert = nullptr;
+    Node *insertionPoint = nullptr;
+    Node *nodeToInsert = nullptr;
 
     for (auto *nodeU = routeU->depot->next; !nodeU->isDepot;
          nodeU = nodeU->next)
@@ -19,8 +19,8 @@ bool relocateStar(int &nbMoves,
         routeU = nodeU->route;
         auto *nodeX = nodeU->next;
 
-        auto const routeUTwData = TimeWindowSegment::merge(
-            nodeU->prev->twBefore, nodeX->twAfter);
+        auto const routeUTwData
+            = TimeWindowSegment::merge(nodeU->prev->twBefore, nodeX->twAfter);
         int const costSuppU
             = params.dist(nodeU->prev->client, nodeX->client)
               - params.dist(nodeU->prev->client, nodeU->client)

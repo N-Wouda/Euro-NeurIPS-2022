@@ -1,10 +1,12 @@
 #include "operators.h"
 
+#include "Node.h"
+#include "Route.h"
 #include "TimeWindowSegment.h"
 
 #include <cmath>
 
-void operators::insertNode(LocalSearch::Node *U, LocalSearch::Node *V)
+void operators::insertNode(Node *U, Node *V)
 {
     U->prev->next = U->next;
     U->next->prev = U->prev;
@@ -15,7 +17,7 @@ void operators::insertNode(LocalSearch::Node *U, LocalSearch::Node *V)
     U->route = V->route;
 }
 
-void operators::swapNode(LocalSearch::Node *U, LocalSearch::Node *V)
+void operators::swapNode(Node *U, Node *V)
 {
     auto *myVPred = V->prev;
     auto *myVSuiv = V->next;
@@ -38,7 +40,7 @@ void operators::swapNode(LocalSearch::Node *U, LocalSearch::Node *V)
     V->route = myRouteU;
 }
 
-void operators::updateRouteData(LocalSearch::Route *route,
+void operators::updateRouteData(Route *route,
                                 int nbMoves,
                                 LocalSearch::Penalties const &penalties,
                                 Params const &params)
@@ -56,7 +58,7 @@ void operators::updateRouteData(LocalSearch::Route *route,
 
     bool firstIt = true;
     auto seedTwD = node->tw;
-    LocalSearch::Node *seedNode = nullptr;
+    Node *seedNode = nullptr;
 
     while (!node->isDepot || firstIt)
     {

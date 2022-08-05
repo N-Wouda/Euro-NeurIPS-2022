@@ -4,8 +4,8 @@
 
 bool twoOptWithinTrip(int &nbMoves,
                       bool &searchCompleted,
-                      LocalSearch::Node *nodeU,
-                      LocalSearch::Node *nodeV,
+                      Node *nodeU,
+                      Node *nodeV,
                       LocalSearch::Penalties const &penalties,
                       Params const &params)
 {
