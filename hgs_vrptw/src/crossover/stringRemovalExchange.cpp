@@ -86,7 +86,7 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
                             + 1;
 
                 std::vector<size_t> removalIndices;
-                if (rng.randint(100) <= params.config.splitRate)
+                if (rng.randint(100) >= params.config.splitRate)
                     removalIndices = selectString(route, client, card, rng);
                 else
                 {
@@ -148,11 +148,43 @@ sortClients(ClientSet const clientSet, Params const &params, XorShift128 &rng)
     std::vector<int> indices(clients.size());
     std::iota(indices.begin(), indices.end(), 0);
 
-    // TODO how to add more sorting options in a neat way?
-    std::sort(indices.begin(),
-              indices.end(),
-              [&](int A, int B)
-              { return params.clients[A].demand < params.clients[B].demand; });
+    auto const highestDemand = [&](int A, int B)
+    { return params.clients[A].demand > params.clients[B].demand; };
+
+    auto const furtherToDepot
+        = [&](int A, int B) { return params.dist(0, A) > params.dist(0, B); };
+
+    auto const closestToDepot
+        = [&](int A, int B) { return params.dist(0, A) < params.dist(0, B); };
+
+    auto const largestTw = [&](int A, int B)
+    {
+        return params.clients[A].twLate - params.clients[A].twEarly
+               > params.clients[B].twLate - params.clients[B].twEarly;
+    };
+
+    auto const smallestTwEarly = [&](int A, int B)
+    { return params.clients[A].twEarly < params.clients[B].twEarly; };
+
+    auto const smallestTwLate = [&](int A, int B)
+    { return params.clients[A].twLate < params.clients[B].twEarly; };
+
+    // TODO How to make this non-uniform?
+    auto draw = rng.randint(7);
+    if (draw == 1)
+        std::shuffle(indices.begin(), indices.end(), rng);
+    else if (draw == 2)
+        std::sort(indices.begin(), indices.end(), highestDemand);
+    else if (draw == 3)
+        std::sort(indices.begin(), indices.end(), furtherToDepot);
+    else if (draw == 4)
+        std::sort(indices.begin(), indices.end(), closestToDepot);
+    else if (draw == 5)
+        std::sort(indices.begin(), indices.end(), largestTw);
+    else if (draw == 6)
+        std::sort(indices.begin(), indices.end(), smallestTwEarly);
+    else if (draw == 7)
+        std::sort(indices.begin(), indices.end(), smallestTwLate);
 
     std::vector<int> sortedClients;
     for (auto idx : indices)
@@ -207,7 +239,7 @@ Individual stringRemovalExchange(Parents const &parents,
     auto const &routes1 = parents.first->getRoutes();
     auto const &routes2 = parents.second->getRoutes();
 
-    // Find a center node around which substrings will be removed
+    // Find a center node around which strings will be removed
     Client const center = rng.randint(params.nbClients) + 1;
 
     auto [destroyed1, removed1] = stringRemoval(routes1, center, params, rng);
