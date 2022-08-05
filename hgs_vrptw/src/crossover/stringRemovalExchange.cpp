@@ -15,17 +15,9 @@ namespace
 {
 using Parents = std::pair<Individual const *, Individual const *>;
 using Client = int;
-using Clients = std::vector<Client>;
 using ClientSet = std::unordered_set<Client>;
 using Route = std::vector<Client>;
 using Routes = std::vector<Route>;
-
-struct InsertPos  // best insert position, used to plan unplanned clients
-{
-    int deltaCost;
-    std::vector<int> *route;
-    size_t offset;
-};
 
 // Returns the indices of a random (sub)string with length card that
 // contains the client
@@ -54,6 +46,7 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
     for (auto &route : routes)
         avgRouteSize += route.size();
     avgRouteSize = avgRouteSize / routes.size();
+
     auto maxCard = std::min(params.config.maxStringCard, avgRouteSize);
 
     // Compute the number of strings to remove
@@ -149,9 +142,8 @@ sortClients(ClientSet const clientSet, Params const &params, XorShift128 &rng)
     std::vector<int> indices(clients.size());
     std::iota(indices.begin(), indices.end(), 0);
 
-    auto const highestDemand = [&](int A, int B) {
-        return params.clients[A].demand > params.clients[B].demand;
-    };
+    auto const highestDemand = [&](int A, int B)
+    { return params.clients[A].demand > params.clients[B].demand; };
 
     auto const furtherToDepot
         = [&](int A, int B) { return params.dist(0, A) > params.dist(0, B); };
@@ -159,18 +151,17 @@ sortClients(ClientSet const clientSet, Params const &params, XorShift128 &rng)
     auto const closestToDepot
         = [&](int A, int B) { return params.dist(0, A) < params.dist(0, B); };
 
-    auto const largestTw = [&](int A, int B) {
+    auto const largestTw = [&](int A, int B)
+    {
         return params.clients[A].twLate - params.clients[A].twEarly
                > params.clients[B].twLate - params.clients[B].twEarly;
     };
 
-    auto const smallestTwEarly = [&](int A, int B) {
-        return params.clients[A].twEarly < params.clients[B].twEarly;
-    };
+    auto const smallestTwEarly = [&](int A, int B)
+    { return params.clients[A].twEarly < params.clients[B].twEarly; };
 
-    auto const smallestTwLate = [&](int A, int B) {
-        return params.clients[A].twLate < params.clients[B].twEarly;
-    };
+    auto const smallestTwLate = [&](int A, int B)
+    { return params.clients[A].twLate < params.clients[B].twEarly; };
 
     // TODO How to make this non-uniform?
     auto draw = rng.randint(7);
@@ -195,44 +186,6 @@ sortClients(ClientSet const clientSet, Params const &params, XorShift128 &rng)
 
     return sortedClients;
 }
-
-Individual greedyRepairWithBlinks(Routes &routes,
-                                  ClientSet const unplannedSet,
-                                  Params const &params,
-                                  XorShift128 &rng)
-
-{
-    auto unplanned = sortClients(unplannedSet, params, rng);
-
-    for (Client client : unplanned)
-    {
-        InsertPos best = {INT_MAX, &routes.front(), 0};
-
-        for (auto &route : routes)
-        {
-            // NOTE Perhaps we should consider empty routes
-            if (route.empty())
-                continue;
-
-            for (size_t idx = 0; idx <= route.size(); ++idx)
-            {
-                if (rng.randint(100) >= params.config.blinkRate)
-                {
-                    auto const [prev, next] = findPrevNext(route, idx);
-
-                    int const cost = deltaCost(client, prev, next, params);
-                    if (cost < best.deltaCost)
-                        best = {cost, &route, idx};
-                }
-            }
-        }
-
-        auto const [_, route, offset] = best;
-        route->insert(route->begin() + static_cast<long>(offset), client);
-    }
-
-    return {&params, routes};
-}
 }  // namespace
 
 Individual stringRemovalExchange(Parents const &parents,
@@ -252,13 +205,16 @@ Individual stringRemovalExchange(Parents const &parents,
     removeClients(destroyed1, removed2);
     removeClients(destroyed2, removed1);
 
-    auto removed = removed1;
-    removed.insert(removed2.begin(), removed2.end());
+    auto removedSet = removed1;
+    removedSet.insert(removed2.begin(), removed2.end());
+    auto removed = sortClients(removedSet, params, rng);
 
-    Individual indiv1
-        = greedyRepairWithBlinks(destroyed1, removed, params, rng);
-    Individual indiv2
-        = greedyRepairWithBlinks(destroyed2, removed, params, rng);
+    auto blinkRate = params.config.blinkRate;
+    greedyRepairWithBlinks(destroyed1, removed, blinkRate, params, rng);
+    greedyRepairWithBlinks(destroyed2, removed, blinkRate, params, rng);
+
+    Individual indiv1{&params, destroyed1};
+    Individual indiv2{&params, destroyed2};
 
     return std::min(indiv1, indiv2);
 }

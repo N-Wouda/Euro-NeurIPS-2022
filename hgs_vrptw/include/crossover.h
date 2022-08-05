@@ -45,13 +45,12 @@ Individual stringRemovalExchange(
     XorShift128 &rng);
 
 /**
- * Evaluates the cost change of inserting client between prev and next.
+ * Greedily inserts the unplanned clients into the routes, while skipping
+ * positions with probability blinkRate [2].
  */
-int deltaCost(int client, int prev, int next, Params const &params);
-
-/**
- * Finds the previous and next client index given the current route idx.
- */
-std::pair<size_t, size_t> findPrevNext(std::vector<int> const &route,
-                                       size_t idx);
+void greedyRepairWithBlinks(std::vector<std::vector<int>> &routes,
+                            std::vector<int> const unplanned,
+                            size_t blinkRate,
+                            Params const &params,
+                            XorShift128 &rng);
 #endif  // CROSSOVER_H
