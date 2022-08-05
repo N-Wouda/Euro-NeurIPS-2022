@@ -155,9 +155,32 @@ Individual greedyRepairWithBlinks(Routes &routes,
     std::sort(indices.begin(), indices.end(), [&](int A, int B) {
         return params.clients[A].demand < params.clients[B].demand;
     });
+    for (Client client : unplanned)
+    {
+        InsertPos best = {INT_MAX, &routes.front(), 0};
 
-    // TODO Refactor to add blinking
-    addUnplannedToRoutes(unplannedSet, routes, params);
+        for (auto &route : routes)
+        {
+            // NOTE Perhaps we should consider empty routes
+            if (route.empty())
+                continue;
+
+            for (size_t idx = 0; idx <= route.size(); ++idx)
+            {
+                if (rng.randint(100) >= params.config.blinkRate)
+                {
+                    auto const [prev, next] = findPrevNext(route, idx);
+
+                    int const cost = deltaCost(client, prev, next, params);
+                    if (cost < best.deltaCost)
+                        best = {cost, &route, idx};
+                }
+            }
+        }
+
+        auto const [_, route, offset] = best;
+        route->insert(route->begin() + static_cast<long>(offset), client);
+    }
 
     return {&params, routes};
 }

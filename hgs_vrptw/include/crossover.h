@@ -44,16 +44,21 @@ Individual stringRemovalExchange(
     Params const &params,
     XorShift128 &rng);
 
+struct InsertPos  // best insert position, used to plan unplanned clients
+{
+    int deltaCost;
+    std::vector<int> *route;
+    size_t offset;
+};
+
 /**
  * Evaluates the cost change of inserting client between prev and next.
  */
 int deltaCost(int client, int prev, int next, Params const &params);
 
 /**
- * Inserts unplanned clients into the given routes using a greedy heuristic.
- * */
-void addUnplannedToRoutes(std::unordered_set<int> const &unplanned,
-                          std::vector<std::vector<int>> &routes,
-                          Params const &params);
-
+ * Finds the previous and next client index given the current route idx.
+ */
+std::pair<size_t, size_t> findPrevNext(std::vector<int> const &route,
+                                       size_t idx);
 #endif  // CROSSOVER_H

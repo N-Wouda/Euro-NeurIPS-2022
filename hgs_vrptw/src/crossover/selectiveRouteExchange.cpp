@@ -13,6 +13,35 @@ using Client = int;
 using ClientSet = std::unordered_set<Client>;
 using Route = std::vector<Client>;
 using Routes = std::vector<Route>;
+
+void addUnplannedToRoutes(ClientSet const &unplanned,
+                          Routes &routes,
+                          Params const &params)
+{
+    for (Client client : unplanned)
+    {
+        InsertPos best = {INT_MAX, &routes.front(), 0};
+
+        for (auto &route : routes)
+        {
+            if (route.empty())
+                break;
+
+            for (size_t idx = 0; idx <= route.size(); ++idx)
+            {
+                auto const [prev, next] = findPrevNext(route, idx);
+
+                int const cost = deltaCost(client, prev, next, params);
+                if (cost < best.deltaCost)
+                    best = {cost, &route, idx};
+            }
+        }
+
+        auto const [_, route, offset] = best;
+        route->insert(route->begin() + static_cast<long>(offset), client);
+    }
+}
+
 }  // namespace
 
 Individual selectiveRouteExchange(
