@@ -1,24 +1,19 @@
 #ifndef LOCALSEARCH_H
 #define LOCALSEARCH_H
 
-#include "CircleSector.h"
 #include "Individual.h"
 #include "Node.h"
 #include "Params.h"
 #include "Penalties.h"
 #include "Route.h"
-#include "TimeWindowSegment.h"
 #include "XorShift128.h"
 
-#include <array>
-#include <functional>
-#include <set>
 #include <vector>
 
 class LocalSearch
 {
-    using nodeOp = std::function<bool(Node *, Node *, Penalties const &)>;
-    using routeOp = std::function<bool(Route *, Route *, Penalties const &)>;
+    using nodeOp = bool (*)(Node *, Node *, Penalties const &);
+    using routeOp = bool (*)(Route *, Route *, Penalties const &);
 
     Penalties penalties;  // Penalty data
     Params &params;       // Problem parameters

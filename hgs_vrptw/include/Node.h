@@ -30,10 +30,13 @@ struct Node
                            // node is removed, including TimeWarp (used in
                            // SWAP*)
     TimeWindowSegment tw;  // TimeWindowSegment for individual node (client)
-    TimeWindowSegment twBefore;  // TimeWindowSegment for subsequence
-                                 // (0...client) including self
-    TimeWindowSegment twAfter;   // TimeWindowSegment for subsequence
-                                 // (client...0) including self
+
+    // TimeWindowSegment for subsequence (0...client) including self
+    TimeWindowSegment twBefore;
+
+    // TimeWindowSegment for subsequence (client...0) including self
+    TimeWindowSegment twAfter;
+
     bool isSeed;  // Tells whether a nextSeed is available (faster tw
                   // calculations)
     TimeWindowSegment toNextSeedTwD;  // TimeWindowSegment for subsequence

@@ -22,6 +22,17 @@ struct Route
     int whenLastTestedLargeNb;    // "When" the large neighborhood moves of
                                   // this route have last been tested
 
+    [[nodiscard]] inline bool hasExcessCapacity() const
+    {
+        return load > params->vehicleCapacity;
+    }
+
+    [[nodiscard]] inline bool overlapsWith(Route const &other) const
+    {
+        return CircleSector::overlap(
+            sector, other.sector, params->config.circleSectorOverlapTolerance);
+    }
+
     /**
      * Updates this route. To be called after swapping nodes/changing the
      * solution.

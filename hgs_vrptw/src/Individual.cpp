@@ -229,15 +229,12 @@ void Individual::evaluateCompleteCost()
 
 void Individual::brokenPairsDistance(Individual *other)
 {
-    auto const tNeighbours = this->getNeighbours();
-    auto const oNeighbours = other->getNeighbours();
-
     int diffs = 0;
 
     for (int j = 1; j <= params->nbClients; j++)
     {
-        auto const &[tPred, tSucc] = tNeighbours[j];
-        auto const &[oPred, oSucc] = oNeighbours[j];
+        auto const &[tPred, tSucc] = this->neighbours[j];
+        auto const &[oPred, oSucc] = other->neighbours[j];
 
         // Increase the difference if the successor of j in this individual is
         // not directly linked to j in other
@@ -313,16 +310,21 @@ Individual::Individual(Params const *params, XorShift128 *rng)
     std::shuffle(tourChrom.begin(), tourChrom.end(), *rng);
 
     makeRoutes();
+    neighbours = getNeighbours();
 }
 
 Individual::Individual(Params const *params, Tour tour)
     : params(params), tourChrom(std::move(tour)), routeChrom(params->nbVehicles)
 {
     makeRoutes();
+    neighbours = getNeighbours();
 }
 
 Individual::Individual(Params const *params, Routes routes)
-    : params(params), tourChrom(), routeChrom(std::move(routes))
+    : params(params),
+      tourChrom(),
+      routeChrom(std::move(routes)),
+      neighbours(getNeighbours())
 {
     // a precedes b only when a is not empty and b is. Combined with a stable
     // sort, this ensures we keep the original sorting as much as possible, but

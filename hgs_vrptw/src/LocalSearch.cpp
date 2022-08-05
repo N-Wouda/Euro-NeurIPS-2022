@@ -1,6 +1,5 @@
 #include "LocalSearch.h"
 
-#include "CircleSector.h"
 #include "Individual.h"
 #include "Params.h"
 #include "TimeWindowSegment.h"
@@ -41,9 +40,9 @@ void LocalSearch::search()
             searchCompleted = true;  // empty routes are not done in the first
 
         /* ROUTE IMPROVEMENT (RI) MOVES SUBJECT TO A PROXIMITY RESTRICTION */
-        for (int posU = 0; posU < params.nbClients; posU++)
+        for (int const u : orderNodes)
         {
-            Node *nodeU = &clients[orderNodes[posU]];
+            Node *nodeU = &clients[u];
             int lastTestRINodeU = nodeU->whenLastTestedRI;
             nodeU->whenLastTestedRI = nbMoves;
 
@@ -51,7 +50,7 @@ void LocalSearch::search()
             // not matter much as we are already randomizing the order of the
             // node pairs (and it's not very common to find improving moves of
             // different types for the same node pair)
-            for (auto const &v : params.getNeighboursOf(nodeU->client))
+            for (auto const v : params.getNeighboursOf(nodeU->client))
             {
                 Node *nodeV = &clients[v];
                 auto const lastTested
@@ -90,35 +89,33 @@ void LocalSearch::search()
         /* (SWAP*) MOVES LIMITED TO ROUTE PAIRS WHOSE CIRCLE SECTORS OVERLAP */
         if (searchCompleted && shouldIntensify)
         {
-            for (int rU = 0; rU < params.nbVehicles; rU++)
+            for (int const rU: orderRoutes)
             {
-                Route *routeU = &routes[orderRoutes[rU]];
-                if (routeU->nbCustomers == 0)
+                Route &routeU = routes[rU];
+                
+                if (routeU.nbCustomers == 0)
                     continue;
 
-                int lastTestLargeNbRouteU = routeU->whenLastTestedLargeNb;
-                routeU->whenLastTestedLargeNb = nbMoves;
+                int lastTestLargeNbRouteU = routeU.whenLastTestedLargeNb;
+                routeU.whenLastTestedLargeNb = nbMoves;
 
-                for (int rV = 0; rV < params.nbVehicles; rV++)
+                for (int const rV: orderRoutes)
                 {
-                    Route *routeV = &routes[orderRoutes[rV]];
+                    Route &routeV = routes[rV];
 
-                    if (routeV->nbCustomers == 0 || routeU->idx >= routeV->idx)
+                    if (routeV.nbCustomers == 0 || routeU.idx >= routeV.idx)
                         continue;
 
                     if (step > 0
-                        && std::max(routeU->whenLastModified,
-                                    routeV->whenLastModified)
+                        && std::max(routeU.whenLastModified,
+                                    routeV.whenLastModified)
                                <= lastTestLargeNbRouteU)
                         continue;
 
-                    if (!CircleSector::overlap(
-                            routeU->sector,
-                            routeV->sector,
-                            params.config.circleSectorOverlapTolerance))
+                    if (!routeU.overlapsWith(routeV))
                         continue;
 
-                    if (applyRouteOperators(routeU, routeV))
+                    if (applyRouteOperators(&routeU, &routeV))
                         continue;
                 }
             }

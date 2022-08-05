@@ -21,7 +21,7 @@ bool moveSingleClient(Node *nodeU,
 
     if (nodeU->route != nodeV->route)
     {
-        if (nodeU->route->load <= params.vehicleCapacity
+        if (!nodeU->route->hasExcessCapacity()
             && !nodeU->route->twData.hasTimeWarp()
             && costSuppU + costSuppV >= 0)
         {

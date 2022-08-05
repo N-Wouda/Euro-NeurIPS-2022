@@ -27,9 +27,9 @@ bool swapTwoClientPairs(Node *nodeU,
 
     if (nodeU->route != nodeV->route)
     {
-        if (nodeU->route->load <= params.vehicleCapacity
+        if (!nodeU->route->hasExcessCapacity()
             && !nodeU->route->twData.hasTimeWarp()
-            && nodeV->route->load <= params.vehicleCapacity
+            && !nodeV->route->hasExcessCapacity()
             && !nodeV->route->twData.hasTimeWarp() && costSuppU + costSuppV >= 0)
         {
             return false;

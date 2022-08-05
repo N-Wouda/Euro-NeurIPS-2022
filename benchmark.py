@@ -37,6 +37,17 @@ def solve(loc: str, seed: int, time_limit: int):
     pop = hgspy.Population(params, rng)
     ls = hgspy.LocalSearch(params, rng)
 
+    ls.add_node_operator(hgspy.operators.move_single_client)
+    ls.add_node_operator(hgspy.operators.move_two_clients)
+    ls.add_node_operator(hgspy.operators.move_two_clients_reversed)
+    ls.add_node_operator(hgspy.operators.swap_two_client_pairs)
+    ls.add_node_operator(hgspy.operators.swap_two_clients_for_one)
+    ls.add_node_operator(hgspy.operators.swap_two_single_clients)
+    ls.add_node_operator(hgspy.operators.two_opt_between_trips)
+    ls.add_node_operator(hgspy.operators.two_opt_within_trip)
+
+    ls.add_route_operator(hgspy.operators.relocate_star)
+
     algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
     algo.add_crossover_operator(hgspy.crossover.ordered_exchange)
     algo.add_crossover_operator(hgspy.crossover.selective_route_exchange)

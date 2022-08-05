@@ -16,9 +16,9 @@ bool twoOptBetweenTrips(Node *nodeU,
     int costSuppV = params.dist(nodeV->client, nodeU->next->client)
                     - params.dist(nodeV->client, nodeV->next->client);
 
-    if (nodeU->route->load <= params.vehicleCapacity
+    if (!nodeU->route->hasExcessCapacity()
         && !nodeU->route->twData.hasTimeWarp()
-        && nodeV->route->load <= params.vehicleCapacity
+        && !nodeV->route->hasExcessCapacity()
         && !nodeV->route->twData.hasTimeWarp() && costSuppU + costSuppV >= 0)
     {
         return false;
