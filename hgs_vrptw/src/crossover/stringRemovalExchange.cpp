@@ -156,49 +156,9 @@ Individual greedyRepairWithBlinks(Routes &routes,
         return params.clients[A].demand < params.clients[B].demand;
     });
 
-    // NOTE Copied largely from SREX
-    for (int idx : indices)
-    {
-        Client client = unplanned[idx];
-        InsertPos best = {INT_MAX, &routes.front(), 0};
+    // TODO Refactor to add blinking
+    addUnplannedToRoutes(unplannedSet, routes, params);
 
-        for (auto &route : routes)
-        {
-            if (route.empty())
-                break;
-
-            for (size_t idx = 0; idx <= route.size(); ++idx)
-            {
-                if (rng.randint(100) > params.config.blinkRate)
-                {
-                    Client prev, next;
-
-                    if (idx == 0)
-                    {
-                        prev = 0;
-                        next = route[0];
-                    }
-                    else if (idx == route.size())
-                    {
-                        prev = route.back();
-                        next = 0;
-                    }
-                    else
-                    {
-                        prev = route[idx - 1];
-                        next = route[idx];
-                    }
-
-                    int const cost = deltaCost(client, prev, next, params);
-                    if (cost < best.deltaCost)
-                        best = {cost, &route, idx};
-                }
-            }
-        }
-
-        auto const [_, route, offset] = best;
-        route->insert(route->begin() + static_cast<long>(offset), client);
-    }
     return {&params, routes};
 }
 }  // namespace

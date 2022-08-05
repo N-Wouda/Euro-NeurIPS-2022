@@ -6,65 +6,13 @@
 
 #include <unordered_set>
 
+// TODO what to do with typdefs in this anonymous namespace?
 namespace
 {
 using Client = int;
 using ClientSet = std::unordered_set<Client>;
 using Route = std::vector<Client>;
 using Routes = std::vector<Route>;
-
-struct InsertPos  // best insert position, used to plan unplanned clients
-{
-    int deltaCost;
-    Route *route;
-    size_t offset;
-};
-
-// Uses a simple feasible nearest neighbour heuristic to insert unplanned
-// clients into the given routes.
-void addUnplannedToRoutes(ClientSet const &unplanned,
-                          Routes &routes,
-                          Params const &params)
-{
-    for (Client client : unplanned)
-    {
-        InsertPos best = {INT_MAX, &routes.front(), 0};
-
-        for (auto &route : routes)
-        {
-            if (route.empty())
-                break;
-
-            for (size_t idx = 0; idx <= route.size(); ++idx)
-            {
-                Client prev, next;
-
-                if (idx == 0)  // Currently depot -> [0]. Try depot -> client
-                {              // -> [0].
-                    prev = 0;
-                    next = route[0];
-                }
-                else if (idx == route.size())  // Currently [-1] -> depot. Try
-                {                              // [-1] -> client -> depot.
-                    prev = route.back();
-                    next = 0;
-                }
-                else  // Currently [idx - 1] -> [idx]. Try [idx - 1] -> client
-                {     // -> [idx].
-                    prev = route[idx - 1];
-                    next = route[idx];
-                }
-
-                int const cost = deltaCost(client, prev, next, params);
-                if (cost < best.deltaCost)
-                    best = {cost, &route, idx};
-            }
-        }
-
-        auto const [_, route, offset] = best;
-        route->insert(route->begin() + static_cast<long>(offset), client);
-    }
-}
 }  // namespace
 
 Individual selectiveRouteExchange(

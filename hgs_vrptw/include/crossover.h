@@ -2,6 +2,7 @@
 #define CROSSOVER_H
 
 #include "Individual.h"
+#include <unordered_set>
 
 /**
  * Does two ordered crossovers of the given parents (binary tournament). Each
@@ -47,5 +48,12 @@ Individual stringRemovalExchange(
  * Evaluates the cost change of inserting client between prev and next.
  */
 int deltaCost(int client, int prev, int next, Params const &params);
+
+/**
+ * Inserts unplanned clients into the given routes using a greedy heuristic.
+ * */
+void addUnplannedToRoutes(std::unordered_set<int> const &unplanned,
+                          std::vector<std::vector<int>> &routes,
+                          Params const &params);
 
 #endif  // CROSSOVER_H
