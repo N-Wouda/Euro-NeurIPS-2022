@@ -15,16 +15,12 @@ namespace
 {
 using Parents = std::pair<Individual const *, Individual const *>;
 using Client = int;
+using Clients = std::vector<Client>;
 using ClientSet = std::unordered_set<Client>;
 using Route = std::vector<Client>;
 using Routes = std::vector<Route>;
 
-struct InsertPos  // best insert position, used to plan unplanned clients
-{
-    int deltaCost;
-    Route *route;
-    size_t offset;
-};
+;
 
 // Returns the indices of a random (sub)string with length card that
 // contains the client
@@ -140,21 +136,34 @@ void removeClients(Routes &routes, ClientSet const &clients)
         }
     }
 }
+Clients
+sortClients(ClientSet const clientSet, Params const &params, XorShift128 &rng)
+{
+    std::vector clients(clientSet.begin(), clientSet.end());
+    std::vector<int> indices(clients.size());
+    std::iota(indices.begin(), indices.end(), 0);
+
+    // TODO how to add more sorting options in a neat way?
+    std::sort(indices.begin(),
+              indices.end(),
+              [&](int A, int B)
+              { return params.clients[A].demand < params.clients[B].demand; });
+
+    std::vector<int> sortedClients;
+    for (auto idx : indices)
+        sortedClients.push_back(clients[idx]);
+
+    return sortedClients;
+}
+
 Individual greedyRepairWithBlinks(Routes &routes,
                                   ClientSet const unplannedSet,
                                   Params const &params,
                                   XorShift128 &rng)
 
 {
-    // Sort clients
-    std::vector unplanned(unplannedSet.begin(), unplannedSet.end());
-    std::vector<int> indices(unplanned.size());
-    std::iota(indices.begin(), indices.end(), 0);
+    auto unplanned = sortClients(unplannedSet, params, rng);
 
-    // TODO how to add more sorting options in a neat way?
-    std::sort(indices.begin(), indices.end(), [&](int A, int B) {
-        return params.clients[A].demand < params.clients[B].demand;
-    });
     for (Client client : unplanned)
     {
         InsertPos best = {INT_MAX, &routes.front(), 0};
