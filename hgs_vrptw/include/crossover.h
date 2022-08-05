@@ -43,4 +43,9 @@ Individual stringRemovalExchange(
     Params const &params,
     XorShift128 &rng);
 
+/**
+ * Evaluates the cost change of inserting client between prev and next.
+ */
+int deltaCost(int client, int prev, int next, Params const &params);
+
 #endif  // CROSSOVER_H

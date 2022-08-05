@@ -124,31 +124,13 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
     }
 }
 
-int deltaCost(Client client, Client prev, Client next, Params const &params)
-{
-    int clientLate = params.clients[client].twLate;
-    int distToInsert = params.dist(prev, client);
-    int prevEarly = params.clients[prev].twEarly;
-
-    if (prevEarly + distToInsert >= clientLate)
-        return INT_MAX;
-
-    int clientEarly = params.clients[client].twEarly;
-    int distFromInsert = params.dist(client, next);
-    int nextLate = params.clients[next].twLate;
-
-    if (clientEarly + distFromInsert >= nextLate)
-        return INT_MAX;
-
-    return distToInsert + distFromInsert - params.dist(prev, next);
-}
-
 void removeClients(Routes &routes, ClientSet const &clients)
 {
     for (Client c : clients)
     {
         for (auto &route : routes)
         {
+            // TODO Make this more efficient
             if (std::find(route.begin(), route.end(), c) != route.end())
             {
                 auto position = std::find(route.begin(), route.end(), c);

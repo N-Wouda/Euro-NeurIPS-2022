@@ -20,26 +20,6 @@ struct InsertPos  // best insert position, used to plan unplanned clients
     size_t offset;
 };
 
-// Evaluates the cost change of inserting client between prev and next.
-int deltaCost(Client client, Client prev, Client next, Params const &params)
-{
-    int clientLate = params.clients[client].twLate;
-    int distToInsert = params.dist(prev, client);
-    int prevEarly = params.clients[prev].twEarly;
-
-    if (prevEarly + distToInsert >= clientLate)
-        return INT_MAX;
-
-    int clientEarly = params.clients[client].twEarly;
-    int distFromInsert = params.dist(client, next);
-    int nextLate = params.clients[next].twLate;
-
-    if (clientEarly + distFromInsert >= nextLate)
-        return INT_MAX;
-
-    return distToInsert + distFromInsert - params.dist(prev, next);
-}
-
 // Uses a simple feasible nearest neighbour heuristic to insert unplanned
 // clients into the given routes.
 void addUnplannedToRoutes(ClientSet const &unplanned,
