@@ -72,9 +72,7 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
                     continue;
 
                 // Remove string from the route
-                auto card = rng.randint(std::min(
-                                static_cast<size_t>(route.size()), maxCard))
-                            + 1;
+                auto card = rng.randint(std::min(route.size(), maxCard)) + 1;
 
                 std::vector<size_t> removalIndices;
                 if (rng.randint(100) >= params.config.splitRate)
