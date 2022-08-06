@@ -1,5 +1,6 @@
 #include "crossover.h"
 #include "Params.h"
+#include <unordered_set>
 
 namespace
 {

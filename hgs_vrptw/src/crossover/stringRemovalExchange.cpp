@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <functional>
 #include <numeric>
+#include <unordered_map>
 #include <unordered_set>
 
 namespace
@@ -19,8 +20,8 @@ using Routes = std::vector<Route>;
 
 // Returns the indices of a random (sub)string that contains the client
 std::vector<size_t> selectString(Route const &route,
-                                 Client client,
-                                 size_t stringSize,
+                                 Client const client,
+                                 size_t const stringSize,
                                  XorShift128 &rng)
 {
     auto itr = std::find(route.begin(), route.end(), client);
@@ -37,23 +38,24 @@ std::vector<size_t> selectString(Route const &route,
 
 // Removes a number of strings around the center client
 std::pair<Routes, ClientSet> stringRemoval(Routes routes,
-                                           Client center,
+                                           Client const center,
                                            Params const &params,
                                            XorShift128 &rng)
 {
     // Compute the maximum string size to be removed
     size_t avgRouteSize = 0;
+
     for (auto &route : routes)
         avgRouteSize += route.size();
     avgRouteSize = avgRouteSize / routes.size();
 
-    auto maxSize = std::min(params.config.maxStringSize, avgRouteSize);
+    auto const maxSize = std::min(params.config.maxStringSize, avgRouteSize);
 
     // Compute the number of strings to remove
     // NOTE Deviates from original because we use discrete unif distribution
-    auto maxStringRemovals
+    auto const maxStringRemovals
         = (4 * params.config.avgDestruction) / (1 + maxSize) - 1;
-    auto nbStringRemovals = rng.randint(maxStringRemovals) + 1;
+    auto const nbStringRemovals = rng.randint(maxStringRemovals) + 1;
 
     std::set<Route> destroyedRoutes;
     ClientSet removedClients;
@@ -75,7 +77,8 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
                 continue;
 
             // Remove string from the route
-            auto stringSize = rng.randint(std::min(route.size(), maxSize)) + 1;
+            auto const stringSize
+                = rng.randint(std::min(route.size(), maxSize)) + 1;
 
             std::vector<size_t> removalIndices;
 
@@ -89,9 +92,10 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
                        and subSize < route.size() - stringSize)
                     subSize++;
 
-                auto strIndices
+                auto const strIndices
                     = selectString(route, client, stringSize + subSize, rng);
-                auto subPos = rng.randint(strIndices.size() - subSize + 1);
+                auto const subPos
+                    = rng.randint(strIndices.size() - subSize + 1);
 
                 for (size_t i = 0; i <= subPos; i++)
                     removalIndices.push_back(strIndices[i]);
@@ -165,7 +169,7 @@ sortClients(ClientSet const &clientSet, Params const &params, XorShift128 &rng)
     };
 
     // TODO How to make this non-uniform?
-    auto draw = rng.randint(7);
+    auto const draw = rng.randint(7);
     if (draw == 1)
         std::shuffle(indices.begin(), indices.end(), rng);
     else if (draw == 2)
@@ -199,8 +203,10 @@ Individual stringRemovalExchange(Parents const &parents,
     // Find a center node around which strings will be removed
     Client const center = rng.randint(params.nbClients) + 1;
 
-    auto [destroyed1, removed1] = stringRemoval(routes1, center, params, rng);
-    auto [destroyed2, removed2] = stringRemoval(routes2, center, params, rng);
+    auto [destroyed1, const removed1]
+        = stringRemoval(routes1, center, params, rng);
+    auto [destroyed2, const removed2]
+        = stringRemoval(routes2, center, params, rng);
 
     // Remove clients from other destroyed parent
     removeClients(destroyed1, removed2);
@@ -208,9 +214,9 @@ Individual stringRemovalExchange(Parents const &parents,
 
     auto removedSet = removed1;
     removedSet.insert(removed2.begin(), removed2.end());
-    auto removed = sortClients(removedSet, params, rng);
+    auto const removed = sortClients(removedSet, params, rng);
 
-    auto blinkRate = params.config.blinkRate;
+    auto const blinkRate = params.config.blinkRate;
     crossover::greedyRepairWithBlinks(
         destroyed1, removed, blinkRate, params, rng);
     crossover::greedyRepairWithBlinks(

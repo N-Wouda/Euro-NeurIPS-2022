@@ -32,7 +32,8 @@ Individual selectiveRouteExchange(
  * first removes strings of clients from each parent based on "Slack Induction
  * String Removals (SISRs)" [1]. Removed clients from one parent are then
  * also removed from the other parent. Both parents are repaired to complete
- * solutions by greedily re-inserting the unassigned clients.
+ * solutions by greedily re-inserting the unplanned clients, while randomly
+ * skipping insertion positions.
  * <br />
  * [1]: Christiaens, J., & Vanden Berghe, G. (2020). Slack induction by string
  * removals for vehicle routing problems. Transportation Science, 54(2),
