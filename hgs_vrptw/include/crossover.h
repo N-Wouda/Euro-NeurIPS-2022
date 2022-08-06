@@ -2,7 +2,6 @@
 #define CROSSOVER_H
 
 #include "Individual.h"
-#include <unordered_set>
 
 /**
  * Does two ordered crossovers of the given parents (binary tournament). Each
