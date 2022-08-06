@@ -118,18 +118,18 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
 
 void removeClients(Routes &routes, ClientSet const &clients)
 {
+    std::unordered_map<Client, Route &> client2route;
+    client2route.reserve(clients.size());
+    for (auto &route : routes)
+        for (Client c : route)
+            if (clients.contains(c))
+                client2route[c] = route;
+
     for (Client c : clients)
     {
-        for (auto &route : routes)
-        {
-            // TODO Make this more efficient
-            if (std::find(route.begin(), route.end(), c) != route.end())
-            {
-                auto position = std::find(route.begin(), route.end(), c);
-                route.erase(position);
-                break;
-            }
-        }
+        auto &route = client2route[c];
+        auto const position = std::find(route.begin(), route.end(), c);
+        route.erase(position);
     }
 }
 
