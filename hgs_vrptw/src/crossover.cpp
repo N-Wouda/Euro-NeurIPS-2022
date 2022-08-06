@@ -39,7 +39,7 @@ int deltaCost(Client client, Client prev, Client next, Params const &params)
 }  // namespace
 
 void crossover::greedyRepairWithBlinks(Routes &routes,
-                                       Clients const unplanned,
+                                       Clients const &unplanned,
                                        size_t blinkRate,
                                        Params const &params,
                                        XorShift128 &rng)

@@ -51,7 +51,7 @@ namespace crossover
  * positions with probability blinkRate (see stringRemovalExchange).
  */
 void greedyRepairWithBlinks(std::vector<std::vector<int>> &routes,
-                            std::vector<int> const unplanned,
+                            std::vector<int> const &unplanned,
                             size_t blinkRate,
                             Params const &params,
                             XorShift128 &rng);
