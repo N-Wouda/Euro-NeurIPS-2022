@@ -100,7 +100,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
              py::arg("minCircleSectorSizeDegrees") = 15,
              py::arg("avgDestruction") = 10,
-             py::arg("maxStringCard") = 10,
+             py::arg("maxStringSize") = 10,
              py::arg("splitRate") = 50,
              py::arg("splitDepth") = 1,
              py::arg("blinkRate") = 1)
@@ -130,7 +130,7 @@ PYBIND11_MODULE(hgspy, m)
                       &Config::circleSectorOverlapTolerance)
         .def_readonly("minCircleSectorSize", &Config::minCircleSectorSize)
         .def_readonly("avgDestruction", &Config::avgDestruction)
-        .def_readonly("maxStringCard", &Config::maxStringCard)
+        .def_readonly("maxStringSize", &Config::maxStringSize)
         .def_readonly("splitRate", &Config::splitRate)
         .def_readonly("splitDepth", &Config::splitDepth)
         .def_readonly("blinkRate", &Config::blinkRate);

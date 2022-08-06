@@ -91,8 +91,8 @@ public:
             }
             else if (std::string(argv[i]) == "-avgDestruction")
                 config.avgDestruction = static_cast<size_t>(atoi(argv[i + 1]));
-            else if (std::string(argv[i]) == "-maxStringCard")
-                config.maxStringCard = static_cast<size_t>(atoi(argv[i + 1]));
+            else if (std::string(argv[i]) == "-maxStringSize")
+                config.maxStringSize = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-splitRate")
                 config.splitRate = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-splitDepth")

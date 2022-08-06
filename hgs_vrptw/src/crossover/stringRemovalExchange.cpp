@@ -17,18 +17,19 @@ using ClientSet = std::unordered_set<Client>;
 using Route = std::vector<Client>;
 using Routes = std::vector<Route>;
 
-// Returns the indices of a random (sub)string with length card that
-// contains the client
-std::vector<size_t>
-selectString(Route const &route, Client client, size_t card, XorShift128 &rng)
+// Returns the indices of a random (sub)string that contains the client
+std::vector<size_t> selectString(Route const &route,
+                                 Client client,
+                                 size_t stringSize,
+                                 XorShift128 &rng)
 {
     auto itr = std::find(route.begin(), route.end(), client);
     auto routePos = std::distance(route.begin(), itr);
-    auto stringPos = rng.randint(card);
+    auto stringPos = rng.randint(stringSize);
     auto startIdx = routePos - stringPos;
 
     std::vector<size_t> indices;
-    for (size_t i = startIdx; i != startIdx + card; i++)
+    for (size_t i = startIdx; i != startIdx + stringSize; i++)
         indices.push_back(i % route.size());
 
     return indices;
@@ -39,17 +40,18 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
                                            Params const &params,
                                            XorShift128 &rng)
 {
-    // Compute the maximum string cardinality to be removed
+    // Compute the maximum string size to be removed
     size_t avgRouteSize = 0;
     for (auto &route : routes)
         avgRouteSize += route.size();
     avgRouteSize = avgRouteSize / routes.size();
 
-    auto maxCard = std::min(params.config.maxStringCard, avgRouteSize);
+    auto maxSize = std::min(params.config.maxStringSize, avgRouteSize);
 
     // Compute the number of strings to remove
     // NOTE Deviates from original because we use discrete unif distribution
-    auto maxStringRemovals = (4 * params.config.avgDestruction) / (1 + maxCard);
+    auto maxStringRemovals
+        = (4 * params.config.avgDestruction) / (1 + maxSize) - 1;
     auto nbStringRemovals = rng.randint(maxStringRemovals) + 1;
 
     std::set<Route> destroyedRoutes;
@@ -72,28 +74,29 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
                 continue;
 
             // Remove string from the route
-            auto card = rng.randint(std::min(route.size(), maxCard)) + 1;
+            auto stringSize = rng.randint(std::min(route.size(), maxSize)) + 1;
 
             std::vector<size_t> removalIndices;
+
             if (rng.randint(100) >= params.config.splitRate)
-                removalIndices = selectString(route, client, card, rng);
+                removalIndices = selectString(route, client, stringSize, rng);
+
             else
             {
                 size_t subSize = 1;
                 while (rng.randint(100) > params.config.splitDepth
-                       and subSize < route.size() - card)
+                       and subSize < route.size() - stringSize)
                     subSize++;
 
                 auto strIndices
-                    = selectString(route, client, card + subSize, rng);
+                    = selectString(route, client, stringSize + subSize, rng);
                 auto subPos = rng.randint(strIndices.size() - subSize + 1);
 
                 for (size_t i = 0; i <= subPos; i++)
                     removalIndices.push_back(strIndices[i]);
-                for (auto i = subPos + card; i <= strIndices.size(); i++)
-                    removalIndices.push_back(strIndices[i]);
 
-                removalIndices = selectString(route, client, card, rng);
+                for (auto i = subPos + stringSize; i <= strIndices.size(); i++)
+                    removalIndices.push_back(strIndices[i]);
             }
 
             std::sort(
@@ -137,8 +140,9 @@ sortClients(ClientSet const &clientSet, Params const &params, XorShift128 &rng)
     std::vector<int> indices(clients.size());
     std::iota(indices.begin(), indices.end(), 0);
 
-    auto const highestDemand = [&](int A, int B)
-    { return params.clients[A].demand > params.clients[B].demand; };
+    auto const highestDemand = [&](int A, int B) {
+        return params.clients[A].demand > params.clients[B].demand;
+    };
 
     auto const furtherToDepot
         = [&](int A, int B) { return params.dist(0, A) > params.dist(0, B); };

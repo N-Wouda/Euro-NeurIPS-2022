@@ -58,7 +58,7 @@ struct Config
 
     // SISR related parameters, see Christiaens 2020.
     size_t avgDestruction = 6;
-    size_t maxStringCard = 10;
+    size_t maxStringSize = 10;
     size_t splitRate = 50;
     size_t splitDepth = 25;
     size_t blinkRate = 1;
@@ -87,10 +87,10 @@ struct Config
                     int circleSectorOverlapToleranceDegrees = 0,
                     int minCircleSectorSizeDegrees = 15,
                     size_t avgDestruction = 6,
-                    size_t maxStringCard = 10,
+                    size_t maxStringSize = 10,
                     size_t splitRate = 50,
                     size_t splitDepth = 25,
-                    size_t blinkRate = 1)
+                    size_t blinkRate = 0)
         : seed(seed),
           nbIter(nbIter),
           timeLimit(timeLimit),
@@ -113,7 +113,7 @@ struct Config
           weightTimeWarp(weightTimeWarp),
           intensificationProbability(intensificationProbability),
           avgDestruction(avgDestruction),
-          maxStringCard(maxStringCard),
+          maxStringSize(maxStringSize),
           splitRate(splitRate),
           splitDepth(splitDepth),
           blinkRate(blinkRate)
