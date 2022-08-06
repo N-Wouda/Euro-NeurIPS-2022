@@ -6,7 +6,6 @@
 
 #include <unordered_set>
 
-// TODO what to do with typdefs in this anonymous namespace?
 namespace
 {
 using Client = int;
@@ -36,6 +35,7 @@ Individual selectiveRouteExchange(
 
     ClientSet selectedA;
     ClientSet selectedB;
+
     for (size_t r = 0; r < nMovedRoutes; r++)
     {
         selectedA.insert(routesA[(startA + r) % nRoutesA].begin(),
