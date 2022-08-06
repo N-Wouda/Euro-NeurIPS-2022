@@ -31,11 +31,11 @@ Individual selectiveRouteExchange(
 /**
  * Performs a SISRX crossover of the given parents (binary tournament). SISRX
  * first removes strings of clients from each parent based on "Slack Induction
- * String Removals (SISRs)" [2]. Removed clients from one parent are then
+ * String Removals (SISRs)" [1]. Removed clients from one parent are then
  * also removed from the other parent. Both parents are repaired to complete
- * solutions by greedily re-inserting the unassinged clients.
+ * solutions by greedily re-inserting the unassigned clients.
  * <br />
- * [2]: Christiaens, J., & Vanden Berghe, G. (2020). Slack induction by string
+ * [1]: Christiaens, J., & Vanden Berghe, G. (2020). Slack induction by string
  * removals for vehicle routing problems. Transportation Science, 54(2),
  * 417-433.
  */
