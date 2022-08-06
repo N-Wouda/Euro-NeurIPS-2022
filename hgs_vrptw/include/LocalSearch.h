@@ -8,12 +8,13 @@
 #include "Route.h"
 #include "XorShift128.h"
 
+#include <functional>
 #include <vector>
 
 class LocalSearch
 {
-    using nodeOp = bool (*)(Node *, Node *, Penalties const &);
-    using routeOp = bool (*)(Route *, Route *, Penalties const &);
+    using nodeOp = std::function<bool(Node *, Node *, Penalties const &)>;
+    using routeOp = std::function<bool(Route *, Route *, Penalties const &)>;
 
     Penalties penalties;  // Penalty data
     Params &params;       // Problem parameters
@@ -23,9 +24,9 @@ class LocalSearch
     std::vector<int> orderRoutes;  // random route order used in SWAP* operators
 
     /* THE SOLUTION IS REPRESENTED AS A LINKED LIST OF ELEMENTS */
-    std::vector<Node> clients;    // Note that clients[0] is a sentinel value
-    std::vector<Node> depots;     // These depots mark the start of routes
-    std::vector<Node> depotsEnd;  // These depots mark the end of routes
+    std::vector<Node> clients;      // Note that clients[0] is a sentinel value
+    std::vector<Node> startDepots;  // These mark the start of routes
+    std::vector<Node> endDepots;    // These mark the end of routes
     std::vector<Route> routes;
 
     std::vector<nodeOp> nodeOps;
@@ -40,9 +41,9 @@ class LocalSearch
     // Export the LS solution back into an individual
     Individual exportIndividual();
 
-    bool applyNodeOperators(Node *U, Node *V);
+    [[nodiscard]] bool applyNodeOperators(Node *U, Node *V);
 
-    bool applyRouteOperators(Route *U, Route *V);
+    [[nodiscard]] bool applyRouteOperators(Route *U, Route *V);
 
     // Performs the actual local search procedure
     void search();

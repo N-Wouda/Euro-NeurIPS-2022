@@ -24,28 +24,13 @@ struct Node
                                     // route (0...client) is reversed
                                     // (useful for 2-opt moves with
                                     // asymmetric problems)
-    int deltaRemoval;      // Difference of cost in the current route if the
-                           // node is removed (used in SWAP*)
-    int deltaRemovalTW;    // Difference of cost in the current route if the
-                           // node is removed, including TimeWarp (used in
-                           // SWAP*)
-    TimeWindowSegment tw;  // TimeWindowSegment for individual node (client)
 
-    // TimeWindowSegment for subsequence (0...client) including self
-    TimeWindowSegment twBefore;
+    TimeWindowSegment tw;        // TWS for individual node (client)
+    TimeWindowSegment twBefore;  // TWS for (0...client) including self
+    TimeWindowSegment twAfter;   // TWS for (client...0) including self
 
-    // TimeWindowSegment for subsequence (client...0) including self
-    TimeWindowSegment twAfter;
-
-    bool isSeed;  // Tells whether a nextSeed is available (faster tw
-                  // calculations)
-    TimeWindowSegment toNextSeedTwD;  // TimeWindowSegment for subsequence
-                                      // (client...client+4) excluding self,
-                                      // including client + 4
-    Node *nextSeed;  // next seeded node if available (nullptr otherwise)
-
-    // Calculates time window data for segment [self, other] in same route
-    TimeWindowSegment mergeSegmentTwData(Node const *other) const;
+    Node *nextSeed;                   // next seed (if available)
+    TimeWindowSegment toNextSeedTwD;  // TWS to next seed
 };
 
 #endif  // NODE_H

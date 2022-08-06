@@ -2,9 +2,7 @@
 
 #include "TimeWindowSegment.h"
 
-bool swapTwoClientPairs(Node *nodeU,
-                        Node *nodeV,
-                        Penalties const &penalties)
+bool swapTwoClientPairs(Node *nodeU, Node *nodeV, Penalties const &penalties)
 {
     auto const &params = *nodeU->params;
 
@@ -16,56 +14,56 @@ bool swapTwoClientPairs(Node *nodeU,
         || nodeU->next == nodeV || nodeV == nodeU->next->next)
         return false;
 
-    int costSuppU = params.dist(nodeU->prev->client, nodeV->client)
-                    + params.dist(nodeV->next->client, nodeU->next->next->client)
-                    - params.dist(nodeU->prev->client, nodeU->client)
-                    - params.dist(nodeU->next->client, nodeU->next->next->client);
-    int costSuppV = params.dist(nodeV->prev->client, nodeU->client)
-                    + params.dist(nodeU->next->client, nodeV->next->next->client)
-                    - params.dist(nodeV->prev->client, nodeV->client)
-                    - params.dist(nodeV->next->client, nodeV->next->next->client);
+    int costSuppU
+        = params.dist(nodeU->prev->client, nodeV->client)
+          + params.dist(nodeV->next->client, nodeU->next->next->client)
+          - params.dist(nodeU->prev->client, nodeU->client)
+          - params.dist(nodeU->next->client, nodeU->next->next->client);
+    int costSuppV
+        = params.dist(nodeV->prev->client, nodeU->client)
+          + params.dist(nodeU->next->client, nodeV->next->next->client)
+          - params.dist(nodeV->prev->client, nodeV->client)
+          - params.dist(nodeV->next->client, nodeV->next->next->client);
 
     if (nodeU->route != nodeV->route)
     {
-        if (!nodeU->route->hasExcessCapacity()
-            && !nodeU->route->twData.hasTimeWarp()
-            && !nodeV->route->hasExcessCapacity()
-            && !nodeV->route->twData.hasTimeWarp() && costSuppU + costSuppV >= 0)
+        if (nodeU->route->isFeasible() && nodeV->route->isFeasible()
+            && costSuppU + costSuppV >= 0)
         {
             return false;
         }
 
-        auto routeUTwData = TimeWindowSegment::merge(
-            nodeU->prev->twBefore,
-            nodeV->tw,
-            nodeV->next->tw,
-            nodeU->next->next->twAfter);
-        auto routeVTwData = TimeWindowSegment::merge(
-            nodeV->prev->twBefore,
-            nodeU->tw,
-            nodeU->next->tw,
-            nodeV->next->next->twAfter);
+        auto routeUTwData
+            = TimeWindowSegment::merge(nodeU->prev->twBefore,
+                                       nodeV->tw,
+                                       nodeV->next->tw,
+                                       nodeU->next->next->twAfter);
+        auto routeVTwData
+            = TimeWindowSegment::merge(nodeV->prev->twBefore,
+                                       nodeU->tw,
+                                       nodeU->next->tw,
+                                       nodeV->next->next->twAfter);
 
-        costSuppU += penalties.load(nodeU->route->load
-                                    + params.clients[nodeV->client].demand
-                                    + params.clients[nodeV->next->client].demand
-                                    - params.clients[nodeU->client].demand
-                                    - params.clients[nodeU->next->client].demand)
-                     + penalties.timeWarp(routeUTwData) - nodeU->route->penalty;
+        costSuppU
+            += penalties.load(nodeU->route->load
+                              + params.clients[nodeV->client].demand
+                              + params.clients[nodeV->next->client].demand
+                              - params.clients[nodeU->client].demand
+                              - params.clients[nodeU->next->client].demand)
+               + penalties.timeWarp(routeUTwData) - nodeU->route->penalty;
 
-        costSuppV += penalties.load(nodeV->route->load
-                                    + params.clients[nodeU->client].demand
-                                    + params.clients[nodeU->next->client].demand
-                                    - params.clients[nodeV->client].demand
-                                    - params.clients[nodeV->next->client].demand)
-                     + penalties.timeWarp(routeVTwData) - nodeV->route->penalty;
+        costSuppV
+            += penalties.load(nodeV->route->load
+                              + params.clients[nodeU->client].demand
+                              + params.clients[nodeU->next->client].demand
+                              - params.clients[nodeV->client].demand
+                              - params.clients[nodeV->next->client].demand)
+               + penalties.timeWarp(routeVTwData) - nodeV->route->penalty;
     }
     else
     {
-        if (!nodeU->route->twData.hasTimeWarp() && costSuppU + costSuppV >= 0)
-        {
+        if (!nodeU->route->hasTimeWarp() && costSuppU + costSuppV >= 0)
             return false;
-        }
 
         // Swap within the same route
         if (nodeU->position < nodeV->position)
@@ -76,7 +74,7 @@ bool swapTwoClientPairs(Node *nodeU,
                 nodeU->prev->twBefore,
                 nodeV->tw,
                 nodeV->next->tw,
-                nodeU->next->next->mergeSegmentTwData(nodeV->prev),
+                nodeU->route->twBetween(nodeU->next->next, nodeV->prev),
                 nodeU->tw,
                 nodeU->next->tw,
                 nodeV->next->next->twAfter);
@@ -91,7 +89,7 @@ bool swapTwoClientPairs(Node *nodeU,
                 nodeV->prev->twBefore,
                 nodeU->tw,
                 nodeU->next->tw,
-                nodeV->next->next->mergeSegmentTwData(nodeU->prev),
+                nodeV->route->twBetween(nodeV->next->next, nodeU->prev),
                 nodeV->tw,
                 nodeV->next->tw,
                 nodeU->next->next->twAfter);

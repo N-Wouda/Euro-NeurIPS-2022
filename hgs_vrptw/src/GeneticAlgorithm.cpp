@@ -61,7 +61,9 @@ Result GeneticAlgorithm::runUntil(clock::time_point const &timePoint)
 Individual GeneticAlgorithm::crossover() const
 {
     auto const parents = population.selectParents();
+
     std::vector<Individual> offspring;
+    offspring.reserve(operators.size());
 
     for (auto const &op : operators)
         offspring.push_back(op(parents, params, rng));

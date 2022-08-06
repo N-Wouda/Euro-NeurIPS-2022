@@ -22,9 +22,28 @@ struct Route
     int whenLastTestedLargeNb;    // "When" the large neighborhood moves of
                                   // this route have last been tested
 
+    /**
+     * Tests if this route is feasible.
+     */
+    [[nodiscard]] inline bool isFeasible() const
+    {
+        return !hasExcessCapacity() && !hasTimeWarp();
+    }
+
+    /**
+     * Determines whether this route is load-feasible.
+     */
     [[nodiscard]] inline bool hasExcessCapacity() const
     {
         return load > params->vehicleCapacity;
+    }
+
+    /**
+     * Determines whether this route is time-feasible.
+     */
+    [[nodiscard]] inline bool hasTimeWarp() const
+    {
+        return twData.totalTimeWarp() > 0;
     }
 
     [[nodiscard]] inline bool overlapsWith(Route const &other) const
@@ -32,6 +51,11 @@ struct Route
         return CircleSector::overlap(
             sector, other.sector, params->config.circleSectorOverlapTolerance);
     }
+
+    /**
+     * Calculates time window data for segment [start, end] in this route.
+     */
+    TimeWindowSegment twBetween(Node const *start, Node const *end) const;
 
     /**
      * Updates this route. To be called after swapping nodes/changing the

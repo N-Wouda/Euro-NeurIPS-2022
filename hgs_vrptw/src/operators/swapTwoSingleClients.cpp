@@ -2,9 +2,7 @@
 
 #include "TimeWindowSegment.h"
 
-bool swapTwoSingleClients(Node *nodeU,
-                          Node *nodeV,
-                          Penalties const &penalties)
+bool swapTwoSingleClients(Node *nodeU, Node *nodeV, Penalties const &penalties)
 {
     auto const &params = *nodeU->params;
 
@@ -26,21 +24,16 @@ bool swapTwoSingleClients(Node *nodeU,
 
     if (nodeU->route != nodeV->route)
     {
-        if (!nodeU->route->hasExcessCapacity()
-            && !nodeU->route->twData.hasTimeWarp()
-            && !nodeV->route->hasExcessCapacity()
-            && !nodeV->route->twData.hasTimeWarp()
+        if (nodeU->route->isFeasible() && nodeV->route->isFeasible()
             && costSuppU + costSuppV >= 0)
         {
             return false;
         }
 
-        auto routeUTwData = TimeWindowSegment::merge(nodeU->prev->twBefore,
-                                                  nodeV->tw,
-                                                  nodeU->next->twAfter);
-        auto routeVTwData = TimeWindowSegment::merge(nodeV->prev->twBefore,
-                                                  nodeU->tw,
-                                                  nodeV->next->twAfter);
+        auto routeUTwData = TimeWindowSegment::merge(
+            nodeU->prev->twBefore, nodeV->tw, nodeU->next->twAfter);
+        auto routeVTwData = TimeWindowSegment::merge(
+            nodeV->prev->twBefore, nodeU->tw, nodeV->next->twAfter);
 
         costSuppU += penalties.load(nodeU->route->load
                                     + params.clients[nodeV->client].demand
@@ -54,7 +47,7 @@ bool swapTwoSingleClients(Node *nodeU,
     }
     else
     {
-        if (!nodeU->route->twData.hasTimeWarp() && costSuppU + costSuppV >= 0)
+        if (!nodeU->route->hasTimeWarp() && costSuppU + costSuppV >= 0)
         {
             return false;
         }
@@ -68,7 +61,7 @@ bool swapTwoSingleClients(Node *nodeU,
             auto const routeUTwData = TimeWindowSegment::merge(
                 nodeU->prev->twBefore,
                 nodeV->tw,
-                nodeU->next->mergeSegmentTwData(nodeV->prev),
+                nodeU->route->twBetween(nodeU->next, nodeV->prev),
                 nodeU->tw,
                 nodeV->next->twAfter);
 
@@ -82,7 +75,7 @@ bool swapTwoSingleClients(Node *nodeU,
             auto const routeUTwData = TimeWindowSegment::merge(
                 nodeV->prev->twBefore,
                 nodeU->tw,
-                nodeV->next->mergeSegmentTwData(nodeU->prev),
+                nodeV->route->twBetween(nodeV->next, nodeU->prev),
                 nodeV->tw,
                 nodeU->next->twAfter);
 

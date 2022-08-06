@@ -19,23 +19,24 @@ void operators::insertNode(Node *U, Node *V)
 
 void operators::swapNode(Node *U, Node *V)
 {
-    auto *myVPred = V->prev;
-    auto *myVSuiv = V->next;
-    auto *myUPred = U->prev;
-    auto *myUSuiv = U->next;
-    auto *myRouteU = U->route;
-    auto *myRouteV = V->route;
+    auto *VPred = V->prev;
+    auto *VSucc = V->next;
+    auto *UPred = U->prev;
+    auto *USucc = U->next;
 
-    myUPred->next = V;
-    myUSuiv->prev = V;
-    myVPred->next = U;
-    myVSuiv->prev = U;
+    auto *routeU = U->route;
+    auto *routeV = V->route;
 
-    U->prev = myVPred;
-    U->next = myVSuiv;
-    V->prev = myUPred;
-    V->next = myUSuiv;
+    UPred->next = V;
+    USucc->prev = V;
+    VPred->next = U;
+    VSucc->prev = U;
 
-    U->route = myRouteV;
-    V->route = myRouteU;
+    U->prev = VPred;
+    U->next = VSucc;
+    V->prev = UPred;
+    V->next = USucc;
+
+    U->route = routeV;
+    V->route = routeU;
 }

@@ -21,7 +21,7 @@ bool twoOptWithinTrip(Node *nodeU,
                + nodeV->cumulatedReversalDistance
                - nodeU->next->cumulatedReversalDistance;
 
-    if (!nodeU->route->twData.hasTimeWarp() && cost >= 0)
+    if (!nodeU->route->hasTimeWarp() && cost >= 0)
         return false;
 
     auto routeTwData = nodeU->twBefore;

@@ -48,14 +48,6 @@ public:
     }
 
     /**
-     * Determines whether this segment is time-feasible.
-     */
-    [[nodiscard]] inline bool hasTimeWarp() const
-    {
-        return totalTimeWarp() > 0;
-    }
-
-    /**
      * Returns the time warp along the segment, assuming we can depart in time.
      */
     [[nodiscard]] inline int segmentTimeWarp() const { return timeWarp; }

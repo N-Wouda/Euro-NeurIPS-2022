@@ -20,12 +20,8 @@ bool moveTwoClients(Node *nodeU,
 
     if (nodeU->route != nodeV->route)
     {
-        if (!nodeU->route->hasExcessCapacity()
-            && !nodeU->route->twData.hasTimeWarp()
-            && costSuppU + costSuppV >= 0)
-        {
+        if (nodeU->route->isFeasible() && costSuppU + costSuppV >= 0)
             return false;
-        }
 
         auto routeUTwData = TimeWindowSegment::merge(
             nodeU->prev->twBefore, nodeU->next->next->twAfter);
@@ -46,10 +42,8 @@ bool moveTwoClients(Node *nodeU,
     }
     else
     {
-        if (!nodeU->route->twData.hasTimeWarp() && costSuppU + costSuppV >= 0)
-        {
+        if (!nodeU->route->hasTimeWarp() && costSuppU + costSuppV >= 0)
             return false;
-        }
 
         // Move within the same route
         if (nodeU->position < nodeV->position)
@@ -59,7 +53,7 @@ bool moveTwoClients(Node *nodeU,
             // - U - X - Y - ... - end
             auto const routeUTwData = TimeWindowSegment::merge(
                 nodeU->prev->twBefore,
-                nodeU->next->next->mergeSegmentTwData(nodeV),
+                nodeU->route->twBetween(nodeU->next->next, nodeV),
                 nodeU->tw,
                 nodeU->next->tw,
                 nodeV->next->twAfter);
@@ -75,7 +69,7 @@ bool moveTwoClients(Node *nodeU,
                 nodeV->twBefore,
                 nodeU->tw,
                 nodeU->next->tw,
-                nodeV->next->mergeSegmentTwData(nodeU->prev),
+                nodeV->route->twBetween(nodeV->next, nodeU->prev),
                 nodeU->next->next->twAfter);
 
             costSuppU += penalties.timeWarp(routeUTwData);

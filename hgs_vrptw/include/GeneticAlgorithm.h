@@ -10,6 +10,7 @@
 
 #include <array>
 #include <chrono>
+#include <functional>
 #include <list>
 #include <unordered_set>
 
@@ -18,10 +19,10 @@
 class GeneticAlgorithm
 {
     using clock = std::chrono::system_clock;
-    using xOp = Individual (*)(
+    using xOp = std::function<Individual(
         std::pair<Individual const *, Individual const *> const &,
         Params const &,
-        XorShift128 &);
+        XorShift128 &)>;
 
     Params &params;            // Problem parameters
     XorShift128 &rng;          // Random number generator

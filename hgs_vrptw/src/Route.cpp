@@ -1,5 +1,6 @@
 #include "Route.h"
 
+#include <cassert>
 #include <cmath>
 
 void Route::update(int nbMoves, Penalties const &penalties)
@@ -32,7 +33,6 @@ void Route::update(int nbMoves, Penalties const &penalties)
         node->cumulatedReversalDistance = reverseDistance;
         node->twBefore
             = TimeWindowSegment::merge(node->prev->twBefore, node->tw);
-        node->isSeed = false;
         node->nextSeed = nullptr;
         if (!node->isDepot)
         {
@@ -47,7 +47,6 @@ void Route::update(int nbMoves, Penalties const &penalties)
             {
                 if (seedNode != nullptr)
                 {
-                    seedNode->isSeed = true;
                     seedNode->toNextSeedTwD
                         = TimeWindowSegment::merge(seedTwD, node->tw);
                     seedNode->nextSeed = node;
@@ -103,4 +102,35 @@ void Route::update(int nbMoves, Penalties const &penalties)
             }
         }
     }
+}
+
+TimeWindowSegment Route::twBetween(Node const *start, Node const *end) const
+{
+    assert(this == start->route && this == end->route);
+    assert(start->position <= end->position);
+
+    if (start->isDepot)
+        return end->twBefore;
+
+    if (end->isDepot)
+        return start->twAfter;
+
+    Node const *node = start;
+    TimeWindowSegment data = start->tw;
+
+    while (node != end)
+    {
+        if (node->nextSeed && node->position + 4 <= end->position)
+        {
+            data = TimeWindowSegment::merge(data, node->toNextSeedTwD);
+            node = node->nextSeed;
+        }
+        else
+        {
+            node = node->next;
+            data = TimeWindowSegment::merge(data, node->tw);
+        }
+    }
+
+    return data;
 }

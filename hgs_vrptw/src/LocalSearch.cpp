@@ -89,17 +89,17 @@ void LocalSearch::search()
         /* (SWAP*) MOVES LIMITED TO ROUTE PAIRS WHOSE CIRCLE SECTORS OVERLAP */
         if (searchCompleted && shouldIntensify)
         {
-            for (int const rU: orderRoutes)
+            for (int const rU : orderRoutes)
             {
                 Route &routeU = routes[rU];
-                
+
                 if (routeU.nbCustomers == 0)
                     continue;
 
                 int lastTestLargeNbRouteU = routeU.whenLastTestedLargeNb;
                 routeU.whenLastTestedLargeNb = nbMoves;
 
-                for (int const rV: orderRoutes)
+                for (int const rV : orderRoutes)
                 {
                     Route &routeV = routes[rV];
 
@@ -193,8 +193,8 @@ void LocalSearch::loadIndividual(Individual const &indiv)
 
     for (int r = 0; r < params.nbVehicles; r++)
     {
-        Node *myDepot = &depots[r];
-        Node *myDepotFin = &depotsEnd[r];
+        Node *myDepot = &startDepots[r];
+        Node *myDepotFin = &endDepots[r];
         Route *myRoute = &routes[r];
         myDepot->prev = myDepotFin;
         myDepotFin->next = myDepot;
@@ -224,12 +224,10 @@ void LocalSearch::loadIndividual(Individual const &indiv)
         myDepot->tw = depotTwData;
         myDepot->twBefore = depotTwData;
         myDepot->twAfter = depotTwData;
-        myDepot->isSeed = false;
 
         myDepotFin->tw = depotTwData;
         myDepotFin->twBefore = depotTwData;
         myDepotFin->twAfter = depotTwData;
-        myDepotFin->isSeed = false;
 
         routes[r].update(0, penalties);
         routes[r].whenLastTestedLargeNb = -1;
@@ -255,7 +253,7 @@ Individual LocalSearch::exportIndividual()
 
     for (int r = 0; r < params.nbVehicles; r++)
     {
-        Node *node = depots[routePolarAngles[r].second].next;
+        Node *node = startDepots[routePolarAngles[r].second].next;
 
         while (!node->isDepot)
         {
@@ -276,8 +274,8 @@ LocalSearch::LocalSearch(Params &params, XorShift128 &rng)
 {
     clients = std::vector<Node>(params.nbClients + 1);
     routes = std::vector<Route>(params.nbVehicles);
-    depots = std::vector<Node>(params.nbVehicles);
-    depotsEnd = std::vector<Node>(params.nbVehicles);
+    startDepots = std::vector<Node>(params.nbVehicles);
+    endDepots = std::vector<Node>(params.nbVehicles);
 
     for (int i = 0; i <= params.nbClients; i++)
     {
@@ -290,13 +288,13 @@ LocalSearch::LocalSearch(Params &params, XorShift128 &rng)
     {
         routes[i].params = &params;
         routes[i].idx = i;
-        routes[i].depot = &depots[i];
-        depots[i].client = 0;
-        depots[i].isDepot = true;
-        depots[i].route = &routes[i];
-        depotsEnd[i].client = 0;
-        depotsEnd[i].isDepot = true;
-        depotsEnd[i].route = &routes[i];
+        routes[i].depot = &startDepots[i];
+        startDepots[i].client = 0;
+        startDepots[i].isDepot = true;
+        startDepots[i].route = &routes[i];
+        endDepots[i].client = 0;
+        endDepots[i].isDepot = true;
+        endDepots[i].route = &routes[i];
     }
 
     std::iota(orderNodes.begin(), orderNodes.end(), 1);

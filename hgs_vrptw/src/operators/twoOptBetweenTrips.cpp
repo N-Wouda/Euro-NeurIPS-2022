@@ -2,9 +2,7 @@
 
 #include "TimeWindowSegment.h"
 
-bool twoOptBetweenTrips(Node *nodeU,
-                        Node *nodeV,
-                        Penalties const &penalties)
+bool twoOptBetweenTrips(Node *nodeU, Node *nodeV, Penalties const &penalties)
 {
     auto const &params = *nodeU->params;
 
@@ -16,18 +14,16 @@ bool twoOptBetweenTrips(Node *nodeU,
     int costSuppV = params.dist(nodeV->client, nodeU->next->client)
                     - params.dist(nodeV->client, nodeV->next->client);
 
-    if (!nodeU->route->hasExcessCapacity()
-        && !nodeU->route->twData.hasTimeWarp()
-        && !nodeV->route->hasExcessCapacity()
-        && !nodeV->route->twData.hasTimeWarp() && costSuppU + costSuppV >= 0)
+    if (nodeU->route->isFeasible() && nodeV->route->isFeasible()
+        && costSuppU + costSuppV >= 0)
     {
         return false;
     }
 
-    auto routeUTwData = TimeWindowSegment::merge(nodeU->twBefore,
-                                              nodeV->next->twAfter);
-    auto routeVTwData = TimeWindowSegment::merge(nodeV->twBefore,
-                                              nodeU->next->twAfter);
+    auto routeUTwData
+        = TimeWindowSegment::merge(nodeU->twBefore, nodeV->next->twAfter);
+    auto routeVTwData
+        = TimeWindowSegment::merge(nodeV->twBefore, nodeU->next->twAfter);
 
     costSuppU += penalties.load(nodeU->cumulatedLoad + nodeV->route->load
                                 - nodeV->cumulatedLoad)

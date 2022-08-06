@@ -2,9 +2,7 @@
 
 #include "TimeWindowSegment.h"
 
-bool moveSingleClient(Node *nodeU,
-                      Node *nodeV,
-                      Penalties const &penalties)
+bool moveSingleClient(Node *nodeU, Node *nodeV, Penalties const &penalties)
 {
     auto const &params = *nodeU->params;
 
@@ -21,12 +19,8 @@ bool moveSingleClient(Node *nodeU,
 
     if (nodeU->route != nodeV->route)
     {
-        if (!nodeU->route->hasExcessCapacity()
-            && !nodeU->route->twData.hasTimeWarp()
-            && costSuppU + costSuppV >= 0)
-        {
+        if (nodeU->route->isFeasible() && costSuppU + costSuppV >= 0)
             return false;
-        }
 
         auto routeUTwData = TimeWindowSegment::merge(nodeU->prev->twBefore,
                                                      nodeU->next->twAfter);
@@ -43,7 +37,7 @@ bool moveSingleClient(Node *nodeU,
     }
     else
     {
-        if (!nodeU->route->twData.hasTimeWarp() && costSuppU + costSuppV >= 0)
+        if (!nodeU->route->hasTimeWarp() && costSuppU + costSuppV >= 0)
             return false;
 
         // Move within the same route
@@ -53,7 +47,7 @@ bool moveSingleClient(Node *nodeU,
             // start - ... - UPrev - X - ... - V - U - Y - ... - end
             auto const routeUTwData = TimeWindowSegment::merge(
                 nodeU->prev->twBefore,
-                nodeU->next->mergeSegmentTwData(nodeV),
+                nodeU->route->twBetween(nodeU->next, nodeV),
                 nodeU->tw,
                 nodeV->next->twAfter);
 
@@ -66,7 +60,7 @@ bool moveSingleClient(Node *nodeU,
             auto const routeUTwData = TimeWindowSegment::merge(
                 nodeV->twBefore,
                 nodeU->tw,
-                nodeV->next->mergeSegmentTwData(nodeU->prev),
+                nodeV->route->twBetween(nodeV->next, nodeU->prev),
                 nodeU->next->twAfter);
 
             costSuppU += penalties.timeWarp(routeUTwData);
