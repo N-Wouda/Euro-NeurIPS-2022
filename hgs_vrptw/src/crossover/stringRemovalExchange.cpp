@@ -65,50 +65,48 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
 
         for (auto &route : routes)
         {
-            if (std::find(route.begin(), route.end(), client) != route.end())
+            if (std::find(route.begin(), route.end(), client) == route.end())
+                continue;
+
+            if (destroyedRoutes.contains(route))
+                continue;
+
+            // Remove string from the route
+            auto card = rng.randint(std::min(route.size(), maxCard)) + 1;
+
+            std::vector<size_t> removalIndices;
+            if (rng.randint(100) >= params.config.splitRate)
+                removalIndices = selectString(route, client, card, rng);
+            else
             {
+                size_t subSize = 1;
+                while (rng.randint(100) > params.config.splitDepth
+                       and subSize < route.size() - card)
+                    subSize++;
 
-                if (destroyedRoutes.contains(route))
-                    continue;
+                auto strIndices
+                    = selectString(route, client, card + subSize, rng);
+                auto subPos = rng.randint(strIndices.size() - subSize + 1);
 
-                // Remove string from the route
-                auto card = rng.randint(std::min(route.size(), maxCard)) + 1;
+                for (size_t i = 0; i <= subPos; i++)
+                    removalIndices.push_back(strIndices[i]);
+                for (auto i = subPos + card; i <= strIndices.size(); i++)
+                    removalIndices.push_back(strIndices[i]);
 
-                std::vector<size_t> removalIndices;
-                if (rng.randint(100) >= params.config.splitRate)
-                    removalIndices = selectString(route, client, card, rng);
-                else
-                {
-                    size_t subSize = 1;
-                    while (rng.randint(100) > params.config.splitDepth
-                           and subSize < route.size() - card)
-                        subSize++;
-
-                    auto strIndices
-                        = selectString(route, client, card + subSize, rng);
-                    auto subPos = rng.randint(strIndices.size() - subSize + 1);
-
-                    for (size_t i = 0; i <= subPos; i++)
-                        removalIndices.push_back(strIndices[i]);
-                    for (auto i = subPos + card; i <= strIndices.size(); i++)
-                        removalIndices.push_back(strIndices[i]);
-
-                    removalIndices = selectString(route, client, card, rng);
-                }
-
-                std::sort(removalIndices.begin(),
-                          removalIndices.end(),
-                          std::greater<>());
-
-                for (auto idx : removalIndices)
-                {
-                    removedClients.insert(route[idx]);
-                    route.erase(route.begin() + idx);
-                }
-
-                destroyedRoutes.insert(route);
-                break;
+                removalIndices = selectString(route, client, card, rng);
             }
+
+            std::sort(
+                removalIndices.begin(), removalIndices.end(), std::greater<>());
+
+            for (auto idx : removalIndices)
+            {
+                removedClients.insert(route[idx]);
+                route.erase(route.begin() + idx);
+            }
+
+            destroyedRoutes.insert(route);
+            break;
         }
     }
 
