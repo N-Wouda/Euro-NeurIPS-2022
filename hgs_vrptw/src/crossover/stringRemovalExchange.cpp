@@ -35,6 +35,7 @@ std::vector<size_t> selectString(Route const &route,
     return indices;
 }
 
+// Removes a number of strings around the center client
 std::pair<Routes, ClientSet> stringRemoval(Routes routes,
                                            Client center,
                                            Params const &params,
