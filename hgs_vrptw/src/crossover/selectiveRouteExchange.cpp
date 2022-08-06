@@ -168,11 +168,10 @@ Individual selectiveRouteExchange(
 
     // Insert unplanned clients (those that were in the removed routes of A, but
     // not the inserted routes of B).
-    ClientSet unplannedSet;
+    Route unplanned;
     for (Client c : selectedA)
         if (!selectedB.contains(c))
-            unplannedSet.insert(c);
-    auto unplanned = std::vector<int>(unplannedSet.begin(), unplannedSet.end());
+            unplanned.push_back(c);
 
     crossover::greedyRepairWithBlinks(routes1, unplanned, 0, params, rng);
     crossover::greedyRepairWithBlinks(routes2, unplanned, 0, params, rng);
