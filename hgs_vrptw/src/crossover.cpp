@@ -38,11 +38,11 @@ int deltaCost(Client client, Client prev, Client next, Params const &params)
 }
 }  // namespace
 
-void greedyRepairWithBlinks(Routes &routes,
-                            Clients const unplanned,
-                            size_t blinkRate,
-                            Params const &params,
-                            XorShift128 &rng)
+void crossover::greedyRepairWithBlinks(Routes &routes,
+                                       Clients const unplanned,
+                                       size_t blinkRate,
+                                       Params const &params,
+                                       XorShift128 &rng)
 {
     for (Client client : unplanned)
     {

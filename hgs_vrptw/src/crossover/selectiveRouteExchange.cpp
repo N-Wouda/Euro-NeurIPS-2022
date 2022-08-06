@@ -174,8 +174,8 @@ Individual selectiveRouteExchange(
             unplannedSet.insert(c);
     auto unplanned = std::vector<int>(unplannedSet.begin(), unplannedSet.end());
 
-    greedyRepairWithBlinks(routes1, unplanned, 0, params, rng);
-    greedyRepairWithBlinks(routes2, unplanned, 0, params, rng);
+    crossover::greedyRepairWithBlinks(routes1, unplanned, 0, params, rng);
+    crossover::greedyRepairWithBlinks(routes2, unplanned, 0, params, rng);
 
     Individual indiv1{&params, routes1};
     Individual indiv2{&params, routes2};

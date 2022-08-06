@@ -212,8 +212,10 @@ Individual stringRemovalExchange(Parents const &parents,
     auto removed = sortClients(removedSet, params, rng);
 
     auto blinkRate = params.config.blinkRate;
-    greedyRepairWithBlinks(destroyed1, removed, blinkRate, params, rng);
-    greedyRepairWithBlinks(destroyed2, removed, blinkRate, params, rng);
+    crossover::greedyRepairWithBlinks(
+        destroyed1, removed, blinkRate, params, rng);
+    crossover::greedyRepairWithBlinks(
+        destroyed2, removed, blinkRate, params, rng);
 
     Individual indiv1{&params, destroyed1};
     Individual indiv2{&params, destroyed2};

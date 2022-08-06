@@ -44,13 +44,16 @@ Individual stringRemovalExchange(
     Params const &params,
     XorShift128 &rng);
 
+namespace crossover
+{
 /**
  * Greedily inserts the unplanned clients into the routes, while skipping
- * positions with probability blinkRate [2].
+ * positions with probability blinkRate (see stringRemovalExchange).
  */
 void greedyRepairWithBlinks(std::vector<std::vector<int>> &routes,
                             std::vector<int> const unplanned,
                             size_t blinkRate,
                             Params const &params,
                             XorShift128 &rng);
+}  // namespace crossover
 #endif  // CROSSOVER_H
