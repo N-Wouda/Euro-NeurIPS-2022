@@ -53,7 +53,7 @@ bool relocateStar(Route *routeU,
     if (!insertionPoint)
         return false;
 
-    operators::insertNode(nodeToInsert, insertionPoint);
+    nodeToInsert->insertAfter(insertionPoint);
 
     return true;
 }

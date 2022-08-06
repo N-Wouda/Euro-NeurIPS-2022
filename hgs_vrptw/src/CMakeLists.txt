@@ -10,7 +10,6 @@ set(individualSources
 
 set(localSearchSources
         LocalSearch.cpp
-        operators/operators.cpp
         operators/moveSingleClient.cpp
         operators/moveTwoClients.cpp
         operators/moveTwoClientsReversed.cpp

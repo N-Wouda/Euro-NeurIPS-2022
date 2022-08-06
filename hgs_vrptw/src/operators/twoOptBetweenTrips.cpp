@@ -44,7 +44,7 @@ bool twoOptBetweenTrips(Node *nodeU, Node *nodeV, Penalties const &penalties)
     {
         auto *current = itRouteV;
         itRouteV = itRouteV->next;
-        operators::insertNode(current, insertLocation);
+        current->insertAfter(insertLocation);
         insertLocation = current;
     }
 
@@ -53,7 +53,7 @@ bool twoOptBetweenTrips(Node *nodeU, Node *nodeV, Penalties const &penalties)
     {
         auto *current = itRouteU;
         itRouteU = itRouteU->next;
-        operators::insertNode(current, insertLocation);
+        current->insertAfter(insertLocation);
         insertLocation = current;
     }
 

@@ -1,23 +1,9 @@
 #ifndef OPERATORS_H
 #define OPERATORS_H
 
-#include "LocalSearch.h"
 #include "Node.h"
-#include "Params.h"
+#include "Penalties.h"
 #include "Route.h"
-
-namespace operators  // TODO obsolete
-{
-/**
- * Inserts U after V, and updates the solution.
- */
-void insertNode(Node *U, Node *V);
-
-/**
- * Swaps U and V, and updates the solution.
- */
-void swapNode(Node *U, Node *V);
-}  // namespace operators
 
 /**
  * Inserts U after V, if that is an improving move.

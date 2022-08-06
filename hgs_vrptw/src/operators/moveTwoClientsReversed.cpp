@@ -86,8 +86,8 @@ bool moveTwoClientsReversed(Node *nodeU,
 
     auto *nodeX = nodeU->next;
 
-    operators::insertNode(nodeU, nodeV);  // insert U after V
-    operators::insertNode(nodeX, nodeV);  // insert X after V (so V -> X -> U)
+    nodeU->insertAfter(nodeV);
+    nodeX->insertAfter(nodeV);
 
     return true;
 }

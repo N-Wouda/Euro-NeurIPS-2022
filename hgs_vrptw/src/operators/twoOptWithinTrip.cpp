@@ -49,7 +49,7 @@ bool twoOptWithinTrip(Node *nodeU,
     {
         auto *current = itRoute;
         itRoute = itRoute->prev;
-        operators::insertNode(current, insertionPoint);
+        current->insertAfter(insertionPoint);
         insertionPoint = current;
     }
 

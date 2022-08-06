@@ -89,7 +89,7 @@ bool swapTwoSingleClients(Node *nodeU, Node *nodeV, Penalties const &penalties)
     if (costSuppU + costSuppV >= 0)
         return false;
 
-    operators::swapNode(nodeU, nodeV);
+    nodeU->swapWith(nodeV);
 
     return true;
 }

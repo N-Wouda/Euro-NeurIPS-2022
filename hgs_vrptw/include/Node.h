@@ -28,6 +28,16 @@ public:  // TODO make fields private
     TimeWindowSegment tw;        // TWS for individual node (client)
     TimeWindowSegment twBefore;  // TWS for (0...client) including self
     TimeWindowSegment twAfter;   // TWS for (client...0) including self
+
+    /**
+     * Inserts this node after the other and updates the solution.
+     */
+    void insertAfter(Node *other);
+
+    /**
+     * Swaps this node with the other and updates the solution.
+     */
+    void swapWith(Node *other);
 };
 
 #endif  // NODE_H

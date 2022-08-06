@@ -82,8 +82,8 @@ bool moveTwoClients(Node *nodeU,
     if (costSuppU + costSuppV >= 0)
         return false;
 
-    operators::insertNode(nodeU->next, nodeV);  // insert X after V, and U after
-    operators::insertNode(nodeU, nodeV);        // V, so we get V -> U -> X.
+    nodeU->next->insertAfter(nodeV);
+    nodeU->insertAfter(nodeV);
 
     return true;
 }

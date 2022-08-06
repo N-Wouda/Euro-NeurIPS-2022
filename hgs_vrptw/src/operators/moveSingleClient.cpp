@@ -73,7 +73,7 @@ bool moveSingleClient(Node *nodeU, Node *nodeV, Penalties const &penalties)
     if (costSuppU + costSuppV >= 0)
         return false;
 
-    operators::insertNode(nodeU, nodeV);
+    nodeU->insertAfter(nodeV);
 
     return true;
 }

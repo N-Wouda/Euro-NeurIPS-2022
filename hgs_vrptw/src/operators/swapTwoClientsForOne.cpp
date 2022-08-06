@@ -90,8 +90,8 @@ bool swapTwoClientsForOne(Node *nodeU, Node *nodeV, Penalties const &penalties)
     if (costSuppU + costSuppV >= 0)
         return false;
 
-    operators::insertNode(nodeU->next, nodeV);
-    operators::swapNode(nodeU, nodeV);
+    nodeU->next->insertAfter(nodeV);
+    nodeU->swapWith(nodeV);
 
     return true;
 }
