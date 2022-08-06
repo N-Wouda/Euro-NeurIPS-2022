@@ -5,6 +5,14 @@
 #include "Penalties.h"
 #include "Route.h"
 
+namespace operators
+{
+/**
+ * Cost delta of inserting U after V.
+ */
+int singleMoveCost(Node *nodeU, Node *nodeV, Penalties const &penalties);
+}  // namespace operators
+
 /**
  * Inserts U after V, if that is an improving move.
  */
@@ -54,5 +62,15 @@ bool twoOptWithinTrip(Node *nodeU, Node *nodeV, Penalties const &penalties);
  * Performs the best moveSingleClient move between routes U and V.
  */
 bool relocateStar(Route *routeU, Route *routeV, Penalties const &penalties);
+
+/**
+ * Explores the SWAP* neighbourhood of [1]. Our implementation of the
+ * neighbourhood follows Algorithm 2 of that paper fairly faithfully.
+ * <br />
+ * Thibaut Vidal. 2022. Hybrid genetic search for the CVRP: Open-source
+ * implementation and SWAP* neighborhood. Comput. Oper. Res. 140.
+ * https://doi.org/10.1016/j.cor.2021.105643
+ */
+bool swapStar(Route *routeU, Route *routeV, Penalties const &penalties);
 
 #endif  // OPERATORS_H

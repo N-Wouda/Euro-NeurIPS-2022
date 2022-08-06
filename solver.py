@@ -99,6 +99,7 @@ def solve_static_vrptw(instance, time_limit=3600, seed=1, plot=False):
     ls.add_node_operator(hgspy.operators.two_opt_within_trip)
 
     ls.add_route_operator(hgspy.operators.relocate_star)
+    ls.add_route_operator(hgspy.operators.swap_star)
 
     algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
     algo.add_crossover_operator(hgspy.crossover.ordered_exchange)

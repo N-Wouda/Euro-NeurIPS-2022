@@ -32,7 +32,9 @@ try
     ls.addNodeOperator(swapTwoSingleClients);
     ls.addNodeOperator(twoOptBetweenTrips);
     ls.addNodeOperator(twoOptWithinTrip);
+
     ls.addRouteOperator(relocateStar);
+    ls.addRouteOperator(swapStar);
 
     GeneticAlgorithm solver(params, rng, pop, ls);
     solver.addCrossoverOperator(orderedExchange);

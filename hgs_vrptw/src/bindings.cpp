@@ -194,4 +194,5 @@ PYBIND11_MODULE(hgspy, m)
     lsOps.def("two_opt_within_trip", &twoOptWithinTrip);
 
     lsOps.def("relocate_star", &relocateStar);
+    lsOps.def("swap_star", &swapStar);
 }
