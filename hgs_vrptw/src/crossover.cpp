@@ -55,31 +55,28 @@ void crossover::greedyRepairWithBlinks(Routes &routes,
 
             for (size_t idx = 0; idx <= route.size(); ++idx)
             {
-                if (rng.randint(100) >= blinkRate)
-                {
-                    int prev, next;
-                    if (idx
-                        == 0)  // Currently depot -> [0]. Try depot -> client
-                    {          // -> [0].
-                        prev = 0;
-                        next = route[0];
-                    }
-                    else if (idx
-                             == route.size())  // Currently [-1] -> depot. Try
-                    {                          // [-1] -> client -> depot.
-                        prev = route.back();
-                        next = 0;
-                    }
-                    else  // Currently [idx - 1] -> [idx]. Try [idx - 1] ->
-                          // client
-                    {     // -> [idx].
-                        prev = route[idx - 1];
-                        next = route[idx];
-                    }
-                    int const cost = deltaCost(client, prev, next, params);
-                    if (cost < best.deltaCost)
-                        best = {cost, &route, idx};
+                if (rng.randint(100) < blinkRate)
+                    continue;
+
+                Client prev, next;
+                if (idx == 0)  // Currently depot -> [0]. Try depot -> client
+                {              // -> [0].
+                    prev = 0;
+                    next = route[0];
                 }
+                else if (idx == route.size())  // Currently [-1] -> depot. Try
+                {                              // [-1] -> client -> depot.
+                    prev = route.back();
+                    next = 0;
+                }
+                else  // Currently [idx - 1] -> [idx]. Try [idx - 1] -> client
+                {     // -> [idx].
+                    prev = route[idx - 1];
+                    next = route[idx];
+                }
+                auto const cost = deltaCost(client, prev, next, params);
+                if (cost < best.deltaCost)
+                    best = {cost, &route, idx};
             }
         }
 
