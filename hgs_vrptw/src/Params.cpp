@@ -153,16 +153,14 @@ Params::Params(Config const &config, std::string const &instPath)
             // Read the edge weights of an explicit distance matrix
             else if (content == "EDGE_WEIGHT_SECTION")
             {
-                dist = Matrix(nbClients + 1);
+                dist = Matrix<int>(nbClients + 1);
                 for (int i = 0; i <= nbClients; i++)
                 {
                     for (int j = 0; j <= nbClients; j++)
                     {
                         // Keep track of the largest distance between two
                         // clients (or the depot)
-                        int cost;
-                        inputFile >> cost;
-                        dist(i, j) = cost;
+                        inputFile >> dist(i, j);
                     }
                 }
             }
@@ -387,7 +385,7 @@ Params::Params(Config const &config,
     auto const vehicleMargin = std::ceil(1.3 * totalDemand / vehicleCapacity);
     nbVehicles = static_cast<int>(vehicleMargin) + 3;
 
-    dist = Matrix(distMat.size());
+    dist = Matrix<int>(distMat.size());
 
     for (size_t i = 0; i != distMat.size(); ++i)
         for (size_t j = 0; j != distMat[i].size(); ++j)

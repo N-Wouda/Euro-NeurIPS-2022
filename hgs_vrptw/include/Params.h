@@ -57,7 +57,7 @@ public:
     int vehicleCapacity;  // Capacity limit
 
     std::vector<Client> clients;  // Client (+depot) information
-    Matrix dist;                  // Distance matrix (+depot)
+    Matrix<int> dist;             // Distance matrix (+depot)
 
     /**
      * Returns the nbGranular clients nearest/closest to the passed-in client.
