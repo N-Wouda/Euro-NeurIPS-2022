@@ -75,7 +75,7 @@ void LocalSearch::search()
              * AVOID INCREASING TOO MUCH THE FLEET SIZE */
             if (step > 0)
             {
-                auto pred = [](auto &route) { return route.nbCustomers == 0; };
+                auto pred = [](auto const &route) { return route.empty(); };
                 auto empty = std::find_if(routes.begin(), routes.end(), pred);
 
                 if (empty == routes.end())
@@ -93,7 +93,7 @@ void LocalSearch::search()
             {
                 Route &routeU = routes[rU];
 
-                if (routeU.nbCustomers == 0)
+                if (routeU.empty())
                     continue;
 
                 int lastTestLargeNbRouteU = routeU.whenLastTestedLargeNb;
@@ -103,7 +103,7 @@ void LocalSearch::search()
                 {
                     Route &routeV = routes[rV];
 
-                    if (routeV.nbCustomers == 0 || routeU.idx >= routeV.idx)
+                    if (routeV.empty() || routeU.idx >= routeV.idx)
                         continue;
 
                     if (step > 0

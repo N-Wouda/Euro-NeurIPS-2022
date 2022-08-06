@@ -11,7 +11,7 @@ bool twoOptWithinTrip(Node *nodeU,
     if (nodeU->route != nodeV->route)
         return false;
 
-    if (nodeU->position >= nodeV->position - 1)
+    if (nodeU->position + 1 >= nodeV->position)
         return false;
 
     int cost = params.dist(nodeU->client, nodeV->client)

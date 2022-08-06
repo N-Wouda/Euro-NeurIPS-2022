@@ -1,13 +1,25 @@
 #include "Route.h"
 
+#include <bit>
 #include <cassert>
 #include <cmath>
+
+namespace
+{
+using TWS = TimeWindowSegment;
+}
 
 void Route::update(int nbMoves, Penalties const &penalties)
 {
     load = 0;
+    jumps = {{}, {}};
+    jumps[0].reserve(nbCustomers);  // nbCustomers has likely changed since the
+    jumps[1].reserve(nbCustomers);  // last update, but probably not *much*.
 
-    int place = 0;
+    std::vector<Node const *> nodes;
+    nodes.reserve(nbCustomers);
+
+    size_t place = 0;
     int reverseDistance = 0;
     int cumulatedX = 0;
     int cumulatedY = 0;
@@ -17,49 +29,36 @@ void Route::update(int nbMoves, Penalties const &penalties)
     node->cumulatedLoad = 0;
     node->cumulatedReversalDistance = 0;
 
-    bool firstIt = true;
-    auto seedTwD = node->tw;
-    Node *seedNode = nullptr;
+    if (!node->next->isDepot)
+        sector.initialize(params->clients[node->next->client].angle);
 
-    while (!node->isDepot || firstIt)
+    do
     {
         node = node->next;
+        nodes.push_back(node);
+
         place++;
         node->position = place;
+
         load += params->clients[node->client].demand;
+        node->cumulatedLoad = load;
+
         reverseDistance += params->dist(node->client, node->prev->client)
                            - params->dist(node->prev->client, node->client);
-        node->cumulatedLoad = load;
         node->cumulatedReversalDistance = reverseDistance;
-        node->twBefore
-            = TimeWindowSegment::merge(node->prev->twBefore, node->tw);
-        node->nextSeed = nullptr;
+
+        node->twBefore = TWS::merge(node->prev->twBefore, node->tw);
+
         if (!node->isDepot)
         {
             cumulatedX += params->clients[node->client].x;
             cumulatedY += params->clients[node->client].y;
-            if (firstIt)
-                sector.initialize(params->clients[node->client].angle);
-            else
-                sector.extend(params->clients[node->client].angle);
 
-            if (place % 4 == 0)
-            {
-                if (seedNode != nullptr)
-                {
-                    seedNode->toNextSeedTwD
-                        = TimeWindowSegment::merge(seedTwD, node->tw);
-                    seedNode->nextSeed = node;
-                }
-                seedNode = node;
-            }
-            else if (place % 4 == 1)
-                seedTwD = node->tw;
-            else
-                seedTwD = TimeWindowSegment::merge(seedTwD, node->tw);
+            sector.extend(params->clients[node->client].angle);
         }
-        firstIt = false;
-    }
+
+        installJumpPoints(nodes, node);
+    } while (!node->isDepot);
 
     twData = node->twBefore;
     penalty = penalties.load(load) + penalties.timeWarp(this->twData);
@@ -73,33 +72,30 @@ void Route::update(int nbMoves, Penalties const &penalties)
     do
     {
         node = node->prev;
-        node->twAfter = TimeWindowSegment::merge(node->tw, node->next->twAfter);
+        node->twAfter = TWS::merge(node->tw, node->next->twAfter);
     } while (!node->isDepot);
 
-    if (this->nbCustomers == 0)
+    if (empty())
     {
-        this->polarAngleBarycenter = 1.e30;
+        polarAngleBarycenter = 1.e30;
+        return;
     }
-    else
+
+    polarAngleBarycenter = atan2(
+        cumulatedY / static_cast<double>(nbCustomers) - params->clients[0].y,
+        cumulatedX / static_cast<double>(nbCustomers) - params->clients[0].x);
+
+    // Enforce minimum size of circle sector
+    if (params->config.minCircleSectorSize > 0)
     {
-        this->polarAngleBarycenter
-            = atan2(cumulatedY / static_cast<double>(nbCustomers)
-                        - params->clients[0].y,
-                    cumulatedX / static_cast<double>(nbCustomers)
-                        - params->clients[0].x);
+        const int growSectorBy = (params->config.minCircleSectorSize
+                                  - CircleSector::positive_mod(sector) + 1)
+                                 / 2;
 
-        // Enforce minimum size of circle sector
-        if (params->config.minCircleSectorSize > 0)
+        if (growSectorBy > 0)
         {
-            const int growSectorBy = (params->config.minCircleSectorSize
-                                      - CircleSector::positive_mod(sector) + 1)
-                                     / 2;
-
-            if (growSectorBy > 0)
-            {
-                sector.extend(sector.start - growSectorBy);
-                sector.extend(sector.end + growSectorBy);
-            }
+            sector.extend(sector.start - growSectorBy);
+            sector.extend(sector.end + growSectorBy);
         }
     }
 }
@@ -120,17 +116,53 @@ TimeWindowSegment Route::twBetween(Node const *start, Node const *end) const
 
     while (node != end)
     {
-        if (node->nextSeed && node->position + 4 <= end->position)
+        auto const dist = end->position - node->position;
+
+        if (dist >= jumpPts.front())
         {
-            data = TimeWindowSegment::merge(data, node->toNextSeedTwD);
-            node = node->nextSeed;
+            auto const pos = std::bit_floor(std::min(dist, jumpPts.back()));
+            auto const &jumpList = jumps[std::bit_width(pos) - jumpOffset];
+
+            if (jumpList.size() >= node->position)  // jump list contains node
+            {
+                auto const &jumpNode = jumpList[node->position - 1];
+                data = TWS::merge(data, jumpNode.tw);
+                node = jumpNode.to;
+
+                continue;
+            }
         }
-        else
-        {
-            node = node->next;
-            data = TimeWindowSegment::merge(data, node->tw);
-        }
+
+        node = node->next;
+        data = TWS::merge(data, node->tw);
     }
 
     return data;
+}
+
+void Route::installJumpPoints(std::vector<Node const *> nodes, Node const *node)
+{
+    JumpNode const *toNextJump = nullptr;
+
+    for (size_t const position : jumpPts)
+        if (node->position > position && nodes.size() > position)
+        {
+            auto *prev = nodes[node->position - position - 1];
+            auto const idx_ = std::bit_width(position) - jumpOffset;
+
+            if (toNextJump)
+            {
+                // After installing earlier, part way jumps, part of the way
+                // of larger jumps is already known. We reuse that by computing
+                // the time window between (prev, part way) separately and then
+                // merging that with (part way, node) which we already know.
+                auto const prev2jump = twBetween(prev, toNextJump->from);
+                auto const prev2node = TWS::merge(prev2jump, toNextJump->tw);
+                jumps[idx_].emplace_back(prev, node, prev2node);
+            }
+            else
+                jumps[idx_].emplace_back(prev, node);
+
+            toNextJump = &jumps[idx_].back();
+        }
 }
