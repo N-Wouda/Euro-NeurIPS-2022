@@ -57,11 +57,11 @@ struct Config
     int minCircleSectorSize = static_cast<int>(15 / 360. * 65536);
 
     // SISR related parameters, see Christiaens 2020.
-    size_t avgDestruction = 6;
-    size_t maxStringSize = 10;
-    size_t splitRate = 50;
-    size_t splitDepth = 25;
-    size_t blinkRate = 1;
+    size_t avgDestruction = 6;  // avg number of clients destroyed per iteration
+    size_t maxStringSize = 10;  // maximum size of each string removal
+    size_t splitRate = 50;      // probability of using split-string procedure
+    size_t splitDepth = 25;     // probability of increasing substring size
+    size_t blinkRate = 1;       // probability of skipping insertion positions
 
     explicit Config(int seed = 0,
                     size_t nbIter = 20'000,
@@ -90,7 +90,7 @@ struct Config
                     size_t maxStringSize = 10,
                     size_t splitRate = 50,
                     size_t splitDepth = 25,
-                    size_t blinkRate = 0)
+                    size_t blinkRate = 1)
         : seed(seed),
           nbIter(nbIter),
           timeLimit(timeLimit),
