@@ -84,11 +84,10 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
 
             if (rng.randint(100) >= params.config.splitRate)
                 removalIndices = selectString(route, client, stringSize, rng);
-
             else
             {
                 size_t subSize = 1;
-                while (rng.randint(100) > params.config.splitDepth
+                while (rng.randint(100) >= params.config.splitDepth
                        and subSize < route.size() - stringSize)
                     subSize++;
 
@@ -97,10 +96,10 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
                 auto const subPos
                     = rng.randint(strIndices.size() - subSize + 1);
 
-                for (size_t i = 0; i <= subPos; i++)
+                for (size_t i = 0; i < subPos; i++)
                     removalIndices.push_back(strIndices[i]);
 
-                for (auto i = subPos + stringSize; i <= strIndices.size(); i++)
+                for (auto i = subPos + stringSize; i < strIndices.size(); i++)
                     removalIndices.push_back(strIndices[i]);
             }
 
@@ -208,10 +207,8 @@ Individual stringRemovalExchange(Parents const &parents,
     // Find a center node around which strings will be removed
     Client const center = rng.randint(params.nbClients) + 1;
 
-    auto [destroyed1, const removed1]
-        = stringRemoval(routes1, center, params, rng);
-    auto [destroyed2, const removed2]
-        = stringRemoval(routes2, center, params, rng);
+    auto [destroyed1, removed1] = stringRemoval(routes1, center, params, rng);
+    auto [destroyed2, removed2] = stringRemoval(routes2, center, params, rng);
 
     // Remove clients from other destroyed parent
     removeClients(destroyed1, removed2);
