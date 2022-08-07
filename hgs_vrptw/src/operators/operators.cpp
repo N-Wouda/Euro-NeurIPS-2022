@@ -10,7 +10,7 @@ int operators::singleMoveCost(Node *nodeU,
 
     // If U already comes directly after V, this move has no effect
     if (nodeU->client == nodeV->next->client)
-        return false;
+        return 0;
 
     int costSuppU = params.dist(nodeU->prev->client, nodeU->next->client)
                     - params.dist(nodeU->prev->client, nodeU->client)
@@ -22,7 +22,7 @@ int operators::singleMoveCost(Node *nodeU,
     if (nodeU->route != nodeV->route)
     {
         if (nodeU->route->isFeasible() && costSuppU + costSuppV >= 0)
-            return false;
+            return costSuppU + costSuppV;
 
         auto routeUTwData = TimeWindowSegment::merge(nodeU->prev->twBefore,
                                                      nodeU->next->twAfter);
@@ -40,7 +40,7 @@ int operators::singleMoveCost(Node *nodeU,
     else
     {
         if (!nodeU->route->hasTimeWarp() && costSuppU + costSuppV >= 0)
-            return false;
+            return costSuppU + costSuppV;
 
         // Move within the same route
         if (nodeU->position < nodeV->position)
