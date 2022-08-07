@@ -69,8 +69,11 @@ bool twoOptWithinTrip(Node *nodeU, Node *nodeV, Penalties const &penalties);
 bool relocateStar(Route *routeU, Route *routeV, Penalties const &penalties);
 
 /**
- * Explores the SWAP* neighbourhood of [1]. Our implementation of the
- * neighbourhood follows Algorithm 2 of that paper fairly faithfully.
+ * Explores the SWAP* neighbourhood of [1]. The SWAP* neighbourhood explores
+ * free form re-insertions of nodes U and V in the given routes (so the nodes
+ * are exchanged between routes, but they are not necessarily inserted in
+ * the same place as the other exchanged node). Our implementation of the
+ * neighbourhood follows Algorithm 2 of [1] fairly faithfully.
  * <br />
  * Thibaut Vidal. 2022. Hybrid genetic search for the CVRP: Open-source
  * implementation and SWAP* neighborhood. Comput. Oper. Res. 140.

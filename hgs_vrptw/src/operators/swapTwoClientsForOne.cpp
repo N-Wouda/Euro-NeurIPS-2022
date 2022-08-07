@@ -48,16 +48,13 @@ bool swapTwoClientsForOne(Node *nodeU, Node *nodeV, Penalties const &penalties)
                                     - params.clients[nodeV->client].demand)
                      + penalties.timeWarp(routeVTwData) - nodeV->route->penalty;
     }
-    else
+    else  // within same route
     {
         if (!nodeU->route->hasTimeWarp() && costSuppU + costSuppV >= 0)
             return false;
 
-        // Swap within the same route
         if (nodeU->position < nodeV->position)
         {
-            // start - ... - UPrev - V - XNext - ... - VPrev - U - X - Y - ... -
-            // end
             auto const routeUTwData = TimeWindowSegment::merge(
                 nodeU->prev->twBefore,
                 nodeV->tw,
@@ -70,8 +67,6 @@ bool swapTwoClientsForOne(Node *nodeU, Node *nodeV, Penalties const &penalties)
         }
         else
         {
-            // start - ... - VPrev - U - X - Y - ... - UPrev - V - XNext - ... -
-            // end
             auto const routeUTwData = TimeWindowSegment::merge(
                 nodeV->prev->twBefore,
                 nodeU->tw,
@@ -83,7 +78,6 @@ bool swapTwoClientsForOne(Node *nodeU, Node *nodeV, Penalties const &penalties)
             costSuppU += penalties.timeWarp(routeUTwData);
         }
 
-        // Compute new total penalty
         costSuppU += penalties.load(nodeU->route->load) - nodeU->route->penalty;
     }
 

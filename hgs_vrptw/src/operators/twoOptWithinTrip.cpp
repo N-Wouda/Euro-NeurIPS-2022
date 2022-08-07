@@ -2,9 +2,7 @@
 
 #include "TimeWindowSegment.h"
 
-bool twoOptWithinTrip(Node *nodeU,
-                      Node *nodeV,
-                      Penalties const &penalties)
+bool twoOptWithinTrip(Node *nodeU, Node *nodeV, Penalties const &penalties)
 {
     auto const &params = *nodeU->params;
 
@@ -14,14 +12,14 @@ bool twoOptWithinTrip(Node *nodeU,
     if (nodeU->position + 1 >= nodeV->position)
         return false;
 
-    int cost = params.dist(nodeU->client, nodeV->client)
-               + params.dist(nodeU->next->client, nodeV->next->client)
-               - params.dist(nodeU->client, nodeU->next->client)
-               - params.dist(nodeV->client, nodeV->next->client)
-               + nodeV->cumulatedReversalDistance
-               - nodeU->next->cumulatedReversalDistance;
+    int deltaCost = params.dist(nodeU->client, nodeV->client)
+                    + params.dist(nodeU->next->client, nodeV->next->client)
+                    - params.dist(nodeU->client, nodeU->next->client)
+                    - params.dist(nodeV->client, nodeV->next->client)
+                    + nodeV->cumulatedReversalDistance
+                    - nodeU->next->cumulatedReversalDistance;
 
-    if (!nodeU->route->hasTimeWarp() && cost >= 0)
+    if (!nodeU->route->hasTimeWarp() && deltaCost >= 0)
         return false;
 
     auto routeTwData = nodeU->twBefore;
@@ -31,14 +29,12 @@ bool twoOptWithinTrip(Node *nodeU,
         routeTwData = TimeWindowSegment::merge(routeTwData, itRoute->tw);
         itRoute = itRoute->prev;
     }
-    routeTwData
-        = TimeWindowSegment::merge(routeTwData, nodeV->next->twAfter);
+    routeTwData = TimeWindowSegment::merge(routeTwData, nodeV->next->twAfter);
 
-    // Compute new total penalty
-    cost += penalties.load(nodeU->route->load) + penalties.timeWarp(routeTwData)
-            - nodeU->route->penalty;
+    deltaCost += penalties.load(nodeU->route->load)
+                 + penalties.timeWarp(routeTwData) - nodeU->route->penalty;
 
-    if (cost >= 0)
+    if (deltaCost >= 0)
         return false;
 
     itRoute = nodeV;

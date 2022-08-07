@@ -4,6 +4,8 @@
 
 bool twoOptBetweenTrips(Node *nodeU, Node *nodeV, Penalties const &penalties)
 {
+    using TWS = TimeWindowSegment;
+
     auto const &params = *nodeU->params;
 
     if (nodeU->route->idx >= nodeV->route->idx)
@@ -20,17 +22,14 @@ bool twoOptBetweenTrips(Node *nodeU, Node *nodeV, Penalties const &penalties)
         return false;
     }
 
-    auto routeUTwData
-        = TimeWindowSegment::merge(nodeU->twBefore, nodeV->next->twAfter);
-    auto routeVTwData
-        = TimeWindowSegment::merge(nodeV->twBefore, nodeU->next->twAfter);
+    auto const routeUTwData = TWS::merge(nodeU->twBefore, nodeV->next->twAfter);
+    auto const routeVTwData = TWS::merge(nodeV->twBefore, nodeU->next->twAfter);
 
-    costSuppU += penalties.load(nodeU->cumulatedLoad + nodeV->route->load
-                                - nodeV->cumulatedLoad)
+    int const deltaLoad = nodeU->cumulatedLoad - nodeV->cumulatedLoad;
+    costSuppU += penalties.load(nodeV->route->load + deltaLoad)
                  + penalties.timeWarp(routeUTwData) - nodeU->route->penalty;
 
-    costSuppV += penalties.load(nodeV->cumulatedLoad + nodeU->route->load
-                                - nodeU->cumulatedLoad)
+    costSuppV += penalties.load(nodeU->route->load - deltaLoad)
                  + penalties.timeWarp(routeVTwData) - nodeV->route->penalty;
 
     if (costSuppU + costSuppV >= 0)

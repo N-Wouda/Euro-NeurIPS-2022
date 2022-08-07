@@ -1,6 +1,7 @@
 #include "operators.h"
 
 #include <array>
+#include <cassert>
 
 namespace
 {
@@ -72,8 +73,8 @@ preprocess(Route *from, Route *to, Penalties const &penalties)
 
 bool swapStar(Route *routeU, Route *routeV, Penalties const &penalties)
 {
-    std::vector<ThreeBest> u2v = preprocess(routeU, routeV, penalties);
-    std::vector<ThreeBest> v2u = preprocess(routeV, routeU, penalties);
+    auto const u2v = preprocess(routeU, routeV, penalties);
+    auto const v2u = preprocess(routeV, routeU, penalties);
 
     SwapStarMove best;
     for (auto *U = routeU->depot->next; !U->isDepot; U = U->next)
@@ -92,13 +93,18 @@ bool swapStar(Route *routeU, Route *routeV, Penalties const &penalties)
                 best.VAfter = U;
             }
 
-            // Next evaluate swaps within the entire routes U and V
+            // Next evaluate swaps within the entire routes U and V using the
+            // three best insert locations.
             auto const &UBest = u2v[U->position - 1];
             auto const &VBest = v2u[V->position - 1];
 
             for (size_t idx1 = 0; idx1 != 3; ++idx1)
                 for (size_t idx2 = 0; idx2 != 3; ++idx2)
                 {
+                    if (UBest.costs[idx1] == INT_MAX      // unchanged, so must
+                        || VBest.costs[idx2] == INT_MAX)  // not be evaluated
+                        continue;
+
                     int const deltaStar = UBest.costs[idx1] + VBest.costs[idx2];
 
                     if (deltaStar < best.deltaCost)
@@ -117,6 +123,8 @@ bool swapStar(Route *routeU, Route *routeV, Penalties const &penalties)
 
     if (deltaCost < 0)
     {
+        assert(U && V && UAfter && VAfter);
+
         U->insertAfter(UAfter);
         V->insertAfter(VAfter);
     }
