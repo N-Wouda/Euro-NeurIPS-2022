@@ -42,13 +42,9 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
                                            Params const &params,
                                            XorShift128 &rng)
 {
-    // Compute the maximum string size to be removed
-    size_t avgRouteSize = 0;
-
-    for (auto &route : routes)
-        avgRouteSize += route.size();
-    avgRouteSize = avgRouteSize / routes.size();
-
+    auto op = [&](size_t s, auto &r) { return s + r.size(); };
+    size_t avgRouteSize
+        = std::accumulate(routes.begin(), routes.end(), 0, op) / routes.size();
     auto const maxSize = std::min(params.config.maxStringSize, avgRouteSize);
 
     // Compute the number of strings to remove
