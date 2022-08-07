@@ -80,14 +80,9 @@ public:
 
     template <typename... Args>
     [[nodiscard]] inline int
-    dist(int first, int second, int third, Args... args) const
+    dist(size_t first, size_t second, size_t third, Args... args) const
     {
-        auto const f2s = dist_(first, second);
-
-        if constexpr (sizeof...(args) == 0)
-            return f2s + dist_(second, third);
-        else
-            return f2s + dist(second, third, args...);
+        return dist_(first, second) + dist(second, third, args...);
     }
 
     /**
