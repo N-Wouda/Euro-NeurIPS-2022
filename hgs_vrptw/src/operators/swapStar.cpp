@@ -4,38 +4,37 @@
 
 namespace
 {
-// Structure used in SWAP* to remember the three best insertion positions of
-// a client in a given route
+// Stores the three best insertion positions of a client in a given route
 struct ThreeBest
 {
-    std::array<int, 3> bestCost = {INT_MAX, INT_MAX, INT_MAX};
-    std::array<Node *, 3> bestLocation = {nullptr, nullptr, nullptr};
+    std::array<int, 3> costs = {INT_MAX, INT_MAX, INT_MAX};
+    std::array<Node *, 3> locs = {nullptr, nullptr, nullptr};
 
-    void add(int costInsert, Node *placeInsert)
+    void maybeAdd(int costInsert, Node *placeInsert)
     {
-        if (costInsert >= bestCost[2])
+        if (costInsert >= costs[2])
             return;
 
-        if (costInsert >= bestCost[1])
+        if (costInsert >= costs[1])
         {
-            bestCost[2] = costInsert;
-            bestLocation[2] = placeInsert;
+            costs[2] = costInsert;
+            locs[2] = placeInsert;
         }
-        else if (costInsert >= bestCost[0])
+        else if (costInsert >= costs[0])
         {
-            bestCost[2] = bestCost[1];
-            bestLocation[2] = bestLocation[1];
-            bestCost[1] = costInsert;
-            bestLocation[1] = placeInsert;
+            costs[2] = costs[1];
+            locs[2] = locs[1];
+            costs[1] = costInsert;
+            locs[1] = placeInsert;
         }
         else
         {
-            bestCost[2] = bestCost[1];
-            bestLocation[2] = bestLocation[1];
-            bestCost[1] = bestCost[0];
-            bestLocation[1] = bestLocation[0];
-            bestCost[0] = costInsert;
-            bestLocation[0] = placeInsert;
+            costs[2] = costs[1];
+            locs[2] = locs[1];
+            costs[1] = costs[0];
+            locs[1] = locs[0];
+            costs[0] = costInsert;
+            locs[0] = placeInsert;
         }
     }
 };
@@ -48,76 +47,73 @@ struct SwapStarMove
     Node *UAfter = nullptr;
     Node *VAfter = nullptr;
 };
+
+std::vector<ThreeBest>
+preprocess(Route *from, Route *to, Penalties const &penalties)
+{
+    std::vector<ThreeBest> from2to;  // stores insertion points for each node
+    for (auto *U = from->depot->next; !U->isDepot; U = U->next)
+    {
+        auto &best = from2to.emplace_back();
+
+        for (auto *V = to->depot->next; !V->isDepot; V = V->next)
+        {
+            int deltaCost = operators::singleMoveCost(U, V, penalties);
+            best.maybeAdd(deltaCost, V);
+        }
+
+        int deltaCost = operators::singleMoveCost(U, to->depot, penalties);
+        best.maybeAdd(deltaCost, to->depot);
+    }
+
+    return from2to;
+}
 }  // namespace
 
 bool swapStar(Route *routeU, Route *routeV, Penalties const &penalties)
 {
-    // Preprocessing phase
-    std::vector<ThreeBest> u2v;
-    for (auto *U = routeU->depot->next; !U->isDepot; U = U->next)
-    {
-        auto &best = u2v.emplace_back();
+    std::vector<ThreeBest> u2v = preprocess(routeU, routeV, penalties);
+    std::vector<ThreeBest> v2u = preprocess(routeV, routeU, penalties);
 
-        for (auto *V = routeV->depot->next; !V->isDepot; V = V->next)
-        {
-            int deltaCost = operators::singleMoveCost(U, V, penalties);
-            best.add(deltaCost, V);
-        }
-
-        int deltaCost = operators::singleMoveCost(U, routeV->depot, penalties);
-        best.add(deltaCost, routeV->depot);
-    }
-
-    std::vector<ThreeBest> v2u;
-    for (auto *V = routeV->depot->next; !V->isDepot; V = V->next)
-    {
-        auto &best = v2u.emplace_back();
-
-        for (auto *U = routeU->depot->next; !U->isDepot; U = U->next)
-        {
-            int deltaCost = operators::singleMoveCost(V, U, penalties);
-            best.add(deltaCost, U);
-        }
-
-        int deltaCost = operators::singleMoveCost(V, routeU->depot, penalties);
-        best.add(deltaCost, routeU->depot);
-    }
-
-    // Search phase
     SwapStarMove best;
-
     for (auto *U = routeU->depot->next; !U->isDepot; U = U->next)
         for (auto *V = routeV->depot->next; !V->isDepot; V = V->next)
         {
+            // First evaluate a direct swap of U and V
+            int const deltaSwap = operators::twoSwapCost(U, V, penalties);
+
+            if (deltaSwap < best.deltaCost)
+            {
+                best.deltaCost = deltaSwap;
+                best.U = U;
+                best.UAfter = V;
+
+                best.V = V;
+                best.VAfter = U;
+            }
+
+            // Next evaluate swaps within the entire routes U and V
             auto const &UBest = u2v[U->position - 1];
             auto const &VBest = v2u[V->position - 1];
 
-            // TODO use other indices as well
-            auto const deltaCostStar = UBest.bestCost[0] + VBest.bestCost[0];
-            auto const deltaCostSwap = operators::twoSwapCost(U, V, penalties);
+            for (size_t idx1 = 0; idx1 != 3; ++idx1)
+                for (size_t idx2 = 0; idx2 != 3; ++idx2)
+                {
+                    int const deltaStar = UBest.costs[idx1] + VBest.costs[idx2];
 
-            if (deltaCostStar < best.deltaCost && deltaCostStar < deltaCostSwap)
-            {
-                best.deltaCost = deltaCostStar;
-                best.U = U;
-                best.UAfter = UBest.bestLocation[0];
+                    if (deltaStar < best.deltaCost)
+                    {
+                        best.deltaCost = deltaStar;
+                        best.U = U;
+                        best.UAfter = UBest.locs[idx1];
 
-                best.V = V;
-                best.VAfter = VBest.bestLocation[0];
-            }
-
-            if (deltaCostSwap < best.deltaCost)
-            {
-                best.deltaCost = deltaCostSwap;
-                best.U = U;
-                best.UAfter = UBest.bestLocation[0];
-
-                best.V = V;
-                best.VAfter = VBest.bestLocation[0];
-            }
+                        best.V = V;
+                        best.VAfter = VBest.locs[idx2];
+                    }
+                }
         }
 
-    auto &[deltaCost, U, V, UAfter, VAfter] = best;
+    auto const &[deltaCost, U, V, UAfter, VAfter] = best;
 
     if (deltaCost < 0)
     {
