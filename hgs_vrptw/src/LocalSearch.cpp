@@ -243,10 +243,9 @@ Individual LocalSearch::exportIndividual()
     routePolarAngles.reserve(params.nbVehicles);
 
     for (int r = 0; r < params.nbVehicles; r++)
-        routePolarAngles.emplace_back(routes[r].polarAngleBarycenter, r);
+        routePolarAngles.emplace_back(routes[r].angleCenter, r);
 
-    // empty indivRoutes have a polar angle of 1.e30, and therefore will always
-    // appear at the end
+    // Empty routes have a large center angle, and thus always sort at the end
     std::sort(routePolarAngles.begin(), routePolarAngles.end());
 
     std::vector<std::vector<int>> indivRoutes(params.nbVehicles);

@@ -39,24 +39,25 @@ class Route
     // us jump to the next node in the route a given jump distance away. Very
     // useful for speeding up time window calculations along the route.
     std::vector<std::vector<JumpNode>> jumps;
-    size_t nbCustomers;   // Number of customers in the route
-    CircleSector sector;  // Circle sector of the route's clients
+    size_t nbCustomers;         // Number of customers in the route
+    CircleSector sector;        // Circle sector of the route's clients
+    std::vector<Node *> nodes;  // List of nodes (in order) in this solution.
 
     // Sets jump points, pointing to the current node from earlier route nodes.
-    void installJumpPoints(std::vector<Node const *> nodes, Node const *node);
+    void installJumpPoints(Node const *node);
 
 public:  // TODO make fields private
     Params const *params;
 
-    int idx;                      // Route index
-    Node *depot;                  // Pointer to the associated depot
-    int load;                     // Total load on the route
-    TimeWindowSegment twData;     // Time window data of the route
-    int penalty;                  // Current load and time window penalties
-    double polarAngleBarycenter;  // Angle of the barycenter of the route
-    int whenLastModified;         // "When" this route has been last modified
-    int whenLastTestedLargeNb;    // "When" the large neighborhood moves of
-                                  // this route have last been tested
+    int idx;                    // Route index
+    Node *depot;                // Pointer to the associated depot
+    int load;                   // Total load on the route
+    TimeWindowSegment twData;   // Time window data of the route
+    int penalty;                // Current load and time window penalties
+    double angleCenter;         // Angle of the barycenter of the route
+    int whenLastModified;       // "When" this route has been last modified
+    int whenLastTestedLargeNb;  // "When" the large neighborhood moves of
+                                // this route have last been tested
 
     /**
      * Tests if this route is feasible.

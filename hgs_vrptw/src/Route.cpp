@@ -1,8 +1,8 @@
 #include "Route.h"
+#include "math.h"
 
 #include <bit>
 #include <cassert>
-#include <cmath>
 
 namespace
 {
@@ -11,13 +11,15 @@ using TWS = TimeWindowSegment;
 
 void Route::update(int nbMoves, Penalties const &penalties)
 {
+    size_t const prevSize = nodes.size();
+
     load = 0;
     jumps = {{}, {}};
-    jumps[0].reserve(nbCustomers);  // nbCustomers has likely changed since the
-    jumps[1].reserve(nbCustomers);  // last update, but probably not *much*.
+    jumps[0].reserve(prevSize);  // Route's size has likely changed since the
+    jumps[1].reserve(prevSize);  // last update, but probably not *much*.
 
-    std::vector<Node const *> nodes;
-    nodes.reserve(nbCustomers);
+    nodes = {};
+    nodes.reserve(prevSize);
 
     size_t place = 0;
     int reverseDistance = 0;
@@ -57,7 +59,7 @@ void Route::update(int nbMoves, Penalties const &penalties)
             sector.extend(params->clients[node->client].angle);
         }
 
-        installJumpPoints(nodes, node);
+        installJumpPoints(node);
     } while (!node->isDepot);
 
     twData = node->twBefore;
@@ -77,11 +79,11 @@ void Route::update(int nbMoves, Penalties const &penalties)
 
     if (empty())
     {
-        polarAngleBarycenter = 1.e30;
+        angleCenter = 1.e30;
         return;
     }
 
-    polarAngleBarycenter = atan2(
+    angleCenter = fatan2(
         cumulatedY / static_cast<double>(nbCustomers) - params->clients[0].y,
         cumulatedX / static_cast<double>(nbCustomers) - params->clients[0].x);
 
@@ -140,7 +142,7 @@ TimeWindowSegment Route::twBetween(Node const *start, Node const *end) const
     return data;
 }
 
-void Route::installJumpPoints(std::vector<Node const *> nodes, Node const *node)
+void Route::installJumpPoints(Node const *node)
 {
     JumpNode const *toNextJump = nullptr;
 
@@ -158,11 +160,9 @@ void Route::installJumpPoints(std::vector<Node const *> nodes, Node const *node)
                 // merging that with (part way, node) which we already know.
                 auto const prev2jump = twBetween(prev, toNextJump->from);
                 auto const prev2node = TWS::merge(prev2jump, toNextJump->tw);
-                jumps[idx_].emplace_back(prev, node, prev2node);
+                toNextJump = &jumps[idx_].emplace_back(prev, node, prev2node);
             }
             else
-                jumps[idx_].emplace_back(prev, node);
-
-            toNextJump = &jumps[idx_].back();
+                toNextJump = &jumps[idx_].emplace_back(prev, node);
         }
 }
