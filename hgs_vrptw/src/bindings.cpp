@@ -67,6 +67,7 @@ PYBIND11_MODULE(hgspy, m)
                       size_t,
                       double,
                       size_t,
+                      size_t,
                       double,
                       int,
                       size_t,
@@ -81,7 +82,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("collectStatistics") = false,
              py::arg("initialTimeWarpPenalty") = 1,
              py::arg("nbPenaltyManagement") = 100,
-             py::arg("penaltyBooster") = 2.,
+             py::arg("feasBooster") = 2.,
              py::arg("penaltyIncrease") = 1.2,
              py::arg("penaltyDecrease") = 0.85,
              py::arg("minimumPopulationSize") = 25,
@@ -90,6 +91,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("nbClose") = 5,
              py::arg("targetFeasible") = 0.2,
              py::arg("repairProbability") = 50,
+             py::arg("repairBooster") = 10,
              py::arg("diversityWeight") = 0.,
              py::arg("nbVeh") = INT_MAX,
              py::arg("nbGranular") = 40,
@@ -104,7 +106,7 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("collectStatistics", &Config::collectStatistics)
         .def_readonly("initialTimeWarpPenalty", &Config::initialTimeWarpPenalty)
         .def_readonly("nbPenaltyManagement", &Config::nbPenaltyManagement)
-        .def_readonly("penaltyBooster", &Config::penaltyBooster)
+        .def_readonly("feasBooster", &Config::feasBooster)
         .def_readonly("penaltyIncrease", &Config::penaltyIncrease)
         .def_readonly("penaltyDecrease", &Config::penaltyDecrease)
         .def_readonly("minimumPopulationSize", &Config::minimumPopulationSize)
@@ -113,6 +115,7 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("nbClose", &Config::nbClose)
         .def_readonly("targetFeasible", &Config::targetFeasible)
         .def_readonly("repairProbability", &Config::repairProbability)
+        .def_readonly("repairBooster", &Config::repairBooster)
         .def_readonly("diversityWeight", &Config::diversityWeight)
         .def_readonly("nbVeh", &Config::nbVeh)
         .def_readonly("nbGranular", &Config::nbGranular)
