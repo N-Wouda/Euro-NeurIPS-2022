@@ -11,11 +11,6 @@ namespace operators
  * Cost delta of inserting U after V.
  */
 int singleMoveCost(Node *nodeU, Node *nodeV, Penalties const &penalties);
-
-/**
- * Cost delta of swapping U and V.
- */
-int twoSwapCost(Node *nodeU, Node *nodeV, Penalties const &penalties);
 }  // namespace operators
 
 /**
