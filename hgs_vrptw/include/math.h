@@ -33,7 +33,6 @@ inline double fatan2(double y, double x)
                 return -M_PI_2 - fatan(x / y);
         }
     }
-
     else  // -pi..-pi/2, pi/2..pi
     {
         if (y >= 0)  // pi/2 .. pi
