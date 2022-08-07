@@ -153,7 +153,7 @@ Params::Params(Config const &config, std::string const &instPath)
             // Read the edge weights of an explicit distance matrix
             else if (content == "EDGE_WEIGHT_SECTION")
             {
-                dist = Matrix<int>(nbClients + 1);
+                dist_ = Matrix<int>(nbClients + 1);
                 for (int i = 0; i <= nbClients; i++)
                 {
                     for (int j = 0; j <= nbClients; j++)
@@ -333,7 +333,7 @@ Params::Params(Config const &config, std::string const &instPath)
         nbVehicles = nbClients;
     }
 
-    int maxDist = dist.max();
+    int maxDist = dist_.max();
 
     // Calculate, for all vertices, the correlation for the nbGranular closest
     // vertices
@@ -385,7 +385,7 @@ Params::Params(Config const &config,
     auto const vehicleMargin = std::ceil(1.3 * totalDemand / vehicleCapacity);
     nbVehicles = static_cast<int>(vehicleMargin) + 3;
 
-    dist = Matrix<int>(distMat.size());
+    dist_ = Matrix<int>(distMat.size());
 
     for (size_t i = 0; i != distMat.size(); ++i)
         for (size_t j = 0; j != distMat[i].size(); ++j)
@@ -393,7 +393,7 @@ Params::Params(Config const &config,
 
     // A reasonable scale for the initial values of the penalties
     int maxDemand = *std::max_element(demands.begin(), demands.end());
-    penaltyCapacity = std::max(1, std::min(1000, dist.max() / maxDemand));
+    penaltyCapacity = std::max(1, std::min(1000, dist_.max() / maxDemand));
 
     // Initial parameter values of this parameter is not argued
     penaltyTimeWarp = static_cast<int>(config.initialTimeWarpPenalty);

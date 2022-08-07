@@ -2,56 +2,55 @@
 
 #include "TimeWindowSegment.h"
 
-bool twoOptBetweenTrips(Node *nodeU, Node *nodeV, Penalties const &penalties)
+bool twoOptBetweenTrips(Node *U, Node *V, Penalties const &penalties)
 {
     using TWS = TimeWindowSegment;
 
-    auto const &params = *nodeU->params;
+    auto const &params = *U->params;
 
-    if (nodeU->route->idx >= nodeV->route->idx)
+    if (U->route->idx >= V->route->idx)
         return false;
 
-    int costSuppU = params.dist(nodeU->client, nodeV->next->client)
-                    - params.dist(nodeU->client, nodeU->next->client);
-    int costSuppV = params.dist(nodeV->client, nodeU->next->client)
-                    - params.dist(nodeV->client, nodeV->next->client);
+    int const current = params.dist(U->client, n(U)->client)
+                        + params.dist(V->client, n(V)->client);
+    int const proposed = params.dist(U->client, n(V)->client)
+                         + params.dist(V->client, n(U)->client);
 
-    if (nodeU->route->isFeasible() && nodeV->route->isFeasible()
-        && costSuppU + costSuppV >= 0)
-    {
-        return false;
-    }
+    int deltaCost = proposed - current;
 
-    auto const routeUTwData = TWS::merge(nodeU->twBefore, nodeV->next->twAfter);
-    auto const routeVTwData = TWS::merge(nodeV->twBefore, nodeU->next->twAfter);
-
-    int const deltaLoad = nodeU->cumulatedLoad - nodeV->cumulatedLoad;
-    costSuppU += penalties.load(nodeV->route->load + deltaLoad)
-                 + penalties.timeWarp(routeUTwData) - nodeU->route->penalty;
-
-    costSuppV += penalties.load(nodeU->route->load - deltaLoad)
-                 + penalties.timeWarp(routeVTwData) - nodeV->route->penalty;
-
-    if (costSuppU + costSuppV >= 0)
+    if (U->route->isFeasible() && V->route->isFeasible() && deltaCost >= 0)
         return false;
 
-    auto *itRouteU = nodeU->next;
-    auto *itRouteV = nodeV->next;
+    auto const uTWS = TWS::merge(U->twBefore, n(V)->twAfter);
+    auto const vTWS = TWS::merge(V->twBefore, n(U)->twAfter);
 
-    auto *insertLocation = nodeU;
+    int const deltaLoad = U->cumulatedLoad - V->cumulatedLoad;
+
+    deltaCost += penalties.load(V->route->load + deltaLoad)
+                 + penalties.timeWarp(uTWS) - U->route->penalty
+                 + penalties.load(U->route->load - deltaLoad)
+                 + penalties.timeWarp(vTWS) - V->route->penalty;
+
+    if (deltaCost >= 0)
+        return false;
+
+    auto *itRouteU = n(U);
+    auto *itRouteV = n(V);
+
+    auto *insertLocation = U;
     while (!itRouteV->isDepot)
     {
         auto *current = itRouteV;
-        itRouteV = itRouteV->next;
+        itRouteV = n(itRouteV);
         current->insertAfter(insertLocation);
         insertLocation = current;
     }
 
-    insertLocation = nodeV;
+    insertLocation = V;
     while (!itRouteU->isDepot)
     {
         auto *current = itRouteU;
-        itRouteU = itRouteU->next;
+        itRouteU = n(itRouteU);
         current->insertAfter(insertLocation);
         insertLocation = current;
     }

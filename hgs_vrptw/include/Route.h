@@ -25,7 +25,7 @@ class Route
         JumpNode() = default;
 
         JumpNode(Node const *from, Node const *to)
-            : from(from), to(to), tw(from->route->twBetween(from, to))
+            : from(from), to(to), tw(Route::twBetween(from, to))
         {
         }
 
@@ -92,9 +92,9 @@ public:  // TODO make fields private
     [[nodiscard]] inline bool empty() const { return nbCustomers == 0; }
 
     /**
-     * Calculates time window data for segment [start, end] in this route.
+     * Calculates time window data for segment [start, end] in the same route.
      */
-    TimeWindowSegment twBetween(Node const *start, Node const *end) const;
+    static TimeWindowSegment twBetween(Node const *start, Node const *end);
 
     /**
      * Updates this route. To be called after swapping nodes/changing the

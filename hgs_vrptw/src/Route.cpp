@@ -102,9 +102,9 @@ void Route::update(int nbMoves, Penalties const &penalties)
     }
 }
 
-TimeWindowSegment Route::twBetween(Node const *start, Node const *end) const
+TimeWindowSegment Route::twBetween(Node const *start, Node const *end)
 {
-    assert(this == start->route && this == end->route);
+    assert(start->route == end->route);
     assert(start->position <= end->position);
 
     if (start->isDepot)
@@ -115,6 +115,7 @@ TimeWindowSegment Route::twBetween(Node const *start, Node const *end) const
 
     Node const *node = start;
     TimeWindowSegment data = start->tw;
+    auto const &jumps = start->route->jumps;
 
     while (node != end)
     {
@@ -158,7 +159,7 @@ void Route::installJumpPoints(Node const *node)
                 // of larger jumps is already known. We reuse that by computing
                 // the time window between (prev, part way) separately and then
                 // merging that with (part way, node) which we already know.
-                auto const prev2jump = twBetween(prev, toNextJump->from);
+                auto const prev2jump = Route::twBetween(prev, toNextJump->from);
                 auto const prev2node = TWS::merge(prev2jump, toNextJump->tw);
                 toNextJump = &jumps[idx_].emplace_back(prev, node, prev2node);
             }

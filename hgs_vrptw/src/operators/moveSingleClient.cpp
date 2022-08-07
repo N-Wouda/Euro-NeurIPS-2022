@@ -1,11 +1,11 @@
 #include "operators.h"
 
-bool moveSingleClient(Node *nodeU, Node *nodeV, Penalties const &penalties)
+bool moveSingleClient(Node *U, Node *V, Penalties const &penalties)
 {
-    auto const deltaCost = operators::singleMoveCost(nodeU, nodeV, penalties);
+    auto const deltaCost = operators::singleMoveCost(U, V, penalties);
 
     if (deltaCost < 0)
-        nodeU->insertAfter(nodeV);
+        U->insertAfter(V);
 
     return deltaCost < 0;
 }

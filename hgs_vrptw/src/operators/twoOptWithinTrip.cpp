@@ -2,49 +2,52 @@
 
 #include "TimeWindowSegment.h"
 
-bool twoOptWithinTrip(Node *nodeU, Node *nodeV, Penalties const &penalties)
+bool twoOptWithinTrip(Node *U, Node *V, Penalties const &penalties)
 {
-    auto const &params = *nodeU->params;
+    using TWS = TimeWindowSegment;
 
-    if (nodeU->route != nodeV->route)
+    auto const &params = *U->params;
+
+    if (U->route != V->route)
         return false;
 
-    if (nodeU->position + 1 >= nodeV->position)
+    if (U->position + 1 >= V->position)
         return false;
 
-    int deltaCost = params.dist(nodeU->client, nodeV->client)
-                    + params.dist(nodeU->next->client, nodeV->next->client)
-                    - params.dist(nodeU->client, nodeU->next->client)
-                    - params.dist(nodeV->client, nodeV->next->client)
-                    + nodeV->cumulatedReversalDistance
-                    - nodeU->next->cumulatedReversalDistance;
+    int deltaCost = params.dist(U->client, V->client)
+                    + params.dist(n(U)->client, n(V)->client)
+                    + V->cumulatedReversalDistance
+                    - params.dist(U->client, n(U)->client)
+                    - params.dist(V->client, n(V)->client)
+                    - n(U)->cumulatedReversalDistance;
 
-    if (!nodeU->route->hasTimeWarp() && deltaCost >= 0)
+    if (!U->route->hasTimeWarp() && deltaCost >= 0)
         return false;
 
-    auto routeTwData = nodeU->twBefore;
-    auto *itRoute = nodeV;
-    while (itRoute != nodeU)
+    auto uTWS = U->twBefore;
+    auto *itRoute = V;
+    while (itRoute != U)
     {
-        routeTwData = TimeWindowSegment::merge(routeTwData, itRoute->tw);
-        itRoute = itRoute->prev;
+        uTWS = TWS::merge(uTWS, itRoute->tw);
+        itRoute = p(itRoute);
     }
-    routeTwData = TimeWindowSegment::merge(routeTwData, nodeV->next->twAfter);
 
-    deltaCost += penalties.load(nodeU->route->load)
-                 + penalties.timeWarp(routeTwData) - nodeU->route->penalty;
+    uTWS = TWS::merge(uTWS, n(V)->twAfter);
+
+    deltaCost += penalties.load(U->route->load) + penalties.timeWarp(uTWS)
+                 - U->route->penalty;
 
     if (deltaCost >= 0)
         return false;
 
-    itRoute = nodeV;
-    auto *insertionPoint = nodeU;
-    auto *currNext = nodeU->next;
+    itRoute = V;
+    auto *insertionPoint = U;
+    auto *currNext = n(U);
 
     while (itRoute != currNext)  // No need to move x, we pivot around it
     {
         auto *current = itRoute;
-        itRoute = itRoute->prev;
+        itRoute = p(itRoute);
         current->insertAfter(insertionPoint);
         insertionPoint = current;
     }

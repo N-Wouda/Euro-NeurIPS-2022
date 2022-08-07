@@ -40,4 +40,24 @@ public:  // TODO make fields private
     void swapWith(Node *other);
 };
 
+/**
+ * Convenience method accessing the node directly before the argument.
+ */
+inline Node *p(Node *node) { return node->prev; }
+
+/**
+ * Convenience method accessing the node two positions before the argument.
+ */
+inline Node *pp(Node *node) { return node->prev->prev; }
+
+/**
+ * Convenience method accessing the node directly after the argument.
+ */
+inline Node *n(Node *node) { return node->next; }
+
+/**
+ * Convenience method accessing the node two positions after the argument.
+ */
+inline Node *nn(Node *node) { return node->next->next; }
+
 #endif  // NODE_H
