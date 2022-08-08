@@ -38,6 +38,8 @@ class Params
     // nbClients + 1, but nothing stored for the depot!)
     std::vector<std::vector<int>> neighbours;
 
+    Matrix<int> dist_;  // Distance matrix (+depot)
+
     /**
      * Calculate, for all vertices, the correlation ('nearness') of the
      * nbGranular closest vertices.
@@ -57,7 +59,6 @@ public:
     int vehicleCapacity;  // Capacity limit
 
     std::vector<Client> clients;  // Client (+depot) information
-    Matrix dist;                  // Distance matrix (+depot)
 
     /**
      * Returns the nbGranular clients nearest/closest to the passed-in client.
@@ -65,6 +66,23 @@ public:
     [[nodiscard]] std::vector<int> const &getNeighboursOf(size_t client) const
     {
         return neighbours[client];
+    }
+
+    [[nodiscard]] inline int &dist(size_t row, size_t col)
+    {
+        return dist_(row, col);
+    }
+
+    [[nodiscard]] inline int dist(size_t row, size_t col) const
+    {
+        return dist_(row, col);
+    }
+
+    template <typename... Args>
+    [[nodiscard]] inline int
+    dist(size_t first, size_t second, size_t third, Args... args) const
+    {
+        return dist_(first, second) + dist(second, third, args...);
     }
 
     /**

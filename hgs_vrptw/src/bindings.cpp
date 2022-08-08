@@ -8,6 +8,7 @@
 #include "Statistics.h"
 #include "XorShift128.h"
 #include "crossover.h"
+#include "operators.h"
 
 #include <pybind11/chrono.h>
 #include <pybind11/functional.h>
@@ -41,6 +42,9 @@ PYBIND11_MODULE(hgspy, m)
         .def(py::init<Params &, XorShift128 &>(),
              py::arg("params"),
              py::arg("rng"))
+        .def("add_node_operator", &LocalSearch::addNodeOperator, py::arg("op"))
+        .def(
+            "add_route_operator", &LocalSearch::addRouteOperator, py::arg("op"))
         .def("__call__",
              &LocalSearch::operator(),
              py::arg("indiv"),
@@ -63,6 +67,7 @@ PYBIND11_MODULE(hgspy, m)
                       size_t,
                       double,
                       size_t,
+                      size_t,
                       double,
                       int,
                       size_t,
@@ -79,7 +84,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("collectStatistics") = false,
              py::arg("initialTimeWarpPenalty") = 1,
              py::arg("nbPenaltyManagement") = 100,
-             py::arg("penaltyBooster") = 2.,
+             py::arg("feasBooster") = 2.,
              py::arg("penaltyIncrease") = 1.2,
              py::arg("penaltyDecrease") = 0.85,
              py::arg("minimumPopulationSize") = 25,
@@ -88,6 +93,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("nbClose") = 5,
              py::arg("targetFeasible") = 0.2,
              py::arg("repairProbability") = 50,
+             py::arg("repairBooster") = 10,
              py::arg("diversityWeight") = 0.,
              py::arg("nbVeh") = INT_MAX,
              py::arg("nbGranular") = 40,
@@ -104,7 +110,7 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("collectStatistics", &Config::collectStatistics)
         .def_readonly("initialTimeWarpPenalty", &Config::initialTimeWarpPenalty)
         .def_readonly("nbPenaltyManagement", &Config::nbPenaltyManagement)
-        .def_readonly("penaltyBooster", &Config::penaltyBooster)
+        .def_readonly("feasBooster", &Config::feasBooster)
         .def_readonly("penaltyIncrease", &Config::penaltyIncrease)
         .def_readonly("penaltyDecrease", &Config::penaltyDecrease)
         .def_readonly("minimumPopulationSize", &Config::minimumPopulationSize)
@@ -113,6 +119,7 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("nbClose", &Config::nbClose)
         .def_readonly("targetFeasible", &Config::targetFeasible)
         .def_readonly("repairProbability", &Config::repairProbability)
+        .def_readonly("repairBooster", &Config::repairBooster)
         .def_readonly("diversityWeight", &Config::diversityWeight)
         .def_readonly("nbVeh", &Config::nbVeh)
         .def_readonly("nbGranular", &Config::nbGranular)
@@ -180,21 +187,23 @@ PYBIND11_MODULE(hgspy, m)
     // Crossover operators (as a submodule)
     py::module xOps = m.def_submodule("crossover");
 
-    xOps.def("ordered_exchange",
-             &orderedExchange,
-             py::arg("parents"),
-             py::arg("params"),
-             py::arg("rng"));
+    xOps.def("ordered_exchange", &orderedExchange);
+    xOps.def("selective_route_exchange", &selectiveRouteExchange);
+    xOps.def("string_removal_exchange", &stringRemovalExchange);
 
-    xOps.def("selective_route_exchange",
-             &selectiveRouteExchange,
-             py::arg("parents"),
-             py::arg("params"),
-             py::arg("rng"));
+    // Local search operators (as a submodule)
+    py::module lsOps = m.def_submodule("operators");
 
-    xOps.def("string_removal_exchange",
-             &stringRemovalExchange,
-             py::arg("parents"),
-             py::arg("params"),
-             py::arg("rng"));
+    lsOps.def("move_single_client", &moveSingleClient);
+    lsOps.def("move_two_clients", &moveTwoClients);
+    lsOps.def("move_two_clients_reversed", &moveTwoClientsReversed);
+    lsOps.def("swap_two_client_pairs", &swapTwoClientPairs);
+    lsOps.def("swap_two_clients_for_one", &swapTwoClientsForOne);
+    lsOps.def("swap_two_single_clients", &swapTwoSingleClients);
+    lsOps.def("two_opt_between_routes", &twoOptBetweenRoutes);
+    lsOps.def("two_opt_within_route", &twoOptWithinRoute);
+
+    lsOps.def("relocate_star", &relocateStar);
+    lsOps.def("swap_star", &swapStar);
+>>>>>>> main
 }

@@ -11,7 +11,21 @@ set(individualSources
         Individual.cpp)
 
 set(localSearchSources
-        LocalSearch.cpp)
+        LocalSearch.cpp
+        operators/operators.cpp
+        operators/moveSingleClient.cpp
+        operators/moveTwoClients.cpp
+        operators/moveTwoClientsReversed.cpp
+        operators/swapTwoClientPairs.cpp
+        operators/swapTwoClientsForOne.cpp
+        operators/swapTwoSingleClients.cpp
+        operators/twoOptBetweenRoutes.cpp
+        operators/twoOptWithinRoute.cpp
+        operators/relocateStar.cpp
+        operators/swapStar.cpp)
+
+set(nodeSources
+        Node.cpp)
 
 set(paramsSources
         Params.cpp)
@@ -22,18 +36,27 @@ set(populationSources
 set(resultSources
         Result.cpp)
 
+set(routeSources
+        Route.cpp)
+
 set(statisticsSources
         Statistics.cpp)
+
+set(timeWindowSegmentSources
+        TimeWindowSegment.cpp)
 
 # (Internal) library
 add_library(hgs
         ${geneticSources}
         ${individualSources}
         ${localSearchSources}
+        ${nodeSources}
         ${paramsSources}
         ${populationSources}
         ${resultSources}
-        ${statisticsSources})
+        ${routeSources}
+        ${statisticsSources}
+        ${timeWindowSegmentSources})
 
 # Executable
 add_executable(genvrp main.cpp)

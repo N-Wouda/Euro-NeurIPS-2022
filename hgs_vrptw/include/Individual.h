@@ -36,6 +36,9 @@ class Individual
     // - the numRoutes() member indicates the number of nonempty routes.
     Routes routeChrom;
 
+    // Pairs of [predecessor, successor] for each client (index) in the tour
+    std::vector<std::pair<Client, Client>> neighbours;
+
     // Splits the tour chromosome into routes using the linear split algorithm
     void makeRoutes();
 
@@ -123,5 +126,8 @@ public:
 
     ~Individual();
 };
+
+// Outputs an individual into a given ostream in CVRPLib format
+std::ostream &operator<<(std::ostream &out, Individual const &indiv);
 
 #endif
