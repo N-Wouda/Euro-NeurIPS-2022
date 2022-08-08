@@ -28,18 +28,21 @@ int operators::singleMoveCost(Node *U, Node *V, Penalties const &penalties)
         deltaCost += penalties.timeWarp(uTWS);
         deltaCost -= penalties.timeWarp(U->route->tw);
 
-        auto const vTWS = TWS::merge(V->twBefore, U->tw, n(V)->twAfter);
-
-        deltaCost += penalties.timeWarp(vTWS);
-        deltaCost -= penalties.timeWarp(V->route->tw);
-
         auto const uDemand = params.clients[U->client].demand;
 
         deltaCost += penalties.load(U->route->load - uDemand);
         deltaCost -= penalties.load(U->route->load);
 
+        if (deltaCost >= 0)    // if delta cost of just U's route is not enough
+            return deltaCost;  // even without V, the move will never be good
+
         deltaCost += penalties.load(V->route->load + uDemand);
         deltaCost -= penalties.load(V->route->load);
+
+        auto const vTWS = TWS::merge(V->twBefore, U->tw, n(V)->twAfter);
+
+        deltaCost += penalties.timeWarp(vTWS);
+        deltaCost -= penalties.timeWarp(V->route->tw);
     }
     else  // move within the same route
     {

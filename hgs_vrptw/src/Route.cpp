@@ -1,8 +1,8 @@
 #include "Route.h"
-#include "fatan.h"
 
 #include <bit>
 #include <cassert>
+#include <cmath>
 
 namespace
 {
@@ -79,7 +79,7 @@ void Route::update()
         return;
     }
 
-    angleCenter = fatan2(
+    angleCenter = atan2(
         cumulatedY / static_cast<double>(nbCustomers) - params->clients[0].y,
         cumulatedX / static_cast<double>(nbCustomers) - params->clients[0].x);
 
