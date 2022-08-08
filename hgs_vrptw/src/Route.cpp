@@ -9,7 +9,7 @@ namespace
 using TWS = TimeWindowSegment;
 }
 
-void Route::update(int nbMoves, Penalties const &penalties)
+void Route::update()
 {
     size_t const prevSize = nodes.size();
 
@@ -26,7 +26,7 @@ void Route::update(int nbMoves, Penalties const &penalties)
     int cumulatedX = 0;
     int cumulatedY = 0;
 
-    auto *node = this->depot;
+    auto *node = depot;
     node->position = 0;
     node->cumulatedLoad = 0;
     node->cumulatedReversalDistance = 0;
@@ -45,8 +45,9 @@ void Route::update(int nbMoves, Penalties const &penalties)
         load += params->clients[node->client].demand;
         node->cumulatedLoad = load;
 
-        reverseDistance += params->dist(node->client, node->prev->client)
-                           - params->dist(node->prev->client, node->client);
+        reverseDistance += params->dist(node->client, node->prev->client);
+        reverseDistance -= params->dist(node->prev->client, node->client);
+
         node->cumulatedReversalDistance = reverseDistance;
 
         node->twBefore = TWS::merge(node->prev->twBefore, node->tw);
@@ -62,13 +63,8 @@ void Route::update(int nbMoves, Penalties const &penalties)
         installJumpPoints(node);
     } while (!node->isDepot());
 
-    twData = node->twBefore;
-    penalty = penalties.load(load) + penalties.timeWarp(this->twData);
+    tw = node->twBefore;
     nbCustomers = place - 1;
-
-    // Remember "when" this route has been last modified (will be used to filter
-    // unnecessary move evaluations)
-    whenLastModified = nbMoves;
 
     // Time window data in reverse direction, node should be end depot now
     do

@@ -72,7 +72,7 @@ preprocess(Route *R1, Route *R2, Penalties const &penalties)
         int const deltaRemoval
             = params.dist(p(U)->client, n(U)->client)
               - params.dist(p(U)->client, U->client, n(U)->client)
-              + penalties.timeWarp(twData) - penalties.timeWarp(R1->twData);
+              + penalties.timeWarp(twData) - penalties.timeWarp(R1->tw);
 
         // Compute additional timewarp we get when inserting U in R2, this
         // may be actually less if we remove U but we ignore this to have a
@@ -82,7 +82,7 @@ preprocess(Route *R1, Route *R2, Penalties const &penalties)
         int cost = params.dist(0, U->client, n(R2->depot)->client)
                    - params.dist(0, n(R2->depot)->client)
                    + penalties.timeWarp(twData)
-                   - penalties.timeWarp(R2->twData);
+                   - penalties.timeWarp(R2->tw);
 
         currentOption.maybeAdd(cost - deltaRemoval, R2->depot);
 
@@ -92,7 +92,7 @@ preprocess(Route *R1, Route *R2, Penalties const &penalties)
             int deltaCost = params.dist(V->client, U->client, n(V)->client)
                             - params.dist(V->client, n(V)->client)
                             + penalties.timeWarp(twData)
-                            - penalties.timeWarp(R2->twData);
+                            - penalties.timeWarp(R2->tw);
 
             currentOption.maybeAdd(deltaCost - deltaRemoval, V);
         }
@@ -133,7 +133,7 @@ int getBestInsertPoint(Node *U,
     int deltaCost = params.dist(p(V)->client, U->client, n(V)->client)
                     - params.dist(p(V)->client, n(V)->client)
                     + penalties.timeWarp(twData)
-                    - penalties.timeWarp(V->route->twData);
+                    - penalties.timeWarp(V->route->tw);
 
     if (!found || deltaCost < bestCost)
     {
@@ -292,12 +292,17 @@ bool swapStar(Route *routeU, Route *routeV, Penalties const &penalties)
         deltaCost += penalties.timeWarp(vTWS);
     }
 
-    int const uDemand = params.clients[best.U->client].demand;
-    int const vDemand = params.clients[best.V->client].demand;
-    auto const diff = uDemand - vDemand;
+    deltaCost -= penalties.timeWarp(routeU->tw);
+    deltaCost -= penalties.timeWarp(routeV->tw);
 
-    deltaCost += penalties.load(routeU->load - diff) - routeU->penalty;
-    deltaCost += penalties.load(routeV->load + diff) - routeV->penalty;
+    auto const uDemand = params.clients[best.U->client].demand;
+    auto const vDemand = params.clients[best.V->client].demand;
+
+    deltaCost += penalties.load(routeU->load - uDemand + vDemand);
+    deltaCost -= penalties.load(routeU->load);
+
+    deltaCost += penalties.load(routeV->load + uDemand - vDemand);
+    deltaCost -= penalties.load(routeV->load);
 
     if (deltaCost >= 0)
         return false;

@@ -12,7 +12,6 @@ public:  // TODO make fields private
 
     int client;            // Client represented with this node
     size_t position;       // Position in the route
-    int whenLastTestedRI;  // "When" the RI operators have last been applied
     Node *next;            // Next node in the route order
     Node *prev;            // Previous node in the route order
     Route *route;          // Pointer towards the associated route

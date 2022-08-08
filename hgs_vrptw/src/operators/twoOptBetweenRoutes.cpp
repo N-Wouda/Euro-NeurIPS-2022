@@ -22,14 +22,22 @@ bool twoOptBetweenRoutes(Node *U, Node *V, Penalties const &penalties)
         return false;
 
     auto const uTWS = TWS::merge(U->twBefore, n(V)->twAfter);
+
+    deltaCost += penalties.timeWarp(uTWS);
+    deltaCost -= penalties.timeWarp(U->route->tw);
+
     auto const vTWS = TWS::merge(V->twBefore, n(U)->twAfter);
+
+    deltaCost += penalties.timeWarp(vTWS);
+    deltaCost -= penalties.timeWarp(V->route->tw);
 
     int const deltaLoad = U->cumulatedLoad - V->cumulatedLoad;
 
-    deltaCost += penalties.load(V->route->load + deltaLoad)
-                 + penalties.timeWarp(uTWS) - U->route->penalty
-                 + penalties.load(U->route->load - deltaLoad)
-                 + penalties.timeWarp(vTWS) - V->route->penalty;
+    deltaCost += penalties.load(U->route->load - deltaLoad);
+    deltaCost -= penalties.load(U->route->load);
+
+    deltaCost += penalties.load(V->route->load + deltaLoad);
+    deltaCost -= penalties.load(V->route->load);
 
     if (deltaCost >= 0)
         return false;
