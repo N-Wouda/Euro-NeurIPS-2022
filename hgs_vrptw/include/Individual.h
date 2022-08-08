@@ -127,4 +127,7 @@ public:
     ~Individual();
 };
 
+// Outputs an individual into a given ostream in CVRPLib format
+std::ostream &operator<<(std::ostream &out, Individual const &indiv);
+
 #endif

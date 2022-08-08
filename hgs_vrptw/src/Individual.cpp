@@ -275,15 +275,7 @@ void Individual::exportCVRPLibFormat(std::string const &path, double time) const
     if (!out)
         throw std::runtime_error("Could not open " + path);
 
-    for (size_t rIdx = 0; rIdx != nbRoutes; ++rIdx)
-    {
-        out << "Route #" << rIdx + 1 << ":";  // route number
-        for (int cIdx : routeChrom[rIdx])
-            out << " " << cIdx;  // client index
-        out << '\n';
-    }
-
-    out << "Cost " << cost() << '\n';
+    out << *this;
     out << "Time " << time << '\n';
 }
 
@@ -351,4 +343,20 @@ Individual::~Individual()
 
         other->indivsPerProximity.erase(it);
     }
+}
+
+std::ostream &operator<<(std::ostream &out, Individual const &indiv)
+{
+    auto const &routes = indiv.getRoutes();
+
+    for (size_t rIdx = 0; rIdx != indiv.numRoutes(); ++rIdx)
+    {
+        out << "Route #" << rIdx + 1 << ":";  // route number
+        for (int cIdx : routes[rIdx])
+            out << " " << cIdx;  // client index
+        out << '\n';
+    }
+
+    out << "Cost " << indiv.cost() << '\n';
+    return out;
 }
