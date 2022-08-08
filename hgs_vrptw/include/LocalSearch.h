@@ -69,9 +69,7 @@ public:
      * @param loadPenalty     Excess load penalty.
      * @param timeWarpPenalty Penalty for violated time windows.
      */
-    void operator()(Individual &indiv,
-                    int loadPenalty,
-                    int timeWarpPenalty);
+    void operator()(Individual &indiv, int loadPenalty, int timeWarpPenalty);
 
     LocalSearch(Params &params, XorShift128 &rng);
 };
