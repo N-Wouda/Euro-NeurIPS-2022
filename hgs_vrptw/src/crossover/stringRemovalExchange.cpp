@@ -80,16 +80,15 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
                 = rng.randint(std::min(route.size(), maxStringSize)) + 1;
 
             // Find the route indices of the string to be removed
-            auto removalIndices = selectString(route, c, stringSize, rng);
+            auto indices = selectString(route, c, stringSize, rng);
 
-            std::sort(
-                removalIndices.begin(), removalIndices.end(), std::greater<>());
-
-            for (auto idx : removalIndices)
-            {
+            for (auto idx : indices)
                 removedClients.insert(route[idx]);
+
+            std::sort(indices.begin(), indices.end(), std::greater<>());
+
+            for (auto idx : indices)
                 route.erase(route.begin() + idx);
-            }
 
             destroyedRoutes.insert(route);
             break;
