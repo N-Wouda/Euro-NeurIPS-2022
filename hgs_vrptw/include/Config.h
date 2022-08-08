@@ -83,7 +83,7 @@ struct Config
                     int intensificationProbability = 15,
                     int circleSectorOverlapToleranceDegrees = 0,
                     int minCircleSectorSizeDegrees = 15,
-                    size_t maxStringRemovals = 6,
+                    size_t maxStringRemovals = 3,
                     size_t maxStringSize = 10)
         : seed(seed),
           nbIter(nbIter),
