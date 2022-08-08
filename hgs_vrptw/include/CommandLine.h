@@ -94,10 +94,6 @@ public:
                     = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-maxStringSize")
                 config.maxStringSize = static_cast<size_t>(atoi(argv[i + 1]));
-            else if (std::string(argv[i]) == "-splitRate")
-                config.splitRate = static_cast<size_t>(atoi(argv[i + 1]));
-            else if (std::string(argv[i]) == "-splitDepth")
-                config.splitDepth = static_cast<size_t>(atoi(argv[i + 1]));
         }
         return config;
     }

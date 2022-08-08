@@ -72,8 +72,6 @@ PYBIND11_MODULE(hgspy, m)
                       int,
                       int,
                       size_t,
-                      size_t,
-                      size_t,
                       size_t>(),
              py::arg("seed") = 0,
              py::arg("nbIter") = 20'000,
@@ -98,10 +96,8 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("intensificationProbability") = 15,
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
              py::arg("minCircleSectorSizeDegrees") = 15,
-             py::arg("maxStringRemovals") = 10,
-             py::arg("maxStringSize") = 10,
-             py::arg("splitRate") = 50,
-             py::arg("splitDepth") = 25)
+             py::arg("maxStringRemovals") = 3,
+             py::arg("maxStringSize") = 10)
         .def_readonly("seed", &Config::seed)
         .def_readonly("nbIter", &Config::nbIter)
         .def_readonly("timeLimit", &Config::timeLimit)
@@ -128,9 +124,7 @@ PYBIND11_MODULE(hgspy, m)
                       &Config::circleSectorOverlapTolerance)
         .def_readonly("minCircleSectorSize", &Config::minCircleSectorSize)
         .def_readonly("maxStringRemovals", &Config::maxStringRemovals)
-        .def_readonly("maxStringSize", &Config::maxStringSize)
-        .def_readonly("splitRate", &Config::splitRate)
-        .def_readonly("splitDepth", &Config::splitDepth);
+        .def_readonly("maxStringSize", &Config::maxStringSize);
 
     py::class_<Params>(m, "Params")
         .def(py::init<Config const &,

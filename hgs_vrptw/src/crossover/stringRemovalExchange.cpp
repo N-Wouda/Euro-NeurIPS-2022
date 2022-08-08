@@ -42,10 +42,12 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
                                            Params const &params,
                                            XorShift128 &rng)
 {
+    // Normalize maxStringSize for the current route characteristics
     auto op = [&](size_t s, auto &r) { return s + r.size(); };
     size_t avgRouteSize
         = std::accumulate(routes.begin(), routes.end(), 0, op) / routes.size();
-    auto const maxSize = std::min(params.config.maxStringSize, avgRouteSize);
+    auto const maxStringSize
+        = std::min(params.config.maxStringSize, avgRouteSize);
 
     // Compute the number of strings to remove
     auto const nbStringRemovals
@@ -72,31 +74,9 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
 
             // Remove string from the route
             auto const stringSize
-                = rng.randint(std::min(route.size(), maxSize)) + 1;
+                = rng.randint(std::min(route.size(), maxStringSize)) + 1;
 
-            std::vector<size_t> removalIndices;
-
-            if (rng.randint(100) >= params.config.splitRate)
-                removalIndices = selectString(route, client, stringSize, rng);
-            else
-            {
-                size_t subSize = 1;
-                while (rng.randint(100) >= params.config.splitDepth
-                       and subSize < route.size() - stringSize)
-                    subSize++;
-
-                auto const strIndices
-                    = selectString(route, client, stringSize + subSize, rng);
-                auto const subPos
-                    = rng.randint(strIndices.size() - subSize + 1);
-
-                for (size_t i = 0; i < subPos; i++)
-                    removalIndices.push_back(strIndices[i]);
-
-                for (auto i = subPos + stringSize; i < strIndices.size(); i++)
-                    removalIndices.push_back(strIndices[i]);
-            }
-
+            auto removalIndices = selectString(route, client, stringSize, rng);
             std::sort(
                 removalIndices.begin(), removalIndices.end(), std::greater<>());
 
