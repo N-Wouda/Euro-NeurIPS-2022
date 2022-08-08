@@ -117,7 +117,7 @@ TimeWindowSegment Route::twBetween(Node const *start, Node const *end)
     {
         auto const dist = end->position - node->position;
 
-        if (dist >= jumpPts.front())
+        if (dist >= jumpPts.front())  // can make at least one jump
         {
             auto const pos = std::bit_floor(std::min(dist, jumpPts.back()));
             auto const &jumpList = jumps[std::bit_width(pos) - jumpOffset];

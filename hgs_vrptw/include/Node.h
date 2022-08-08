@@ -10,16 +10,15 @@ class Node
 public:  // TODO make fields private
     Params const *params;
 
-    int client;            // Client represented with this node
-    size_t position;       // Position in the route
-    Node *next;            // Next node in the route order
-    Node *prev;            // Previous node in the route order
-    Route *route;          // Pointer towards the associated route
-    int cumulatedLoad;     // Cumulative load from depot to client (inclusive)
+    int client;       // Client represented with this node
+    size_t position;  // Position in the route
+    Node *next;       // Next node in the route order
+    Node *prev;       // Previous node in the route order
+    Route *route;     // Pointer towards the associated route
 
-    // Distance difference if the segment (0...client) is reversed. This is
-    // useful for 2-OPT moves in asymmetric problems.
-    int cumulatedReversalDistance;
+    // These fields are used for 2-OPT moves
+    int cumulatedLoad;              // Load from depot to client (inclusive)
+    int cumulatedReversalDistance;  // Distance if (0 .. client) is reversed
 
     TimeWindowSegment tw;        // TWS for individual node (client)
     TimeWindowSegment twBefore;  // TWS for (0...client) including self

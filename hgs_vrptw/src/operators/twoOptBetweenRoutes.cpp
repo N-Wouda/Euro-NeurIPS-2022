@@ -48,19 +48,19 @@ bool twoOptBetweenRoutes(Node *U, Node *V, Penalties const &penalties)
     auto *insertLocation = U;
     while (!itRouteV->isDepot())
     {
-        auto *current = itRouteV;
+        auto *node = itRouteV;
         itRouteV = n(itRouteV);
-        current->insertAfter(insertLocation);
-        insertLocation = current;
+        node->insertAfter(insertLocation);
+        insertLocation = node;
     }
 
     insertLocation = V;
     while (!itRouteU->isDepot())
     {
-        auto *current = itRouteU;
+        auto *node = itRouteU;
         itRouteU = n(itRouteU);
-        current->insertAfter(insertLocation);
-        insertLocation = current;
+        node->insertAfter(insertLocation);
+        insertLocation = node;
     }
 
     return true;
