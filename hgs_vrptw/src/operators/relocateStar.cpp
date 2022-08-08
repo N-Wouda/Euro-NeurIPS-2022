@@ -6,8 +6,7 @@ bool relocateStar(Route *routeU, Route *routeV, Penalties const &penalties)
     Node *insertionPoint = nullptr;
     Node *nodeToInsert = nullptr;
 
-    auto eval = [&](auto *U, auto *V)
-    {
+    auto eval = [&](auto *U, auto *V) {
         int const deltaCost = operators::singleMoveCost(U, V, penalties);
 
         if (deltaCost < bestCost)
