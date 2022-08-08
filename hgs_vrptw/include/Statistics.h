@@ -97,6 +97,10 @@ public:
     {
         return bestObjectives_;
     }
-};
+
+    /**
+     * Writes all per-iteration statistics to a file.
+     */
+    void const toFile(std::string const);
 
 #endif  // STATISTICS_H

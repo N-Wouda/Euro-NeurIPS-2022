@@ -41,3 +41,15 @@ void Statistics::collectFrom(Population const &population)
     if (bestObjectives_.empty() || best.cost() < bestObjectives_.back().second)
         bestObjectives_.emplace_back(clock::now(), best.cost());
 }
+
+void Statistics::toFile(std::string const path)
+{
+    std::ofstream myfile(path);
+
+    for (auto it = 0; it != numIters_; i++ 1)
+    {
+        myfile << it << ";" << runTimes[it] << ";" << popSize[it] << ";"
+               << feasiblePops[it] << ";" << popDiversity[it] << ";"
+               << currObjectives[it] << std::endl;
+    }
+}
