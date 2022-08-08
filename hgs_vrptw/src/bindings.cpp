@@ -205,5 +205,4 @@ PYBIND11_MODULE(hgspy, m)
 
     lsOps.def("relocate_star", &relocateStar);
     lsOps.def("swap_star", &swapStar);
->>>>>>> main
 }
