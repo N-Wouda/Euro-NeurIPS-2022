@@ -25,7 +25,7 @@ struct CircleSector
         return (i % 65536 + 65536) % 65536;
     }
 
-    static int positive_mod(CircleSector sector)
+    static int positive_mod(CircleSector const &sector)
     {
         return positive_mod(sector.end - sector.start);
     }

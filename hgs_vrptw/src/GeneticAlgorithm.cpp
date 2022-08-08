@@ -61,7 +61,9 @@ Result GeneticAlgorithm::runUntil(clock::time_point const &timePoint)
 Individual GeneticAlgorithm::crossover() const
 {
     auto const parents = population.selectParents();
+
     std::vector<Individual> offspring;
+    offspring.reserve(operators.size());
 
     for (auto const &op : operators)
         offspring.push_back(op(parents, params, rng));
@@ -84,8 +86,8 @@ void GeneticAlgorithm::educate(Individual &indiv)
         && rng.randint(100) < params.config.repairProbability)
     {
         localSearch(indiv,  // re-run, but penalise infeasibility more
-                    10 * params.penaltyCapacity,
-                    10 * params.penaltyTimeWarp);
+                    params.config.repairBooster * params.penaltyCapacity,
+                    params.config.repairBooster * params.penaltyTimeWarp);
 
         if (indiv.isFeasible())
             // TODO should we also register this individual in the load/time
@@ -98,8 +100,8 @@ void GeneticAlgorithm::updatePenalties()
 {
     auto compute = [&](double currFeas, double currPenalty) {
         // +- 1 to ensure we do not get stuck at the same integer values.
-        if (currFeas < 0.01 && params.config.penaltyBooster > 0)
-            currPenalty = params.config.penaltyBooster * currPenalty + 1;
+        if (currFeas < 0.01 && params.config.feasBooster > 0)
+            currPenalty = params.config.feasBooster * currPenalty + 1;
         else if (currFeas < params.config.targetFeasible - 0.05)
             currPenalty = params.config.penaltyIncrease * currPenalty + 1;
         else if (currFeas > params.config.targetFeasible + 0.05)

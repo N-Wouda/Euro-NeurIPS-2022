@@ -59,8 +59,8 @@ public:
             else if (std::string(argv[i]) == "-initialTimeWarpPenalty")
                 config.initialTimeWarpPenalty
                     = static_cast<size_t>(atoi(argv[i + 1]));
-            else if (std::string(argv[i]) == "-penaltyBooster")
-                config.penaltyBooster = atof(argv[i + 1]);
+            else if (std::string(argv[i]) == "-feasBooster")
+                config.feasBooster = atof(argv[i + 1]);
             else if (std::string(argv[i]) == "-minimumPopulationSize")
                 config.minimumPopulationSize
                     = static_cast<size_t>(atoi(argv[i + 1]));
@@ -73,7 +73,10 @@ public:
             else if (std::string(argv[i]) == "-targetFeasible")
                 config.targetFeasible = atof(argv[i + 1]);
             else if (std::string(argv[i]) == "-repairProbability")
-                config.repairProbability = atoi(argv[i + 1]);
+                config.repairProbability
+                    = static_cast<size_t>(atoi(argv[i + 1]));
+            else if (std::string(argv[i]) == "-repairBooster")
+                config.repairBooster = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-intensificationProbability")
                 config.intensificationProbability = atoi(argv[i + 1]);
             else if (std::string(argv[i]) == "-diversityWeight")

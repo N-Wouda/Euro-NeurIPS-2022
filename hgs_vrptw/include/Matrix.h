@@ -7,11 +7,11 @@
 // This class is used because a flat vector is faster than a vector of vectors
 // which requires two lookup operations rather than one to index a matrix
 // element
-class Matrix
+template <typename T> class Matrix
 {
-    size_t cols_;            // The number of columns of the matrix
-    std::vector<int> data_;  // The vector where all the data is stored (this
-                             // represents the matrix)
+    size_t cols_;          // The number of columns of the matrix
+    std::vector<T> data_;  // The vector where all the data is stored (this
+                           // represents the matrix)
 
 public:
     // Empty constructor: with zero columns and a vector of size zero
@@ -24,20 +24,22 @@ public:
     {
     }
 
-    [[nodiscard]] inline int &operator()(size_t row, size_t col)
+    [[nodiscard]] inline T &operator()(size_t row, size_t col)
     {
         return data_[cols_ * row + col];
     }
 
-    [[nodiscard]] inline int operator()(size_t row, size_t col) const
+    [[nodiscard]] inline T operator()(size_t row, size_t col) const
     {
         return data_[cols_ * row + col];
     }
 
-    [[nodiscard]] int max() const
+    [[nodiscard]] T max() const
     {
         return *std::max_element(data_.begin(), data_.end());
     }
+
+    [[nodiscard]] size_t size() const { return data_.size(); }
 };
 
 #endif

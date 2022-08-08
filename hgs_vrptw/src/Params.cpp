@@ -3,9 +3,9 @@
 #include "CircleSector.h"
 #include "Matrix.h"
 #include "XorShift128.h"
+#include "math.h"
 
 #include <algorithm>
-#include <cmath>
 #include <fstream>
 #include <numeric>
 #include <set>
@@ -75,8 +75,8 @@ Params::Params(Config const &config, std::string const &instPath)
             clients[nbClients].servDur *= 10;
             clients[nbClients].angle = CircleSector::positive_mod(
                 static_cast<int>(32768.
-                                 * atan2(clients[nbClients].y - clients[0].y,
-                                         clients[nbClients].x - clients[0].x)
+                                 * fatan2(clients[nbClients].y - clients[0].y,
+                                          clients[nbClients].x - clients[0].x)
                                  / M_PI));
 
             // Keep track of the max demand, the total demand, and the
@@ -153,16 +153,14 @@ Params::Params(Config const &config, std::string const &instPath)
             // Read the edge weights of an explicit distance matrix
             else if (content == "EDGE_WEIGHT_SECTION")
             {
-                dist = Matrix(nbClients + 1);
+                dist_ = Matrix<int>(nbClients + 1);
                 for (int i = 0; i <= nbClients; i++)
                 {
                     for (int j = 0; j <= nbClients; j++)
                     {
                         // Keep track of the largest distance between two
                         // clients (or the depot)
-                        int cost;
-                        inputFile >> cost;
-                        dist(i, j) = cost;
+                        inputFile >> dist(i, j);
                     }
                 }
             }
@@ -185,8 +183,8 @@ Params::Params(Config const &config, std::string const &instPath)
                     clients[i].custNum--;
                     clients[i].angle = CircleSector::positive_mod(
                         static_cast<int>(32768.
-                                         * atan2(clients[i].y - clients[0].y,
-                                                 clients[i].x - clients[0].x)
+                                         * fatan2(clients[i].y - clients[0].y,
+                                                  clients[i].x - clients[0].x)
                                          / M_PI));
                 }
             }
@@ -335,7 +333,7 @@ Params::Params(Config const &config, std::string const &instPath)
         nbVehicles = nbClients;
     }
 
-    int maxDist = dist.max();
+    int maxDist = dist_.max();
 
     // Calculate, for all vertices, the correlation for the nbGranular closest
     // vertices
@@ -387,7 +385,7 @@ Params::Params(Config const &config,
     auto const vehicleMargin = std::ceil(1.3 * totalDemand / vehicleCapacity);
     nbVehicles = static_cast<int>(vehicleMargin) + 3;
 
-    dist = Matrix(distMat.size());
+    dist_ = Matrix<int>(distMat.size());
 
     for (size_t i = 0; i != distMat.size(); ++i)
         for (size_t j = 0; j != distMat[i].size(); ++j)
@@ -395,7 +393,7 @@ Params::Params(Config const &config,
 
     // A reasonable scale for the initial values of the penalties
     int maxDemand = *std::max_element(demands.begin(), demands.end());
-    penaltyCapacity = std::max(1, std::min(1000, dist.max() / maxDemand));
+    penaltyCapacity = std::max(1, std::min(1000, dist_.max() / maxDemand));
 
     // Initial parameter values of this parameter is not argued
     penaltyTimeWarp = static_cast<int>(config.initialTimeWarpPenalty);
@@ -406,8 +404,8 @@ Params::Params(Config const &config,
     {
         auto const angle = CircleSector::positive_mod(
             static_cast<int>(32768.
-                             * atan2(clients[nbClients].y - coords[idx].second,
-                                     clients[nbClients].x - coords[idx].first)
+                             * fatan2(clients[nbClients].y - coords[idx].second,
+                                      clients[nbClients].x - coords[idx].first)
                              / M_PI));
 
         clients[idx] = {static_cast<int>(idx + 1),

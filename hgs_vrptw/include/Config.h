@@ -20,16 +20,18 @@ struct Config
     size_t initialTimeWarpPenalty = 1;
 
     size_t nbPenaltyManagement = 100;  // manage penalties every # iterations
-    double penaltyBooster = 2.0;       // special increase penalty if no feas
+    double feasBooster = 2.0;          // special increase penalty if no feas
     double penaltyIncrease = 1.2;      // regular increase if below target feas
     double penaltyDecrease = 0.85;     // regular decrease if above target feas
 
     size_t minimumPopulationSize = 25;
-    size_t generationSize = 40;     // max size before culling a generation
-    size_t nbElite = 4;             // number of elite individuals in pop
-    size_t nbClose = 5;             // # individuals when calculating diversity
-    double targetFeasible = 0.2;    // target feasible pop fraction
+    size_t generationSize = 40;   // max size before culling a generation
+    size_t nbElite = 4;           // number of elite individuals in pop
+    size_t nbClose = 5;           // # individuals when calculating diversity
+    double targetFeasible = 0.2;  // target feasible pop fraction
+
     size_t repairProbability = 50;  // probability of repair if infeasible
+    size_t repairBooster = 10;      // penalty booster when repairing
 
     // Weight for diversity criterion. If 0, weight is set to 1 - nbElite /
     // populationSize
@@ -62,7 +64,7 @@ struct Config
                     bool collectStatistics = false,
                     size_t initialTimeWarpPenalty = 1,
                     size_t nbPenaltyManagement = 100,
-                    double penaltyBooster = 2.,
+                    double feasBooster = 2.,
                     double penaltyIncrease = 1.2,
                     double penaltyDecrease = 0.85,
                     size_t minimumPopulationSize = 25,
@@ -71,6 +73,7 @@ struct Config
                     size_t nbClose = 5,
                     double targetFeasible = 0.2,
                     size_t repairProbability = 50,
+                    size_t repairBooster = 10,
                     double diversityWeight = 0.,
                     int nbVeh = INT_MAX,
                     size_t nbGranular = 40,
@@ -85,7 +88,7 @@ struct Config
           collectStatistics(collectStatistics),
           initialTimeWarpPenalty(initialTimeWarpPenalty),
           nbPenaltyManagement(nbPenaltyManagement),
-          penaltyBooster(penaltyBooster),
+          feasBooster(feasBooster),
           penaltyIncrease(penaltyIncrease),
           penaltyDecrease(penaltyDecrease),
           minimumPopulationSize(minimumPopulationSize),
@@ -94,6 +97,7 @@ struct Config
           nbClose(nbClose),
           targetFeasible(targetFeasible),
           repairProbability(repairProbability),
+          repairBooster(repairBooster),
           diversityWeight(diversityWeight),
           nbVeh(nbVeh),
           nbGranular(nbGranular),
