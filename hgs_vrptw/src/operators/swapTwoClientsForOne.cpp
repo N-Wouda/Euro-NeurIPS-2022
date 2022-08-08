@@ -8,7 +8,7 @@ bool swapTwoClientsForOne(Node *U, Node *V, Penalties const &penalties)
 
     auto const &params = *U->params;
 
-    if (U == p(V) || n(U) == p(V) || U == n(V) || n(U)->isDepot)
+    if (U == p(V) || n(U) == p(V) || U == n(V) || n(U)->isDepot())
         return false;
 
     int const current

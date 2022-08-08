@@ -57,7 +57,7 @@ preprocess(Route *R1, Route *R2, Penalties const &penalties)
     auto const &params = *R1->params;
     std::vector<ThreeBest> from2to;  // stores insertion points for each node
 
-    for (Node *U = n(R1->depot); !U->isDepot; U = n(U))
+    for (Node *U = n(R1->depot); !U->isDepot(); U = n(U))
     {
         auto &currentOption = from2to.emplace_back();
 
@@ -86,7 +86,7 @@ preprocess(Route *R1, Route *R2, Penalties const &penalties)
 
         currentOption.maybeAdd(cost - deltaRemoval, R2->depot);
 
-        for (Node *V = n(R2->depot); !V->isDepot; V = n(V))
+        for (Node *V = n(R2->depot); !V->isDepot(); V = n(V))
         {
             twData = TWS::merge(V->twBefore, U->tw, n(V)->twAfter);
             int deltaCost = params.dist(V->client, U->client, n(V)->client)
@@ -153,11 +153,11 @@ bool swapStar(Route *routeU, Route *routeV, Penalties const &penalties)
     auto const &params = *routeU->params;
     BestMove best;
 
-    for (Node *U = n(routeU->depot); !U->isDepot; U = n(U))
+    for (Node *U = n(routeU->depot); !U->isDepot(); U = n(U))
     {
         auto const &bestU = u2v[U->position - 1];
 
-        for (Node *V = n(routeV->depot); !V->isDepot; V = n(V))
+        for (Node *V = n(routeV->depot); !V->isDepot(); V = n(V))
         {
             auto const &bestV = v2u[V->position - 1];
 

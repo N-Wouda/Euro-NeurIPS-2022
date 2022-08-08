@@ -3,7 +3,7 @@
 #include "CircleSector.h"
 #include "Matrix.h"
 #include "XorShift128.h"
-#include "math.h"
+#include "fatan.h"
 
 #include <algorithm>
 #include <fstream>

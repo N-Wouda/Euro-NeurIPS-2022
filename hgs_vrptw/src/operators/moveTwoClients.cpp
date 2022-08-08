@@ -8,7 +8,7 @@ bool moveTwoClients(Node *U, Node *V, Penalties const &penalties)
 
     auto const &params = *U->params;
 
-    if (U == n(V) || V == n(U) || n(U)->isDepot)
+    if (U == n(V) || V == n(U) || n(U)->isDepot())
         return false;
 
     int const current

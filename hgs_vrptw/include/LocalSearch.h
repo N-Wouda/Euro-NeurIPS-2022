@@ -23,7 +23,6 @@ class LocalSearch
     std::vector<int> orderNodes;   // random node order used in RI operators
     std::vector<int> orderRoutes;  // random route order used in SWAP* operators
 
-    /* THE SOLUTION IS REPRESENTED AS A LINKED LIST OF ELEMENTS */
     std::vector<Node> clients;      // Note that clients[0] is a sentinel value
     std::vector<Node> startDepots;  // These mark the start of routes
     std::vector<Node> endDepots;    // These mark the end of routes
@@ -33,7 +32,7 @@ class LocalSearch
     std::vector<routeOp> routeOps;
 
     int nbMoves = 0;               // Operator (RI and SWAP*) counter
-    bool searchCompleted = false;  // No further improving move?
+    bool searchCompleted = false;  // No further improving move found?
 
     // Load an initial solution that we will attempt to improve
     void loadIndividual(Individual const &indiv);

@@ -1,5 +1,5 @@
 #include "Route.h"
-#include "math.h"
+#include "fatan.h"
 
 #include <bit>
 #include <cassert>
@@ -31,7 +31,7 @@ void Route::update(int nbMoves, Penalties const &penalties)
     node->cumulatedLoad = 0;
     node->cumulatedReversalDistance = 0;
 
-    if (!node->next->isDepot)
+    if (!node->next->isDepot())
         sector.initialize(params->clients[node->next->client].angle);
 
     do
@@ -51,7 +51,7 @@ void Route::update(int nbMoves, Penalties const &penalties)
 
         node->twBefore = TWS::merge(node->prev->twBefore, node->tw);
 
-        if (!node->isDepot)
+        if (!node->isDepot())
         {
             cumulatedX += params->clients[node->client].x;
             cumulatedY += params->clients[node->client].y;
@@ -60,7 +60,7 @@ void Route::update(int nbMoves, Penalties const &penalties)
         }
 
         installJumpPoints(node);
-    } while (!node->isDepot);
+    } while (!node->isDepot());
 
     twData = node->twBefore;
     penalty = penalties.load(load) + penalties.timeWarp(this->twData);
@@ -75,7 +75,7 @@ void Route::update(int nbMoves, Penalties const &penalties)
     {
         node = node->prev;
         node->twAfter = TWS::merge(node->tw, node->next->twAfter);
-    } while (!node->isDepot);
+    } while (!node->isDepot());
 
     if (empty())
     {
@@ -107,10 +107,10 @@ TimeWindowSegment Route::twBetween(Node const *start, Node const *end)
     assert(start->route == end->route);
     assert(start->position <= end->position);
 
-    if (start->isDepot)
+    if (start->isDepot())
         return end->twBefore;
 
-    if (end->isDepot)
+    if (end->isDepot())
         return start->twAfter;
 
     Node const *node = start;
