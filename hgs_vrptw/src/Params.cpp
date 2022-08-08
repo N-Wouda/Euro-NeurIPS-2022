@@ -76,7 +76,7 @@ Params::Params(Config const &config, std::string const &instPath)
             clients[nbClients].angle = CircleSector::positive_mod(
                 static_cast<int>(32768.
                                  * atan2(clients[nbClients].y - clients[0].y,
-                                          clients[nbClients].x - clients[0].x)
+                                         clients[nbClients].x - clients[0].x)
                                  / M_PI));
 
             // Keep track of the max demand, the total demand, and the
@@ -184,7 +184,7 @@ Params::Params(Config const &config, std::string const &instPath)
                     clients[i].angle = CircleSector::positive_mod(
                         static_cast<int>(32768.
                                          * atan2(clients[i].y - clients[0].y,
-                                                  clients[i].x - clients[0].x)
+                                                 clients[i].x - clients[0].x)
                                          / M_PI));
                 }
             }
@@ -405,7 +405,7 @@ Params::Params(Config const &config,
         auto const angle = CircleSector::positive_mod(
             static_cast<int>(32768.
                              * atan2(clients[nbClients].y - coords[idx].second,
-                                      clients[nbClients].x - coords[idx].first)
+                                     clients[nbClients].x - coords[idx].first)
                              / M_PI));
 
         clients[idx] = {static_cast<int>(idx + 1),
