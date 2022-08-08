@@ -270,7 +270,9 @@ Individual LocalSearch::exportIndividual()
 }
 
 LocalSearch::LocalSearch(Params &params, XorShift128 &rng)
-    : penalties{&params, params.penaltyCapacity, params.penaltyTimeWarp},
+    : penalties{params.vehicleCapacity,
+                params.penaltyCapacity,
+                params.penaltyTimeWarp},
       params(params),
       rng(rng),
       orderNodes(params.nbClients),
