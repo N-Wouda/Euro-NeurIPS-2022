@@ -116,59 +116,6 @@ void removeClients(Routes &routes, ClientSet const &clients)
     }
 }
 
-std::vector<int>
-sortClients(ClientSet const &clientSet, Params const &params, XorShift128 &rng)
-{
-    std::vector clients(clientSet.begin(), clientSet.end());
-    std::vector<int> indices(clients.size());
-    std::iota(indices.begin(), indices.end(), 0);
-
-    auto const highestDemand = [&](int A, int B) {
-        return params.clients[A].demand > params.clients[B].demand;
-    };
-
-    auto const furtherToDepot
-        = [&](int A, int B) { return params.dist(0, A) > params.dist(0, B); };
-
-    auto const closestToDepot
-        = [&](int A, int B) { return params.dist(0, A) < params.dist(0, B); };
-
-    auto const largestTw = [&](int A, int B) {
-        return params.clients[A].twLate - params.clients[A].twEarly
-               > params.clients[B].twLate - params.clients[B].twEarly;
-    };
-
-    auto const smallestTwEarly = [&](int A, int B) {
-        return params.clients[A].twEarly < params.clients[B].twEarly;
-    };
-
-    auto const smallestTwLate = [&](int A, int B) {
-        return params.clients[A].twLate < params.clients[B].twEarly;
-    };
-
-    // TODO How to make this non-uniform?
-    auto const draw = rng.randint(7);
-    if (draw == 1)
-        std::shuffle(indices.begin(), indices.end(), rng);
-    else if (draw == 2)
-        std::sort(indices.begin(), indices.end(), highestDemand);
-    else if (draw == 3)
-        std::sort(indices.begin(), indices.end(), furtherToDepot);
-    else if (draw == 4)
-        std::sort(indices.begin(), indices.end(), closestToDepot);
-    else if (draw == 5)
-        std::sort(indices.begin(), indices.end(), largestTw);
-    else if (draw == 6)
-        std::sort(indices.begin(), indices.end(), smallestTwEarly);
-    else if (draw == 7)
-        std::sort(indices.begin(), indices.end(), smallestTwLate);
-
-    std::vector<int> sortedClients;
-    for (auto idx : indices)
-        sortedClients.push_back(clients[idx]);
-
-    return sortedClients;
-}
 }  // namespace
 
 Individual stringRemovalExchange(Parents const &parents,
@@ -188,12 +135,13 @@ Individual stringRemovalExchange(Parents const &parents,
     removeClients(destroyed1, removed2);
     removeClients(destroyed2, removed1);
 
-    auto removedSet = removed1;
-    removedSet.insert(removed2.begin(), removed2.end());
-    auto const removed = sortClients(removedSet, params, rng);
+    auto removed = std::vector<Client>(removed1.begin(), removed2.end());
+    for (Client c : removed2)
+        if (!removed1.contains(c))
+            removed.push_back(c);
 
-    crossover::greedyRepair(destroyed1, removed, params);
-    crossover::greedyRepair(destroyed2, removed, params);
+    crossover::greedyRepair(destroyed1, removed, params, rng);
+    crossover::greedyRepair(destroyed2, removed, params, rng);
 
     Individual indiv1{&params, destroyed1};
     Individual indiv2{&params, destroyed2};

@@ -49,8 +49,9 @@ namespace crossover
  * Greedily inserts the unplanned clients back into the routes.
  */
 void greedyRepair(std::vector<std::vector<int>> &routes,
-                  std::vector<int> const &unplanned,
-                  Params const &params);
+                  std::vector<int> &unplanned,
+                  Params const &params,
+                  XorShift128 &rng);
 
 }  // namespace crossover
 #endif  // CROSSOVER_H

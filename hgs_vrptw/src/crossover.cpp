@@ -40,9 +40,12 @@ int deltaCost(Client client, Client prev, Client next, Params const &params)
 }  // namespace
 
 void crossover::greedyRepair(Routes &routes,
-                             Clients const &unplanned,
-                             Params const &params)
+                             Clients &unplanned,
+                             Params const &params,
+                             XorShift128 &rng)
 {
+    std::shuffle(unplanned.begin(), unplanned.end(), rng);
+
     for (Client client : unplanned)
     {
         InsertPos best = {INT_MAX, &routes.front(), 0};
