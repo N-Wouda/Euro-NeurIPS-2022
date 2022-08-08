@@ -42,13 +42,9 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
                                            Params const &params,
                                            XorShift128 &rng)
 {
-    // Compute the maximum string size to be removed
-    size_t avgRouteSize = 0;
-
-    for (auto &route : routes)
-        avgRouteSize += route.size();
-    avgRouteSize = avgRouteSize / routes.size();
-
+    auto op = [&](size_t s, auto &r) { return s + r.size(); };
+    size_t avgRouteSize
+        = std::accumulate(routes.begin(), routes.end(), 0, op) / routes.size();
     auto const maxSize = std::min(params.config.maxStringSize, avgRouteSize);
 
     // Compute the number of strings to remove
@@ -218,11 +214,8 @@ Individual stringRemovalExchange(Parents const &parents,
     removedSet.insert(removed2.begin(), removed2.end());
     auto const removed = sortClients(removedSet, params, rng);
 
-    auto const blinkRate = params.config.blinkRate;
-    crossover::greedyRepairWithBlinks(
-        destroyed1, removed, blinkRate, params, rng);
-    crossover::greedyRepairWithBlinks(
-        destroyed2, removed, blinkRate, params, rng);
+    crossover::greedyRepair(destroyed1, removed, params);
+    crossover::greedyRepair(destroyed2, removed, params);
 
     Individual indiv1{&params, destroyed1};
     Individual indiv2{&params, destroyed2};

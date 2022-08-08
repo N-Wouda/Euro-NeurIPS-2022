@@ -39,11 +39,9 @@ int deltaCost(Client client, Client prev, Client next, Params const &params)
 }
 }  // namespace
 
-void crossover::greedyRepairWithBlinks(Routes &routes,
-                                       Clients const &unplanned,
-                                       size_t blinkRate,
-                                       Params const &params,
-                                       XorShift128 &rng)
+void crossover::greedyRepair(Routes &routes,
+                             Clients const &unplanned,
+                             Params const &params)
 {
     for (Client client : unplanned)
     {
@@ -56,9 +54,6 @@ void crossover::greedyRepairWithBlinks(Routes &routes,
 
             for (size_t idx = 0; idx <= route.size(); ++idx)
             {
-                if (rng.randint(100) < blinkRate)
-                    continue;
-
                 Client prev, next;
                 if (idx == 0)  // Currently depot -> [0]. Try depot -> client
                 {              // -> [0].

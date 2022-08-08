@@ -74,7 +74,6 @@ PYBIND11_MODULE(hgspy, m)
                       size_t,
                       size_t,
                       size_t,
-                      size_t,
                       size_t>(),
              py::arg("seed") = 0,
              py::arg("nbIter") = 20'000,
@@ -102,8 +101,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("avgDestruction") = 10,
              py::arg("maxStringSize") = 10,
              py::arg("splitRate") = 50,
-             py::arg("splitDepth") = 1,
-             py::arg("blinkRate") = 1)
+             py::arg("splitDepth") = 25)
         .def_readonly("seed", &Config::seed)
         .def_readonly("nbIter", &Config::nbIter)
         .def_readonly("timeLimit", &Config::timeLimit)
@@ -132,8 +130,7 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("avgDestruction", &Config::avgDestruction)
         .def_readonly("maxStringSize", &Config::maxStringSize)
         .def_readonly("splitRate", &Config::splitRate)
-        .def_readonly("splitDepth", &Config::splitDepth)
-        .def_readonly("blinkRate", &Config::blinkRate);
+        .def_readonly("splitDepth", &Config::splitDepth);
 
     py::class_<Params>(m, "Params")
         .def(py::init<Config const &,

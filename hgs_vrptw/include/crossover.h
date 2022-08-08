@@ -32,8 +32,7 @@ Individual selectiveRouteExchange(
  * first removes strings of clients from each parent based on "Slack Induction
  * String Removals (SISRs)" [1]. Removed clients from one parent are then
  * also removed from the other parent. Both parents are repaired to complete
- * solutions by greedily re-inserting the unplanned clients, while randomly
- * skipping insertion positions.
+ * solutions by greedily re-inserting the unplanned clients.
  * <br />
  * [1]: Christiaens, J., & Vanden Berghe, G. (2020). Slack induction by string
  * removals for vehicle routing problems. Transportation Science, 54(2),
@@ -47,13 +46,11 @@ Individual stringRemovalExchange(
 namespace crossover
 {
 /**
- * Greedily inserts the unplanned clients into the routes, while skipping
- * positions with probability blinkRate (see stringRemovalExchange).
+ * Greedily inserts the unplanned clients back into the routes.
  */
-void greedyRepairWithBlinks(std::vector<std::vector<int>> &routes,
-                            std::vector<int> const &unplanned,
-                            size_t blinkRate,
-                            Params const &params,
-                            XorShift128 &rng);
+void greedyRepair(std::vector<std::vector<int>> &routes,
+                  std::vector<int> const &unplanned,
+                  Params const &params);
+
 }  // namespace crossover
 #endif  // CROSSOVER_H
