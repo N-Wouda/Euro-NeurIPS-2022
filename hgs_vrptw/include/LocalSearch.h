@@ -65,12 +65,12 @@ public:
      * Performs the local search procedure around the given individual, using
      * the passed-in penalty parameters.
      *
-     * @param indiv                  Individual to improve.
-     * @param excessCapacityPenalty  Excess capacity penalty.
-     * @param timeWarpPenalty        Penalty for violated time windows.
+     * @param indiv           Individual to improve.
+     * @param loadPenalty     Excess load penalty.
+     * @param timeWarpPenalty Penalty for violated time windows.
      */
     void operator()(Individual &indiv,
-                    int excessCapacityPenalty,
+                    int loadPenalty,
                     int timeWarpPenalty);
 
     LocalSearch(Params &params, XorShift128 &rng);

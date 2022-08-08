@@ -8,10 +8,10 @@
 #include <vector>
 
 void LocalSearch::operator()(Individual &indiv,
-                             int excessCapacityPenalty,
+                             int loadPenalty,
                              int timeWarpPenalty)
 {
-    penalties = {&params, excessCapacityPenalty, timeWarpPenalty};
+    penalties = {params.vehicleCapacity, loadPenalty, timeWarpPenalty};
 
     // Shuffling the node order beforehand adds diversity to the search
     std::shuffle(orderNodes.begin(), orderNodes.end(), rng);
