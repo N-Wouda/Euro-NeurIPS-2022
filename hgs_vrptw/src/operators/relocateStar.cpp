@@ -6,18 +6,25 @@ bool relocateStar(Route *routeU, Route *routeV, Penalties const &penalties)
     Node *insertionPoint = nullptr;
     Node *nodeToInsert = nullptr;
 
-    for (auto *U = n(routeU->depot); !U->isDepot; U = n(U))
-        for (auto *V = n(routeV->depot); !V->isDepot; V = n(V))
-        {
-            int deltaCost = operators::singleMoveCost(U, V, penalties);
+    auto eval = [&](auto *U, auto *V)
+    {
+        int const deltaCost = operators::singleMoveCost(U, V, penalties);
 
-            if (deltaCost < bestCost)
-            {
-                bestCost = deltaCost;
-                insertionPoint = V;
-                nodeToInsert = U;
-            }
+        if (deltaCost < bestCost)
+        {
+            bestCost = deltaCost;
+            insertionPoint = V;
+            nodeToInsert = U;
         }
+    };
+
+    for (auto *U = n(routeU->depot); !U->isDepot; U = n(U))
+    {
+        eval(U, routeV->depot);
+
+        for (auto *V = n(routeV->depot); !V->isDepot; V = n(V))
+            eval(U, V);
+    }
 
     if (!insertionPoint)
         return false;

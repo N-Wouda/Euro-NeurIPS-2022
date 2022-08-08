@@ -30,8 +30,8 @@ try
     ls.addNodeOperator(swapTwoClientPairs);
     ls.addNodeOperator(swapTwoClientsForOne);
     ls.addNodeOperator(swapTwoSingleClients);
-    ls.addNodeOperator(twoOptBetweenTrips);
-    ls.addNodeOperator(twoOptWithinTrip);
+    ls.addNodeOperator(twoOptBetweenRoutes);
+    ls.addNodeOperator(twoOptWithinRoute);
 
     ls.addRouteOperator(relocateStar);
     ls.addRouteOperator(swapStar);

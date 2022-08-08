@@ -2,7 +2,7 @@
 
 #include "TimeWindowSegment.h"
 
-bool twoOptBetweenTrips(Node *U, Node *V, Penalties const &penalties)
+bool twoOptBetweenRoutes(Node *U, Node *V, Penalties const &penalties)
 {
     using TWS = TimeWindowSegment;
 

@@ -193,8 +193,8 @@ PYBIND11_MODULE(hgspy, m)
     lsOps.def("swap_two_client_pairs", &swapTwoClientPairs);
     lsOps.def("swap_two_clients_for_one", &swapTwoClientsForOne);
     lsOps.def("swap_two_single_clients", &swapTwoSingleClients);
-    lsOps.def("two_opt_between_trips", &twoOptBetweenTrips);
-    lsOps.def("two_opt_within_trip", &twoOptWithinTrip);
+    lsOps.def("two_opt_between_routes", &twoOptBetweenRoutes);
+    lsOps.def("two_opt_within_route", &twoOptWithinRoute);
 
     lsOps.def("relocate_star", &relocateStar);
     lsOps.def("swap_star", &swapStar);

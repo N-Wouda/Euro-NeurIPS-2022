@@ -48,13 +48,13 @@ bool swapTwoSingleClients(Node *U, Node *V, Penalties const &penalties);
  * move. Assumes U and V do not belong to the same route (if they do, this is a
  * no-op).
  */
-bool twoOptBetweenTrips(Node *U, Node *V, Penalties const &penalties);
+bool twoOptBetweenRoutes(Node *U, Node *V, Penalties const &penalties);
 
 /**
  * Replaces U -> X and V -> Y by U -> V and X -> Y, if that is an improving
  * move. Assumes U and V belong to the same route (if not, this is a no-op).
  */
-bool twoOptWithinTrip(Node *U, Node *V, Penalties const &penalties);
+bool twoOptWithinRoute(Node *U, Node *V, Penalties const &penalties);
 
 /**
  * Performs the best moveSingleClient move between routes U and V.

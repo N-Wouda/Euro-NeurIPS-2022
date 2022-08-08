@@ -17,8 +17,8 @@ set(localSearchSources
         operators/swapTwoClientPairs.cpp
         operators/swapTwoClientsForOne.cpp
         operators/swapTwoSingleClients.cpp
-        operators/twoOptBetweenTrips.cpp
-        operators/twoOptWithinTrip.cpp
+        operators/twoOptBetweenRoutes.cpp
+        operators/twoOptWithinRoute.cpp
         operators/relocateStar.cpp
         operators/swapStar.cpp)
 

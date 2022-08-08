@@ -95,8 +95,8 @@ def solve_static_vrptw(instance, time_limit=3600, seed=1, plot=False):
     ls.add_node_operator(hgspy.operators.swap_two_client_pairs)
     ls.add_node_operator(hgspy.operators.swap_two_clients_for_one)
     ls.add_node_operator(hgspy.operators.swap_two_single_clients)
-    ls.add_node_operator(hgspy.operators.two_opt_between_trips)
-    ls.add_node_operator(hgspy.operators.two_opt_within_trip)
+    ls.add_node_operator(hgspy.operators.two_opt_between_routes)
+    ls.add_node_operator(hgspy.operators.two_opt_within_route)
 
     ls.add_route_operator(hgspy.operators.relocate_star)
     ls.add_route_operator(hgspy.operators.swap_star)
