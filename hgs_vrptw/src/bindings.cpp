@@ -98,7 +98,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("intensificationProbability") = 15,
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
              py::arg("minCircleSectorSizeDegrees") = 15,
-             py::arg("avgDestruction") = 10,
+             py::arg("maxStringRemovals") = 10,
              py::arg("maxStringSize") = 10,
              py::arg("splitRate") = 50,
              py::arg("splitDepth") = 25)
@@ -127,7 +127,7 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("circleSectorOverlapTolerance",
                       &Config::circleSectorOverlapTolerance)
         .def_readonly("minCircleSectorSize", &Config::minCircleSectorSize)
-        .def_readonly("avgDestruction", &Config::avgDestruction)
+        .def_readonly("maxStringRemovals", &Config::maxStringRemovals)
         .def_readonly("maxStringSize", &Config::maxStringSize)
         .def_readonly("splitRate", &Config::splitRate)
         .def_readonly("splitDepth", &Config::splitDepth);

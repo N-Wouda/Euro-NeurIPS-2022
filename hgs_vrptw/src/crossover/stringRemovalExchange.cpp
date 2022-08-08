@@ -48,10 +48,8 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
     auto const maxSize = std::min(params.config.maxStringSize, avgRouteSize);
 
     // Compute the number of strings to remove
-    // NOTE Deviates from original because we use discrete unif distribution
-    auto const maxStringRemovals
-        = (4 * params.config.avgDestruction) / (1 + maxSize) - 1;
-    auto const nbStringRemovals = rng.randint(maxStringRemovals) + 1;
+    auto const nbStringRemovals
+        = rng.randint(params.config.maxStringRemovals) + 1;
 
     std::set<Route> destroyedRoutes;
     ClientSet removedClients;
@@ -131,7 +129,7 @@ void removeClients(Routes &routes, ClientSet const &clients)
 
     for (size_t i = 0; i < orderedClients.size(); i++)
     {
-        auto &client = orderedClients[i];
+        auto client = orderedClients[i];
         auto &route = clientRoutes[i].get();
         auto const position = std::find(route.begin(), route.end(), client);
         route.erase(position);

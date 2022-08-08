@@ -168,7 +168,7 @@ Individual selectiveRouteExchange(
 
     // Insert unplanned clients (those that were in the removed routes of A, but
     // not the inserted routes of B).
-    Route unplanned;
+    std::vector<Client> unplanned;
     for (Client c : selectedA)
         if (!selectedB.contains(c))
             unplanned.push_back(c);
