@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <functional>
 #include <numeric>
-#include <unordered_map>
 #include <unordered_set>
 
 namespace
@@ -18,7 +17,9 @@ using ClientSet = std::unordered_set<Client>;
 using Route = std::vector<Client>;
 using Routes = std::vector<Route>;
 
-// Returns the indices of a random (sub)string that contains the client
+size_t mod(int x, int N) { return (x % N + N) % N; }
+
+// Returns the indices of a string that contains the client
 std::vector<size_t> selectString(Route const &route,
                                  Client const client,
                                  size_t const stringSize,
@@ -27,11 +28,11 @@ std::vector<size_t> selectString(Route const &route,
     auto itr = std::find(route.begin(), route.end(), client);
     auto routePos = std::distance(route.begin(), itr);
     auto stringPos = rng.randint(stringSize);
-    auto startIdx = routePos - stringPos;
+    auto startIdx = routePos - stringPos;  // can become negative
 
     std::vector<size_t> indices;
-    for (size_t i = startIdx; i != startIdx + stringSize; i++)
-        indices.push_back(i % route.size());
+    for (int i = startIdx; i != startIdx + static_cast<int>(stringSize); i++)
+        indices.push_back(mod(i, route.size()));
 
     return indices;
 }
@@ -56,27 +57,31 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
     std::set<Route> destroyedRoutes;
     ClientSet removedClients;
 
-    for (auto client : params.getNeighboursOf(center))
+    auto neighbors = params.getNeighboursOf(center);
+    std::shuffle(neighbors.begin(), neighbors.end(), rng);
+
+    for (auto c : neighbors)
     {
         if (destroyedRoutes.size() >= nbStringRemovals)
             break;
 
-        if (removedClients.contains(client))
+        if (removedClients.contains(c))
             continue;
 
         for (auto &route : routes)
         {
-            if (std::find(route.begin(), route.end(), client) == route.end())
+            if (std::find(route.begin(), route.end(), c) == route.end())
                 continue;
 
             if (destroyedRoutes.contains(route))
                 continue;
 
-            // Remove string from the route
             auto const stringSize
                 = rng.randint(std::min(route.size(), maxStringSize)) + 1;
 
-            auto removalIndices = selectString(route, client, stringSize, rng);
+            // Find the route indices of the string to be removed
+            auto removalIndices = selectString(route, c, stringSize, rng);
+
             std::sort(
                 removalIndices.begin(), removalIndices.end(), std::greater<>());
 
