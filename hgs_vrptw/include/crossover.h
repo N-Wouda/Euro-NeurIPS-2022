@@ -8,6 +8,16 @@
 #include <unordered_set>
 #include <vector>
 
+namespace crossover
+{
+/**
+ * Greedily inserts the unplanned clients into non-empty routes.
+ */
+void greedyRepair(std::vector<std::vector<int>> &routes,
+                  std::unordered_set<int> const &unplanned,
+                  Params const &params);
+}  // namespace crossover
+
 /**
  * Does two ordered crossovers of the given parents (binary tournament). Each
  * crossover randomly selects a subset of clients from the first parent, and the
@@ -48,14 +58,4 @@ Individual stringRemovalExchange(
     Params const &params,
     XorShift128 &rng);
 
-namespace crossover
-{
-/**
- * Greedily inserts the unplanned clients into non-empty routes.
- */
-void greedyRepair(std::vector<std::vector<int>> &routes,
-                  std::unordered_set<int> const &unplanned,
-                  Params const &params);
-
-}  // namespace crossover
 #endif  // CROSSOVER_H
