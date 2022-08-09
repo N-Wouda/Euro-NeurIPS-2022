@@ -2,17 +2,16 @@
 
 #include "Individual.h"
 #include "Params.h"
-#include "TimeWindowSegment.h"
 
 #include <numeric>
 #include <stdexcept>
 #include <vector>
 
 void LocalSearch::operator()(Individual &indiv,
-                             int excessCapacityPenalty,
+                             int loadPenalty,
                              int timeWarpPenalty)
 {
-    penalties = {&params, excessCapacityPenalty, timeWarpPenalty};
+    penalties = {params.vehicleCapacity, loadPenalty, timeWarpPenalty};
 
     // Shuffling the node order beforehand adds diversity to the search
     std::shuffle(orderNodes.begin(), orderNodes.end(), rng);
@@ -34,6 +33,13 @@ void LocalSearch::search()
     searchCompleted = false;
     nbMoves = 0;
 
+    // Caches the last time node or routes were tested for modification (uses
+    // nbMoves to track this). The lastModified field, in contrast, track when
+    // a route was last *actually* modified.
+    std::vector<int> lastTestedNodes(params.nbClients + 1, -1);
+    std::vector<int> lastTestedRoutes(params.nbVehicles, -1);
+    lastModified = std::vector<int>(params.nbVehicles, 0);
+
     for (int step = 0; !searchCompleted; ++step)
     {
         if (step > 1)                // At least two loops as some moves with
@@ -43,8 +49,8 @@ void LocalSearch::search()
         for (int const u : orderNodes)
         {
             Node *nodeU = &clients[u];
-            int lastTestRINodeU = nodeU->whenLastTestedRI;
-            nodeU->whenLastTestedRI = nbMoves;
+            int lastTestedNode = lastTestedNodes[nodeU->client];
+            lastTestedNodes[nodeU->client] = nbMoves;
 
             // Randomizing the order of the neighborhoods within this loop does
             // not matter much as we are already randomizing the order of the
@@ -53,19 +59,19 @@ void LocalSearch::search()
             for (auto const v : params.getNeighboursOf(nodeU->client))
             {
                 Node *nodeV = &clients[v];
-                auto const lastTested
-                    = std::max(nodeU->route->whenLastModified,
-                               nodeV->route->whenLastModified);
+                int lastModifiedRoute
+                    = std::max(lastModified[nodeU->route->idx],
+                               lastModified[nodeV->route->idx]);
 
                 // only evaluate moves involving routes that have been modified
                 // since last move evaluations for nodeU
-                if (step == 0 || lastTested > lastTestRINodeU)
+                if (step == 0 || lastModifiedRoute > lastTestedNode)
                 {
                     if (applyNodeOperators(nodeU, nodeV))
                         continue;
 
                     // Trying moves that insert nodeU directly after the depot
-                    if (nodeV->prev->isDepot
+                    if (nodeV->prev->isDepot()
                         && applyNodeOperators(nodeU, nodeV->prev))
                         continue;
                 }
@@ -96,8 +102,8 @@ void LocalSearch::search()
                 if (routeU.empty())
                     continue;
 
-                int lastTestLargeNbRouteU = routeU.whenLastTestedLargeNb;
-                routeU.whenLastTestedLargeNb = nbMoves;
+                int lastTested = lastTestedRoutes[routeU.idx];
+                lastTestedRoutes[routeU.idx] = nbMoves;
 
                 for (int const rV : orderRoutes)
                 {
@@ -107,9 +113,9 @@ void LocalSearch::search()
                         continue;
 
                     if (step > 0
-                        && std::max(routeU.whenLastModified,
-                                    routeV.whenLastModified)
-                               <= lastTestLargeNbRouteU)
+                        && std::max(lastModified[routeU.idx],
+                                    lastModified[routeV.idx])
+                               <= lastTested)
                         continue;
 
                     if (!routeU.overlapsWith(routeV))
@@ -135,9 +141,14 @@ bool LocalSearch::applyNodeOperators(Node *U, Node *V)
             nbMoves++;
             searchCompleted = false;
 
-            routeU->update(nbMoves, penalties);
+            routeU->update();
+            lastModified[routeU->idx] = nbMoves;
+
             if (routeU != routeV)
-                routeV->update(nbMoves, penalties);
+            {
+                routeV->update();
+                lastModified[routeV->idx] = nbMoves;
+            }
 
             return true;
         }
@@ -154,9 +165,14 @@ bool LocalSearch::applyRouteOperators(Route *U, Route *V)
             nbMoves++;
             searchCompleted = false;
 
-            U->update(nbMoves, penalties);
+            U->update();
+            lastModified[U->idx] = nbMoves;
+
             if (U != V)
-                V->update(nbMoves, penalties);
+            {
+                V->update();
+                lastModified[V->idx] = nbMoves;
+            }
 
             return true;
         }
@@ -166,75 +182,64 @@ bool LocalSearch::applyRouteOperators(Route *U, Route *V)
 
 void LocalSearch::loadIndividual(Individual const &indiv)
 {
-    TimeWindowSegment depotTwData = {&params,
-                                     0,
-                                     0,
-                                     0,
-                                     0,
-                                     params.clients[0].twEarly,
-                                     params.clients[0].twLate,
-                                     params.clients[0].releaseTime};
-
-    // Initializing time window data (before loop since it is needed in update
-    // route)
-    for (int i = 1; i <= params.nbClients; i++)
-    {
-        clients[i].tw = {&params,
-                         i,
-                         i,
-                         params.clients[i].servDur,
-                         0,
-                         params.clients[i].twEarly,
-                         params.clients[i].twLate,
-                         params.clients[i].releaseTime};
-    }
+    for (int client = 0; client <= params.nbClients; client++)
+        clients[client].tw = {&params,
+                              client,
+                              client,
+                              params.clients[client].servDur,
+                              0,
+                              params.clients[client].twEarly,
+                              params.clients[client].twLate,
+                              params.clients[client].releaseTime};
 
     auto const &routesIndiv = indiv.getRoutes();
 
     for (int r = 0; r < params.nbVehicles; r++)
     {
-        Node *myDepot = &startDepots[r];
-        Node *myDepotFin = &endDepots[r];
-        Route *myRoute = &routes[r];
-        myDepot->prev = myDepotFin;
-        myDepotFin->next = myDepot;
+        Node *startDepot = &startDepots[r];
+        Node *endDepot = &endDepots[r];
+
+        startDepot->prev = endDepot;
+        startDepot->next = endDepot;
+
+        endDepot->prev = startDepot;
+        endDepot->next = startDepot;
+
+        startDepot->tw = clients[0].tw;
+        startDepot->twBefore = clients[0].tw;
+        startDepot->twAfter = clients[0].tw;
+
+        endDepot->tw = clients[0].tw;
+        endDepot->twBefore = clients[0].tw;
+        endDepot->twAfter = clients[0].tw;
+
+        Route *route = &routes[r];
+
         if (!routesIndiv[r].empty())
         {
-            Node *myClient = &clients[routesIndiv[r][0]];
-            myClient->route = myRoute;
-            myClient->prev = myDepot;
-            myDepot->next = myClient;
+            Node *client = &clients[routesIndiv[r][0]];
+            client->route = route;
+
+            client->prev = startDepot;
+            startDepot->next = client;
+
             for (int i = 1; i < static_cast<int>(routesIndiv[r].size()); i++)
             {
-                Node *myClientPred = myClient;
-                myClient = &clients[routesIndiv[r][i]];
-                myClient->prev = myClientPred;
-                myClientPred->next = myClient;
-                myClient->route = myRoute;
+                Node *prev = client;
+
+                client = &clients[routesIndiv[r][i]];
+                client->route = route;
+
+                client->prev = prev;
+                prev->next = client;
             }
-            myClient->next = myDepotFin;
-            myDepotFin->prev = myClient;
-        }
-        else
-        {
-            myDepot->next = myDepotFin;
-            myDepotFin->prev = myDepot;
+
+            client->next = endDepot;
+            endDepot->prev = client;
         }
 
-        myDepot->tw = depotTwData;
-        myDepot->twBefore = depotTwData;
-        myDepot->twAfter = depotTwData;
-
-        myDepotFin->tw = depotTwData;
-        myDepotFin->twBefore = depotTwData;
-        myDepotFin->twAfter = depotTwData;
-
-        routes[r].update(0, penalties);
-        routes[r].whenLastTestedLargeNb = -1;
+        route->update();
     }
-
-    for (int i = 1; i <= params.nbClients; i++)
-        clients[i].whenLastTestedRI = -1;
 }
 
 Individual LocalSearch::exportIndividual()
@@ -254,7 +259,7 @@ Individual LocalSearch::exportIndividual()
     {
         Node *node = startDepots[routePolarAngles[r].second].next;
 
-        while (!node->isDepot)
+        while (!node->isDepot())
         {
             indivRoutes[r].push_back(node->client);
             node = node->next;
@@ -265,12 +270,18 @@ Individual LocalSearch::exportIndividual()
 }
 
 LocalSearch::LocalSearch(Params &params, XorShift128 &rng)
-    : penalties{&params, params.penaltyCapacity, params.penaltyTimeWarp},
+    : penalties{params.vehicleCapacity,
+                params.penaltyCapacity,
+                params.penaltyTimeWarp},
       params(params),
       rng(rng),
       orderNodes(params.nbClients),
-      orderRoutes(params.nbVehicles)
+      orderRoutes(params.nbVehicles),
+      lastModified(params.nbVehicles, -1)
 {
+    std::iota(orderNodes.begin(), orderNodes.end(), 1);
+    std::iota(orderRoutes.begin(), orderRoutes.end(), 0);
+
     clients = std::vector<Node>(params.nbClients + 1);
     routes = std::vector<Route>(params.nbVehicles);
     startDepots = std::vector<Node>(params.nbVehicles);
@@ -280,7 +291,6 @@ LocalSearch::LocalSearch(Params &params, XorShift128 &rng)
     {
         clients[i].params = &params;
         clients[i].client = i;
-        clients[i].isDepot = false;
     }
 
     for (int i = 0; i < params.nbVehicles; i++)
@@ -288,14 +298,11 @@ LocalSearch::LocalSearch(Params &params, XorShift128 &rng)
         routes[i].params = &params;
         routes[i].idx = i;
         routes[i].depot = &startDepots[i];
+
         startDepots[i].client = 0;
-        startDepots[i].isDepot = true;
         startDepots[i].route = &routes[i];
+
         endDepots[i].client = 0;
-        endDepots[i].isDepot = true;
         endDepots[i].route = &routes[i];
     }
-
-    std::iota(orderNodes.begin(), orderNodes.end(), 1);
-    std::iota(orderRoutes.begin(), orderRoutes.end(), 0);
 }

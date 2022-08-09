@@ -49,15 +49,11 @@ class Route
 public:  // TODO make fields private
     Params const *params;
 
-    int idx;                    // Route index
-    Node *depot;                // Pointer to the associated depot
-    int load;                   // Total load on the route
-    TimeWindowSegment twData;   // Time window data of the route
-    int penalty;                // Current load and time window penalties
-    double angleCenter;         // Angle of the barycenter of the route
-    int whenLastModified;       // "When" this route has been last modified
-    int whenLastTestedLargeNb;  // "When" the large neighborhood moves of
-                                // this route have last been tested
+    int idx;               // Route index
+    Node *depot;           // Pointer to the associated depot
+    int load;              // Total load on the route
+    TimeWindowSegment tw;  // Time window data of the route
+    double angleCenter;    // Angle of the barycenter of the route
 
     /**
      * Tests if this route is feasible.
@@ -80,7 +76,7 @@ public:  // TODO make fields private
      */
     [[nodiscard]] inline bool hasTimeWarp() const
     {
-        return twData.totalTimeWarp() > 0;
+        return tw.totalTimeWarp() > 0;
     }
 
     [[nodiscard]] inline bool overlapsWith(Route const &other) const
@@ -100,7 +96,7 @@ public:  // TODO make fields private
      * Updates this route. To be called after swapping nodes/changing the
      * solution.
      */
-    void update(int nbMoves, Penalties const &penalties);
+    void update();
 };
 
 #endif  // HGS_VRPTW_ROUTE_H

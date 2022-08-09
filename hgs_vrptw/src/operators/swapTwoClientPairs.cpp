@@ -11,8 +11,8 @@ bool swapTwoClientPairs(Node *U, Node *V, Penalties const &penalties)
     if (U->client >= V->client)
         return false;
 
-    if (n(U)->isDepot || n(V)->isDepot || n(V) == p(U) || U == n(V) || n(U) == V
-        || V == nn(U))
+    if (n(U)->isDepot() || n(V)->isDepot() || n(V) == p(U) || U == n(V)
+        || n(U) == V || V == nn(U))
         return false;
 
     int const current
@@ -31,7 +31,14 @@ bool swapTwoClientPairs(Node *U, Node *V, Penalties const &penalties)
             return false;
 
         auto uTWS = TWS::merge(p(U)->twBefore, V->tw, n(V)->tw, nn(U)->twAfter);
+
+        deltaCost += penalties.timeWarp(uTWS);
+        deltaCost -= penalties.timeWarp(U->route->tw);
+
         auto vTWS = TWS::merge(p(V)->twBefore, U->tw, n(U)->tw, nn(V)->twAfter);
+
+        deltaCost += penalties.timeWarp(vTWS);
+        deltaCost -= penalties.timeWarp(V->route->tw);
 
         auto const uDemand = params.clients[U->client].demand;
         auto const xDemand = params.clients[n(U)->client].demand;
@@ -39,10 +46,11 @@ bool swapTwoClientPairs(Node *U, Node *V, Penalties const &penalties)
         auto const yDemand = params.clients[n(V)->client].demand;
         auto const loadDiff = uDemand + xDemand - vDemand - yDemand;
 
-        deltaCost += penalties.load(U->route->load - loadDiff)
-                     + penalties.timeWarp(uTWS) - U->route->penalty
-                     + penalties.load(V->route->load + loadDiff)
-                     + penalties.timeWarp(vTWS) - V->route->penalty;
+        deltaCost += penalties.load(U->route->load - loadDiff);
+        deltaCost -= penalties.load(U->route->load);
+
+        deltaCost += penalties.load(V->route->load + loadDiff);
+        deltaCost -= penalties.load(V->route->load);
     }
     else  // swap within the same route
     {
@@ -74,7 +82,7 @@ bool swapTwoClientPairs(Node *U, Node *V, Penalties const &penalties)
             deltaCost += penalties.timeWarp(uTWS);
         }
 
-        deltaCost += penalties.load(U->route->load) - U->route->penalty;
+        deltaCost -= penalties.timeWarp(U->route->tw);
     }
 
     if (deltaCost >= 0)

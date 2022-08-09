@@ -34,8 +34,7 @@ bool twoOptWithinRoute(Node *U, Node *V, Penalties const &penalties)
 
     uTWS = TWS::merge(uTWS, n(V)->twAfter);
 
-    deltaCost += penalties.load(U->route->load) + penalties.timeWarp(uTWS)
-                 - U->route->penalty;
+    deltaCost += penalties.timeWarp(uTWS) - penalties.timeWarp(U->route->tw);
 
     if (deltaCost >= 0)
         return false;

@@ -23,7 +23,8 @@ class LocalSearch
     std::vector<int> orderNodes;   // random node order used in RI operators
     std::vector<int> orderRoutes;  // random route order used in SWAP* operators
 
-    /* THE SOLUTION IS REPRESENTED AS A LINKED LIST OF ELEMENTS */
+    std::vector<int> lastModified;  // tracks when routes were last modified
+
     std::vector<Node> clients;      // Note that clients[0] is a sentinel value
     std::vector<Node> startDepots;  // These mark the start of routes
     std::vector<Node> endDepots;    // These mark the end of routes
@@ -33,7 +34,7 @@ class LocalSearch
     std::vector<routeOp> routeOps;
 
     int nbMoves = 0;               // Operator (RI and SWAP*) counter
-    bool searchCompleted = false;  // No further improving move?
+    bool searchCompleted = false;  // No further improving move found?
 
     // Load an initial solution that we will attempt to improve
     void loadIndividual(Individual const &indiv);
@@ -64,13 +65,11 @@ public:
      * Performs the local search procedure around the given individual, using
      * the passed-in penalty parameters.
      *
-     * @param indiv                  Individual to improve.
-     * @param excessCapacityPenalty  Excess capacity penalty.
-     * @param timeWarpPenalty        Penalty for violated time windows.
+     * @param indiv           Individual to improve.
+     * @param loadPenalty     Excess load penalty.
+     * @param timeWarpPenalty Penalty for violated time windows.
      */
-    void operator()(Individual &indiv,
-                    int excessCapacityPenalty,
-                    int timeWarpPenalty);
+    void operator()(Individual &indiv, int loadPenalty, int timeWarpPenalty);
 
     LocalSearch(Params &params, XorShift128 &rng);
 };
