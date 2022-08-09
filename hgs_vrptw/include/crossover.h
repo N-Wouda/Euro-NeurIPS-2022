@@ -2,6 +2,21 @@
 #define CROSSOVER_H
 
 #include "Individual.h"
+#include "Params.h"
+#include "XorShift128.h"
+
+#include <unordered_set>
+#include <vector>
+
+namespace crossover
+{
+/**
+ * Greedily inserts the unplanned clients into non-empty routes.
+ */
+void greedyRepair(std::vector<std::vector<int>> &routes,
+                  std::unordered_set<int> const &unplanned,
+                  Params const &params);
+}  // namespace crossover
 
 /**
  * Does two ordered crossovers of the given parents (binary tournament). Each
@@ -14,8 +29,8 @@ Individual orderedExchange(
     XorShift128 &rng);
 
 /**
- * Performs two SREX [1] crossovers the given parents (binary tournament). This
- * was one of ORTEC's DIMACS contributions.
+ * Performs two SREX [1] crossovers of the given parents (binary tournament).
+ * This was one of ORTEC's DIMACS contributions.
  * <br />
  * [1]: Yuichi Nagata and Shigenobu Kobayashi. "A memetic algorithm for the
  * pickup and delivery problem with time windows using selective route exchange
@@ -23,6 +38,22 @@ Individual orderedExchange(
  * Nature. Springer. 2010, pp. 536–545.
  */
 Individual selectiveRouteExchange(
+    std::pair<Individual const *, Individual const *> const &parents,
+    Params const &params,
+    XorShift128 &rng);
+
+/**
+ * Performs a SISRX crossover of the given parents (binary tournament). SISRX
+ * first removes strings of clients from each parent based on "Slack Induction
+ * String Removals (SISRs)" [1]. Removed clients from one parent are then
+ * also removed from the other parent. Both parents are repaired to complete
+ * solutions by greedily re-inserting the unplanned clients.
+ * <br />
+ * [1]: Christiaens, J., & Vanden Berghe, G. (2020). Slack induction by string
+ * removals for vehicle routing problems. Transportation Science, 54(2),
+ * 417-433.
+ */
+Individual stringRemovalExchange(
     std::pair<Individual const *, Individual const *> const &parents,
     Params const &params,
     XorShift128 &rng);
