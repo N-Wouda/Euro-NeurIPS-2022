@@ -139,13 +139,13 @@ void Individual::makeRoutes()
         throw std::runtime_error("No split solution reached the last client");
 
     int end = params->nbClients;
-    for (auto &route : routeChrom)
+    for (auto &route : routes_)
     {
         if (end == 0)
             break;
 
         int begin = splits.predecessors[end];
-        route = {tourChrom.begin() + begin, tourChrom.begin() + end};
+        route = {tour_.begin() + begin, tour_.begin() + end};
         end = begin;
     }
 
@@ -161,7 +161,7 @@ void Individual::evaluateCompleteCost()
     capacityExcess = 0;
     timeWarp = 0;
 
-    for (auto const &route : routeChrom)
+    for (auto const &route : routes_)
     {
         if (route.empty())  // First empty route. Due to makeRoutes() all
             break;          // subsequent routes are empty as well
@@ -284,7 +284,7 @@ std::vector<std::pair<int, int>> Individual::getNeighbours() const
     std::vector<std::pair<int, int>> neighbours(params->nbClients + 1);
     neighbours[0] = {0, 0};  // note that depot neighbours have no meaning
 
-    for (auto const &route : routeChrom)
+    for (auto const &route : routes_)
         for (size_t idx = 0; idx != route.size(); ++idx)
             neighbours[route[idx]]
                 = {idx == 0 ? 0 : route[idx - 1],                  // pred
@@ -294,19 +294,17 @@ std::vector<std::pair<int, int>> Individual::getNeighbours() const
 }
 
 Individual::Individual(Params const *params, XorShift128 *rng)
-    : params(params),
-      tourChrom(params->nbClients),
-      routeChrom(params->nbVehicles)
+    : params(params), tour_(params->nbClients), routes_(params->nbVehicles)
 {
-    std::iota(tourChrom.begin(), tourChrom.end(), 1);
-    std::shuffle(tourChrom.begin(), tourChrom.end(), *rng);
+    std::iota(tour_.begin(), tour_.end(), 1);
+    std::shuffle(tour_.begin(), tour_.end(), *rng);
 
     makeRoutes();
     neighbours = getNeighbours();
 }
 
 Individual::Individual(Params const *params, Tour tour)
-    : params(params), tourChrom(std::move(tour)), routeChrom(params->nbVehicles)
+    : params(params), tour_(std::move(tour)), routes_(params->nbVehicles)
 {
     makeRoutes();
     neighbours = getNeighbours();
@@ -314,21 +312,21 @@ Individual::Individual(Params const *params, Tour tour)
 
 Individual::Individual(Params const *params, Routes routes)
     : params(params),
-      tourChrom(),
-      routeChrom(std::move(routes)),
+      tour_(),
+      routes_(std::move(routes)),
       neighbours(getNeighbours())
 {
     // a precedes b only when a is not empty and b is. Combined with a stable
     // sort, this ensures we keep the original sorting as much as possible, but
-    // also make sure all empty routes are at the end of routeChrom.
+    // also make sure all empty routes are at the end of routes_.
     auto comp = [](auto &a, auto &b) { return !a.empty() && b.empty(); };
-    std::stable_sort(routeChrom.begin(), routeChrom.end(), comp);
+    std::stable_sort(routes_.begin(), routes_.end(), comp);
 
-    tourChrom.reserve(params->nbClients);
+    tour_.reserve(params->nbClients);
 
-    for (auto const &route : routeChrom)
+    for (auto const &route : routes_)
         for (Client c : route)
-            tourChrom.push_back(c);
+            tour_.push_back(c);
 
     evaluateCompleteCost();
 }

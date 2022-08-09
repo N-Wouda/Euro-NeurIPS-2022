@@ -81,8 +81,7 @@ preprocess(Route *R1, Route *R2, Penalties const &penalties)
 
         int cost = params.dist(0, U->client, n(R2->depot)->client)
                    - params.dist(0, n(R2->depot)->client)
-                   + penalties.timeWarp(twData)
-                   - penalties.timeWarp(R2->tw);
+                   + penalties.timeWarp(twData) - penalties.timeWarp(R2->tw);
 
         currentOption.maybeAdd(cost - deltaRemoval, R2->depot);
 
