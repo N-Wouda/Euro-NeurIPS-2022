@@ -92,11 +92,6 @@ public:
                 auto const minCircleSize = atoi(argv[i + 1]) / 360. * 65536;
                 config.minCircleSectorSize = static_cast<int>(minCircleSize);
             }
-            else if (std::string(argv[i]) == "-maxStringRemovals")
-                config.maxStringRemovals
-                    = static_cast<size_t>(atoi(argv[i + 1]));
-            else if (std::string(argv[i]) == "-maxStringSize")
-                config.maxStringSize = static_cast<size_t>(atoi(argv[i + 1]));
         }
         return config;
     }

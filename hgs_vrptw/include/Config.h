@@ -58,10 +58,6 @@ struct Config
     // that even small circle sectors have 'overlap'
     int minCircleSectorSize = static_cast<int>(15 / 360. * 65536);
 
-    // SISRX related parameters
-    size_t maxStringRemovals = 3;  // max number of string removals
-    size_t maxStringSize = 10;     // maximum size of each string removal
-
     explicit Config(int seed = 0,
                     size_t nbIter = 20'000,
                     int timeLimit = INT_MAX,
@@ -85,9 +81,7 @@ struct Config
                     int weightTimeWarp = 10,
                     int intensificationProbability = 15,
                     int circleSectorOverlapToleranceDegrees = 0,
-                    int minCircleSectorSizeDegrees = 15,
-                    size_t maxStringRemovals = 3,
-                    size_t maxStringSize = 10)
+                    int minCircleSectorSizeDegrees = 15)
         : seed(seed),
           nbIter(nbIter),
           timeLimit(timeLimit),
@@ -109,9 +103,7 @@ struct Config
           nbGranular(nbGranular),
           weightWaitTime(weightWaitTime),
           weightTimeWarp(weightTimeWarp),
-          intensificationProbability(intensificationProbability),
-          maxStringRemovals(maxStringRemovals),
-          maxStringSize(maxStringSize)
+          intensificationProbability(intensificationProbability)
     {
         auto const overlap = circleSectorOverlapToleranceDegrees / 360. * 65536;
         circleSectorOverlapTolerance = static_cast<int>(overlap);

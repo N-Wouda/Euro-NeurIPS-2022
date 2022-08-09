@@ -1,9 +1,5 @@
 #include "crossover.h"
 
-#include "Individual.h"
-#include "Params.h"
-#include "XorShift128.h"
-
 #include <unordered_set>
 
 namespace
@@ -168,13 +164,13 @@ Individual selectiveRouteExchange(
 
     // Insert unplanned clients (those that were in the removed routes of A, but
     // not the inserted routes of B).
-    std::vector<Client> unplanned;
+    ClientSet unplanned;
     for (Client c : selectedA)
         if (!selectedB.contains(c))
-            unplanned.push_back(c);
+            unplanned.insert(c);
 
-    crossover::greedyRepair(routes1, unplanned, params, rng);
-    crossover::greedyRepair(routes2, unplanned, params, rng);
+    crossover::greedyRepair(routes1, unplanned, params);
+    crossover::greedyRepair(routes2, unplanned, params);
 
     Individual indiv1{&params, routes1};
     Individual indiv2{&params, routes2};

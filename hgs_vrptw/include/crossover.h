@@ -2,6 +2,11 @@
 #define CROSSOVER_H
 
 #include "Individual.h"
+#include "Params.h"
+#include "XorShift128.h"
+
+#include <unordered_set>
+#include <vector>
 
 /**
  * Does two ordered crossovers of the given parents (binary tournament). Each
@@ -46,12 +51,11 @@ Individual stringRemovalExchange(
 namespace crossover
 {
 /**
- * Greedily inserts the unplanned clients back into the routes.
+ * Greedily inserts the unplanned clients into non-empty routes.
  */
 void greedyRepair(std::vector<std::vector<int>> &routes,
-                  std::vector<int> &unplanned,
-                  Params const &params,
-                  XorShift128 &rng);
+                  std::unordered_set<int> const &unplanned,
+                  Params const &params);
 
 }  // namespace crossover
 #endif  // CROSSOVER_H

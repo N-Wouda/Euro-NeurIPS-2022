@@ -1,12 +1,9 @@
 #include "crossover.h"
-#include "Params.h"
-#include <unordered_set>
 
 namespace
 {
 using Parents = std::pair<Individual const *, Individual const *>;
 using Client = int;
-using Clients = std::vector<Client>;
 using ClientSet = std::unordered_set<Client>;
 using Route = std::vector<Client>;
 using Routes = std::vector<Route>;
@@ -40,12 +37,9 @@ int deltaCost(Client client, Client prev, Client next, Params const &params)
 }  // namespace
 
 void crossover::greedyRepair(Routes &routes,
-                             Clients &unplanned,
-                             Params const &params,
-                             XorShift128 &rng)
+                             ClientSet const &unplanned,
+                             Params const &params)
 {
-    std::shuffle(unplanned.begin(), unplanned.end(), rng);
-
     for (Client client : unplanned)
     {
         InsertPos best = {INT_MAX, &routes.front(), 0};

@@ -75,9 +75,7 @@ PYBIND11_MODULE(hgspy, m)
                       int,
                       int,
                       int,
-                      int,
-                      size_t,
-                      size_t>(),
+                      int>(),
              py::arg("seed") = 0,
              py::arg("nbIter") = 20'000,
              py::arg("timeLimit") = INT_MAX,
@@ -101,9 +99,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("weightTimeWarp") = 10,
              py::arg("intensificationProbability") = 15,
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
-             py::arg("minCircleSectorSizeDegrees") = 15,
-             py::arg("maxStringRemovals") = 3,
-             py::arg("maxStringSize") = 10)
+             py::arg("minCircleSectorSizeDegrees") = 15)
         .def_readonly("seed", &Config::seed)
         .def_readonly("nbIter", &Config::nbIter)
         .def_readonly("timeLimit", &Config::timeLimit)
@@ -129,9 +125,7 @@ PYBIND11_MODULE(hgspy, m)
                       &Config::intensificationProbability)
         .def_readonly("circleSectorOverlapTolerance",
                       &Config::circleSectorOverlapTolerance)
-        .def_readonly("minCircleSectorSize", &Config::minCircleSectorSize)
-        .def_readonly("maxStringRemovals", &Config::maxStringRemovals)
-        .def_readonly("maxStringSize", &Config::maxStringSize);
+        .def_readonly("minCircleSectorSize", &Config::minCircleSectorSize);
 
     py::class_<Params>(m, "Params")
         .def(py::init<Config const &,
@@ -189,7 +183,6 @@ PYBIND11_MODULE(hgspy, m)
 
     xOps.def("ordered_exchange", &orderedExchange);
     xOps.def("selective_route_exchange", &selectiveRouteExchange);
-    xOps.def("string_removal_exchange", &stringRemovalExchange);
 
     // Local search operators (as a submodule)
     py::module lsOps = m.def_submodule("operators");
