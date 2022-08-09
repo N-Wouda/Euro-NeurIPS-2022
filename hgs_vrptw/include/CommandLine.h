@@ -93,6 +93,7 @@ public:
                 config.minCircleSectorSize = static_cast<int>(minCircleSize);
             }
         }
+
         return config;
     }
 };
