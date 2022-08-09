@@ -10,6 +10,10 @@
 #include "crossover.h"
 #include "operators.h"
 
+#include "MaxIterations.h"
+#include "MaxRuntime.h"
+#include "StoppingCriterion.h"
+
 #include <pybind11/chrono.h>
 #include <pybind11/functional.h>
 #include <pybind11/stl.h>
@@ -176,7 +180,18 @@ PYBIND11_MODULE(hgspy, m)
         .def("add_crossover_operator",
              &GeneticAlgorithm::addCrossoverOperator,
              py::arg("op"))
-        .def("run_until", &GeneticAlgorithm::runUntil, py::arg("time_point"));
+        .def("run", &GeneticAlgorithm::run, py::arg("stop"));
+
+    // Stopping criteria (as a submodule)
+    py::module stop = m.def_submodule("stop");
+
+    py::class_<StoppingCriterion>(stop, "StoppingCriterion");
+
+    py::class_<MaxIterations, StoppingCriterion>(stop, "MaxIterations")
+        .def(py::init<size_t>(), py::arg("max_iterations"));
+
+    py::class_<MaxRuntime, StoppingCriterion>(stop, "MaxRuntime")
+        .def(py::init<size_t>(), py::arg("max_runtime"));
 
     // Crossover operators (as a submodule)
     py::module xOps = m.def_submodule("crossover");

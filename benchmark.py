@@ -14,16 +14,19 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--seed", type=int, default=1)
-    parser.add_argument("--time_limit", type=int, default=10)
     parser.add_argument("--num_procs", type=int, default=4)
     parser.add_argument(
         "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
     )
 
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--time_limit", type=int)
+    group.add_argument("--max_iters", type=int)
+
     return parser.parse_args()
 
 
-def solve(loc: str, seed: int, time_limit: int):
+def solve(loc: str, seed: int, **kwargs):
     path = Path(loc)
 
     hgspy = tools.get_hgspy_module()
@@ -53,7 +56,12 @@ def solve(loc: str, seed: int, time_limit: int):
     algo.add_crossover_operator(hgspy.crossover.ordered_exchange)
     algo.add_crossover_operator(hgspy.crossover.selective_route_exchange)
 
-    res = algo.run_until(start + timedelta(seconds=time_limit))
+    if "time_limit" in kwargs and kwargs["time_limit"]:
+        stop = hgspy.stop.MaxRuntime(kwargs["time_limit"])
+    else:
+        stop = hgspy.stop.MaxIterations(kwargs["max_iters"])
+
+    res = algo.run(stop)
 
     best = res.get_best_found()
     routes = [route for route in best.get_routes() if route]
@@ -68,9 +76,14 @@ def solve(loc: str, seed: int, time_limit: int):
         is_ok = "N"
 
     stats = res.get_statistics()
-    kpis = (int(best.cost()), stats.num_iters(), len(stats.best_objectives()))
-
-    return path.stem, is_ok, *kpis
+    return (
+        path.stem,
+        is_ok,
+        int(best.cost()),
+        stats.num_iters(),
+        round((datetime.now() - start).total_seconds(), 3),
+        len(stats.best_objectives()),
+    )
 
 
 def tabulate(headers, rows) -> str:
@@ -97,8 +110,7 @@ def tabulate(headers, rows) -> str:
 def main():
     args = parse_args()
 
-    kwargs = dict(seed=args.seed, time_limit=args.time_limit)
-    func = partial(solve, **kwargs)
+    func = partial(solve, **vars(args))
     func_args = sorted(glob(args.instance_pattern))
 
     tqdm_kwargs = dict(max_workers=args.num_procs, unit="instance")
@@ -109,11 +121,19 @@ def main():
         ("ok", "U1"),
         ("obj", int),
         ("iters", int),
+        ("time", float),
         ("nb_improv", int),
     ]
     data = np.array(data, dtype=dtypes)
 
-    headers = ["Instance", "OK?", "Objective", "Iters. (#)", "Improv. (#)"]
+    headers = [
+        "Instance",
+        "OK",
+        "Objective",
+        "Iters. (#)",
+        "Time (s)",
+        "Improv. (#)",
+    ]
     table = tabulate(headers, data)
 
     print("\n", table, "\n", sep="")
@@ -125,6 +145,7 @@ def main():
     print(f"(w/o infeas: {obj_feas.mean():.0f})" if obj_feas.size > 0 else "")
 
     print(f"     Avg. iterations: {data['iters'].mean():.0f}")
+    print(f"   Avg. run-time (s): {data['time'].mean():.2f}")
     print(f"Avg. improving moves: {data['nb_improv'].mean():.1f}")
     print(f"        Total not OK: {np.count_nonzero(data['ok'] == 'N')}")
 

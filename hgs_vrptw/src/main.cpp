@@ -1,6 +1,7 @@
 #include "CommandLine.h"
 #include "GeneticAlgorithm.h"
 #include "LocalSearch.h"
+#include "MaxRuntime.h"
 #include "Params.h"
 #include "Population.h"
 #include "XorShift128.h"
@@ -40,8 +41,8 @@ try
     solver.addCrossoverOperator(orderedExchange);
     solver.addCrossoverOperator(selectiveRouteExchange);
 
-    auto const until = start + std::chrono::seconds(config.timeLimit);
-    auto const res = solver.runUntil(until);
+    MaxRuntime stop(config.timeLimit);
+    auto const res = solver.run(stop);
 
     std::chrono::duration<double> const timeDelta = clock::now() - start;
     auto const &bestSol = res.getBestFound();
