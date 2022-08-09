@@ -1,9 +1,5 @@
 #include "crossover.h"
 
-#include "Individual.h"
-#include "Params.h"
-#include "XorShift128.h"
-
 namespace
 {
 using Parents = std::pair<Individual const *, Individual const *>;

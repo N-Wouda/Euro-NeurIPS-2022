@@ -103,8 +103,7 @@ struct Config
           nbGranular(nbGranular),
           weightWaitTime(weightWaitTime),
           weightTimeWarp(weightTimeWarp),
-          intensificationProbability(intensificationProbability),
-          circleSectorOverlapTolerance(circleSectorOverlapToleranceDegrees)
+          intensificationProbability(intensificationProbability)
     {
         auto const overlap = circleSectorOverlapToleranceDegrees / 360. * 65536;
         circleSectorOverlapTolerance = static_cast<int>(overlap);
