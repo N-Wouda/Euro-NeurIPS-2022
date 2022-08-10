@@ -16,7 +16,6 @@ public:
      */
     virtual void init(Individual const &indiv, Penalties const *penalties)
     {
-
         d_penalties = penalties;
     };
 

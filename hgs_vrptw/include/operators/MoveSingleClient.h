@@ -12,10 +12,7 @@ class MoveSingleClient : public LocalSearchOperator<Node>
 public:
     bool test(Node *U, Node *V) override;
 
-    void apply(Node *U, Node *V) override
-    {
-        U->insertAfter(V);
-    }
+    void apply(Node *U, Node *V) override { U->insertAfter(V); }
 };
 
 #endif  // MOVESINGLECLIENT_H

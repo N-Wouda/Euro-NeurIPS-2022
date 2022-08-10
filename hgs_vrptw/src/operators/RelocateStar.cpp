@@ -80,8 +80,7 @@ bool RelocateStar::test(Route *U, Route *V)
     insertionPoint = nullptr;
     nodeToInsert = nullptr;
 
-    auto eval = [&](auto *nodeU, auto *nodeV)
-    {
+    auto eval = [&](auto *nodeU, auto *nodeV) {
         int const deltaCost = singleMoveCost(nodeU, nodeV);
 
         if (deltaCost < bestCost)
