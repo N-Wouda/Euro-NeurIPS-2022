@@ -105,7 +105,8 @@ def solve_static_vrptw(instance, time_limit=3600, seed=1, plot=False):
     algo.add_crossover_operator(hgspy.crossover.ordered_exchange)
     algo.add_crossover_operator(hgspy.crossover.selective_route_exchange)
 
-    res = algo.run_until(start + timedelta(seconds=time_limit))
+    stop = hgspy.stop.MaxRuntime(time_limit)
+    res = algo.run(stop)
 
     best = res.get_best_found()
     routes = [route for route in best.get_routes() if route]

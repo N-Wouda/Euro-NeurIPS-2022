@@ -6,10 +6,10 @@
 #include "Params.h"
 #include "Population.h"
 #include "Result.h"
+#include "StoppingCriterion.h"
 #include "XorShift128.h"
 
 #include <array>
-#include <chrono>
 #include <functional>
 #include <list>
 #include <unordered_set>
@@ -18,7 +18,6 @@
 // population management, doing crossovers and updating parameters.
 class GeneticAlgorithm
 {
-    using clock = std::chrono::system_clock;
     using xOp = std::function<Individual(
         std::pair<Individual const *, Individual const *> const &,
         Params const &,
@@ -61,13 +60,13 @@ public:
     void addCrossoverOperator(xOp const &op) { operators.push_back(op); }
 
     /**
-     * Runs the genetic algorithm until just after the passed-in time point.
+     * Runs the genetic algorithm with the given stopping criterion.
      *
-     * @param timePoint Time point in the future.
-     * @return          Result object contained the best solution, and current
-     *                  population composition.
+     * @param stop The stopping criterion to use.
+     * @return     Result object containing the best solution, and some optional
+     *             statistics.
      */
-    Result runUntil(clock::time_point const &timePoint);
+    Result run(StoppingCriterion &stop);
 
     GeneticAlgorithm(Params &params,
                      XorShift128 &rng,

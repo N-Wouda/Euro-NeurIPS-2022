@@ -29,12 +29,12 @@ class Individual
 
     // Giant tour representing the individual: list of integers representing
     // clients (can not be the depot 0). Size is nbClients.
-    Tour tourChrom;
+    Tour tour_;
 
     // For each vehicle, the associated sequence of deliveries (complete
     // solution). Size is nbVehicles, but quite a few routes are likely empty
     // - the numRoutes() member indicates the number of nonempty routes.
-    Routes routeChrom;
+    Routes routes_;
 
     // Pairs of [predecessor, successor] for each client (index) in the tour
     std::vector<std::pair<Client, Client>> neighbours;
@@ -73,12 +73,12 @@ public:
     /**
      * Returns this individual's routing decisions.
      */
-    [[nodiscard]] inline Routes const &getRoutes() const { return routeChrom; }
+    [[nodiscard]] inline Routes const &getRoutes() const { return routes_; }
 
     /**
      * Returns this individual's giant tour chromosome.
      */
-    [[nodiscard]] inline Tour const &getTour() const { return tourChrom; }
+    [[nodiscard]] inline Tour const &getTour() const { return tour_; }
 
     /**
      * Returns true when this solution is feasible; false otherwise.

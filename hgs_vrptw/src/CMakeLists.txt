@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.2)
 
 set(geneticSources
         GeneticAlgorithm.cpp
+        crossover/crossover.cpp
         crossover/orderedExchange.cpp
         crossover/selectiveRouteExchange.cpp)
 

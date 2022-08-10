@@ -8,7 +8,8 @@ bool swapTwoClientsForOne(Node *U, Node *V, Penalties const &penalties)
 
     auto const &params = *U->params;
 
-    if (U == p(V) || n(U) == p(V) || U == n(V) || n(U)->isDepot)
+    if (U == p(V) || n(U) == p(V) || U == n(V) || n(U)->isDepot()
+        || V->isDepot())
         return false;
 
     int const current
@@ -26,17 +27,25 @@ bool swapTwoClientsForOne(Node *U, Node *V, Penalties const &penalties)
             return false;
 
         auto uTWS = TWS::merge(p(U)->twBefore, V->tw, nn(U)->twAfter);
+
+        deltaCost += penalties.timeWarp(uTWS);
+        deltaCost -= penalties.timeWarp(U->route->tw);
+
         auto vTWS = TWS::merge(p(V)->twBefore, U->tw, n(U)->tw, n(V)->twAfter);
+
+        deltaCost += penalties.timeWarp(vTWS);
+        deltaCost -= penalties.timeWarp(V->route->tw);
 
         auto const uDemand = params.clients[U->client].demand;
         auto const xDemand = params.clients[n(U)->client].demand;
         auto const vDemand = params.clients[V->client].demand;
         auto const loadDiff = uDemand + xDemand - vDemand;
 
-        deltaCost += penalties.load(U->route->load - loadDiff)
-                     + penalties.timeWarp(uTWS) - U->route->penalty
-                     + penalties.load(V->route->load + loadDiff)
-                     + penalties.timeWarp(vTWS) - V->route->penalty;
+        deltaCost += penalties.load(U->route->load - loadDiff);
+        deltaCost -= penalties.load(U->route->load);
+
+        deltaCost += penalties.load(V->route->load + loadDiff);
+        deltaCost -= penalties.load(V->route->load);
     }
     else  // within same route
     {
@@ -66,7 +75,7 @@ bool swapTwoClientsForOne(Node *U, Node *V, Penalties const &penalties)
             deltaCost += penalties.timeWarp(uTWS);
         }
 
-        deltaCost += penalties.load(U->route->load) - U->route->penalty;
+        deltaCost -= penalties.timeWarp(U->route->tw);
     }
 
     if (deltaCost >= 0)

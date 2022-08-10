@@ -8,7 +8,7 @@ bool moveTwoClients(Node *U, Node *V, Penalties const &penalties)
 
     auto const &params = *U->params;
 
-    if (U == n(V) || V == n(U) || n(U)->isDepot)
+    if (U == n(V) || V == n(U) || n(U)->isDepot())
         return false;
 
     int const current
@@ -26,14 +26,26 @@ bool moveTwoClients(Node *U, Node *V, Penalties const &penalties)
             return false;
 
         auto uTWS = TWS::merge(p(U)->twBefore, nn(U)->twAfter);
-        auto vTWS = TWS::merge(V->twBefore, U->tw, n(U)->tw, n(V)->twAfter);
+
+        deltaCost += penalties.timeWarp(uTWS);
+        deltaCost -= penalties.timeWarp(U->route->tw);
+
         auto const uDemand = params.clients[U->client].demand;
         auto const xDemand = params.clients[n(U)->client].demand;
 
-        deltaCost += penalties.load(U->route->load - uDemand - xDemand)
-                     + penalties.timeWarp(uTWS) - U->route->penalty
-                     + penalties.load(V->route->load + uDemand + xDemand)
-                     + penalties.timeWarp(vTWS) - V->route->penalty;
+        deltaCost += penalties.load(U->route->load - uDemand - xDemand);
+        deltaCost -= penalties.load(U->route->load);
+
+        if (deltaCost >= 0)  // if delta cost of just U's route is not enough
+            return false;    // even without V, the move will never be good
+
+        deltaCost += penalties.load(V->route->load + uDemand + xDemand);
+        deltaCost -= penalties.load(V->route->load);
+
+        auto vTWS = TWS::merge(V->twBefore, U->tw, n(U)->tw, n(V)->twAfter);
+
+        deltaCost += penalties.timeWarp(vTWS);
+        deltaCost -= penalties.timeWarp(V->route->tw);
     }
     else  // within same route
     {
@@ -61,7 +73,7 @@ bool moveTwoClients(Node *U, Node *V, Penalties const &penalties)
             deltaCost += penalties.timeWarp(uTWS);
         }
 
-        deltaCost += penalties.load(U->route->load) - U->route->penalty;
+        deltaCost -= penalties.timeWarp(U->route->tw);
     }
 
     if (deltaCost >= 0)

@@ -10,24 +10,21 @@ class Node
 public:  // TODO make fields private
     Params const *params;
 
-    bool isDepot;          // Tells whether this node represents a depot or not
-    int client;            // Node index
-    size_t position;       // Position in the route
-    int whenLastTestedRI;  // "When" the RI moves for this node have been
-                           // last tested
-    Node *next;            // Next node in the route order
-    Node *prev;            // Previous node in the route order
-    Route *route;          // Pointer towards the associated route
-    int cumulatedLoad;     // Cumulated load on this route until the client
-                           // (including itself)
-    int cumulatedReversalDistance;  // Difference of cost if the segment of
-                                    // route (0...client) is reversed
-                                    // (useful for 2-opt moves with
-                                    // asymmetric problems)
+    int client;       // Client represented with this node
+    size_t position;  // Position in the route
+    Node *next;       // Next node in the route order
+    Node *prev;       // Previous node in the route order
+    Route *route;     // Pointer towards the associated route
+
+    // These fields are used for 2-OPT moves
+    int cumulatedLoad;              // Load from depot to client (inclusive)
+    int cumulatedReversalDistance;  // Distance if (0 .. client) is reversed
 
     TimeWindowSegment tw;        // TWS for individual node (client)
     TimeWindowSegment twBefore;  // TWS for (0...client) including self
     TimeWindowSegment twAfter;   // TWS for (client...0) including self
+
+    [[nodiscard]] inline bool isDepot() const { return client == 0; }
 
     /**
      * Inserts this node after the other and updates the solution.

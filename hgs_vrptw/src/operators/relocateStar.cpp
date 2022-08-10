@@ -17,11 +17,11 @@ bool relocateStar(Route *routeU, Route *routeV, Penalties const &penalties)
         }
     };
 
-    for (auto *U = n(routeU->depot); !U->isDepot; U = n(U))
+    for (auto *U = n(routeU->depot); !U->isDepot(); U = n(U))
     {
         eval(U, routeV->depot);
 
-        for (auto *V = n(routeV->depot); !V->isDepot; V = n(V))
+        for (auto *V = n(routeV->depot); !V->isDepot(); V = n(V))
             eval(U, V);
     }
 

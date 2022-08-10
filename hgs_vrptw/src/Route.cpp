@@ -1,15 +1,15 @@
 #include "Route.h"
-#include "math.h"
 
 #include <bit>
 #include <cassert>
+#include <cmath>
 
 namespace
 {
 using TWS = TimeWindowSegment;
 }
 
-void Route::update(int nbMoves, Penalties const &penalties)
+void Route::update()
 {
     size_t const prevSize = nodes.size();
 
@@ -26,12 +26,12 @@ void Route::update(int nbMoves, Penalties const &penalties)
     int cumulatedX = 0;
     int cumulatedY = 0;
 
-    auto *node = this->depot;
+    auto *node = depot;
     node->position = 0;
     node->cumulatedLoad = 0;
     node->cumulatedReversalDistance = 0;
 
-    if (!node->next->isDepot)
+    if (!node->next->isDepot())
         sector.initialize(params->clients[node->next->client].angle);
 
     do
@@ -45,13 +45,14 @@ void Route::update(int nbMoves, Penalties const &penalties)
         load += params->clients[node->client].demand;
         node->cumulatedLoad = load;
 
-        reverseDistance += params->dist(node->client, node->prev->client)
-                           - params->dist(node->prev->client, node->client);
+        reverseDistance += params->dist(node->client, node->prev->client);
+        reverseDistance -= params->dist(node->prev->client, node->client);
+
         node->cumulatedReversalDistance = reverseDistance;
 
         node->twBefore = TWS::merge(node->prev->twBefore, node->tw);
 
-        if (!node->isDepot)
+        if (!node->isDepot())
         {
             cumulatedX += params->clients[node->client].x;
             cumulatedY += params->clients[node->client].y;
@@ -60,22 +61,17 @@ void Route::update(int nbMoves, Penalties const &penalties)
         }
 
         installJumpPoints(node);
-    } while (!node->isDepot);
+    } while (!node->isDepot());
 
-    twData = node->twBefore;
-    penalty = penalties.load(load) + penalties.timeWarp(this->twData);
+    tw = node->twBefore;
     nbCustomers = place - 1;
-
-    // Remember "when" this route has been last modified (will be used to filter
-    // unnecessary move evaluations)
-    whenLastModified = nbMoves;
 
     // Time window data in reverse direction, node should be end depot now
     do
     {
         node = node->prev;
         node->twAfter = TWS::merge(node->tw, node->next->twAfter);
-    } while (!node->isDepot);
+    } while (!node->isDepot());
 
     if (empty())
     {
@@ -83,7 +79,7 @@ void Route::update(int nbMoves, Penalties const &penalties)
         return;
     }
 
-    angleCenter = fatan2(
+    angleCenter = atan2(
         cumulatedY / static_cast<double>(nbCustomers) - params->clients[0].y,
         cumulatedX / static_cast<double>(nbCustomers) - params->clients[0].x);
 
@@ -107,10 +103,10 @@ TimeWindowSegment Route::twBetween(Node const *start, Node const *end)
     assert(start->route == end->route);
     assert(start->position <= end->position);
 
-    if (start->isDepot)
+    if (start->isDepot())
         return end->twBefore;
 
-    if (end->isDepot)
+    if (end->isDepot())
         return start->twAfter;
 
     Node const *node = start;
@@ -121,7 +117,7 @@ TimeWindowSegment Route::twBetween(Node const *start, Node const *end)
     {
         auto const dist = end->position - node->position;
 
-        if (dist >= jumpPts.front())
+        if (dist >= jumpPts.front())  // can make at least one jump
         {
             auto const pos = std::bit_floor(std::min(dist, jumpPts.back()));
             auto const &jumpList = jumps[std::bit_width(pos) - jumpOffset];

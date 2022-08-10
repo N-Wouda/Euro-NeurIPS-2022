@@ -10,7 +10,7 @@
 #include <numeric>
 #include <stdexcept>
 
-Result GeneticAlgorithm::runUntil(clock::time_point const &timePoint)
+Result GeneticAlgorithm::run(StoppingCriterion &stop)
 {
     if (operators.empty())
         throw std::runtime_error("Cannot run genetic algorithm without "
@@ -24,7 +24,7 @@ Result GeneticAlgorithm::runUntil(clock::time_point const &timePoint)
     size_t iter = 0;
     size_t nbIterNonProd = 1;
 
-    while (clock::now() < timePoint)
+    while (not stop())
     {
         iter++;
 
