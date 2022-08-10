@@ -6,7 +6,7 @@ bool swapTwoSingleClients(Node *U, Node *V, Penalties const &penalties)
 
     auto const &params = *U->params;
 
-    if (U->client >= V->client || U == p(V) || U == n(V))
+    if (U->client >= V->client || U == p(V) || U == n(V) || V->isDepot())
         return false;
 
     int const current = params.dist(p(U)->client, U->client, n(U)->client)

@@ -12,7 +12,7 @@ bool swapTwoClientPairs(Node *U, Node *V, Penalties const &penalties)
         return false;
 
     if (n(U)->isDepot() || n(V)->isDepot() || n(V) == p(U) || U == n(V)
-        || n(U) == V || V == nn(U))
+        || n(U) == V || V == nn(U) || V->isDepot())
         return false;
 
     int const current
