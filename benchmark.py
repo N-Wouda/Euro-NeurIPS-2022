@@ -80,21 +80,7 @@ def solve(loc: str, seed: int, **kwargs):
     stats = res.get_statistics()
 
     if "results_dir" in kwargs and kwargs["results_dir"]:
-        results_dir = Path(kwargs["results_dir"])
-
-        # Export best solutions
-        sol_dir = results_dir / "solutions/"
-        sol_dir.mkdir(parents=True, exist_ok=True)
-
-        sol_path = str(sol_dir / (path.stem + ".sol"))
-        best.export_cvrplib_format(sol_path, finish)
-
-        # Export statistics
-        stats_dir = results_dir / "statistics/"
-        stats_dir.mkdir(parents=True, exist_ok=True)
-
-        stats_path = str(stats_dir / (path.stem + ".csv"))
-        stats.export_csv(stats_path)
+        export_results(res, kwargs["results_dir"], path.stem, finish)
 
     return (
         path.stem,
@@ -104,6 +90,31 @@ def solve(loc: str, seed: int, **kwargs):
         finish,
         len(stats.best_objectives()),
     )
+
+
+def export_results(results, results_dir, inst_name, finish_time):
+    """
+    Export the results, i.e., the best solution and statistics.
+    The solutions are stored as ``<results_dir>/solutions/<inst_name>.sol``.
+    The statistics are stored as ``<results_dir>/statistics/<inst_name>.csv``.
+    """
+    results_dir = Path(results_dir)
+
+    # Export best solutions
+    sol_dir = results_dir / "solutions/"
+    sol_dir.mkdir(parents=True, exist_ok=True)
+    sol_path = sol_dir / (inst_name + ".sol")
+
+    best = results.get_best_found()
+    best.export_cvrplib_format(str(sol_path), finish_time)
+
+    # Export statistics
+    stats_dir = results_dir / "statistics/"
+    stats_dir.mkdir(parents=True, exist_ok=True)
+    stats_path = stats_dir / (inst_name + ".csv")
+
+    stats = results.get_statistics()
+    stats.export_csv(str(stats_path))
 
 
 def tabulate(headers, rows) -> str:
