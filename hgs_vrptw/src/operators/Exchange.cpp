@@ -3,9 +3,30 @@
 #include "Route.h"
 #include "TimeWindowSegment.h"
 
+#include <iostream>
+
 namespace
 {
 using TWS = TimeWindowSegment;
+}
+
+template <size_t N, size_t M>
+std::pair<Node *, Node *> Exchange<N, M>::getEnds(Node *U, Node *V) const
+{
+    Node *endU = U;
+    for (size_t count = 1; count != N; ++count)
+        endU = n(endU);
+
+    if constexpr (M == 0)
+        return std::make_pair(endU, nullptr);
+    else
+    {
+        Node *endV = V;
+        for (size_t count = 1; count != M; ++count)
+            endV = n(endV);
+
+        return std::make_pair(endU, endV);
+    }
 }
 
 template <size_t N, size_t M>
@@ -35,6 +56,9 @@ bool Exchange<N, M>::overlaps(Node *U, Node *V) const
 
 template <size_t N, size_t M> bool Exchange<N, M>::test(Node *U, Node *V)
 {
+    if (U->route == V->route)
+        return false;
+
     if (isDepotInSegments(U, V))
         return false;
 
@@ -45,54 +69,77 @@ template <size_t N, size_t M> bool Exchange<N, M>::test(Node *U, Node *V)
         return false;                              // place it's now in
 
     auto const &params = *U->params;
+    auto const &[segEndU, segEndV] = getEnds(U, V);
 
-    Node *segEndU = U;
+    int proposed = 0;
+    int current = 0;
 
-    for (size_t count = 1; count != N; ++count)
-        segEndU = n(segEndU);
+    if constexpr (M == 0)  // nothing from V is moved, so we go to V
+    {                      // -> U segment -> n(V)
+        proposed += params.dist(V->client, U->client)
+                    + Route::distBetween(U, segEndU)
+                    + params.dist(segEndU->client, n(V)->client)
+                    + params.dist(p(U)->client, n(segEndU)->client);
 
-    Node *segEndV = V;
-    for (size_t count = 0; count != M; ++count)
-        segEndV = n(segEndV);
+        current += Route::distBetween(p(U), n(segEndU))
+                   + params.dist(V->client, n(V)->client);
+    }
+    else  // we also move something from V, so we go to p(U) -> V segment ->
+    {     // stuff after U segment
+        proposed += params.dist(p(U)->client, V->client)
+                    + Route::distBetween(V, segEndV)
+                    + params.dist(segEndV->client, n(segEndU)->client);
 
-    int proposed = Route::distBetween(V, segEndV)
-                   + Route::distBetween(U, segEndU)
-                   + params.dist(p(U)->client, V->client)
-                   + params.dist(segEndV->client, n(segEndU)->client)
-                   + params.dist(p(V)->client, U->client)
-                   + params.dist(segEndU->client, n(segEndV)->client);
+        // And similarly for the U segment inserted into V's route
+        proposed += params.dist(p(V)->client, U->client)
+                    + Route::distBetween(U, segEndU)
+                    + params.dist(segEndU->client, n(segEndV)->client);
 
-    int current = Route::distBetween(p(U), n(segEndU))
-                  + Route::distBetween(p(V), n(segEndV));
+        current += Route::distBetween(p(U), n(segEndU))
+                   + Route::distBetween(p(V), n(segEndV));
+    }
 
     int deltaCost = proposed - current;
 
     if (U->route != V->route)
     {
-        if (M == 0 && U->route->isFeasible() && deltaCost >= 0)
-            return false;
+        if constexpr (M == 0)
+            if (U->route->isFeasible() && deltaCost >= 0)
+                return false;
 
-        auto uTWS = TWS::merge(
-            p(U)->twBefore, Route::twBetween(V, segEndV), n(segEndU)->twAfter);
+        TWS uTWS;
+
+        if constexpr (M == 0)
+            uTWS = TWS::merge(p(U)->twBefore, n(segEndU)->twAfter);
+        else
+            uTWS = TWS::merge(p(U)->twBefore,
+                              Route::twBetween(V, segEndV),
+                              n(segEndU)->twAfter);
 
         deltaCost += d_penalties->timeWarp(uTWS);
         deltaCost -= d_penalties->timeWarp(U->route->tw);
 
         auto const uLoad = Route::loadBetween(U, segEndU);
-        auto const vLoad = Route::loadBetween(V, segEndV);
-        auto const loadDiff = M == 0 ? uLoad : uLoad - vLoad;
+        auto const vLoad = M == 0 ? 0 : Route::loadBetween(V, segEndV);
 
-        deltaCost += d_penalties->load(U->route->load - loadDiff);
+        deltaCost += d_penalties->load(U->route->load + uLoad - vLoad);
         deltaCost -= d_penalties->load(U->route->load);
 
         if (M == 0 && deltaCost >= 0)  // never good if delta of just U's route
             return false;              // is not enough even without V
 
-        deltaCost += d_penalties->load(V->route->load + loadDiff);
+        deltaCost += d_penalties->load(V->route->load + uLoad - vLoad);
         deltaCost -= d_penalties->load(V->route->load);
 
-        auto vTWS = TWS::merge(
-            p(V)->twBefore, Route::twBetween(U, segEndU), n(segEndV)->twAfter);
+        TWS vTWS;
+
+        if constexpr (M == 0)
+            vTWS = TWS::merge(
+                p(V)->twBefore, Route::twBetween(U, segEndU), n(V)->twAfter);
+        else
+            vTWS = TWS::merge(p(V)->twBefore,
+                              Route::twBetween(U, segEndU),
+                              n(segEndV)->twAfter);
 
         deltaCost += d_penalties->timeWarp(vTWS);
         deltaCost -= d_penalties->timeWarp(V->route->tw);
@@ -104,21 +151,53 @@ template <size_t N, size_t M> bool Exchange<N, M>::test(Node *U, Node *V)
 
         if (U->position < V->position)
         {
-            auto const tws = TWS::merge(p(U)->twBefore,
-                                        Route::twBetween(V, segEndV),
-                                        Route::twBetween(n(segEndU), p(V)),
-                                        Route::twBetween(U, segEndU),
-                                        n(segEndV)->twAfter);
+            TWS tws;
+
+            if constexpr (M == 0)
+                tws = TWS::merge(p(U)->twBefore,
+                                 Route::twBetween(n(segEndU), V),
+                                 Route::twBetween(U, segEndU),
+                                 n(V)->twAfter);
+            else
+            {
+                if (U->position + N == V->position)
+                    tws = TWS::merge(p(U)->twBefore,
+                                     Route::twBetween(V, segEndV),
+                                     Route::twBetween(U, segEndU),
+                                     n(segEndV)->twAfter);
+                else
+                    tws = TWS::merge(p(U)->twBefore,
+                                     Route::twBetween(V, segEndV),
+                                     Route::twBetween(n(segEndU), p(V)),
+                                     Route::twBetween(U, segEndU),
+                                     n(segEndV)->twAfter);
+            }
 
             deltaCost += d_penalties->timeWarp(tws);
         }
         else
         {
-            auto const tws = TWS::merge(p(V)->twBefore,
-                                        Route::twBetween(U, segEndU),
-                                        Route::twBetween(n(segEndV), p(U)),
-                                        Route::twBetween(V, segEndV),
-                                        n(segEndU)->twAfter);
+            TWS tws;
+
+            if constexpr (M == 0)
+                tws = TWS::merge(V->twBefore,
+                                 Route::twBetween(U, segEndU),
+                                 Route::twBetween(n(V), p(U)),
+                                 n(segEndU)->twAfter);
+            else
+            {
+                if (V->position + M == U->position)
+                    tws = TWS::merge(p(V)->twBefore,
+                                     Route::twBetween(U, segEndU),
+                                     Route::twBetween(V, segEndV),
+                                     n(segEndU)->twAfter);
+                else
+                    tws = TWS::merge(p(V)->twBefore,
+                                     Route::twBetween(U, segEndU),
+                                     Route::twBetween(n(segEndV), p(U)),
+                                     Route::twBetween(V, segEndV),
+                                     n(segEndU)->twAfter);
+            }
 
             deltaCost += d_penalties->timeWarp(tws);
         }
@@ -131,43 +210,38 @@ template <size_t N, size_t M> bool Exchange<N, M>::test(Node *U, Node *V)
 
 template <size_t N, size_t M> void Exchange<N, M>::apply(Node *U, Node *V)
 {
-    auto *insertVAfter = p(U);
-    auto *insertUAfter = V;
+    std::cout << U->route->idx << ' ' << V->route->idx << '\n';
+    std::cout << U->client << ' ' << V->client << '\n';
 
-    for (size_t count = 0; count != M; ++count)
-        insertUAfter = n(V);
+    for (Node *v = V->route->depot->next; !v->isDepot(); v = v->next)
+        std::cout << v->client << ' ';
+    std::cout << '\n';
 
-    auto *nU = U;
+    for (Node *u = U->route->depot->next; !u->isDepot(); u = u->next)
+        std::cout << u->client << ' ';
+    std::cout << '\n';
 
-    // Find last element in U to insert into V, and then walk backwards.
-    // This is necessary to ensure we get the same ordering in the route of
-    // V as we had in U.
-    for (size_t count = 0; count != N; ++count)
-        nU = n(nU);
+    auto const &[segEndU, segEndV] = getEnds(U, V);
 
-    for (size_t count = N; count != 0; --count)
+    for (size_t count = 0; count != N - M; ++count)
+        segEndU->insertAfter(segEndV ? segEndV : V);
+
+    Node *nU = U;
+    Node *nV = V;
+    for (size_t count = 0; count != std::min(N, M); ++count)
     {
-        auto *prev = p(nU);
-        nU->insertAfter(insertUAfter);
-        nU = prev;
+        nU->swapWith(nV);  // This loop flip-flops between storing V in U, and
+        nU = nU->next;     // vice versa; that's OK.
+        nV = nV->next;
     }
 
-    // We now have a route V -> ... -> n(V) [M times] -> U -> ... -> n(U) [N
-    // times]. Let's move the M nodes from V's route over to U.
-    auto *nV = V;
+    for (Node *u = U->route->depot->next; !u->isDepot(); u = u->next)
+        std::cout << u->client << ' ';
+    std::cout << '\n';
 
-    // Find last element in V to insert into U, and then walk backwards.
-    // This is necessary to ensure we get the same ordering in the route of
-    // U as we had in V.
-    for (size_t count = 0; count != M; ++count)
-        nV = n(nV);
-
-    for (size_t count = M; count != 0; --count)
-    {
-        auto *prev = p(nV);
-        nV->insertAfter(insertVAfter);
-        nV = prev;
-    }
+    for (Node *v = V->route->depot->next; !v->isDepot(); v = v->next)
+        std::cout << v->client << ' ';
+    std::cout << '\n';
 }
 
 // Explicit instantiations of the few moves we *might* want to have

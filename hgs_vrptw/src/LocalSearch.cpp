@@ -7,8 +7,6 @@
 #include <stdexcept>
 #include <vector>
 
-#include <iostream>
-
 void LocalSearch::operator()(Individual &indiv,
                              int loadPenalty,
                              int timeWarpPenalty)
