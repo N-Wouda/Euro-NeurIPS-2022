@@ -8,12 +8,6 @@ template <size_t N, size_t M> class Exchange : public LocalSearchOperator<Node>
 {
     static_assert(N >= M && N > 0, "N < M or M == 0 does not make sense");
 
-    std::pair<Node *, Node *> getEnds(Node *U, Node *V) const;
-
-    bool isDepotInSegments(Node *U, Node *V) const;
-
-    bool overlaps(Node *U, Node *V) const;
-
 public:
     bool test(Node *U, Node *V) override;
 

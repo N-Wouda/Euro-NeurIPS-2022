@@ -5,6 +5,9 @@
 #include "Node.h"
 #include "Route.h"
 
+/**
+ * Performs the best moveSingleClient move between routes U and V.
+ */
 class RelocateStar : public LocalSearchOperator<Route>
 {
     int bestCost = 0;

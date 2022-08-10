@@ -3,19 +3,24 @@
 #include "Individual.h"
 #include "LocalSearch.h"
 #include "LocalSearchOperator.h"
+#include "MaxIterations.h"
+#include "MaxRuntime.h"
+#include "MoveSingleClient.h"
+#include "MoveTwoClients.h"
+#include "MoveTwoClientsReversed.h"
 #include "Params.h"
 #include "Population.h"
 #include "RelocateStar.h"
 #include "Result.h"
 #include "Statistics.h"
+#include "StoppingCriterion.h"
 #include "SwapStar.h"
+#include "SwapTwoClientPairs.h"
+#include "SwapTwoClientsForOne.h"
+#include "SwapTwoSingleClients.h"
 #include "TwoOpt.h"
 #include "XorShift128.h"
 #include "crossover.h"
-
-#include "MaxIterations.h"
-#include "MaxRuntime.h"
-#include "StoppingCriterion.h"
 
 #include <pybind11/chrono.h>
 #include <pybind11/functional.h>
@@ -212,6 +217,30 @@ PYBIND11_MODULE(hgspy, m)
 
     py::class_<LocalSearchOperator<Node>>(lsOps, "NodeLocalSearchOperator");
     py::class_<LocalSearchOperator<Route>>(lsOps, "RouteLocalSearchOperator");
+
+    py::class_<MoveSingleClient, LocalSearchOperator<Node>>(lsOps,
+                                                            "MoveSingleClient")
+        .def(py::init<>());
+
+    py::class_<MoveTwoClients, LocalSearchOperator<Node>>(lsOps,
+                                                          "MoveTwoClients")
+        .def(py::init<>());
+
+    py::class_<MoveTwoClientsReversed, LocalSearchOperator<Node>>(
+        lsOps, "MoveTwoClientsReversed")
+        .def(py::init<>());
+
+    py::class_<SwapTwoClientPairs, LocalSearchOperator<Node>>(
+        lsOps, "SwapTwoClientPairs")
+        .def(py::init<>());
+
+    py::class_<SwapTwoClientsForOne, LocalSearchOperator<Node>>(
+        lsOps, "SwapTwoClientsForOne")
+        .def(py::init<>());
+
+    py::class_<SwapTwoSingleClients, LocalSearchOperator<Node>>(
+        lsOps, "SwapTwoSingleClients")
+        .def(py::init<>());
 
     py::class_<TwoOpt, LocalSearchOperator<Node>>(lsOps, "TwoOpt")
         .def(py::init<>());

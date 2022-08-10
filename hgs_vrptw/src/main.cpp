@@ -1,12 +1,17 @@
 #include "CommandLine.h"
-#include "Exchange.h"
 #include "GeneticAlgorithm.h"
 #include "LocalSearch.h"
 #include "MaxRuntime.h"
+#include "MoveSingleClient.h"
+#include "MoveTwoClients.h"
+#include "MoveTwoClientsReversed.h"
 #include "Params.h"
 #include "Population.h"
 #include "RelocateStar.h"
 #include "SwapStar.h"
+#include "SwapTwoClientPairs.h"
+#include "SwapTwoClientsForOne.h"
+#include "SwapTwoSingleClients.h"
 #include "TwoOpt.h"
 #include "XorShift128.h"
 #include "crossover.h"
@@ -29,20 +34,23 @@ try
 
     LocalSearch ls(params, rng);
 
-//    auto moveSingle = Exchange<1, 0>();
-//    ls.addNodeOperator(moveSingle);
-//
-//    auto movePair = Exchange<2, 0>();
-//    ls.addNodeOperator(movePair);
-//
-//    auto swapTwoPairs = Exchange<2, 2>();
-//    ls.addNodeOperator(swapTwoPairs);
-//
-//    auto swapTwoForOne = Exchange<2, 1>();
-//    ls.addNodeOperator(swapTwoForOne);
-//
-//    auto swapSingles = Exchange<1, 1>();
-//    ls.addNodeOperator(swapSingles);
+    auto moveSingle = MoveSingleClient();
+    ls.addNodeOperator(moveSingle);
+
+    auto moveTwo = MoveTwoClients();
+    ls.addNodeOperator(moveTwo);
+
+    auto moveTwoReverse = MoveTwoClientsReversed();
+    ls.addNodeOperator(moveTwoReverse);
+
+    auto swapTwoPairs = SwapTwoClientPairs();
+    ls.addNodeOperator(swapTwoPairs);
+
+    auto swapTwoForOne = SwapTwoClientsForOne();
+    ls.addNodeOperator(swapTwoForOne);
+
+    auto swapSingle = SwapTwoSingleClients();
+    ls.addNodeOperator(swapSingle);
 
     auto twoOpt = TwoOpt();
     ls.addNodeOperator(twoOpt);

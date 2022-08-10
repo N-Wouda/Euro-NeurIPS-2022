@@ -1,8 +1,9 @@
-#include "operators.h"
+#include "MoveTwoClientsReversed.h"
 
+#include "Route.h"
 #include "TimeWindowSegment.h"
 
-bool moveTwoClientsReversed(Node *U, Node *V, Penalties const &penalties)
+bool MoveTwoClientsReversed::test(Node *U, Node *V)
 {
     using TWS = TimeWindowSegment;
 
@@ -11,9 +12,8 @@ bool moveTwoClientsReversed(Node *U, Node *V, Penalties const &penalties)
     if (U == n(V) || n(U) == V || n(U)->isDepot())
         return false;
 
-    int const current
-        = params.dist(p(U)->client, U->client, n(U)->client, nn(U)->client)
-          + params.dist(V->client, n(V)->client);
+    int const current = Route::distBetween(p(U), nn(U))
+                        + params.dist(V->client, n(V)->client);
     int const proposed
         = params.dist(p(U)->client, nn(U)->client)
           + params.dist(V->client, n(U)->client, U->client, n(V)->client);
@@ -27,25 +27,25 @@ bool moveTwoClientsReversed(Node *U, Node *V, Penalties const &penalties)
 
         auto uTWS = TWS::merge(p(U)->twBefore, nn(U)->twAfter);
 
-        deltaCost += penalties.timeWarp(uTWS);
-        deltaCost -= penalties.timeWarp(U->route->tw);
+        deltaCost += d_penalties->timeWarp(uTWS);
+        deltaCost -= d_penalties->timeWarp(U->route->tw);
 
         auto const uDemand = params.clients[U->client].demand;
         auto const xDemand = params.clients[n(U)->client].demand;
 
-        deltaCost += penalties.load(U->route->load - uDemand - xDemand);
-        deltaCost -= penalties.load(U->route->load);
+        deltaCost += d_penalties->load(U->route->load - uDemand - xDemand);
+        deltaCost -= d_penalties->load(U->route->load);
 
         if (deltaCost >= 0)  // if delta cost of just U's route is not enough
             return false;    // even without V, the move will never be good
 
-        deltaCost += penalties.load(V->route->load + uDemand + xDemand);
-        deltaCost -= penalties.load(V->route->load);
+        deltaCost += d_penalties->load(V->route->load + uDemand + xDemand);
+        deltaCost -= d_penalties->load(V->route->load);
 
         auto vTWS = TWS::merge(V->twBefore, n(U)->tw, U->tw, n(V)->twAfter);
 
-        deltaCost += penalties.timeWarp(vTWS);
-        deltaCost -= penalties.timeWarp(V->route->tw);
+        deltaCost += d_penalties->timeWarp(vTWS);
+        deltaCost -= d_penalties->timeWarp(V->route->tw);
     }
     else  // within same route
     {
@@ -60,7 +60,7 @@ bool moveTwoClientsReversed(Node *U, Node *V, Penalties const &penalties)
                                          U->tw,
                                          n(V)->twAfter);
 
-            deltaCost += penalties.timeWarp(uTWS);
+            deltaCost += d_penalties->timeWarp(uTWS);
         }
         else
         {
@@ -70,19 +70,11 @@ bool moveTwoClientsReversed(Node *U, Node *V, Penalties const &penalties)
                                          Route::twBetween(n(V), p(U)),
                                          nn(U)->twAfter);
 
-            deltaCost += penalties.timeWarp(uTWS);
+            deltaCost += d_penalties->timeWarp(uTWS);
         }
 
-        deltaCost -= penalties.timeWarp(U->route->tw);
+        deltaCost -= d_penalties->timeWarp(U->route->tw);
     }
 
-    if (deltaCost >= 0)
-        return false;
-
-    auto *X = n(U);  // copy since the insert below changes n(U)
-
-    U->insertAfter(V);
-    X->insertAfter(V);
-
-    return true;
+    return deltaCost < 0;
 }

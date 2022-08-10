@@ -47,4 +47,9 @@ inline Node *p(Node *node) { return node->prev; }
  */
 inline Node *n(Node *node) { return node->next; }
 
+/**
+ * Convenience method accessing the node two positions after the argument.
+ */
+inline Node *nn(Node *node) { return node->next->next; }
+
 #endif  // NODE_H

@@ -12,6 +12,12 @@ set(individualSources
 set(localSearchSources
         LocalSearch.cpp
         operators/Exchange.cpp
+        operators/MoveSingleClient.cpp
+        operators/MoveTwoClients.cpp
+        operators/MoveTwoClientsReversed.cpp
+        operators/SwapTwoClientPairs.cpp
+        operators/SwapTwoClientsForOne.cpp
+        operators/SwapTwoSingleClients.cpp
         operators/RelocateStar.cpp
         operators/SwapStar.cpp
         operators/TwoOpt.cpp)

@@ -40,10 +40,26 @@ def solve(loc: str, seed: int, **kwargs):
     pop = hgspy.Population(params, rng)
     ls = hgspy.LocalSearch(params, rng)
 
-    ls.add_node_operator(hgspy.operators.TwoOpt())
+    node_ops = [
+        hgspy.operators.MoveSingleClient(),
+        hgspy.operators.MoveTwoClients(),
+        hgspy.operators.MoveTwoClientsReversed(),
+        hgspy.operators.SwapTwoClientPairs(),
+        hgspy.operators.SwapTwoClientsForOne(),
+        hgspy.operators.SwapTwoSingleClients(),
+        hgspy.operators.TwoOpt(),
+    ]
 
-    ls.add_route_operator(hgspy.operators.RelocateStar())
-    ls.add_route_operator(hgspy.operators.SwapStar())
+    for op in node_ops:
+        ls.add_node_operator(op)
+
+    route_ops = [
+        hgspy.operators.RelocateStar(),
+        hgspy.operators.SwapStar(),
+    ]
+
+    for op in route_ops:
+        ls.add_route_operator(op)
 
     algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
     algo.add_crossover_operator(hgspy.crossover.ordered_exchange)

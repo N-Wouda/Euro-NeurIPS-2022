@@ -4,6 +4,13 @@
 #include "LocalSearchOperator.h"
 #include "Node.h"
 
+/**
+ * 2-OPT moves.
+ *
+ * Between routes: replaces U -> X and V -> Y by U -> Y and V -> X, if that is
+ * an improving move. Within route: replaces U -> X and V -> Y by U -> V and
+ * X -> Y, if that is an improving move.
+ */
 class TwoOpt : public LocalSearchOperator<Node>
 {
     bool withinRouteTest(Node *U, Node *V);
