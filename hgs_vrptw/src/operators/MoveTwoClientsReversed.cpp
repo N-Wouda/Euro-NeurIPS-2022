@@ -30,16 +30,15 @@ bool MoveTwoClientsReversed::test(Node *U, Node *V)
         deltaCost += d_penalties->timeWarp(uTWS);
         deltaCost -= d_penalties->timeWarp(U->route->tw);
 
-        auto const uDemand = params.clients[U->client].demand;
-        auto const xDemand = params.clients[n(U)->client].demand;
+        auto const loadDiff = Route::loadBetween(p(U), n(U));
 
-        deltaCost += d_penalties->load(U->route->load - uDemand - xDemand);
+        deltaCost += d_penalties->load(U->route->load - loadDiff);
         deltaCost -= d_penalties->load(U->route->load);
 
         if (deltaCost >= 0)  // if delta cost of just U's route is not enough
             return false;    // even without V, the move will never be good
 
-        deltaCost += d_penalties->load(V->route->load + uDemand + xDemand);
+        deltaCost += d_penalties->load(V->route->load + loadDiff);
         deltaCost -= d_penalties->load(V->route->load);
 
         auto vTWS = TWS::merge(V->twBefore, n(U)->tw, U->tw, n(V)->twAfter);

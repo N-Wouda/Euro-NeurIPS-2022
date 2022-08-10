@@ -36,10 +36,8 @@ bool SwapTwoClientsForOne::test(Node *U, Node *V)
         deltaCost += d_penalties->timeWarp(vTWS);
         deltaCost -= d_penalties->timeWarp(V->route->tw);
 
-        auto const uDemand = params.clients[U->client].demand;
-        auto const xDemand = params.clients[n(U)->client].demand;
         auto const vDemand = params.clients[V->client].demand;
-        auto const loadDiff = uDemand + xDemand - vDemand;
+        auto const loadDiff = Route::loadBetween(p(U), n(U)) - vDemand;
 
         deltaCost += d_penalties->load(U->route->load - loadDiff);
         deltaCost -= d_penalties->load(U->route->load);
