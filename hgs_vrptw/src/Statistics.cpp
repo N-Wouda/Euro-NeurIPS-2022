@@ -35,22 +35,18 @@ void Statistics::collectFrom(Population const &population)
     auto const &best = population.bestSol;
 
     if (!best.isFeasible())
-        return;
-
-    if (!best.isFeasible())
-    {  // avoids storing the possibly
-        currObjectives_.push_back(
-            INT_MAX);  // infeasible initial (random) solution
+    {
+        currObjectives_.push_back(INT_MAX);
         return;
     }
-    else
-        currObjectives_.push_back(best.cost());
+
+    currObjectives_.push_back(best.cost());
 
     if (bestObjectives_.empty() || best.cost() < bestObjectives_.back().second)
         bestObjectives_.emplace_back(clock::now(), best.cost());
 }
 
-void Statistics::toFile(std::string const &path) const
+void Statistics::exportCSV(std::string const &path) const
 {
     std::ofstream out(path);
 
@@ -73,9 +69,9 @@ std::ostream &operator<<(std::ostream &out, Statistics const &stats)
         << "diversity"
         << ";"
         << "best objective"
-        << "\n"
+        << "\n";
 
-        for (size_t it = 0; it != stats.numIters(); it++)
+    for (size_t it = 0; it != stats.numIters(); it++)
     {
         out << it << ";" << stats.runTimes()[it] << ";" << stats.popSizes()[it]
             << ";" << stats.feasiblePops()[it] << ";"

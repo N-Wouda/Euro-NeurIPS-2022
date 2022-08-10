@@ -98,10 +98,11 @@ public:
     }
 
     /**
-     * Exports the collected statistics. Only those that have been collected
-     * for each iteration are exported. Values are separated by semicolons.
+     * Exports the collected statistics as CSV. Only statistics that were
+     * collected for each iteration are exported. Values are separated by
+     * semicolons.
      */
-    void const toFile(std::string const);
+    void exportCSV(std::string const &path) const;
 };
 
 // Outputs a statistics object into a given ostream
