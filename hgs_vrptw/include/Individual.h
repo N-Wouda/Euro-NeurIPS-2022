@@ -54,7 +54,7 @@ public:
     /**
      * Returns this individual's objective (penalized cost).
      */
-    [[nodiscard]] inline size_t cost() const
+    [[nodiscard]] size_t cost() const
     {
         // clang-format off
         return distance
@@ -68,22 +68,22 @@ public:
      * Such non-empty routes are all in the lower indices (guarantee) of the
      * routes returned by ``getRoutes``.
      */
-    [[nodiscard]] inline size_t numRoutes() const { return nbRoutes; }
+    [[nodiscard]] size_t numRoutes() const { return nbRoutes; }
 
     /**
      * Returns this individual's routing decisions.
      */
-    [[nodiscard]] inline Routes const &getRoutes() const { return routes_; }
+    [[nodiscard]] Routes const &getRoutes() const { return routes_; }
 
     /**
      * Returns this individual's giant tour chromosome.
      */
-    [[nodiscard]] inline Tour const &getTour() const { return tour_; }
+    [[nodiscard]] Tour const &getTour() const { return tour_; }
 
     /**
      * Returns true when this solution is feasible; false otherwise.
      */
-    [[nodiscard]] inline bool isFeasible() const
+    [[nodiscard]] bool isFeasible() const
     {
         return !hasExcessCapacity() && !hasTimeWarp();
     }
@@ -91,15 +91,12 @@ public:
     /**
      * If true, then the route exceeds vehicle capacity.
      */
-    [[nodiscard]] inline bool hasExcessCapacity() const
-    {
-        return capacityExcess > 0;
-    }
+    [[nodiscard]] bool hasExcessCapacity() const { return capacityExcess > 0; }
 
     /**
      * If true, then the route violates time window constraints.
      */
-    [[nodiscard]] inline bool hasTimeWarp() const { return timeWarp > 0; }
+    [[nodiscard]] bool hasTimeWarp() const { return timeWarp > 0; }
 
     // Computes and stores a distance measure with another individual, based on
     // the number of arcs that differ between two solutions.

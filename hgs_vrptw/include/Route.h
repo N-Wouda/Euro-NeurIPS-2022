@@ -58,7 +58,7 @@ public:  // TODO make fields private
     /**
      * Tests if this route is feasible.
      */
-    [[nodiscard]] inline bool isFeasible() const
+    [[nodiscard]] bool isFeasible() const
     {
         return !hasExcessCapacity() && !hasTimeWarp();
     }
@@ -66,7 +66,7 @@ public:  // TODO make fields private
     /**
      * Determines whether this route is load-feasible.
      */
-    [[nodiscard]] inline bool hasExcessCapacity() const
+    [[nodiscard]] bool hasExcessCapacity() const
     {
         return load > params->vehicleCapacity;
     }
@@ -74,23 +74,30 @@ public:  // TODO make fields private
     /**
      * Determines whether this route is time-feasible.
      */
-    [[nodiscard]] inline bool hasTimeWarp() const
-    {
-        return tw.totalTimeWarp() > 0;
-    }
+    [[nodiscard]] bool hasTimeWarp() const { return tw.totalTimeWarp() > 0; }
 
-    [[nodiscard]] inline bool overlapsWith(Route const &other) const
+    [[nodiscard]] bool overlapsWith(Route const &other) const
     {
         return CircleSector::overlap(
             sector, other.sector, params->config.circleSectorOverlapTolerance);
     }
 
-    [[nodiscard]] inline bool empty() const { return nbCustomers == 0; }
+    [[nodiscard]] bool empty() const { return nbCustomers == 0; }
 
     /**
      * Calculates time window data for segment [start, end] in the same route.
      */
     static TimeWindowSegment twBetween(Node const *start, Node const *end);
+
+    /**
+     * Calculates the distance for segment [start, end] in the same route.
+     */
+    static int distBetween(Node const *start, Node const *end);
+
+    /**
+     * Calculates the load for segment [start, end] in the same route.
+     */
+    static int loadBetween(Node const *start, Node const *end);
 
     /**
      * Updates this route. To be called after swapping nodes/changing the

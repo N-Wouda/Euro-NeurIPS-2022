@@ -11,17 +11,10 @@ set(individualSources
 
 set(localSearchSources
         LocalSearch.cpp
-        operators/operators.cpp
-        operators/moveSingleClient.cpp
-        operators/moveTwoClients.cpp
-        operators/moveTwoClientsReversed.cpp
-        operators/swapTwoClientPairs.cpp
-        operators/swapTwoClientsForOne.cpp
-        operators/swapTwoSingleClients.cpp
-        operators/twoOptBetweenRoutes.cpp
-        operators/twoOptWithinRoute.cpp
-        operators/relocateStar.cpp
-        operators/swapStar.cpp)
+        operators/Exchange.cpp
+        operators/RelocateStar.cpp
+        operators/SwapStar.cpp
+        operators/TwoOpt.cpp)
 
 set(nodeSources
         Node.cpp)

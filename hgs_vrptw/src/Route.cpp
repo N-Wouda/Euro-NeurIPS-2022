@@ -22,6 +22,7 @@ void Route::update()
     nodes.reserve(prevSize);
 
     size_t place = 0;
+    int distance = 0;
     int reverseDistance = 0;
     int cumulatedX = 0;
     int cumulatedY = 0;
@@ -29,6 +30,7 @@ void Route::update()
     auto *node = depot;
     node->position = 0;
     node->cumulatedLoad = 0;
+    node->cumulatedDistance = 0;
     node->cumulatedReversalDistance = 0;
 
     if (!node->next->isDepot())
@@ -44,6 +46,9 @@ void Route::update()
 
         load += params->clients[node->client].demand;
         node->cumulatedLoad = load;
+
+        distance += params->dist(node->prev->client, node->client);
+        node->cumulatedDistance = distance;
 
         reverseDistance += params->dist(node->client, node->prev->client);
         reverseDistance -= params->dist(node->prev->client, node->client);
@@ -137,6 +142,24 @@ TimeWindowSegment Route::twBetween(Node const *start, Node const *end)
     }
 
     return data;
+}
+
+int Route::distBetween(Node const *start, Node const *end)
+{
+    assert(start->route == end->route);
+    assert(start->position <= end->position);
+    assert(end->cumulatedDistance >= start->cumulatedDistance);
+
+    return end->cumulatedDistance - start->cumulatedDistance;
+}
+
+int Route::loadBetween(Node const *start, Node const *end)
+{
+    assert(start->route == end->route);
+    assert(start->position <= end->position);
+    assert(end->cumulatedLoad >= start->cumulatedLoad);
+
+    return end->cumulatedLoad - start->cumulatedLoad;
 }
 
 void Route::installJumpPoints(Node const *node)

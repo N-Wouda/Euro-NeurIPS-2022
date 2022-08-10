@@ -1,8 +1,8 @@
-#include "operators.h"
+#include "RelocateStar.h"
 
 #include "TimeWindowSegment.h"
 
-int operators::singleMoveCost(Node *U, Node *V, Penalties const &penalties)
+int RelocateStar::singleMoveCost(Node *U, Node *V) const
 {
     using TWS = TimeWindowSegment;
 
@@ -25,24 +25,24 @@ int operators::singleMoveCost(Node *U, Node *V, Penalties const &penalties)
 
         auto const uTWS = TWS::merge(p(U)->twBefore, n(U)->twAfter);
 
-        deltaCost += penalties.timeWarp(uTWS);
-        deltaCost -= penalties.timeWarp(U->route->tw);
+        deltaCost += d_penalties->timeWarp(uTWS);
+        deltaCost -= d_penalties->timeWarp(U->route->tw);
 
         auto const uDemand = params.clients[U->client].demand;
 
-        deltaCost += penalties.load(U->route->load - uDemand);
-        deltaCost -= penalties.load(U->route->load);
+        deltaCost += d_penalties->load(U->route->load - uDemand);
+        deltaCost -= d_penalties->load(U->route->load);
 
         if (deltaCost >= 0)    // if delta cost of just U's route is not enough
             return deltaCost;  // even without V, the move will never be good
 
-        deltaCost += penalties.load(V->route->load + uDemand);
-        deltaCost -= penalties.load(V->route->load);
+        deltaCost += d_penalties->load(V->route->load + uDemand);
+        deltaCost -= d_penalties->load(V->route->load);
 
         auto const vTWS = TWS::merge(V->twBefore, U->tw, n(V)->twAfter);
 
-        deltaCost += penalties.timeWarp(vTWS);
-        deltaCost -= penalties.timeWarp(V->route->tw);
+        deltaCost += d_penalties->timeWarp(vTWS);
+        deltaCost -= d_penalties->timeWarp(V->route->tw);
     }
     else  // move within the same route
     {
@@ -56,7 +56,7 @@ int operators::singleMoveCost(Node *U, Node *V, Penalties const &penalties)
                                          U->tw,
                                          n(V)->twAfter);
 
-            deltaCost += penalties.timeWarp(uTWS);
+            deltaCost += d_penalties->timeWarp(uTWS);
         }
         else
         {
@@ -65,11 +65,40 @@ int operators::singleMoveCost(Node *U, Node *V, Penalties const &penalties)
                                          Route::twBetween(n(V), p(U)),
                                          n(U)->twAfter);
 
-            deltaCost += penalties.timeWarp(uTWS);
+            deltaCost += d_penalties->timeWarp(uTWS);
         }
 
-        deltaCost -= penalties.timeWarp(U->route->tw);
+        deltaCost -= d_penalties->timeWarp(U->route->tw);
     }
 
     return deltaCost;
+}
+
+bool RelocateStar::test(Route *U, Route *V)
+{
+    bestCost = 0;
+    insertionPoint = nullptr;
+    nodeToInsert = nullptr;
+
+    auto eval = [&](auto *nodeU, auto *nodeV)
+    {
+        int const deltaCost = singleMoveCost(nodeU, nodeV);
+
+        if (deltaCost < bestCost)
+        {
+            bestCost = deltaCost;
+            insertionPoint = nodeV;
+            nodeToInsert = nodeU;
+        }
+    };
+
+    for (auto *nodeU = n(U->depot); !nodeU->isDepot(); nodeU = n(nodeU))
+    {
+        eval(nodeU, V->depot);
+
+        for (auto *nodeV = n(V->depot); !nodeV->isDepot(); nodeV = n(nodeV))
+            eval(nodeU, nodeV);
+    }
+
+    return bestCost < 0 && insertionPoint && nodeToInsert;
 }

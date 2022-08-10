@@ -2,13 +2,16 @@
 #include "GeneticAlgorithm.h"
 #include "Individual.h"
 #include "LocalSearch.h"
+#include "LocalSearchOperator.h"
 #include "Params.h"
 #include "Population.h"
+#include "RelocateStar.h"
 #include "Result.h"
 #include "Statistics.h"
+#include "SwapStar.h"
+#include "TwoOpt.h"
 #include "XorShift128.h"
 #include "crossover.h"
-#include "operators.h"
 
 #include "MaxIterations.h"
 #include "MaxRuntime.h"
@@ -46,9 +49,14 @@ PYBIND11_MODULE(hgspy, m)
         .def(py::init<Params &, XorShift128 &>(),
              py::arg("params"),
              py::arg("rng"))
-        .def("add_node_operator", &LocalSearch::addNodeOperator, py::arg("op"))
-        .def(
-            "add_route_operator", &LocalSearch::addRouteOperator, py::arg("op"))
+        .def("add_node_operator",
+             static_cast<void (LocalSearch::*)(LocalSearchOperator<Node> &)>(
+                 &LocalSearch::addNodeOperator),
+             py::arg("op"))
+        .def("add_route_operator",
+             static_cast<void (LocalSearch::*)(LocalSearchOperator<Route> &)>(
+                 &LocalSearch::addRouteOperator),
+             py::arg("op"))
         .def("__call__",
              &LocalSearch::operator(),
              py::arg("indiv"),
@@ -202,15 +210,15 @@ PYBIND11_MODULE(hgspy, m)
     // Local search operators (as a submodule)
     py::module lsOps = m.def_submodule("operators");
 
-    lsOps.def("move_single_client", &moveSingleClient);
-    lsOps.def("move_two_clients", &moveTwoClients);
-    lsOps.def("move_two_clients_reversed", &moveTwoClientsReversed);
-    lsOps.def("swap_two_client_pairs", &swapTwoClientPairs);
-    lsOps.def("swap_two_clients_for_one", &swapTwoClientsForOne);
-    lsOps.def("swap_two_single_clients", &swapTwoSingleClients);
-    lsOps.def("two_opt_between_routes", &twoOptBetweenRoutes);
-    lsOps.def("two_opt_within_route", &twoOptWithinRoute);
+    py::class_<LocalSearchOperator<Node>>(lsOps, "NodeLocalSearchOperator");
+    py::class_<LocalSearchOperator<Route>>(lsOps, "RouteLocalSearchOperator");
 
-    lsOps.def("relocate_star", &relocateStar);
-    lsOps.def("swap_star", &swapStar);
+    py::class_<TwoOpt, LocalSearchOperator<Node>>(lsOps, "TwoOpt")
+        .def(py::init<>());
+
+    py::class_<RelocateStar, LocalSearchOperator<Route>>(lsOps, "RelocateStar")
+        .def(py::init<>());
+
+    py::class_<SwapStar, LocalSearchOperator<Route>>(lsOps, "SwapStar")
+        .def(py::init<>());
 }

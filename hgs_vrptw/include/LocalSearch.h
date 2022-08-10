@@ -8,13 +8,15 @@
 #include "Route.h"
 #include "XorShift128.h"
 
+#include "LocalSearchOperator.h"
+
 #include <functional>
 #include <vector>
 
 class LocalSearch
 {
-    using nodeOp = std::function<bool(Node *, Node *, Penalties const &)>;
-    using routeOp = std::function<bool(Route *, Route *, Penalties const &)>;
+    using nodeOp = LocalSearchOperator<Node>;
+    using routeOp = LocalSearchOperator<Route>;
 
     Penalties penalties;  // Penalty data
     Params &params;       // Problem parameters
@@ -30,8 +32,8 @@ class LocalSearch
     std::vector<Node> endDepots;    // These mark the end of routes
     std::vector<Route> routes;
 
-    std::vector<nodeOp> nodeOps;
-    std::vector<routeOp> routeOps;
+    std::vector<nodeOp *> nodeOps;
+    std::vector<routeOp *> routeOps;
 
     int nbMoves = 0;               // Operator (RI and SWAP*) counter
     bool searchCompleted = false;  // No further improving move found?
@@ -53,13 +55,13 @@ public:
     /**
      * Adds a local search operator that works on node/client pairs U and V.
      */
-    void addNodeOperator(nodeOp const &op) { nodeOps.push_back(op); }
+    void addNodeOperator(nodeOp &op) { nodeOps.emplace_back(&op); }
 
     /**
      * Adds a local search operator that works on route pairs U and V. These
      * operators are executed for route pairs whose circle sectors overlap.
      */
-    void addRouteOperator(routeOp const &op) { routeOps.push_back(op); }
+    void addRouteOperator(routeOp &op) { routeOps.emplace_back(&op); }
 
     /**
      * Performs the local search procedure around the given individual, using

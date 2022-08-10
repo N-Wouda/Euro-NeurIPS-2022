@@ -24,12 +24,16 @@ public:
     {
     }
 
-    [[nodiscard]] inline T &operator()(size_t row, size_t col)
+    // Constructor: create a matrix of size nRows by nCols, using a C++
+    // vector of size nRows * nCols.
+    Matrix(size_t nRows, size_t nCols) : cols_(nCols), data_(nRows * nCols) {}
+
+    [[nodiscard]] T &operator()(size_t row, size_t col)
     {
         return data_[cols_ * row + col];
     }
 
-    [[nodiscard]] inline T operator()(size_t row, size_t col) const
+    [[nodiscard]] T operator()(size_t row, size_t col) const
     {
         return data_[cols_ * row + col];
     }

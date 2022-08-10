@@ -68,18 +68,15 @@ public:
         return neighbours[client];
     }
 
-    [[nodiscard]] inline int &dist(size_t row, size_t col)
-    {
-        return dist_(row, col);
-    }
+    [[nodiscard]] int &dist(size_t row, size_t col) { return dist_(row, col); }
 
-    [[nodiscard]] inline int dist(size_t row, size_t col) const
+    [[nodiscard]] int dist(size_t row, size_t col) const
     {
         return dist_(row, col);
     }
 
     template <typename... Args>
-    [[nodiscard]] inline int
+    [[nodiscard]] int
     dist(size_t first, size_t second, size_t third, Args... args) const
     {
         return dist_(first, second) + dist(second, third, args...);

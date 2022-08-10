@@ -7,6 +7,8 @@
 #include <stdexcept>
 #include <vector>
 
+#include <iostream>
+
 void LocalSearch::operator()(Individual &indiv,
                              int loadPenalty,
                              int timeWarpPenalty)
@@ -131,13 +133,14 @@ void LocalSearch::search()
 
 bool LocalSearch::applyNodeOperators(Node *U, Node *V)
 {
-    for (auto const &op : nodeOps)
-    {
-        auto *routeU = U->route;  // copy these because the operator could
-        auto *routeV = V->route;  // modify the node's route membership
-
-        if (op(U, V, penalties))
+    for (auto &op : nodeOps)
+        if (op->test(U, V))
         {
+            auto *routeU = U->route;  // copy these because the operator could
+            auto *routeV = V->route;  // modify the node's route membership
+
+            op->apply(U, V);
+
             nbMoves++;
             searchCompleted = false;
 
@@ -152,16 +155,17 @@ bool LocalSearch::applyNodeOperators(Node *U, Node *V)
 
             return true;
         }
-    }
 
     return false;
 }
 
 bool LocalSearch::applyRouteOperators(Route *U, Route *V)
 {
-    for (auto const &op : routeOps)
-        if (op(U, V, penalties))
+    for (auto &op : routeOps)
+        if (op->test(U, V))
         {
+            op->apply(U, V);
+
             nbMoves++;
             searchCompleted = false;
 
@@ -240,6 +244,12 @@ void LocalSearch::loadIndividual(Individual const &indiv)
 
         route->update();
     }
+
+    for (auto &op : nodeOps)
+        op->init(indiv, &penalties);
+
+    for (auto &op : routeOps)
+        op->init(indiv, &penalties);
 }
 
 Individual LocalSearch::exportIndividual()
@@ -299,9 +309,11 @@ LocalSearch::LocalSearch(Params &params, XorShift128 &rng)
         routes[i].idx = i;
         routes[i].depot = &startDepots[i];
 
+        startDepots[i].params = &params;
         startDepots[i].client = 0;
         startDepots[i].route = &routes[i];
 
+        startDepots[i].params = &params;
         endDepots[i].client = 0;
         endDepots[i].route = &routes[i];
     }

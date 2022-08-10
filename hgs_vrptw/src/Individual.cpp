@@ -64,7 +64,7 @@ struct ClientSplits
     }
 
     // Computes the cost of propagating label i to j
-    [[nodiscard]] inline int propagate(int i, int j) const
+    [[nodiscard]] int propagate(int i, int j) const
     {
         assert(i < j);
         auto const excessCapacity = cumLoad[j] - cumLoad[i] - vehicleCap;
@@ -74,7 +74,7 @@ struct ClientSplits
     }
 
     // Tests if i dominates j as a predecessor for all nodes x >= j + 1
-    [[nodiscard]] inline bool leftDominates(int i, int j) const
+    [[nodiscard]] bool leftDominates(int i, int j) const
     {
         assert(i < j);
         auto const lhs = pathCosts[j] + splits[j + 1].d0_x;
@@ -86,7 +86,7 @@ struct ClientSplits
     }
 
     // Tests if j dominates i as a predecessor for all nodes x >= j + 1
-    [[nodiscard]] inline bool rightDominates(int i, int j) const
+    [[nodiscard]] bool rightDominates(int i, int j) const
     {
         assert(i < j);
         auto const lhs = pathCosts[j] + splits[j + 1].d0_x;

@@ -1,12 +1,15 @@
 #include "CommandLine.h"
+#include "Exchange.h"
 #include "GeneticAlgorithm.h"
 #include "LocalSearch.h"
 #include "MaxRuntime.h"
 #include "Params.h"
 #include "Population.h"
+#include "RelocateStar.h"
+#include "SwapStar.h"
+#include "TwoOpt.h"
 #include "XorShift128.h"
 #include "crossover.h"
-#include "operators.h"
 
 #include <chrono>
 #include <iostream>
@@ -25,16 +28,29 @@ try
     Population pop(params, rng);
 
     LocalSearch ls(params, rng);
-    ls.addNodeOperator(moveSingleClient);
-    ls.addNodeOperator(moveTwoClients);
-    ls.addNodeOperator(moveTwoClientsReversed);
-    ls.addNodeOperator(swapTwoClientPairs);
-    ls.addNodeOperator(swapTwoClientsForOne);
-    ls.addNodeOperator(swapTwoSingleClients);
-    ls.addNodeOperator(twoOptBetweenRoutes);
-    ls.addNodeOperator(twoOptWithinRoute);
 
+//    auto moveSingle = Exchange<1, 0>();
+//    ls.addNodeOperator(moveSingle);
+//
+//    auto movePair = Exchange<2, 0>();
+//    ls.addNodeOperator(movePair);
+//
+//    auto swapTwoPairs = Exchange<2, 2>();
+//    ls.addNodeOperator(swapTwoPairs);
+//
+//    auto swapTwoForOne = Exchange<2, 1>();
+//    ls.addNodeOperator(swapTwoForOne);
+//
+//    auto swapSingles = Exchange<1, 1>();
+//    ls.addNodeOperator(swapSingles);
+
+    auto twoOpt = TwoOpt();
+    ls.addNodeOperator(twoOpt);
+
+    auto relocateStar = RelocateStar();
     ls.addRouteOperator(relocateStar);
+
+    auto swapStar = SwapStar();
     ls.addRouteOperator(swapStar);
 
     GeneticAlgorithm solver(params, rng, pop, ls);
