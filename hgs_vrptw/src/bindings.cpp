@@ -85,7 +85,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("nbIter") = 20'000,
              py::arg("timeLimit") = INT_MAX,
              py::arg("collectStatistics") = false,
-             py::arg("statsPath") = "statistics.csv",
+             py::arg("statsPath") = "",
              py::arg("initialTimeWarpPenalty") = 1,
              py::arg("nbPenaltyManagement") = 100,
              py::arg("feasBooster") = 2.,
