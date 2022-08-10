@@ -18,6 +18,7 @@ def parse_args():
     parser.add_argument(
         "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
     )
+    parser.add_argument("--results_dir", type=str)
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--max_runtime", type=int)
@@ -62,6 +63,7 @@ def solve(loc: str, seed: int, **kwargs):
         stop = hgspy.stop.MaxIterations(kwargs["max_iterations"])
 
     res = algo.run(stop)
+    finish = round((datetime.now() - start).total_seconds(), 3)
 
     best = res.get_best_found()
     routes = [route for route in best.get_routes() if route]
@@ -76,12 +78,30 @@ def solve(loc: str, seed: int, **kwargs):
         is_ok = "N"
 
     stats = res.get_statistics()
+
+    if "results_dir" in kwargs and kwargs["results_dir"]:
+        results_dir = Path(kwargs["results_dir"])
+
+        # Export best solutions
+        sol_dir = results_dir / "solutions/"
+        sol_dir.mkdir(parents=True, exist_ok=True)
+
+        sol_path = str(sol_dir / (path.stem + ".sol"))
+        best.export_cvrplib_format(sol_path, finish)
+
+        # Export statistics
+        stats_dir = results_dir / "statistics/"
+        stats_dir.mkdir(parents=True, exist_ok=True)
+
+        stats_path = str(stats_dir / (path.stem + ".csv"))
+        stats.export_csv(stats_path)
+
     return (
         path.stem,
         is_ok,
         int(best.cost()),
         stats.num_iters(),
-        round((datetime.now() - start).total_seconds(), 3),
+        finish,
         len(stats.best_objectives()),
     )
 

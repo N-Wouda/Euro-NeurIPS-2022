@@ -40,7 +40,8 @@ PYBIND11_MODULE(hgspy, m)
         .def("get_tour", &Individual::getTour)
         .def("is_feasible", &Individual::isFeasible)
         .def("has_excess_capacity", &Individual::hasExcessCapacity)
-        .def("has_time_warp", &Individual::hasTimeWarp);
+        .def("has_time_warp", &Individual::hasTimeWarp)
+        .def("export_cvrplib_format", &Individual::exportCVRPLibFormat);
 
     py::class_<LocalSearch>(m, "LocalSearch")
         .def(py::init<Params &, XorShift128 &>(),
@@ -164,7 +165,8 @@ PYBIND11_MODULE(hgspy, m)
         .def("feasible_pops", &Statistics::feasiblePops)
         .def("pop_diversity", &Statistics::popDiversity)
         .def("curr_objectives", &Statistics::currObjectives)
-        .def("best_objectives", &Statistics::bestObjectives);
+        .def("best_objectives", &Statistics::bestObjectives)
+        .def("export_csv", &Statistics::exportCSV);
 
     py::class_<Result>(m, "Result")
         .def("get_best_found",
