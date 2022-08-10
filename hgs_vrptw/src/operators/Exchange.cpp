@@ -56,9 +56,6 @@ bool Exchange<N, M>::overlaps(Node *U, Node *V) const
 
 template <size_t N, size_t M> bool Exchange<N, M>::test(Node *U, Node *V)
 {
-    if (U->route == V->route)
-        return false;
-
     if (isDepotInSegments(U, V))
         return false;
 
