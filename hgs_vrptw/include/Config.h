@@ -9,11 +9,11 @@
 // Stores all the parameters values
 struct Config
 {
-    int seed = 0;                    // Random seed
-    size_t nbIter = 20'000;          // iters without improvement
-    int timeLimit = INT_MAX;         // time limit in seconds
-    bool collectStatistics = false;  // collect runtime statistics?
-    std::string statsPath = "here.txt";   // path for saving statistics
+    int seed = 0;                        // Random seed
+    size_t nbIter = 20'000;              // iters without improvement
+    int timeLimit = INT_MAX;             // time limit in seconds
+    bool collectStatistics = false;      // collect runtime statistics?
+    std::string statsPath = "here.txt";  // path for saving statistics
 
     // This was the default until now, but with this value feasible individuals
     // often become infeasible during the local search in educate. This does not

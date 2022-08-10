@@ -80,9 +80,8 @@ public:
     /**
      * Returns a vector of the best objective value at the current iteration,
      * one element for each iteration where a feasible best solution exists.
-     * Early iterations where that might not be the case are missing from
-     * this vector: use ``numIters() - currObjectives().size()`` to determine
-     * the iteration from where on this information is available.
+     * Early iterations where that might not be the case are stored with
+     * value ``INT_MAX``.
      */
     [[nodiscard]] std::vector<size_t> const &currObjectives() const
     {
@@ -99,8 +98,13 @@ public:
     }
 
     /**
-     * Writes all per-iteration statistics to a file.
+     * Exports the collected statistics. Only those that have been collected
+     * for each iteration are exported. Values are separated by semicolons.
      */
     void const toFile(std::string const);
+};
+
+// Outputs a statistics object into a given ostream
+std::ostream &operator<<(std::ostream &out, Statistics const &stats);
 
 #endif  // STATISTICS_H
