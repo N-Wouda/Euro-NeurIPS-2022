@@ -10,48 +10,44 @@
 #include <chrono>
 #include <iostream>
 
-int main(int argc, char **argv)
-try
-{
-    using clock = std::chrono::system_clock;
-    auto start = clock::now();
+int main(int argc, char **argv) try {
+  using clock = std::chrono::system_clock;
+  auto start = clock::now();
 
-    CommandLine args(argc, argv);
-    auto config = args.parse();
+  CommandLine args(argc, argv);
+  auto config = args.parse();
 
-    XorShift128 rng(config.seed);
-    Params params(config, args.instPath());
-    Population pop(params, rng);
+  XorShift128 rng(config.seed);
+  Params params(config, args.instPath());
+  Population pop(params, rng);
 
-    LocalSearch ls(params, rng);
-    ls.addNodeOperator(moveSingleClient);
-    ls.addNodeOperator(moveTwoClients);
-    ls.addNodeOperator(moveTwoClientsReversed);
-    ls.addNodeOperator(swapTwoClientPairs);
-    ls.addNodeOperator(swapTwoClientsForOne);
-    ls.addNodeOperator(swapTwoSingleClients);
-    ls.addNodeOperator(twoOptBetweenRoutes);
-    ls.addNodeOperator(twoOptWithinRoute);
+  LocalSearch ls(params, rng);
+  ls.addNodeOperator(moveSingleClient);
+  ls.addNodeOperator(moveTwoClients);
+  ls.addNodeOperator(moveTwoClientsReversed);
+  ls.addNodeOperator(swapTwoClientPairs);
+  ls.addNodeOperator(swapTwoClientsForOne);
+  ls.addNodeOperator(swapTwoSingleClients);
+  ls.addNodeOperator(twoOptBetweenRoutes);
+  ls.addNodeOperator(twoOptWithinRoute);
 
-    ls.addRouteOperator(relocateStar);
-    ls.addRouteOperator(swapStar);
+  ls.addRouteOperator(relocateStar);
+  ls.addRouteOperator(swapStar);
 
-    GeneticAlgorithm solver(params, rng, pop, ls);
-    solver.addCrossoverOperator(orderedExchange);
-    solver.addCrossoverOperator(selectiveRouteExchange);
+  GeneticAlgorithm solver(params, rng, pop, ls);
+  solver.addCrossoverOperator(orderedExchange);
+  solver.addCrossoverOperator(selectiveRouteExchange);
 
-    auto const until = start + std::chrono::seconds(config.timeLimit);
-    auto const res = solver.runUntil(until);
+  auto const until = start + std::chrono::seconds(config.timeLimit);
+  auto const res = solver.runUntil(until);
+  auto const stats = res.getStatistics();
+  stats.toFile(config.statsPath);
 
-    std::chrono::duration<double> const timeDelta = clock::now() - start;
-    auto const &bestSol = res.getBestFound();
-    bestSol.exportCVRPLibFormat(args.solPath(), timeDelta.count());
-}
-catch (std::exception const &e)
-{
-    std::cerr << "EXCEPTION | " << e.what() << '\n';
-}
-catch (...)
-{
-    std::cerr << "UNKNOWN EXCEPTION\n";
+  std::chrono::duration<double> const timeDelta = clock::now() - start;
+  auto const &bestSol = res.getBestFound();
+  // bestSol.exportCVRPLibFormat(config.solPath, timeDelta.count());
+} catch (std::exception const &e) {
+  std::cerr << "EXCEPTION | " << e.what() << '\n';
+} catch (...) {
+  std::cerr << "UNKNOWN EXCEPTION\n";
 }

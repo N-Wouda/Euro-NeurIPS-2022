@@ -13,6 +13,7 @@ struct Config
     size_t nbIter = 20'000;          // iters without improvement
     int timeLimit = INT_MAX;         // time limit in seconds
     bool collectStatistics = false;  // collect runtime statistics?
+    std::string statsPath = "here.txt";   // path for saving statistics
 
     // This was the default until now, but with this value feasible individuals
     // often become infeasible during the local search in educate. This does not
@@ -61,7 +62,7 @@ struct Config
     explicit Config(int seed = 0,
                     size_t nbIter = 20'000,
                     int timeLimit = INT_MAX,
-                    bool collectStatistics = false,
+                    bool collectStatistics = true,
                     size_t initialTimeWarpPenalty = 1,
                     size_t nbPenaltyManagement = 100,
                     double feasBooster = 2.,
