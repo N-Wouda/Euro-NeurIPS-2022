@@ -20,8 +20,8 @@ def parse_args():
     )
 
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--time_limit", type=int)
-    group.add_argument("--max_iters", type=int)
+    group.add_argument("--max_runtime", type=int)
+    group.add_argument("--max_iterations", type=int)
 
     return parser.parse_args()
 
@@ -56,10 +56,10 @@ def solve(loc: str, seed: int, **kwargs):
     algo.add_crossover_operator(hgspy.crossover.ordered_exchange)
     algo.add_crossover_operator(hgspy.crossover.selective_route_exchange)
 
-    if "time_limit" in kwargs and kwargs["time_limit"]:
-        stop = hgspy.stop.MaxRuntime(kwargs["time_limit"])
+    if "max_runtime" in kwargs and kwargs["max_runtime"]:
+        stop = hgspy.stop.MaxRuntime(kwargs["max_runtime"])
     else:
-        stop = hgspy.stop.MaxIterations(kwargs["max_iters"])
+        stop = hgspy.stop.MaxIterations(kwargs["max_iterations"])
 
     res = algo.run(stop)
 
