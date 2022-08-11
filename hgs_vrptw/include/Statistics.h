@@ -102,7 +102,7 @@ public:
      * collected for each iteration are exported. Uses `,` as default
      * separator.
      */
-    void toCsv(std::string const &path, const char sep = ';') const;
+    void toCsv(std::string const &path, const char sep = ',') const;
 };
 
 #endif  // STATISTICS_H
