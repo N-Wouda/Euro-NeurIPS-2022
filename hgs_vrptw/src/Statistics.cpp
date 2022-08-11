@@ -46,37 +46,21 @@ void Statistics::collectFrom(Population const &population)
         bestObjectives_.emplace_back(clock::now(), best.cost());
 }
 
-void Statistics::exportCSV(std::string const &path) const
+void Statistics::toCsv(std::string const &path, char const sep) const
 {
     std::ofstream out(path);
 
     if (!out)
         throw std::runtime_error("Could not open " + path);
 
-    out << *this;
-}
-
-std::ostream &operator<<(std::ostream &out, Statistics const &stats)
-{
-    out << "iteration"
-        << ";"
-        << "run-time"
-        << ";"
-        << "population size"
-        << ";"
-        << "# feasible"
-        << ";"
-        << "diversity"
-        << ";"
-        << "best objective"
+    out << "# iteration" << sep << "run-time (s)" << sep << "population size"
+        << sep << "# feasible" << sep << "diversity" << sep << "best objective"
         << "\n";
 
-    for (size_t it = 0; it != stats.numIters(); it++)
+    for (size_t it = 0; it != numIters_; it++)
     {
-        out << it << ";" << stats.runTimes()[it] << ";" << stats.popSizes()[it]
-            << ";" << stats.feasiblePops()[it] << ";"
-            << stats.popDiversity()[it] << ";" << stats.currObjectives()[it]
-            << "\n";
+        out << it << sep << runTimes()[it] << sep << popSizes()[it] << sep
+            << feasiblePops()[it] << sep << popDiversity()[it] << sep
+            << currObjectives_[it] << "\n";
     }
-    return out;
 }

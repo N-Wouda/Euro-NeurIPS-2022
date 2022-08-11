@@ -163,7 +163,7 @@ PYBIND11_MODULE(hgspy, m)
         .def("pop_diversity", &Statistics::popDiversity)
         .def("curr_objectives", &Statistics::currObjectives)
         .def("best_objectives", &Statistics::bestObjectives)
-        .def("export_csv", &Statistics::exportCSV);
+        .def("to_csv", &Statistics::toCsv);
 
     py::class_<Result>(m, "Result")
         .def("get_best_found",

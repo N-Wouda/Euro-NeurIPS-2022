@@ -99,13 +99,10 @@ public:
 
     /**
      * Exports the collected statistics as CSV. Only statistics that were
-     * collected for each iteration are exported. Values are separated by
-     * semicolons.
+     * collected for each iteration are exported. Uses `,` as default
+     * separator.
      */
-    void exportCSV(std::string const &path) const;
+    void toCsv(std::string const &path, const char sep = ';') const;
 };
-
-// Outputs a statistics object into a given ostream
-std::ostream &operator<<(std::ostream &out, Statistics const &stats);
 
 #endif  // STATISTICS_H
