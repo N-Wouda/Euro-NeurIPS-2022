@@ -44,9 +44,6 @@ try
     MaxRuntime stop(config.timeLimit);
     auto const res = solver.run(stop);
 
-    if (config.collectStatistics && config.statsPath != "")
-        res.getStatistics().exportCSV(config.statsPath);
-
     std::chrono::duration<double> const timeDelta = clock::now() - start;
     auto const &bestSol = res.getBestFound();
     bestSol.exportCVRPLibFormat(args.solPath(), timeDelta.count());

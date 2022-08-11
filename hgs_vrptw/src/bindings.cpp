@@ -61,7 +61,6 @@ PYBIND11_MODULE(hgspy, m)
                       size_t,
                       int,
                       bool,
-                      std::string,
                       size_t,
                       size_t,
                       double,
@@ -86,7 +85,6 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("nbIter") = 20'000,
              py::arg("timeLimit") = INT_MAX,
              py::arg("collectStatistics") = false,
-             py::arg("statsPath") = "",
              py::arg("initialTimeWarpPenalty") = 1,
              py::arg("nbPenaltyManagement") = 100,
              py::arg("feasBooster") = 2.,
@@ -111,7 +109,6 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("nbIter", &Config::nbIter)
         .def_readonly("timeLimit", &Config::timeLimit)
         .def_readonly("collectStatistics", &Config::collectStatistics)
-        .def_readonly("statsPath", &Config::statsPath)
         .def_readonly("initialTimeWarpPenalty", &Config::initialTimeWarpPenalty)
         .def_readonly("nbPenaltyManagement", &Config::nbPenaltyManagement)
         .def_readonly("feasBooster", &Config::feasBooster)

@@ -36,7 +36,7 @@ void Statistics::collectFrom(Population const &population)
 
     if (!best.isFeasible())
     {
-        currObjectives_.push_back(INT_MAX);
+        currObjectives_.push_back(INT_MAX);  // INT_MAX as substitute for inf
         return;
     }
 

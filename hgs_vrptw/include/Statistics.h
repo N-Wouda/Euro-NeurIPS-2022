@@ -81,7 +81,7 @@ public:
      * Returns a vector of the best objective value at the current iteration,
      * one element for each iteration where a feasible best solution exists.
      * Early iterations where that might not be the case are stored with
-     * value ``INT_MAX``.
+     * value ``INT_MAX`` as substitute for inf.
      */
     [[nodiscard]] std::vector<size_t> const &currObjectives() const
     {
