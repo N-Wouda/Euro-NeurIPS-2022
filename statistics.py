@@ -5,10 +5,17 @@ from glob import glob
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import matplotlib
 import numpy as np
 from tqdm.contrib.concurrent import process_map
 
 import tools
+
+matplotlib.use("Agg")  # Don't show plots
+
+_SOLS_DIR = "solutions/"
+_STATS_DIR = "statistics/"
+_FIGS_DIR = "figures/"
 
 
 def parse_args():
@@ -78,9 +85,10 @@ def solve(loc: str, seed: int, **kwargs):
     except AssertionError:
         is_ok = "N"
 
-    # Only export results for runs with feasible solutions
+    # Only save results for runs with feasible solutions and if results_dir
+    # is a non-empty string
     if is_ok == "Y" and "results_dir" in kwargs and kwargs["results_dir"]:
-        export_results(res, kwargs["results_dir"], path.stem, start, finish)
+        save_results(res, kwargs["results_dir"], path.stem, start, finish)
 
     stats = res.get_statistics()
     return (
@@ -93,33 +101,32 @@ def solve(loc: str, seed: int, **kwargs):
     )
 
 
-def export_results(results, results_dir, inst_name, start_time, finish_time):
+def save_results(res, results_dir, inst_name, start_time, finish_time):
     """
-    Exports the best solution, statistics and figures of results.
+    Save the best solution, statistics and figures of results.
     - Solutions are stored as ``<results_dir>/solutions/<inst_name>.sol``.
     - Statistics are stored as ``<results_dir>/statistics/<inst_name>.csv``.
     - Figures are stored as ``<results_dir>/figures/<inst_name>.png``.
     """
-    results_dir = Path(results_dir)
+    res_dir = Path(results_dir)
 
-    def helper(dir_name, extension):
-        dir_path = results_dir / dir_name
-        dir_path.mkdir(parents=True, exist_ok=True)
+    def make_path(subdir, extension):
+        dir_path = res_dir / subdir
         fi_path = dir_path / (inst_name + "." + extension)
-        return fi_path
+        return str(fi_path)
 
-    # Export best solutions
-    sol_path = helper("solutions", "sol")
-    best = results.get_best_found()
-    best.export_cvrplib_format(str(sol_path), finish_time)
+    # Save best solutions
+    sol_path = make_path(_SOLS_DIR, "sol")
+    best = res.get_best_found()
+    best.export_cvrplib_format(sol_path, finish_time)
 
-    # Export statistics
-    stats_path = helper("statistics", "csv")
-    stats = results.get_statistics()
-    stats.to_csv(str(stats_path), ",")
+    # Save statistics
+    stats_path = make_path(_STATS_DIR, "csv")
+    stats = res.get_statistics()
+    stats.to_csv(stats_path, ",")
 
     # Save plots
-    figs_path = helper("figures", "png")
+    figs_path = make_path(_FIGS_DIR, "png")
     plot_single_run(figs_path, stats, start_time)
 
 
@@ -177,6 +184,14 @@ def tabulate(headers, rows) -> str:
 
 def main():
     args = parse_args()
+
+    # Make directories to save results
+    if args.results_dir is not None:
+        res_dir = Path(args.results_dir)
+        res_dir.mkdir()
+        (res_dir / _SOLS_DIR).mkdir(exist_ok=True)
+        (res_dir / _STATS_DIR).mkdir(exist_ok=True)
+        (res_dir / _FIGS_DIR).mkdir(exist_ok=True)
 
     func = partial(solve, **vars(args))
     func_args = sorted(glob(args.instance_pattern))
