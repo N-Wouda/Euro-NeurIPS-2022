@@ -1,8 +1,7 @@
 import argparse
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 import tools
@@ -19,43 +18,11 @@ def parse_args():
     parser.add_argument("--solver_seed", type=int, default=1)
     parser.add_argument("--static", action="store_true")
     parser.add_argument("--epoch_tlim", type=int, default=120)
-    parser.add_argument("--plot_statistics", action="store_true")
 
     return parser.parse_args()
 
 
-def plot_single_run(stats, start):
-    _, (ax_pop, ax_obj) = plt.subplots(nrows=2, ncols=1, figsize=(8, 12))
-
-    # Population
-    ax_pop.plot(stats.pop_sizes(), label="Population size", c="tab:blue")
-    ax_pop.plot(stats.feasible_pops(), label="# Feasible", c="tab:orange")
-
-    ax_pop.set_title("Population statistics")
-    ax_pop.set_xlabel("Iteration (#)")
-    ax_pop.set_ylabel("Individuals (#)")
-    ax_pop.legend(frameon=False)
-
-    # Population diversity
-    ax_pop_div = ax_pop.twinx()
-    ax_pop_div.plot(stats.pop_diversity(), label="Diversity", c="tab:red")
-
-    ax_pop_div.set_ylabel("Avg. diversity")
-    ax_pop_div.legend(frameon=False)
-
-    # Objectives
-    times, objs = list(zip(*stats.best_objectives()))
-    ax_obj.plot([(x - start).total_seconds() for x in times], objs)
-
-    ax_obj.set_title("Improving objective values")
-    ax_obj.set_xlabel("Run-time (s)")
-    ax_obj.set_ylabel("Objective")
-
-    plt.tight_layout()
-    plt.savefig(f"tmp/{datetime.now().isoformat()}.png")
-
-
-def solve_static_vrptw(instance, time_limit=3600, seed=1, plot=False):
+def solve_static_vrptw(instance, time_limit=3600, seed=1):
     # Instance is a dict that has the following entries:
     # - 'is_depot': boolean np.array. True for depot; False otherwise.
     # - 'coords': np.array of locations (incl. depot)
@@ -80,8 +47,7 @@ def solve_static_vrptw(instance, time_limit=3600, seed=1, plot=False):
 
     hgspy = tools.get_hgspy_module()
 
-    # Need data to plot, so use plot here to control data collection
-    config = hgspy.Config(seed=seed, nbVeh=-1, collectStatistics=plot)
+    config = hgspy.Config(seed=seed, nbVeh=-1)
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=seed)
@@ -111,9 +77,6 @@ def solve_static_vrptw(instance, time_limit=3600, seed=1, plot=False):
     best = res.get_best_found()
     routes = [route for route in best.get_routes() if route]
     cost = best.cost()
-
-    if plot:
-        plot_single_run(res.get_statistics(), start)
 
     assert np.isclose(tools.validate_static_solution(instance, routes), cost)
 
@@ -190,7 +153,6 @@ def run_baseline(args, env, oracle_solution=None):
                     epoch_instance_dispatch,
                     time_limit=epoch_tlim,
                     seed=args.solver_seed,
-                    plot=args.plot_statistics,
                 )
             )
             assert (
