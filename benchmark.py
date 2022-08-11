@@ -84,27 +84,6 @@ def solve(loc: str, seed: int, **kwargs):
     )
 
 
-def tabulate(headers, rows) -> str:
-    # These lengths are used to space each column properly.
-    lengths = [len(header) for header in headers]
-
-    for row in rows:
-        for idx, cell in enumerate(row):
-            lengths[idx] = max(lengths[idx], len(str(cell)))
-
-    lines = [
-        "  ".join(f"{h:<{l}s}" for l, h in zip(lengths, headers)),
-        "  ".join("-" * l for l in lengths),
-    ]
-
-    for row in rows:
-        lines.append(
-            "  ".join(f"{str(c):>{l}s}" for l, c in zip(lengths, row))
-        )
-
-    return "\n".join(lines)
-
-
 def main():
     args = parse_args()
 
@@ -131,7 +110,7 @@ def main():
         "Time (s)",
         "Improv. (#)",
     ]
-    table = tabulate(headers, data)
+    table = tools.tabulate(headers, data)
 
     print("\n", table, "\n", sep="")
 

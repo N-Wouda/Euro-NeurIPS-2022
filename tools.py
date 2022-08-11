@@ -351,3 +351,24 @@ def inst_to_vars(inst):
         duration_matrix=inst['duration_matrix'].tolist(),
         release_times=releases,
     )
+
+
+def tabulate(headers, rows) -> str:
+    # These lengths are used to space each column properly.
+    lengths = [len(header) for header in headers]
+
+    for row in rows:
+        for idx, cell in enumerate(row):
+            lengths[idx] = max(lengths[idx], len(str(cell)))
+
+    lines = [
+        "  ".join(f"{h:<{l}s}" for l, h in zip(lengths, headers)),
+        "  ".join("-" * l for l in lengths),
+    ]
+
+    for row in rows:
+        lines.append(
+            "  ".join(f"{str(c):>{l}s}" for l, c in zip(lengths, row))
+        )
+
+    return "\n".join(lines)
