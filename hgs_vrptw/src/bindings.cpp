@@ -171,6 +171,12 @@ PYBIND11_MODULE(hgspy, m)
              py::return_value_policy::reference)
         .def("get_statistics",
              &Result::getStatistics,
+             py::return_value_policy::reference)
+        .def("get_iterations",
+             &Result::getIterations,
+             py::return_value_policy::reference)
+        .def("get_run_time",
+             &Result::getRunTime,
              py::return_value_policy::reference);
 
     py::class_<GeneticAlgorithm>(m, "GeneticAlgorithm")

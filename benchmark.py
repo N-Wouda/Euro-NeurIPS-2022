@@ -1,5 +1,5 @@
 import argparse
-from datetime import datetime, timedelta
+from datetime import datetime
 from functools import partial
 from glob import glob
 from pathlib import Path
@@ -18,7 +18,6 @@ def parse_args():
     parser.add_argument(
         "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
     )
-    parser.add_argument("--results_dir", type=str)
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--max_runtime", type=int)
@@ -34,7 +33,7 @@ def solve(loc: str, seed: int, **kwargs):
     instance = tools.read_vrplib(path)
     start = datetime.now()
 
-    config = hgspy.Config(seed=seed, nbVeh=-1, collectStatistics=True)
+    config = hgspy.Config(seed=seed, nbVeh=-1)
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=seed)
@@ -63,7 +62,6 @@ def solve(loc: str, seed: int, **kwargs):
         stop = hgspy.stop.MaxIterations(kwargs["max_iterations"])
 
     res = algo.run(stop)
-    finish = round((datetime.now() - start).total_seconds(), 3)
 
     best = res.get_best_found()
     routes = [route for route in best.get_routes() if route]
@@ -77,44 +75,13 @@ def solve(loc: str, seed: int, **kwargs):
     except AssertionError:
         is_ok = "N"
 
-    stats = res.get_statistics()
-
-    if "results_dir" in kwargs and kwargs["results_dir"]:
-        export_results(res, kwargs["results_dir"], path.stem, finish)
-
     return (
         path.stem,
         is_ok,
         int(best.cost()),
-        stats.num_iters(),
-        finish,
-        len(stats.best_objectives()),
+        res.get_iterations(),
+        round((datetime.now() - start).total_seconds(), 3),
     )
-
-
-def export_results(results, results_dir, inst_name, finish_time):
-    """
-    Export the results, i.e., the best solution and statistics.
-    The solutions are stored as ``<results_dir>/solutions/<inst_name>.sol``.
-    The statistics are stored as ``<results_dir>/statistics/<inst_name>.csv``.
-    """
-    results_dir = Path(results_dir)
-
-    # Export best solutions
-    sol_dir = results_dir / "solutions/"
-    sol_dir.mkdir(parents=True, exist_ok=True)
-    sol_path = sol_dir / (inst_name + ".sol")
-
-    best = results.get_best_found()
-    best.export_cvrplib_format(str(sol_path), finish_time)
-
-    # Export statistics
-    stats_dir = results_dir / "statistics/"
-    stats_dir.mkdir(parents=True, exist_ok=True)
-    stats_path = stats_dir / (inst_name + ".csv")
-
-    stats = results.get_statistics()
-    stats.export_csv(str(stats_path))
 
 
 def tabulate(headers, rows) -> str:
@@ -153,7 +120,6 @@ def main():
         ("obj", int),
         ("iters", int),
         ("time", float),
-        ("nb_improv", int),
     ]
     data = np.array(data, dtype=dtypes)
 
@@ -177,7 +143,6 @@ def main():
 
     print(f"     Avg. iterations: {data['iters'].mean():.0f}")
     print(f"   Avg. run-time (s): {data['time'].mean():.2f}")
-    print(f"Avg. improving moves: {data['nb_improv'].mean():.1f}")
     print(f"        Total not OK: {np.count_nonzero(data['ok'] == 'N')}")
 
 
