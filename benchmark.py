@@ -108,7 +108,6 @@ def main():
         "Objective",
         "Iters. (#)",
         "Time (s)",
-        "Improv. (#)",
     ]
     table = tools.tabulate(headers, data)
 
