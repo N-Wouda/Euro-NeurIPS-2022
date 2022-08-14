@@ -28,8 +28,7 @@ std::pair<Node *, Node *> Exchange<N, M>::getEnds(Node *U, Node *V) const
 template <size_t N, size_t M>
 bool Exchange<N, M>::isDepotInSegments(Node *U, Node *V) const
 {
-    auto eval = [&](Node *node, size_t chainLength)
-    {
+    auto eval = [&](Node *node, size_t chainLength) {
         for (size_t count = 0; count != chainLength; ++count, node = n(node))
             if (node->isDepot())
                 return true;
@@ -96,7 +95,7 @@ bool Exchange<N, M>::testPureMove(Node *U, Node *V) const
         deltaCost += d_penalties->timeWarp(vTWS);
         deltaCost -= d_penalties->timeWarp(V->route->tw);
     }
-    else
+    else  // within same route
     {
         if (!U->route->hasTimeWarp() && deltaCost >= 0)
             return false;
@@ -227,24 +226,25 @@ template <size_t N, size_t M> void Exchange<N, M>::apply(Node *U, Node *V)
 {
     auto const [endU, endV] = getEnds(U, V);
 
-    auto pU = p(U);
-    auto pV = M == 0 ? V : p(V);
+    auto *insertUAfter = M == 0 ? V : endV;
+    auto *uToInsert = endU;
 
-    auto *nU = endU;
-    auto *nV = endV;
-
-    for (auto count = 0; count != N; ++count)
+    // Insert these 'extra' nodes of U after the end of V...
+    for (size_t count = 0; count != N - M; ++count)
     {
-        auto *prev = nU->prev;
-        nU->insertAfter(pV);
-        nU = prev;
+        auto *prev = uToInsert->prev;
+        uToInsert->insertAfter(insertUAfter);
+        uToInsert = prev;
     }
 
-    for (auto count = 0; count != M; ++count)
+    // ...and swap the overlapping nodes!
+    for (size_t count = 0; count != std::min(N, M); ++count)
     {
-        auto *prev = nV->prev;
-        nV->insertAfter(pU);
-        nV = prev;
+        auto *nextU = U->next;
+        auto *nextV = V->next;
+        U->swapWith(V);
+        U = nextU;
+        V = nextV;
     }
 }
 
