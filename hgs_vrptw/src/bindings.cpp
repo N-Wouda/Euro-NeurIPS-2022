@@ -165,6 +165,8 @@ PYBIND11_MODULE(hgspy, m)
         .def("feasible_pops", &Statistics::feasiblePops)
         .def("pop_diversity", &Statistics::popDiversity)
         .def("curr_objectives", &Statistics::currObjectives)
+        .def("feasible_avg_objectives", &Statistics::feasibleAvgObjectives)
+        .def("infeasible_avg_objectives", &Statistics::infeasibleAvgObjectives)
         .def("best_objectives", &Statistics::bestObjectives)
         .def("to_csv", &Statistics::toCsv);
 
