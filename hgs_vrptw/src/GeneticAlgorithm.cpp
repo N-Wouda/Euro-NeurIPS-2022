@@ -55,8 +55,8 @@ Result GeneticAlgorithm::run(StoppingCriterion &stop)
             population.reorder();  // re-order since penalties have changed
         }
 
-        if (params.config.collectStatistics)
-            // && iter % params.config.collectNbIter == 0)
+        if (params.config.collectStatistics
+            && iter % params.config.collectNbIter == 0)
             stats.collectFrom(population);
     }
 

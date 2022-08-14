@@ -27,6 +27,7 @@ def parse_args():
         "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
     )
     parser.add_argument("--results_dir", type=str)
+    parser.add_argument("--collect_iters", type=int, default=10)
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--max_runtime", type=int)
@@ -42,7 +43,12 @@ def solve(loc: str, seed: int, **kwargs):
     instance = tools.read_vrplib(path)
     start = datetime.now()
 
-    config = hgspy.Config(seed=seed, nbVeh=-1, collectStatistics=True)
+    config = hgspy.Config(
+        seed=seed,
+        nbVeh=-1,
+        collectStatistics=True,
+        collectNbIter=kwargs["collect_iters"],
+    )
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=seed)
@@ -88,7 +94,7 @@ def solve(loc: str, seed: int, **kwargs):
     # Only save results for runs with feasible solutions and if results_dir
     # is a non-empty string
     if is_ok == "Y" and "results_dir" in kwargs and kwargs["results_dir"]:
-        save_results(res, kwargs["results_dir"], path.stem, start, finish)
+        save_results(res, kwargs["results_dir"], path.stem)
 
     stats = res.get_statistics()
     return (
@@ -101,7 +107,7 @@ def solve(loc: str, seed: int, **kwargs):
     )
 
 
-def save_results(res, results_dir, inst_name, start_time, finish_time):
+def save_results(res, results_dir, inst_name):
     """
     Save the best solution, statistics and figures of results.
     - Solutions are stored as ``<results_dir>/solutions/<inst_name>.sol``.
@@ -118,24 +124,29 @@ def save_results(res, results_dir, inst_name, start_time, finish_time):
     # Save best solutions
     sol_path = make_path(_SOLS_DIR, "sol")
     best = res.get_best_found()
-    best.export_cvrplib_format(sol_path, finish_time)
+    stats = res.get_statistics()
+    best.export_cvrplib_format(sol_path, sum(stats.run_times()))
 
     # Save statistics
     stats_path = make_path(_STATS_DIR, "csv")
-    stats = res.get_statistics()
     stats.to_csv(stats_path, ",")
 
     # Save plots
     figs_path = make_path(_FIGS_DIR, "png")
-    plot_single_run(figs_path, stats, start_time)
+    plot_single_run(figs_path, stats)
 
 
-def plot_single_run(path, stats, start):
-    _, (ax_pop, ax_obj) = plt.subplots(nrows=2, ncols=1, figsize=(8, 12))
+def plot_single_run(path, stats):
+    _, (ax_pop, ax_objs, ax_obj) = plt.subplots(
+        nrows=3, ncols=1, figsize=(8, 12)
+    )
+
+    iters = stats.curr_iters()
 
     # Population
-    ax_pop.plot(stats.pop_sizes(), label="Population size", c="tab:blue")
-    ax_pop.plot(stats.feasible_pops(), label="# Feasible", c="tab:orange")
+    ax_pop.plot(
+        iters, stats.feasible_pops(), label="# Feasible", c="tab:orange"
+    )
 
     ax_pop.set_title("Population statistics")
     ax_pop.set_xlabel("Iteration (#)")
@@ -144,14 +155,39 @@ def plot_single_run(path, stats, start):
 
     # Population diversity
     ax_pop_div = ax_pop.twinx()
-    ax_pop_div.plot(stats.pop_diversity(), label="Diversity", c="tab:red")
+    ax_pop_div.plot(
+        iters, stats.pop_diversity(), label="Diversity", c="tab:red"
+    )
 
     ax_pop_div.set_ylabel("Avg. diversity")
     ax_pop_div.legend(frameon=False)
 
+    # Population objectives
+    ax_objs.plot(
+        iters, stats.curr_objectives(), label="Current objective", c="tab:blue"
+    )
+    ax_objs.plot(
+        iters,
+        stats.feasible_avg_objectives(),
+        label="Feasible",
+        c="tab:green",
+    )
+    ax_objs.plot(
+        iters,
+        stats.infeasible_avg_objectives(),
+        label="Infeasible",
+        c="tab:red",
+    )
+
+    ax_objs.legend(frameon=False)
+    # NOTE Use best objectives to set reasonable y-limits
+    times, objs = list(zip(*stats.best_objectives()))
+    ax_objs.set_ylim(min(objs) * 0.98, min(objs) * 1.05)
+    ax_objs.set_ylabel("Objective")
+
     # Objectives
     times, objs = list(zip(*stats.best_objectives()))
-    ax_obj.plot([(x - start).total_seconds() for x in times], objs)
+    ax_obj.plot(times, objs)
 
     ax_obj.set_title("Improving objective values")
     ax_obj.set_xlabel("Run-time (s)")
