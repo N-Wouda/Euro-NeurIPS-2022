@@ -1,7 +1,6 @@
 #include "Route.h"
 
 #include <bit>
-#include <cassert>
 #include <cmath>
 #include <ostream>
 
@@ -143,25 +142,6 @@ TimeWindowSegment Route::twBetween(Node const *start, Node const *end)
     }
 
     return data;
-}
-
-int Route::distBetween(Node const *start, Node const *end)
-{
-    assert(start->route == end->route);
-    assert(start->position <= end->position);
-    assert(end->cumulatedDistance >= start->cumulatedDistance);
-
-    return end->cumulatedDistance - start->cumulatedDistance;
-}
-
-int Route::loadBetween(Node const *start, Node const *end)
-{
-    assert(start->route == end->route);
-    assert(start->position <= end->position);
-    assert(end->cumulatedLoad >= start->cumulatedLoad);
-
-    auto const atStart = start->params->clients[start->client].demand;
-    return end->cumulatedLoad - start->cumulatedLoad + atStart;
 }
 
 void Route::installJumpPoints(Node const *node)

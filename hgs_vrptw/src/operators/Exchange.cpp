@@ -52,6 +52,9 @@ bool Exchange<N, M>::overlaps(Node *U, Node *V) const
 template <size_t N, size_t M>
 bool Exchange<N, M>::testPureMove(Node *U, Node *V) const
 {
+    if (isDepotInSegments(U, V) || overlaps(U, V))
+        return false;
+
     if (n(V) == U)  // move has no effect if this is the case
         return false;
 
@@ -128,6 +131,9 @@ bool Exchange<N, M>::testPureMove(Node *U, Node *V) const
 template <size_t N, size_t M>
 bool Exchange<N, M>::testSwapMove(Node *U, Node *V) const
 {
+    if (isDepotInSegments(U, V) || overlaps(U, V))
+        return false;
+
     auto const &params = *U->params;
     auto const [endU, endV] = getEnds(U, V);
 
@@ -213,9 +219,6 @@ bool Exchange<N, M>::testSwapMove(Node *U, Node *V) const
 
 template <size_t N, size_t M> bool Exchange<N, M>::test(Node *U, Node *V)
 {
-    if (isDepotInSegments(U, V) || overlaps(U, V))
-        return false;
-
     if constexpr (M == 0)  // special case where nothing in V is moved
         return testPureMove(U, V);
     else

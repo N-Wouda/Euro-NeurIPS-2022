@@ -17,10 +17,10 @@ template <size_t N, size_t M> class Exchange : public LocalSearchOperator<Node>
     std::pair<Node *, Node *> getEnds(Node *U, Node *V) const;
 
     // Tests if the to-be-moved segments of U or V contain the depot
-    bool isDepotInSegments(Node *U, Node *V) const;
+    inline bool isDepotInSegments(Node *U, Node *V) const;
 
     // Tests if the to-be-moved segments of U and V overlap in the same route
-    bool overlaps(Node *U, Node *V) const;
+    inline bool overlaps(Node *U, Node *V) const;
 
     // Special case that's applied when M == 0
     bool testPureMove(Node *U, Node *V) const;

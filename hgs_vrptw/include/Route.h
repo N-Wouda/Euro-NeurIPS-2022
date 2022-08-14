@@ -8,6 +8,7 @@
 
 #include <array>
 #include <bit>
+#include <cassert>
 #include <iosfwd>
 
 class Route
@@ -93,12 +94,12 @@ public:  // TODO make fields private
     /**
      * Calculates the distance for segment [start, end] in the same route.
      */
-    static int distBetween(Node const *start, Node const *end);
+    static inline int distBetween(Node const *start, Node const *end);
 
     /**
      * Calculates the load for segment [start, end] in the same route.
      */
-    static int loadBetween(Node const *start, Node const *end);
+    static inline int loadBetween(Node const *start, Node const *end);
 
     /**
      * Updates this route. To be called after swapping nodes/changing the
@@ -106,6 +107,25 @@ public:  // TODO make fields private
      */
     void update();
 };
+
+int Route::distBetween(Node const *start, Node const *end)
+{
+    assert(start->route == end->route);
+    assert(start->position <= end->position);
+    assert(end->cumulatedDistance >= start->cumulatedDistance);
+
+    return end->cumulatedDistance - start->cumulatedDistance;
+}
+
+int Route::loadBetween(Node const *start, Node const *end)
+{
+    assert(start->route == end->route);
+    assert(start->position <= end->position);
+    assert(end->cumulatedLoad >= start->cumulatedLoad);
+
+    auto const atStart = start->params->clients[start->client].demand;
+    return end->cumulatedLoad - start->cumulatedLoad + atStart;
+}
 
 // Outputs a route into a given ostream in CVRPLib format
 std::ostream &operator<<(std::ostream &out, Route const &route);
