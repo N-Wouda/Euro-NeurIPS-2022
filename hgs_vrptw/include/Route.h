@@ -8,6 +8,7 @@
 
 #include <array>
 #include <bit>
+#include <iosfwd>
 
 class Route
 {
@@ -105,5 +106,8 @@ public:  // TODO make fields private
      */
     void update();
 };
+
+// Outputs a route into a given ostream in CVRPLib format
+std::ostream &operator<<(std::ostream &out, Route const &route);
 
 #endif  // HGS_VRPTW_ROUTE_H

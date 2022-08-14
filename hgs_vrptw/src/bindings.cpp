@@ -1,12 +1,11 @@
 #include "Config.h"
+#include "Exchange.h"
 #include "GeneticAlgorithm.h"
 #include "Individual.h"
 #include "LocalSearch.h"
 #include "LocalSearchOperator.h"
 #include "MaxIterations.h"
 #include "MaxRuntime.h"
-#include "MoveSingleClient.h"
-#include "MoveTwoClients.h"
 #include "MoveTwoClientsReversed.h"
 #include "Params.h"
 #include "Population.h"
@@ -15,9 +14,6 @@
 #include "Statistics.h"
 #include "StoppingCriterion.h"
 #include "SwapStar.h"
-#include "SwapTwoClientPairs.h"
-#include "SwapTwoClientsForOne.h"
-#include "SwapTwoSingleClients.h"
 #include "TwoOpt.h"
 #include "XorShift128.h"
 #include "crossover.h"
@@ -218,11 +214,11 @@ PYBIND11_MODULE(hgspy, m)
     py::class_<LocalSearchOperator<Node>>(lsOps, "NodeLocalSearchOperator");
     py::class_<LocalSearchOperator<Route>>(lsOps, "RouteLocalSearchOperator");
 
-    py::class_<MoveSingleClient, LocalSearchOperator<Node>>(lsOps,
-                                                            "MoveSingleClient")
+    py::class_<Exchange<1, 0>, LocalSearchOperator<Node>>(lsOps,
+                                                          "MoveSingleClient")
         .def(py::init<>());
 
-    py::class_<MoveTwoClients, LocalSearchOperator<Node>>(lsOps,
+    py::class_<Exchange<2, 0>, LocalSearchOperator<Node>>(lsOps,
                                                           "MoveTwoClients")
         .def(py::init<>());
 
@@ -230,15 +226,15 @@ PYBIND11_MODULE(hgspy, m)
         lsOps, "MoveTwoClientsReversed")
         .def(py::init<>());
 
-    py::class_<SwapTwoClientPairs, LocalSearchOperator<Node>>(
-        lsOps, "SwapTwoClientPairs")
+    py::class_<Exchange<2, 2>, LocalSearchOperator<Node>>(lsOps,
+                                                          "SwapTwoClientPairs")
         .def(py::init<>());
 
-    py::class_<SwapTwoClientsForOne, LocalSearchOperator<Node>>(
+    py::class_<Exchange<2, 1>, LocalSearchOperator<Node>>(
         lsOps, "SwapTwoClientsForOne")
         .def(py::init<>());
 
-    py::class_<SwapTwoSingleClients, LocalSearchOperator<Node>>(
+    py::class_<Exchange<1, 1>, LocalSearchOperator<Node>>(
         lsOps, "SwapTwoSingleClients")
         .def(py::init<>());
 

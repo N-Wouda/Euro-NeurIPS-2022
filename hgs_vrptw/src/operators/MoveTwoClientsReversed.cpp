@@ -30,7 +30,7 @@ bool MoveTwoClientsReversed::test(Node *U, Node *V)
         deltaCost += d_penalties->timeWarp(uTWS);
         deltaCost -= d_penalties->timeWarp(U->route->tw);
 
-        auto const loadDiff = Route::loadBetween(p(U), n(U));
+        auto const loadDiff = Route::loadBetween(U, n(U));
 
         deltaCost += d_penalties->load(U->route->load - loadDiff);
         deltaCost -= d_penalties->load(U->route->load);

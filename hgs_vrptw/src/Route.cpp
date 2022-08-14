@@ -3,6 +3,7 @@
 #include <bit>
 #include <cassert>
 #include <cmath>
+#include <ostream>
 
 namespace
 {
@@ -159,7 +160,8 @@ int Route::loadBetween(Node const *start, Node const *end)
     assert(start->position <= end->position);
     assert(end->cumulatedLoad >= start->cumulatedLoad);
 
-    return end->cumulatedLoad - start->cumulatedLoad;
+    auto const atStart = start->params->clients[start->client].demand;
+    return end->cumulatedLoad - start->cumulatedLoad + atStart;
 }
 
 void Route::installJumpPoints(Node const *node)
@@ -185,4 +187,14 @@ void Route::installJumpPoints(Node const *node)
             else
                 toNextJump = &jumps[idx_].emplace_back(prev, node);
         }
+}
+
+std::ostream &operator<<(std::ostream &out, Route const &route)
+{
+    out << "Route #" << route.idx + 1 << ":";  // route number
+    for (auto *node = route.depot->next; !node->isDepot(); node = node->next)
+        out << ' ' << node->client;  // client index
+    out << '\n';
+
+    return out;
 }

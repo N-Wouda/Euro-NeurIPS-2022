@@ -53,6 +53,9 @@ bool Exchange<N, M>::overlaps(Node *U, Node *V) const
 template <size_t N, size_t M>
 bool Exchange<N, M>::testPureMove(Node *U, Node *V) const
 {
+    if (n(V) == U)  // move has no effect if this is the case
+        return false;
+
     auto const [endU, _] = getEnds(U, V);
     auto const &params = *U->params;
 
@@ -76,7 +79,7 @@ bool Exchange<N, M>::testPureMove(Node *U, Node *V) const
         deltaCost += d_penalties->timeWarp(uTWS);
         deltaCost -= d_penalties->timeWarp(U->route->tw);
 
-        auto const loadDiff = Route::loadBetween(p(U), endU);
+        auto const loadDiff = Route::loadBetween(U, endU);
 
         deltaCost += d_penalties->load(U->route->load - loadDiff);
         deltaCost -= d_penalties->load(U->route->load);
@@ -100,21 +103,107 @@ bool Exchange<N, M>::testPureMove(Node *U, Node *V) const
 
         if (U->position < V->position)
         {
-            auto const uTWS = TWS::merge(p(U)->twBefore,
-                                         Route::twBetween(n(endU), V),
-                                         Route::twBetween(U, endU),
-                                         n(V)->twAfter);
+            auto const tws = TWS::merge(p(U)->twBefore,
+                                        Route::twBetween(n(endU), V),
+                                        Route::twBetween(U, endU),
+                                        n(V)->twAfter);
 
-            deltaCost += d_penalties->timeWarp(uTWS);
+            deltaCost += d_penalties->timeWarp(tws);
         }
         else
         {
-            auto const uTWS = TWS::merge(V->twBefore,
-                                         Route::twBetween(U, endU),
-                                         Route::twBetween(n(V), p(U)),
-                                         n(endU)->twAfter);
+            auto const tws = TWS::merge(V->twBefore,
+                                        Route::twBetween(U, endU),
+                                        Route::twBetween(n(V), p(U)),
+                                        n(endU)->twAfter);
 
-            deltaCost += d_penalties->timeWarp(uTWS);
+            deltaCost += d_penalties->timeWarp(tws);
+        }
+
+        deltaCost -= d_penalties->timeWarp(U->route->tw);
+    }
+
+    return deltaCost < 0;
+}
+
+template <size_t N, size_t M>
+bool Exchange<N, M>::testSwapMove(Node *U, Node *V) const
+{
+    auto const &params = *U->params;
+    auto const [endU, endV] = getEnds(U, V);
+
+    int const current
+        = Route::distBetween(p(U), n(endU)) + Route::distBetween(p(V), n(endV));
+
+    int const proposed
+        //   p(U) -> V -> ... -> endV -> n(endU)
+        // + p(V) -> U -> ... -> endU -> n(endV)
+        = params.dist(p(U)->client, V->client) + Route::distBetween(V, endV)
+          + params.dist(endV->client, n(endU)->client)
+          + params.dist(p(V)->client, U->client) + Route::distBetween(U, endU)
+          + params.dist(endU->client, n(endV)->client);
+
+    int deltaCost = proposed - current;
+
+    if (U->route != V->route)
+    {
+        if (U->route->isFeasible() && V->route->isFeasible() && deltaCost >= 0)
+            return false;
+
+        auto uTWS = TWS::merge(
+            p(U)->twBefore, Route::twBetween(V, endV), n(endU)->twAfter);
+
+        deltaCost += d_penalties->timeWarp(uTWS);
+        deltaCost -= d_penalties->timeWarp(U->route->tw);
+
+        auto vTWS = TWS::merge(
+            p(V)->twBefore, Route::twBetween(U, endU), n(endV)->twAfter);
+
+        deltaCost += d_penalties->timeWarp(vTWS);
+        deltaCost -= d_penalties->timeWarp(V->route->tw);
+
+        auto const loadU = Route::loadBetween(U, endU);
+        auto const loadV = Route::loadBetween(V, endV);
+        auto const loadDiff = loadU - loadV;
+
+        deltaCost += d_penalties->load(U->route->load - loadDiff);
+        deltaCost -= d_penalties->load(U->route->load);
+
+        deltaCost += d_penalties->load(V->route->load + loadDiff);
+        deltaCost -= d_penalties->load(V->route->load);
+    }
+    else  // within same route
+    {
+        if (!U->route->hasTimeWarp() && deltaCost >= 0)
+            return false;
+
+        if (U->position < V->position)
+        {
+            TimeWindowSegment u2v;
+            if (n(endU) != V)
+                u2v = Route::twBetween(n(endU), p(V));
+
+            auto const tws = TWS::merge(p(U)->twBefore,
+                                        Route::twBetween(V, endV),
+                                        u2v,
+                                        Route::twBetween(U, endU),
+                                        n(endV)->twAfter);
+
+            deltaCost += d_penalties->timeWarp(tws);
+        }
+        else
+        {
+            TimeWindowSegment v2u;
+            if (n(endV) != U)
+                v2u = Route::twBetween(n(endV), p(U));
+
+            auto const tws = TWS::merge(p(V)->twBefore,
+                                        Route::twBetween(U, endU),
+                                        v2u,
+                                        Route::twBetween(V, endV),
+                                        n(endU)->twAfter);
+
+            deltaCost += d_penalties->timeWarp(tws);
         }
 
         deltaCost -= d_penalties->timeWarp(U->route->tw);
@@ -128,22 +217,34 @@ template <size_t N, size_t M> bool Exchange<N, M>::test(Node *U, Node *V)
     if (isDepotInSegments(U, V) || overlaps(U, V))
         return false;
 
-    if constexpr (M == 0)
+    if constexpr (M == 0)  // special case where nothing in V is moved
         return testPureMove(U, V);
-
-    // TODO
-    return false;
+    else
+        return testSwapMove(U, V);
 }
 
 template <size_t N, size_t M> void Exchange<N, M>::apply(Node *U, Node *V)
 {
     auto const [endU, endV] = getEnds(U, V);
+
+    auto pU = p(U);
+    auto pV = M == 0 ? V : p(V);
+
     auto *nU = endU;
+    auto *nV = endV;
 
     for (auto count = 0; count != N; ++count)
     {
-        nU->insertAfter(V);
-        nU = nU->prev;
+        auto *prev = nU->prev;
+        nU->insertAfter(pV);
+        nU = prev;
+    }
+
+    for (auto count = 0; count != M; ++count)
+    {
+        auto *prev = nV->prev;
+        nV->insertAfter(pU);
+        nV = prev;
     }
 }
 
