@@ -1,4 +1,5 @@
 #include "Statistics.h"
+#include "Params.h"
 #include "Population.h"
 
 #include <fstream>
@@ -17,6 +18,8 @@ void Statistics::collectFrom(Population const &population)
         population.population.begin(),
         population.population.end(),
         [](Individual const *indiv) { return indiv->isFeasible(); });
+
+    currIters_.push_back((numIters_ - 1) * params.config.collectNbIter);
 
     numFeasible.push_back(numFeas);
 
@@ -59,6 +62,7 @@ void Statistics::collectFrom(Population const &population)
         }
     }
 
+    // TODO refactor this
     if (!foundFeasibleBest)
         currObjectives_.push_back(INT_MAX);  // INT_MAX as substitute for inf
 
@@ -80,16 +84,18 @@ void Statistics::collectFrom(Population const &population)
     if (!best.isFeasible())
         return;
 
-    currObjectives_.push_back(best.cost());
-
     if (bestObjectives_.empty() || best.cost() < bestObjectives_.back().second)
-        bestObjectives_.emplace_back(clock::now(), best.cost());
+    {
+        std::chrono::duration<double> time = clock::now() - start;
+        bestObjectives_.emplace_back(time.count(), best.cost());
+    }
 }
 
 void Statistics::toCsv(std::string const &path, char const sep) const
 {
     std::ofstream out(path);
 
+    // TODO use the printstream stuff
     if (!out)
         throw std::runtime_error("Could not open " + path);
 
@@ -107,3 +113,5 @@ void Statistics::toCsv(std::string const &path, char const sep) const
             << infeasibleAvgObjectives_[it] << "\n";
     }
 }
+
+Statistics::Statistics(Params &params) : params(params) {}

@@ -22,7 +22,7 @@ Result GeneticAlgorithm::run(StoppingCriterion &stop)
     if (params.nbClients == 1)
         throw std::runtime_error("Cannot run genetic algorithm with one node.");
 
-    Statistics stats;
+    Statistics stats(params);
 
     size_t iter = 0;
     size_t nbIterNonProd = 1;
@@ -56,6 +56,7 @@ Result GeneticAlgorithm::run(StoppingCriterion &stop)
         }
 
         if (params.config.collectStatistics)
+            // && iter % params.config.collectNbIter == 0)
             stats.collectFrom(population);
     }
 

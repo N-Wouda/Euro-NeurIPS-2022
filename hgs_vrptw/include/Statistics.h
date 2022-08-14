@@ -11,11 +11,15 @@ class Population;  // forward declaration
 class Statistics
 {
     using clock = std::chrono::system_clock;
-    using timedDatapoints = std::vector<std::pair<clock::time_point, size_t>>;
+    using timedDatapoints = std::vector<std::pair<double, size_t>>;
 
+    Params &params;
+
+    clock::time_point start = clock::now();
     clock::time_point lastIter = clock::now();
     size_t numIters_ = 0;
 
+    std::vector<size_t> currIters_;
     std::vector<size_t> popSize;
     std::vector<size_t> numFeasible;
     std::vector<double> popDiversity_;
@@ -36,9 +40,18 @@ public:
     void collectFrom(Population const &population);
 
     /**
-     * Returns the total number of iterations.
+     * Returns the total number of collected iterations.
      */
     [[nodiscard]] size_t numIters() const { return numIters_; }
+
+    /**
+     * Returns a vector of iterations, denoting at which iteration the
+     * statistics were collected at the time.
+     */
+    [[nodiscard]] std::vector<size_t> const &currIters() const
+    {
+        return currIters_;
+    }
 
     /**
      * Returns a vector of run times, one element per iteration. The run times
@@ -125,6 +138,8 @@ public:
      * separator.
      */
     void toCsv(std::string const &path, const char sep = ',') const;
+
+    Statistics(Params &params);
 };
 
 #endif  // STATISTICS_H
