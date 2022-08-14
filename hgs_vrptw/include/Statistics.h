@@ -21,6 +21,8 @@ class Statistics
     std::vector<double> popDiversity_;
     std::vector<double> iterTimes;
     std::vector<size_t> currObjectives_;
+    std::vector<double> feasibleAvgObjectives_;
+    std::vector<double> infeasibleAvgObjectives_;
     timedDatapoints bestObjectives_;
 
 public:
@@ -86,6 +88,26 @@ public:
     [[nodiscard]] std::vector<size_t> const &currObjectives() const
     {
         return currObjectives_;
+    }
+
+    /**
+     * Returns a vector of the average objective value of the feasible
+     * individuals at the current iteration.
+     * */
+
+    [[nodiscard]] std::vector<double> const &feasibleAvgObjectives() const
+    {
+        return feasibleAvgObjectives_;
+    }
+
+    /**
+     * Returns a vector of the average objective value of the infeasible
+     * individuals at the current iteration.
+     * */
+
+    [[nodiscard]] std::vector<double> const &infeasibleAvgObjectives() const
+    {
+        return infeasibleAvgObjectives_;
     }
 
     /**
