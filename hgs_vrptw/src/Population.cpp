@@ -37,9 +37,15 @@ void Population::addIndividual(Individual const &indiv)
         = params.config.minimumPopulationSize + params.config.generationSize;
 
     if (population.size() > maxPopSize)
+    {
+        // Remove duplicates before removing low fitness individuals
+        while (population.size() > params.config.minimumPopulationSize)
+            if (!removeDuplicate())
+                break;
+
         while (population.size() > params.config.minimumPopulationSize)
             removeWorstBiasedFitness();
-
+    }
     if (indiv.isFeasible() && indiv < bestSol)
         bestSol = indiv;
 }
@@ -59,7 +65,8 @@ void Population::updateBiasedFitness()
     std::vector<std::pair<double, size_t>> ranking;
     for (size_t idx = 0; idx != population.size(); idx++)
     {
-        auto const dist = population[idx]->avgBrokenPairsDistanceClosest();
+        auto const dist
+            = population[idx]->avgBrokenPairsDistance(params.config.nbClose);
         ranking.emplace_back(dist, idx);
     }
 
@@ -86,6 +93,27 @@ void Population::updateBiasedFitness()
     }
 }
 
+bool Population::removeDuplicate()
+{
+    updateBiasedFitness();
+
+    for (size_t idx = 0; idx != population.size(); idx++)
+    {
+        auto *indiv = population[idx];
+        auto const dist = indiv->avgBrokenPairsDistance(1);
+
+        // An individual with near zero proximity indicates duplicity
+        if (dist < 1e-7)
+        {
+            population.erase(population.begin() + idx);
+            fitness.erase(fitness.begin() + idx);
+            delete indiv;
+
+            return true;
+        }
+    }
+    return false;
+}
 void Population::removeWorstBiasedFitness()
 {
     updateBiasedFitness();

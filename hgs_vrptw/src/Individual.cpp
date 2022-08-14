@@ -251,10 +251,9 @@ void Individual::brokenPairsDistance(Individual *other)
     indivsPerProximity.insert({dist, other});
 }
 
-double Individual::avgBrokenPairsDistanceClosest() const
+double Individual::avgBrokenPairsDistance(size_t nbNeighbors) const
 {
-    size_t maxSize
-        = std::min(params->config.nbClose, indivsPerProximity.size());
+    size_t maxSize = std::min(nbNeighbors, indivsPerProximity.size());
 
     double result = 0;
     auto it = indivsPerProximity.begin();

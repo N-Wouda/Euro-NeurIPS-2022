@@ -105,9 +105,9 @@ public:
     // the number of arcs that differ between two solutions.
     void brokenPairsDistance(Individual *other);
 
-    // Returns the average distance of this individual to the individuals
-    // nearest to it.
-    [[nodiscard]] double avgBrokenPairsDistanceClosest() const;
+    // Returns the average distance of this individual to the nbNeighbors
+    // nearest individuals in terms of broken pairs distance.
+    [[nodiscard]] double avgBrokenPairsDistance(size_t nbNeighbors) const;
 
     // Exports a solution in CVRPLib format (adds a final line with the
     // computational time).

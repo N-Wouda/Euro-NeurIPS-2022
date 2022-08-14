@@ -1,4 +1,5 @@
 #include "Statistics.h"
+#include "Params.h"
 #include "Population.h"
 
 #include <numeric>
@@ -25,8 +26,8 @@ void Statistics::collectFrom(Population const &population)
         population.population.begin(),
         population.population.end(),
         0.,
-        [](double val, Individual const *indiv) {
-            return val + indiv->avgBrokenPairsDistanceClosest();
+        [&](double val, Individual const *indiv) {
+            return val + indiv->avgBrokenPairsDistance(params.config.nbClose);
         });
 
     popDiversity_.push_back(totalDiversity / static_cast<double>(nPops));
@@ -41,3 +42,5 @@ void Statistics::collectFrom(Population const &population)
     if (bestObjectives_.empty() || best.cost() < bestObjectives_.back().second)
         bestObjectives_.emplace_back(clock::now(), best.cost());
 }
+
+Statistics::Statistics(Params &params) : params(params) {}
