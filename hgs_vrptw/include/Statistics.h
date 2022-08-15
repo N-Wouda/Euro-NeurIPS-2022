@@ -1,7 +1,6 @@
 #ifndef STATISTICS_H
 #define STATISTICS_H
 
-#include "Params.h"
 #include "Population.h"
 
 #include <chrono>
@@ -13,8 +12,6 @@ class Statistics
 {
     using clock = std::chrono::system_clock;
     using timedDatapoints = std::vector<std::pair<clock::time_point, size_t>>;
-
-    Params params;
 
     clock::time_point lastIter = clock::now();
     size_t numIters_ = 0;
@@ -100,8 +97,6 @@ public:
     {
         return bestObjectives_;
     }
-
-    Statistics(Params &params);
 };
 
 #endif  // STATISTICS_H
