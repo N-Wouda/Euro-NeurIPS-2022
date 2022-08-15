@@ -26,6 +26,11 @@ class Population
     // Evaluates the biased fitness of all individuals in the population
     void updateBiasedFitness();
 
+    // Removes a duplicate individual from the population if there exists one.
+    // If there are multiple duplicate individuals, then the one with the lowest
+    // index in `population` is removed first.
+    bool removeDuplicate();
+
     // Removes the worst individual in terms of biased fitness
     void removeWorstBiasedFitness();
 
