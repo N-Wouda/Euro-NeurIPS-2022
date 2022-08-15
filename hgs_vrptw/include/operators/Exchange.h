@@ -19,8 +19,11 @@ template <size_t N, size_t M> class Exchange : public LocalSearchOperator<Node>
     // Tests if the to-be-moved segments of U or V contain the depot
     inline bool isDepotInSegments(Node *U, Node *V) const;
 
-    // Tests if the to-be-moved segments of U and V overlap in the same route
+    // Tests if the segments of U and V overlap in the same route
     inline bool overlaps(Node *U, Node *V) const;
+
+    // Tests if the segments of U and V are adjacent in the same route
+    inline bool adjacent(Node *U, Node *V) const;
 
     // Special case that's applied when M == 0
     bool testPureMove(Node *U, Node *V) const;

@@ -50,12 +50,18 @@ bool Exchange<N, M>::overlaps(Node *U, Node *V) const
 }
 
 template <size_t N, size_t M>
-bool Exchange<N, M>::testPureMove(Node *U, Node *V) const
+bool Exchange<N, M>::adjacent(Node *U, Node *V) const
 {
-    if (isDepotInSegments(U, V) || overlaps(U, V))
+    if (U->route != V->route)
         return false;
 
-    if (n(V) == U)  // move has no effect if this is the case
+    return U->position + N == V->position || V->position + M == U->position;
+}
+
+template <size_t N, size_t M>
+bool Exchange<N, M>::testPureMove(Node *U, Node *V) const
+{
+    if (isDepotInSegments(U, V) || overlaps(U, V) || U == n(V))
         return false;
 
     auto const [endU, _] = getEnds(U, V);
@@ -131,7 +137,11 @@ bool Exchange<N, M>::testPureMove(Node *U, Node *V) const
 template <size_t N, size_t M>
 bool Exchange<N, M>::testSwapMove(Node *U, Node *V) const
 {
-    if (isDepotInSegments(U, V) || overlaps(U, V))
+    if constexpr (N == M)  // symmetric, so only have to evaluate this once
+        if (U->client >= V->client)
+            return false;
+
+    if (isDepotInSegments(U, V) || overlaps(U, V) || adjacent(U, V))
         return false;
 
     auto const &params = *U->params;
