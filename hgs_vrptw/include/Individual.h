@@ -107,8 +107,9 @@ public:
      */
     [[nodiscard]] bool hasClone() const
     {
-        // Another individual with zero proximity indicates duplicity
-        return indivsPerProximity.begin()->first < FLT_EPSILON;
+        return !indivsPerProximity.empty()
+               // Another individual with zero proximity indicates duplicity
+               && indivsPerProximity.begin()->first < FLT_EPSILON;
     }
 
     // Computes and stores a distance measure with another individual, based on
