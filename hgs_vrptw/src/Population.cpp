@@ -37,9 +37,15 @@ void Population::addIndividual(Individual const &indiv)
         = params.config.minimumPopulationSize + params.config.generationSize;
 
     if (population.size() > maxPopSize)
+    {
+        // Remove duplicates before removing low fitness individuals
+        while (population.size() > params.config.minimumPopulationSize)
+            if (!removeDuplicate())
+                break;
+
         while (population.size() > params.config.minimumPopulationSize)
             removeWorstBiasedFitness();
-
+    }
     if (indiv.isFeasible() && indiv < bestSol)
         bestSol = indiv;
 }
@@ -86,6 +92,25 @@ void Population::updateBiasedFitness()
     }
 }
 
+bool Population::removeDuplicate()
+{
+    updateBiasedFitness();
+
+    for (size_t idx = 0; idx != population.size(); idx++)
+    {
+        auto const *indiv = population[idx];
+
+        if (indiv->hasClone())
+        {
+            population.erase(population.begin() + idx);
+            fitness.erase(fitness.begin() + idx);
+            delete indiv;
+
+            return true;
+        }
+    }
+    return false;
+}
 void Population::removeWorstBiasedFitness()
 {
     updateBiasedFitness();
