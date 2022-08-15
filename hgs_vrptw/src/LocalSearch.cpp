@@ -143,13 +143,12 @@ bool LocalSearch::applyNodeOperators(Node *U, Node *V)
             searchCompleted = false;
 
             routeU->update();
-            lastModified[routeU->idx] = nbMoves;
 
             if (routeU != routeV)
-            {
                 routeV->update();
-                lastModified[routeV->idx] = nbMoves;
-            }
+
+            lastModified[routeU->idx] = nbMoves;
+            lastModified[routeV->idx] = nbMoves;
 
             return true;
         }
@@ -168,13 +167,10 @@ bool LocalSearch::applyRouteOperators(Route *U, Route *V)
             searchCompleted = false;
 
             U->update();
-            lastModified[U->idx] = nbMoves;
+            V->update();
 
-            if (U != V)
-            {
-                V->update();
-                lastModified[V->idx] = nbMoves;
-            }
+            lastModified[U->idx] = nbMoves;
+            lastModified[V->idx] = nbMoves;
 
             return true;
         }

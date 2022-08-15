@@ -194,13 +194,9 @@ bool Exchange<N, M>::testSwapMove(Node *U, Node *V) const
 
         if (U->position < V->position)
         {
-            TimeWindowSegment u2v;
-            if (n(endU) != V)
-                u2v = Route::twBetween(n(endU), p(V));
-
             auto const tws = TWS::merge(p(U)->twBefore,
                                         Route::twBetween(V, endV),
-                                        u2v,
+                                        Route::twBetween(n(endU), p(V)),
                                         Route::twBetween(U, endU),
                                         n(endV)->twAfter);
 
@@ -208,13 +204,9 @@ bool Exchange<N, M>::testSwapMove(Node *U, Node *V) const
         }
         else
         {
-            TimeWindowSegment v2u;
-            if (n(endV) != U)
-                v2u = Route::twBetween(n(endV), p(U));
-
             auto const tws = TWS::merge(p(V)->twBefore,
                                         Route::twBetween(U, endU),
-                                        v2u,
+                                        Route::twBetween(n(endV), p(U)),
                                         Route::twBetween(V, endV),
                                         n(endU)->twAfter);
 
