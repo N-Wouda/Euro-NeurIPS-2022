@@ -99,7 +99,7 @@ bool Population::removeDuplicate()
 
     for (size_t idx = 0; idx != population.size(); idx++)
     {
-        auto *indiv = population[idx];
+        auto const *indiv = population[idx];
         auto const dist = indiv->avgBrokenPairsDistance(1);
 
         // An individual with near zero proximity indicates duplicity
