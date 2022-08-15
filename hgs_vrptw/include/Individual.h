@@ -97,17 +97,22 @@ public:
     }
 
     /**
-     * If true, then the route violates time window constraints.
-     */
+     * Returns true when there exists another, identical individual.
+     * */
+    [[nodiscard]] inline bool hasClone() const
+    {
+        // Another individual with zero proximity indicates duplicity
+        return indivsPerProximity.begin()->first < 1e-7;
+    }
     [[nodiscard]] inline bool hasTimeWarp() const { return timeWarp > 0; }
 
     // Computes and stores a distance measure with another individual, based on
     // the number of arcs that differ between two solutions.
     void brokenPairsDistance(Individual *other);
 
-    // Returns the average distance of this individual to the nbNeighbors
-    // nearest individuals in terms of broken pairs distance.
-    [[nodiscard]] double avgBrokenPairsDistance(size_t nbNeighbors) const;
+    // Returns the average distance of this individual to the individuals
+    // nearest to it.
+    [[nodiscard]] double avgBrokenPairsDistanceClosest() const;
 
     // Exports a solution in CVRPLib format (adds a final line with the
     // computational time).

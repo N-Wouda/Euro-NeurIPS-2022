@@ -65,8 +65,7 @@ void Population::updateBiasedFitness()
     std::vector<std::pair<double, size_t>> ranking;
     for (size_t idx = 0; idx != population.size(); idx++)
     {
-        auto const dist
-            = population[idx]->avgBrokenPairsDistance(params.config.nbClose);
+        auto const dist = population[idx]->avgBrokenPairsDistanceClosest();
         ranking.emplace_back(dist, idx);
     }
 
@@ -99,11 +98,9 @@ bool Population::removeDuplicate()
 
     for (size_t idx = 0; idx != population.size(); idx++)
     {
-        auto *indiv = population[idx];
-        auto const dist = indiv->avgBrokenPairsDistance(1);
+        auto const *indiv = population[idx];
 
-        // An individual with near zero proximity indicates duplicity
-        if (dist < 1e-7)
+        if (indiv->hasClone())
         {
             population.erase(population.begin() + idx);
             fitness.erase(fitness.begin() + idx);
