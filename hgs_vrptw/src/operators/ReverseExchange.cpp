@@ -28,7 +28,8 @@ std::pair<Node *, Node *> ReverseExchange<N, M>::getEnds(Node *U, Node *V) const
 template <size_t N, size_t M>
 bool ReverseExchange<N, M>::isDepotInSegments(Node *U, Node *V) const
 {
-    auto eval = [&](Node *node, size_t chainLength) {
+    auto eval = [&](Node *node, size_t chainLength)
+    {
         for (size_t count = 0; count != chainLength; ++count, node = n(node))
             if (node->isDepot())
                 return true;
@@ -227,7 +228,8 @@ template <size_t N, size_t M> bool ReverseExchange<N, M>::test(Node *U, Node *V)
         return testSwapMove(U, V);
 }
 
-template <size_t N, size_t M> void ReverseExchange<N, M>::apply(Node *U, Node *V)
+template <size_t N, size_t M>
+void ReverseExchange<N, M>::apply(Node *U, Node *V)
 {
     auto const [endU, endV] = getEnds(U, V);
 
