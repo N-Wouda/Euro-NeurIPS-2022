@@ -97,14 +97,18 @@ public:
     }
 
     /**
+     * If true, then the route violates time window constraints.
+     */
+    [[nodiscard]] inline bool hasTimeWarp() const { return timeWarp > 0; }
+
+    /**
      * Returns true when there exists another, identical individual.
-     * */
+     */
     [[nodiscard]] inline bool hasClone() const
     {
         // Another individual with zero proximity indicates duplicity
         return indivsPerProximity.begin()->first < 1e-7;
     }
-    [[nodiscard]] inline bool hasTimeWarp() const { return timeWarp > 0; }
 
     // Computes and stores a distance measure with another individual, based on
     // the number of arcs that differ between two solutions.
