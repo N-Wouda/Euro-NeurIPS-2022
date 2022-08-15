@@ -4,6 +4,7 @@
 #include "Params.h"
 #include "XorShift128.h"
 
+#include <cfloat>
 #include <set>
 #include <string>
 #include <vector>
@@ -104,10 +105,10 @@ public:
     /**
      * Returns true when there exists another, identical individual.
      */
-    [[nodiscard]] inline bool hasClone() const
+    [[nodiscard]] bool hasClone() const
     {
         // Another individual with zero proximity indicates duplicity
-        return indivsPerProximity.begin()->first < 1e-7;
+        return indivsPerProximity.begin()->first < FLT_EPSILON;
     }
 
     // Computes and stores a distance measure with another individual, based on
