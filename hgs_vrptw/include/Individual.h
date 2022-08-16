@@ -4,6 +4,7 @@
 #include "Params.h"
 #include "XorShift128.h"
 
+#include <cfloat>
 #include <set>
 #include <string>
 #include <vector>
@@ -100,6 +101,16 @@ public:
      * If true, then the route violates time window constraints.
      */
     [[nodiscard]] inline bool hasTimeWarp() const { return timeWarp > 0; }
+
+    /**
+     * Returns true when there exists another, identical individual.
+     */
+    [[nodiscard]] bool hasClone() const
+    {
+        return !indivsPerProximity.empty()
+               // Another individual with zero proximity indicates duplicity
+               && indivsPerProximity.begin()->first < FLT_EPSILON;
+    }
 
     // Computes and stores a distance measure with another individual, based on
     // the number of arcs that differ between two solutions.
