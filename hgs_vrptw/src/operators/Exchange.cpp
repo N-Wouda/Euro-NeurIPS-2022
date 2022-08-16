@@ -40,7 +40,7 @@ bool Exchange<N, M>::isDepotInSegments(Node *U, Node *V) const
 }
 
 template <size_t N, size_t M>
-bool Exchange<N, M>::overlaps(Node *U, Node *V) const
+bool Exchange<N, M>::overlap(Node *U, Node *V) const
 {
     // clang-format off
     return U->route == V->route
@@ -61,7 +61,7 @@ bool Exchange<N, M>::adjacent(Node *U, Node *V) const
 template <size_t N, size_t M>
 int Exchange<N, M>::testPureMove(Node *U, Node *V) const
 {
-    if (isDepotInSegments(U, V) || overlaps(U, V) || U == n(V))
+    if (isDepotInSegments(U, V) || overlap(U, V) || U == n(V))
         return 0;
 
     auto const [endU, _] = getEnds(U, V);
@@ -92,8 +92,8 @@ int Exchange<N, M>::testPureMove(Node *U, Node *V) const
         deltaCost += d_penalties->load(U->route->load - loadDiff);
         deltaCost -= d_penalties->load(U->route->load);
 
-        if (deltaCost >= 0)  // if delta cost of just U's route is not enough
-            return false;    // even without V, the move will never be good
+        if (deltaCost >= 0)    // if delta cost of just U's route is not enough
+            return deltaCost;  // even without V, the move will never be good
 
         deltaCost += d_penalties->load(V->route->load + loadDiff);
         deltaCost -= d_penalties->load(V->route->load);
@@ -141,7 +141,7 @@ int Exchange<N, M>::testSwapMove(Node *U, Node *V) const
         if (U->client >= V->client)
             return 0;
 
-    if (isDepotInSegments(U, V) || overlaps(U, V) || adjacent(U, V))
+    if (isDepotInSegments(U, V) || overlap(U, V) || adjacent(U, V))
         return 0;
 
     auto const &params = *U->params;

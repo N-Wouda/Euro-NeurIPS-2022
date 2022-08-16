@@ -35,8 +35,8 @@ int MoveTwoClientsReversed::test(Node *U, Node *V)
         deltaCost += d_penalties->load(U->route->load - loadDiff);
         deltaCost -= d_penalties->load(U->route->load);
 
-        if (deltaCost >= 0)  // if delta cost of just U's route is not enough
-            return false;    // even without V, the move will never be good
+        if (deltaCost >= 0)    // if delta cost of just U's route is not enough
+            return deltaCost;  // even without V, the move will never be good
 
         deltaCost += d_penalties->load(V->route->load + loadDiff);
         deltaCost -= d_penalties->load(V->route->load);

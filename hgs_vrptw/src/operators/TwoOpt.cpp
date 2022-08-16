@@ -23,7 +23,7 @@ int TwoOpt::withinRouteTest(Node *U, Node *V)
                     - n(U)->cumulatedReversalDistance;
 
     if (!U->route->hasTimeWarp() && deltaCost >= 0)
-        return 0;
+        return deltaCost;
 
     auto tws = U->twBefore;
     auto *itRoute = V;
@@ -53,7 +53,7 @@ int TwoOpt::betweenRouteTest(Node *U, Node *V)
     int deltaCost = proposed - current;
 
     if (U->route->isFeasible() && V->route->isFeasible() && deltaCost >= 0)
-        return 0;
+        return deltaCost;
 
     auto const uTWS = TWS::merge(U->twBefore, n(V)->twAfter);
 

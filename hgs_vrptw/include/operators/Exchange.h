@@ -20,7 +20,7 @@ template <size_t N, size_t M> class Exchange : public LocalSearchOperator<Node>
     inline bool isDepotInSegments(Node *U, Node *V) const;
 
     // Tests if the segments of U and V overlap in the same route
-    inline bool overlaps(Node *U, Node *V) const;
+    inline bool overlap(Node *U, Node *V) const;
 
     // Tests if the segments of U and V are adjacent in the same route
     inline bool adjacent(Node *U, Node *V) const;
