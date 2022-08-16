@@ -6,7 +6,7 @@ project(hgs_vrptw
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_definitions(-Werror -Wall -Wextra -Wpedantic -fPIC)
+add_definitions(-Werror -Wall -Wextra -Wpedantic -fPIC -Wno-unused-parameter)
 
 if (CMAKE_BUILD_TYPE MATCHES RELEASE)
     add_definitions(-O3)
