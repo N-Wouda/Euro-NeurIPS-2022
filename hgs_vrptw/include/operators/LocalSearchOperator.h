@@ -26,10 +26,10 @@ public:
      * <br />
      * The contract is as follows: if the cost delta is negative, that is the
      * true cost delta of this move. As such, improving moves are fully
-     * evaluated. The operator, however, is free to short-circuit the moment it
-     * determines the move will never be good: that is, when it determines the
-     * cost delta cannot become negative at all. In that case, the returned
-     * (non-negative) cost delta does not constitute a full evaluation.
+     * evaluated. The operator, however, is free to return early if it knows
+     * the move will never be good: that is, when it determines the cost delta
+     * cannot become negative at all. In that case, the returned (non-negative)
+     * cost delta does not constitute a full evaluation.
      */
     virtual int test(Arg *U, Arg *V) { return false; }
 
