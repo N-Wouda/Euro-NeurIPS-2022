@@ -63,7 +63,7 @@ int SwapStar::getBestInsertPoint(Node *U,
 {
     auto const &params = *U->params;
 
-    // Finds the bestPos insertion in the route such that V is not adjacent
+    // Finds the best insertion in the route such that V is not adjacent
     pos = bestPos.locs[0];
     int bestCost = bestPos.costs[0];
     bool found = (pos && pos != V && n(pos) != V);
