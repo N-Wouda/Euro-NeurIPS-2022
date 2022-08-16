@@ -7,7 +7,7 @@ int RelocateStar::test(Route *U, Route *V)
     nodeToInsert = nullptr;
 
     auto eval = [&](auto *nodeU, auto *nodeV) {
-        int const deltaCost = pureMove.test(nodeU, nodeV);
+        int const deltaCost = relocate.test(nodeU, nodeV);
 
         if (deltaCost < bestCost)
         {
