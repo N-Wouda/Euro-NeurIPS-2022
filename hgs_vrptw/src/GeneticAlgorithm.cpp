@@ -68,7 +68,15 @@ Individual GeneticAlgorithm::crossover() const
     for (auto const &op : operators)
         offspring.push_back(op(parents, params, rng));
 
-    return *std::min_element(offspring.begin(), offspring.end());
+    // A simple geometric acceptance criterion: select the best with some
+    // probability. If not accepted, test the second best, etc.
+    std::sort(offspring.begin(), offspring.end());
+
+    for (auto &indiv : offspring)
+        if (rng.randint(100) < params.config.selectProbability)
+            return indiv;
+
+    return offspring.back();  // fallback in case no offspring were selected
 }
 
 void GeneticAlgorithm::educate(Individual &indiv)
