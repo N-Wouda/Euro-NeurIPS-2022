@@ -11,9 +11,9 @@ using Parents = std::pair<Individual const *, Individual const *>;
 using Tour = std::vector<Client>;
 }  // namespace
 
-Individual alternatingExchange(const Parents &parents,
-                                        Params const &params,
-                                        XorShift128 &rng)
+Individual alternatingExchange(Parents const &parents,
+                               Params const &params,
+                               XorShift128 &rng)
 {
     auto const &tourA = parents.first->getTour();
     auto const &tourB = parents.second->getTour();
