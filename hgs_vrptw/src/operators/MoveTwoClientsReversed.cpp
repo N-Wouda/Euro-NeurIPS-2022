@@ -3,14 +3,14 @@
 #include "Route.h"
 #include "TimeWindowSegment.h"
 
-bool MoveTwoClientsReversed::test(Node *U, Node *V)
+int MoveTwoClientsReversed::test(Node *U, Node *V)
 {
     using TWS = TimeWindowSegment;
 
     auto const &params = *U->params;
 
     if (U == n(V) || n(U) == V || n(U)->isDepot())
-        return false;
+        return 0;
 
     int const current = Route::distBetween(p(U), nn(U))
                         + params.dist(V->client, n(V)->client);
@@ -23,7 +23,7 @@ bool MoveTwoClientsReversed::test(Node *U, Node *V)
     if (U->route != V->route)
     {
         if (U->route->isFeasible() && deltaCost >= 0)
-            return false;
+            return deltaCost;
 
         auto uTWS = TWS::merge(p(U)->twBefore, nn(U)->twAfter);
 
@@ -49,7 +49,7 @@ bool MoveTwoClientsReversed::test(Node *U, Node *V)
     else  // within same route
     {
         if (!U->route->hasTimeWarp() && deltaCost >= 0)
-            return false;
+            return deltaCost;
 
         if (U->position < V->position)
         {
@@ -75,5 +75,5 @@ bool MoveTwoClientsReversed::test(Node *U, Node *V)
         deltaCost -= d_penalties->timeWarp(U->route->tw);
     }
 
-    return deltaCost < 0;
+    return deltaCost;
 }

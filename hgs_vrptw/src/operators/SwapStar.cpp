@@ -96,7 +96,7 @@ int SwapStar::getBestInsertPoint(Node *U,
     return bestCost;
 }
 
-bool SwapStar::test(Route *routeU, Route *routeV)
+int SwapStar::test(Route *routeU, Route *routeV)
 {
     best = {};
 
@@ -152,7 +152,7 @@ bool SwapStar::test(Route *routeU, Route *routeV)
     }
 
     if (!best.UAfter || !best.VAfter)
-        return false;
+        return 0;
 
     // Compute actual cost including TimeWarp penalty
     int const current
@@ -256,7 +256,7 @@ bool SwapStar::test(Route *routeU, Route *routeV)
     deltaCost += d_penalties->load(routeV->load + uDemand - vDemand);
     deltaCost -= d_penalties->load(routeV->load);
 
-    return deltaCost < 0;
+    return deltaCost;
 }
 
 void SwapStar::apply(Route *U, Route *V)

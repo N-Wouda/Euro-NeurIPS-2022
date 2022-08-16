@@ -81,7 +81,7 @@ class SwapStar : public LocalSearchOperator<Route>
     BestMove best;
 
 public:
-    bool test(Route *U, Route *V) override;
+    int test(Route *U, Route *V) override;
 
     void apply(Route *U, Route *V) override;
 };

@@ -1,6 +1,7 @@
 #ifndef RELOCATESTAR_H
 #define RELOCATESTAR_H
 
+#include "Exchange.h"
 #include "LocalSearchOperator.h"
 #include "Node.h"
 #include "Route.h"
@@ -10,14 +11,20 @@
  */
 class RelocateStar : public LocalSearchOperator<Route>
 {
+    Exchange<1, 0> pureMove;
+
     int bestCost = 0;
     Node *insertionPoint = nullptr;
     Node *nodeToInsert = nullptr;
 
-    int singleMoveCost(Node *U, Node *V) const;
-
 public:
-    bool test(Route *U, Route *V) override;
+    void init(Individual const &indiv, Penalties const *penalties) override
+    {
+        LocalSearchOperator<Route>::init(indiv, penalties);
+        pureMove.init(indiv, penalties);
+    }
+
+    int test(Route *U, Route *V) override;
 
     void apply(Route *U, Route *V) override
     {

@@ -26,13 +26,13 @@ template <size_t N, size_t M> class Exchange : public LocalSearchOperator<Node>
     inline bool adjacent(Node *U, Node *V) const;
 
     // Special case that's applied when M == 0
-    bool testPureMove(Node *U, Node *V) const;
+    int testPureMove(Node *U, Node *V) const;
 
     // Applied when M != 0
-    bool testSwapMove(Node *U, Node *V) const;
+    int testSwapMove(Node *U, Node *V) const;
 
 public:
-    bool test(Node *U, Node *V) override;
+    int test(Node *U, Node *V) override;
 
     void apply(Node *U, Node *V) override;
 };

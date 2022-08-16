@@ -59,10 +59,10 @@ bool ReverseExchange<N, M>::adjacent(Node *U, Node *V) const
 }
 
 template <size_t N, size_t M>
-bool ReverseExchange<N, M>::testPureMove(Node *U, Node *V) const
+int ReverseExchange<N, M>::testPureMove(Node *U, Node *V) const
 {
     if (isDepotInSegments(U, V) || overlaps(U, V) || U == n(V))
-        return false;
+        return 0;
 
     auto const [endU, _] = getEnds(U, V);
     auto const &params = *U->params;
@@ -80,7 +80,7 @@ bool ReverseExchange<N, M>::testPureMove(Node *U, Node *V) const
     if (U->route != V->route)
     {
         if (U->route->isFeasible() && deltaCost >= 0)
-            return false;
+            return deltaCost;
 
         auto uTWS = TWS::merge(p(U)->twBefore, n(endU)->twAfter);
 
@@ -107,7 +107,7 @@ bool ReverseExchange<N, M>::testPureMove(Node *U, Node *V) const
     else  // within same route
     {
         if (!U->route->hasTimeWarp() && deltaCost >= 0)
-            return false;
+            return deltaCost;
 
         if (U->position < V->position)
         {
@@ -131,18 +131,18 @@ bool ReverseExchange<N, M>::testPureMove(Node *U, Node *V) const
         deltaCost -= d_penalties->timeWarp(U->route->tw);
     }
 
-    return deltaCost < 0;
+    return deltaCost;
 }
 
 template <size_t N, size_t M>
-bool ReverseExchange<N, M>::testSwapMove(Node *U, Node *V) const
+int ReverseExchange<N, M>::testSwapMove(Node *U, Node *V) const
 {
     if constexpr (N == M)  // symmetric, so only have to evaluate this once
         if (U->client >= V->client)
-            return false;
+            return 0;
 
     if (isDepotInSegments(U, V) || overlaps(U, V) || adjacent(U, V))
-        return false;
+        return 0;
 
     auto const &params = *U->params;
     auto const [endU, endV] = getEnds(U, V);
@@ -163,7 +163,7 @@ bool ReverseExchange<N, M>::testSwapMove(Node *U, Node *V) const
     if (U->route != V->route)
     {
         if (U->route->isFeasible() && V->route->isFeasible() && deltaCost >= 0)
-            return false;
+            return deltaCost;
 
         auto uTWS = TWS::merge(
             p(U)->twBefore, Route::twBetween(V, endV), n(endU)->twAfter);
@@ -190,7 +190,7 @@ bool ReverseExchange<N, M>::testSwapMove(Node *U, Node *V) const
     else  // within same route
     {
         if (!U->route->hasTimeWarp() && deltaCost >= 0)
-            return false;
+            return deltaCost;
 
         if (U->position < V->position)
         {
@@ -216,10 +216,10 @@ bool ReverseExchange<N, M>::testSwapMove(Node *U, Node *V) const
         deltaCost -= d_penalties->timeWarp(U->route->tw);
     }
 
-    return deltaCost < 0;
+    return deltaCost;
 }
 
-template <size_t N, size_t M> bool ReverseExchange<N, M>::test(Node *U, Node *V)
+template <size_t N, size_t M> int ReverseExchange<N, M>::test(Node *U, Node *V)
 {
     if constexpr (M == 0)  // special case where nothing in V is moved
         return testPureMove(U, V);

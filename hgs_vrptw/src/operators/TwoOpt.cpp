@@ -8,12 +8,12 @@ namespace
 using TWS = TimeWindowSegment;
 }
 
-bool TwoOpt::withinRouteTest(Node *U, Node *V)
+int TwoOpt::withinRouteTest(Node *U, Node *V)
 {
     auto const &params = *U->params;
 
     if (U->position + 1 >= V->position)
-        return false;
+        return 0;
 
     int deltaCost = params.dist(U->client, V->client)
                     + params.dist(n(U)->client, n(V)->client)
@@ -23,7 +23,7 @@ bool TwoOpt::withinRouteTest(Node *U, Node *V)
                     - n(U)->cumulatedReversalDistance;
 
     if (!U->route->hasTimeWarp() && deltaCost >= 0)
-        return false;
+        return 0;
 
     auto tws = U->twBefore;
     auto *itRoute = V;
@@ -38,10 +38,10 @@ bool TwoOpt::withinRouteTest(Node *U, Node *V)
     deltaCost += d_penalties->timeWarp(tws);
     deltaCost -= d_penalties->timeWarp(U->route->tw);
 
-    return deltaCost < 0;
+    return deltaCost;
 }
 
-bool TwoOpt::betweenRouteTest(Node *U, Node *V)
+int TwoOpt::betweenRouteTest(Node *U, Node *V)
 {
     auto const &params = *U->params;
 
@@ -53,7 +53,7 @@ bool TwoOpt::betweenRouteTest(Node *U, Node *V)
     int deltaCost = proposed - current;
 
     if (U->route->isFeasible() && V->route->isFeasible() && deltaCost >= 0)
-        return false;
+        return 0;
 
     auto const uTWS = TWS::merge(U->twBefore, n(V)->twAfter);
 
@@ -73,7 +73,7 @@ bool TwoOpt::betweenRouteTest(Node *U, Node *V)
     deltaCost += d_penalties->load(V->route->load + deltaLoad);
     deltaCost -= d_penalties->load(V->route->load);
 
-    return deltaCost < 0;
+    return deltaCost;
 }
 
 void TwoOpt::withinRouteApply(Node *U, Node *V)
@@ -115,10 +115,10 @@ void TwoOpt::betweenRouteApply(Node *U, Node *V)
     }
 }
 
-bool TwoOpt::test(Node *U, Node *V)
+int TwoOpt::test(Node *U, Node *V)
 {
     if (U->route->idx > V->route->idx)  // will be tackled in a later iteration
-        return false;                   // - no need to process here already
+        return 0;                       // - no need to process here already
 
     return U->route->idx == V->route->idx ? withinRouteTest(U, V)
                                           : betweenRouteTest(U, V);
@@ -126,7 +126,7 @@ bool TwoOpt::test(Node *U, Node *V)
 
 void TwoOpt::apply(Node *U, Node *V)
 {
-    if (U->route->idx == V->route->idx)
+    if (U->route == V->route)
         withinRouteApply(U, V);
     else
         betweenRouteApply(U, V);

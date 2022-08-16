@@ -20,11 +20,11 @@ public:
     };
 
     /**
-     * Tests whether applying this operator to the given arguments constitutes
-     * an improving move. Returns true if that is the case, false otherwise.
-     * Default false (no-op).
+     * Determines the cost delta of applying this operator to the given
+     * arguments constitutes. If the cost delta is negative, this is an
+     * improving move.
      */
-    virtual bool test(Arg *U, Arg *V) { return false; }
+    virtual int test(Arg *U, Arg *V) { return false; }
 
     /**
      * Applies this operator to the given arguments. For improvements, should
