@@ -35,7 +35,7 @@ public:
 
     /**
      * Applies this operator to the given arguments. For improvements, should
-     * only be called if <code>test()</code> returns true. Default no-op.
+     * only be called if <code>test()</code> returns a negative delta cost.
      */
     virtual void apply(Arg *U, Arg *V){};
 
