@@ -52,7 +52,7 @@ Individual selectiveRouteExchange(
  * algorithms". IEEE Transactions on Systems, Man and Cybernetics. 26, pp.
  * 487-493.
  */
-Individual alternatingPositionCrossover(
+Individual alternatingExchange(
     std::pair<Individual const *, Individual const *> const &parents,
     Params const &params,
     XorShift128 &rng);

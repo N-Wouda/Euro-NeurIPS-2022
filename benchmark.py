@@ -53,7 +53,7 @@ def solve(loc: str, seed: int, **kwargs):
     ls.add_route_operator(hgspy.operators.swap_star)
 
     algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
-    algo.add_crossover_operator(hgspy.crossover.alternating_position_crossover)
+    algo.add_crossover_operator(hgspy.crossover.alternating_exchange)
     algo.add_crossover_operator(hgspy.crossover.ordered_exchange)
     algo.add_crossover_operator(hgspy.crossover.selective_route_exchange)
 

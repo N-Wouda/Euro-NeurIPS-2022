@@ -11,7 +11,7 @@ using Parents = std::pair<Individual const *, Individual const *>;
 using Tour = std::vector<Client>;
 }  // namespace
 
-Individual alternatingPositionCrossover(const Parents &parents,
+Individual alternatingExchange(const Parents &parents,
                                         Params const &params,
                                         XorShift128 &rng)
 {
