@@ -31,6 +31,11 @@ public:
         if (insertionPoint && nodeToInsert)
             nodeToInsert->insertAfter(insertionPoint);
     }
+
+    RelocateStar(Params const &params)
+        : LocalSearchOperator<Route>(params), relocate(params)
+    {
+    }
 };
 
 #endif  // RELOCATESTAR_H

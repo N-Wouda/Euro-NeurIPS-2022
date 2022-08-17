@@ -13,6 +13,8 @@
  */
 class TwoOpt : public LocalSearchOperator<Node>
 {
+    using LocalSearchOperator::LocalSearchOperator;
+
     int withinRouteTest(Node *U, Node *V);
 
     int betweenRouteTest(Node *U, Node *V);

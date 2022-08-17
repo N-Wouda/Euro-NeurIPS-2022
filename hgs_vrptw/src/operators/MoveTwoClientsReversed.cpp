@@ -7,16 +7,14 @@ int MoveTwoClientsReversed::test(Node *U, Node *V)
 {
     using TWS = TimeWindowSegment;
 
-    auto const &params = *U->params;
-
     if (U == n(V) || n(U) == V || n(U)->isDepot())
         return 0;
 
     int const current = Route::distBetween(p(U), nn(U))
-                        + params.dist(V->client, n(V)->client);
+                        + d_params.dist(V->client, n(V)->client);
     int const proposed
-        = params.dist(p(U)->client, nn(U)->client)
-          + params.dist(V->client, n(U)->client, U->client, n(V)->client);
+        = d_params.dist(p(U)->client, nn(U)->client)
+          + d_params.dist(V->client, n(U)->client, U->client, n(V)->client);
 
     int deltaCost = proposed - current;
 

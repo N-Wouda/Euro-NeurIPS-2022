@@ -7,6 +7,7 @@
 template <typename Arg> class LocalSearchOperator
 {
 protected:
+    Params const &d_params;
     Penalties const *d_penalties = nullptr;
 
 public:
@@ -38,6 +39,8 @@ public:
      * only be called if <code>test()</code> returns a negative delta cost.
      */
     virtual void apply(Arg *U, Arg *V){};
+
+    LocalSearchOperator(Params const &params): d_params(params) {}
 
     virtual ~LocalSearchOperator() = default;
 };

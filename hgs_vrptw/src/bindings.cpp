@@ -215,42 +215,42 @@ PYBIND11_MODULE(hgspy, m)
     py::class_<LocalSearchOperator<Route>>(lsOps, "RouteLocalSearchOperator");
 
     py::class_<Exchange<1, 0>, LocalSearchOperator<Node>>(lsOps, "Exchange10")
-        .def(py::init<>());
+        .def(py::init<Params const &>(), py::arg("params"));
 
     py::class_<Exchange<2, 0>, LocalSearchOperator<Node>>(lsOps, "Exchange20")
-        .def(py::init<>());
+        .def(py::init<Params const &>(), py::arg("params"));
 
     py::class_<Exchange<3, 0>, LocalSearchOperator<Node>>(lsOps, "Exchange30")
-        .def(py::init<>());
+        .def(py::init<Params const &>(), py::arg("params"));
 
     py::class_<Exchange<1, 1>, LocalSearchOperator<Node>>(lsOps, "Exchange11")
-        .def(py::init<>());
+        .def(py::init<Params const &>(), py::arg("params"));
 
     py::class_<Exchange<2, 1>, LocalSearchOperator<Node>>(lsOps, "Exchange21")
-        .def(py::init<>());
+        .def(py::init<Params const &>(), py::arg("params"));
 
     py::class_<Exchange<3, 1>, LocalSearchOperator<Node>>(lsOps, "Exchange31")
-        .def(py::init<>());
+        .def(py::init<Params const &>(), py::arg("params"));
 
     py::class_<Exchange<2, 2>, LocalSearchOperator<Node>>(lsOps, "Exchange22")
-        .def(py::init<>());
+        .def(py::init<Params const &>(), py::arg("params"));
 
     py::class_<Exchange<3, 2>, LocalSearchOperator<Node>>(lsOps, "Exchange32")
-        .def(py::init<>());
+        .def(py::init<Params const &>(), py::arg("params"));
 
     py::class_<Exchange<3, 3>, LocalSearchOperator<Node>>(lsOps, "Exchange33")
-        .def(py::init<>());
+        .def(py::init<Params const &>(), py::arg("params"));
 
     py::class_<MoveTwoClientsReversed, LocalSearchOperator<Node>>(
         lsOps, "MoveTwoClientsReversed")
-        .def(py::init<>());
+        .def(py::init<Params const &>(), py::arg("params"));
 
     py::class_<TwoOpt, LocalSearchOperator<Node>>(lsOps, "TwoOpt")
-        .def(py::init<>());
+        .def(py::init<Params const &>(), py::arg("params"));
 
     py::class_<RelocateStar, LocalSearchOperator<Route>>(lsOps, "RelocateStar")
-        .def(py::init<>());
+        .def(py::init<Params const &>(), py::arg("params"));
 
     py::class_<SwapStar, LocalSearchOperator<Route>>(lsOps, "SwapStar")
-        .def(py::init<>());
+        .def(py::init<Params const &>(), py::arg("params"));
 }

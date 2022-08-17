@@ -11,6 +11,8 @@
  */
 template <size_t N, size_t M> class Exchange : public LocalSearchOperator<Node>
 {
+    using LocalSearchOperator::LocalSearchOperator;
+
     static_assert(N >= M && N > 0, "N < M or N == 0 does not make sense");
 
     // Returns the last nodes to be moved in the segments of U and V

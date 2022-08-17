@@ -65,15 +65,14 @@ int Exchange<N, M>::testRelocateMove(Node *U, Node *V) const
         return 0;
 
     auto const [endU, _] = getEnds(U, V);
-    auto const &params = *U->params;
 
     int const current = Route::distBetween(p(U), n(endU))
-                        + params.dist(V->client, n(V)->client);
+                        + d_params.dist(V->client, n(V)->client);
 
-    int const proposed = params.dist(V->client, U->client)
+    int const proposed = d_params.dist(V->client, U->client)
                          + Route::distBetween(U, endU)
-                         + params.dist(endU->client, n(V)->client)
-                         + params.dist(p(U)->client, n(endU)->client);
+                         + d_params.dist(endU->client, n(V)->client)
+                         + d_params.dist(p(U)->client, n(endU)->client);
 
     int deltaCost = proposed - current;
 
@@ -144,7 +143,6 @@ int Exchange<N, M>::testSwapMove(Node *U, Node *V) const
     if (isDepotInSegments(U, V) || overlap(U, V) || adjacent(U, V))
         return 0;
 
-    auto const &params = *U->params;
     auto const [endU, endV] = getEnds(U, V);
 
     int const current
@@ -153,10 +151,10 @@ int Exchange<N, M>::testSwapMove(Node *U, Node *V) const
     int const proposed
         //   p(U) -> V -> ... -> endV -> n(endU)
         // + p(V) -> U -> ... -> endU -> n(endV)
-        = params.dist(p(U)->client, V->client) + Route::distBetween(V, endV)
-          + params.dist(endV->client, n(endU)->client)
-          + params.dist(p(V)->client, U->client) + Route::distBetween(U, endU)
-          + params.dist(endU->client, n(endV)->client);
+        = d_params.dist(p(U)->client, V->client) + Route::distBetween(V, endV)
+          + d_params.dist(endV->client, n(endU)->client)
+          + d_params.dist(p(V)->client, U->client) + Route::distBetween(U, endU)
+          + d_params.dist(endU->client, n(endV)->client);
 
     int deltaCost = proposed - current;
 

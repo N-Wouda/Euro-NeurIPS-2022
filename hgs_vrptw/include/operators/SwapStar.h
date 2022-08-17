@@ -21,6 +21,8 @@
  */
 class SwapStar : public LocalSearchOperator<Route>
 {
+    using LocalSearchOperator::LocalSearchOperator;
+
     struct ThreeBest  // stores three best SWAP* insertion points
     {
         std::array<int, 3> costs = {INT_MAX, INT_MAX, INT_MAX};

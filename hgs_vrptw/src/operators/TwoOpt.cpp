@@ -10,16 +10,14 @@ using TWS = TimeWindowSegment;
 
 int TwoOpt::withinRouteTest(Node *U, Node *V)
 {
-    auto const &params = *U->params;
-
     if (U->position + 1 >= V->position)
         return 0;
 
-    int deltaCost = params.dist(U->client, V->client)
-                    + params.dist(n(U)->client, n(V)->client)
+    int deltaCost = d_params.dist(U->client, V->client)
+                    + d_params.dist(n(U)->client, n(V)->client)
                     + V->cumulatedReversalDistance
-                    - params.dist(U->client, n(U)->client)
-                    - params.dist(V->client, n(V)->client)
+                    - d_params.dist(U->client, n(U)->client)
+                    - d_params.dist(V->client, n(V)->client)
                     - n(U)->cumulatedReversalDistance;
 
     if (!U->route->hasTimeWarp() && deltaCost >= 0)
@@ -43,12 +41,10 @@ int TwoOpt::withinRouteTest(Node *U, Node *V)
 
 int TwoOpt::betweenRouteTest(Node *U, Node *V)
 {
-    auto const &params = *U->params;
-
-    int const current = params.dist(U->client, n(U)->client)
-                        + params.dist(V->client, n(V)->client);
-    int const proposed = params.dist(U->client, n(V)->client)
-                         + params.dist(V->client, n(U)->client);
+    int const current = d_params.dist(U->client, n(U)->client)
+                        + d_params.dist(V->client, n(V)->client);
+    int const proposed = d_params.dist(U->client, n(V)->client)
+                         + d_params.dist(V->client, n(U)->client);
 
     int deltaCost = proposed - current;
 

@@ -9,6 +9,8 @@
  */
 class MoveTwoClientsReversed : public LocalSearchOperator<Node>
 {
+    using LocalSearchOperator::LocalSearchOperator;
+
 public:
     int test(Node *U, Node *V) override;
 
