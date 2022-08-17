@@ -124,17 +124,7 @@ bool LocalSearch::applyNodeOperators(Node *U, Node *V)
             auto *routeV = V->route;  // modify the node's route membership
 
             op->apply(U, V);
-
-            nbMoves++;
-            searchCompleted = false;
-
-            routeU->update();
-
-            if (routeU != routeV)
-                routeV->update();
-
-            lastModified[routeU->idx] = nbMoves;
-            lastModified[routeV->idx] = nbMoves;
+            update(routeU, routeV);
 
             return true;
         }
@@ -148,20 +138,27 @@ bool LocalSearch::applyRouteOperators(Route *U, Route *V)
         if (op->test(U, V) < 0)
         {
             op->apply(U, V);
-
-            nbMoves++;
-            searchCompleted = false;
-
-            U->update();
-            V->update();
-
-            lastModified[U->idx] = nbMoves;
-            lastModified[V->idx] = nbMoves;
+            update(U, V);
 
             return true;
         }
 
     return false;
+}
+
+void LocalSearch::update(Route *U, Route *V)
+{
+    nbMoves++;
+    searchCompleted = false;
+
+    U->update();
+    lastModified[U->idx] = nbMoves;
+
+    if (U != V)
+    {
+        V->update();
+        lastModified[V->idx] = nbMoves;
+    }
 }
 
 void LocalSearch::loadIndividual(Individual const &indiv)
