@@ -9,7 +9,7 @@ import matplotlib
 import numpy as np
 from tqdm.contrib.concurrent import process_map
 
-import plot
+import plotting
 import tools
 
 matplotlib.use("Agg")  # Don't show plots
@@ -56,19 +56,29 @@ def solve(loc: str, seed: int, **kwargs):
     pop = hgspy.Population(params, rng)
     ls = hgspy.LocalSearch(params, rng)
 
-    ls.add_node_operator(hgspy.operators.move_single_client)
-    ls.add_node_operator(hgspy.operators.move_two_clients)
-    ls.add_node_operator(hgspy.operators.move_two_clients_reversed)
-    ls.add_node_operator(hgspy.operators.swap_two_client_pairs)
-    ls.add_node_operator(hgspy.operators.swap_two_clients_for_one)
-    ls.add_node_operator(hgspy.operators.swap_two_single_clients)
-    ls.add_node_operator(hgspy.operators.two_opt_between_routes)
-    ls.add_node_operator(hgspy.operators.two_opt_within_route)
+    node_ops = [
+        hgspy.operators.Exchange10(),
+        hgspy.operators.Exchange11(),
+        hgspy.operators.Exchange20(),
+        hgspy.operators.MoveTwoClientsReversed(),
+        hgspy.operators.Exchange21(),
+        hgspy.operators.Exchange22(),
+        hgspy.operators.TwoOpt(),
+    ]
 
-    ls.add_route_operator(hgspy.operators.relocate_star)
-    ls.add_route_operator(hgspy.operators.swap_star)
+    for op in node_ops:
+        ls.add_node_operator(op)
+
+    route_ops = [
+        hgspy.operators.RelocateStar(),
+        hgspy.operators.SwapStar(),
+    ]
+
+    for op in route_ops:
+        ls.add_route_operator(op)
 
     algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
+    algo.add_crossover_operator(hgspy.crossover.alternating_exchange)
     algo.add_crossover_operator(hgspy.crossover.ordered_exchange)
     algo.add_crossover_operator(hgspy.crossover.selective_route_exchange)
 
@@ -138,9 +148,7 @@ def save_results(res, results_dir, inst_name):
 
 
 def plot_single_run(path, stats):
-    _, (ax_pop, ax_objs, ax_inc) = plt.subplots(
-        nrows=3, ncols=1, figsize=(8, 12)
-    )
+    _, (ax_pop, ax_objs, ax_inc) = plt.subplots(3, 1, figsize=(8, 12))
 
     plot.plot_population(stats, ax_pop)
     plot.plot_objectives(stats, ax_objs)
