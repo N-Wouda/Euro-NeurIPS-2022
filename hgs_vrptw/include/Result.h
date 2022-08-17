@@ -14,7 +14,7 @@ class Result
     Individual const &bestFound;
     Statistics stats;
     size_t numIters;
-    duration runTime;
+    double runTime;
 
 public:
     Result(Individual const &bestFound,
@@ -46,7 +46,7 @@ public:
     /**
      * Returns the total elapsed runtime in seconds.
      */
-    [[nodiscard]] duration const &getRunTime() const { return runTime; }
+    [[nodiscard]] double const &getRunTime() const { return runTime; }
 };
 
 #endif  // RESULT_H

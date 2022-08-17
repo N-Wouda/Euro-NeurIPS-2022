@@ -61,7 +61,7 @@ Result GeneticAlgorithm::run(StoppingCriterion &stop)
     }
 
     std::chrono::duration<double> runTime = clock::now() - start;
-    return {population.getBestFound(), stats, iter, runTime};
+    return {population.getBestFound(), stats, iter, runTime.count()};
 }
 
 Individual GeneticAlgorithm::crossover() const

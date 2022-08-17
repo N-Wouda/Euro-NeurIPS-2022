@@ -95,23 +95,35 @@ void Statistics::toCsv(std::string const &path, char const sep) const
 {
     std::ofstream out(path);
 
-    // TODO use the printstream stuff
     if (!out)
         throw std::runtime_error("Could not open " + path);
 
-    out << "# iteration" << sep << "run-time (s)" << sep << "population size"
-        << sep << "# feasible" << sep << "diversity" << sep
-        << "current best objective" << sep << "feasible avg objective" << sep
-        << "infeasible avg objective"
+    // clang-format off
+    out << "iteration #" << sep
+        << "total run-time (s)" << sep
+        << "iteration run-time (s)" << sep
+        << "population size" << sep
+        << "# feasible" << sep
+        << "diversity" << sep
+        << "current best objective" << sep
+        << "feasible avg. objective" << sep
+        << "infeasible avg. objective"
         << "\n";
 
     for (size_t it = 0; it != numIters_; it++)
     {
-        out << it << sep << runTimes()[it] << sep << popSizes()[it] << sep
-            << feasiblePops()[it] << sep << popDiversity()[it] << sep
-            << currObjectives_[it] << sep << feasibleAvgObjectives_[it] << sep
-            << infeasibleAvgObjectives_[it] << "\n";
+        out << currIters_[it] << sep
+            << runTimes_[it] << sep
+            << iterTimes_[it] << sep
+            << popSizes_[it] << sep
+            << numFeasiblePop_[it] << sep
+            << popDiversity_[it] << sep
+            << currObjectives_[it] << sep
+            << feasObjectives_[it] << sep
+            << infeasObjectives_[it]
+            << "\n";
     }
+    // clang-format on
 }
 
 Statistics::Statistics(Params &params) : params(params) {}

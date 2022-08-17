@@ -20,13 +20,15 @@ class Statistics
     size_t numIters_ = 0;
 
     std::vector<size_t> currIters_;
-    std::vector<size_t> popSize;
-    std::vector<size_t> numFeasible;
+    std::vector<double> runTimes_;
+    std::vector<double> iterTimes_;
+    std::vector<size_t> popSizes_;
+    std::vector<size_t> numFeasiblePop_;
     std::vector<double> popDiversity_;
-    std::vector<double> iterTimes;
     std::vector<size_t> currObjectives_;
-    std::vector<double> feasibleAvgObjectives_;
-    std::vector<double> infeasibleAvgObjectives_;
+    std::vector<double> feasObjectives_;
+    std::vector<double> infeasObjectives_;
+
     timedDatapoints bestObjectives_;
 
 public:
@@ -45,8 +47,8 @@ public:
     [[nodiscard]] size_t numIters() const { return numIters_; }
 
     /**
-     * Returns a vector of iterations, denoting at which iteration the
-     * statistics were collected at the time.
+     * Returns a vector of integers, indicating at which iteration of the
+     * algorithm the statistics were collected.
      */
     [[nodiscard]] std::vector<size_t> const &currIters() const
     {
@@ -54,30 +56,40 @@ public:
     }
 
     /**
-     * Returns a vector of run times, one element per iteration. The run times
-     * are in seconds.
+     * Returns a vector of run times in seconcds, indicating the elapsed time
+     * since the start of the algorithm.
      */
     [[nodiscard]] std::vector<double> const &runTimes() const
     {
-        return iterTimes;
+        return runTimes_;
+    }
+    /**
+     * Returns a vector of run times in seconds, indicating the elapsed time
+     * between the current and last collected iteration.
+     */
+    [[nodiscard]] std::vector<double> const &iterTimes() const
+    {
+        return iterTimes_;
     }
 
     /**
-     * Returns a vector of population sizes, one element for each iteration.
+     * Returns a vector of population sizes, one element for each collected
+     * iteration.
      */
     [[nodiscard]] std::vector<size_t> const &popSizes() const
     {
-        return popSize;
+        return popSizes_;
     }
 
     /**
      * Returns a vector of the number of feasible individuals in the population,
-     * one element for each iteration. Of course, in each iteration, the number
-     * of feasible individuals does not exceed the total population size.
+     * one element for each collected iteration. Of course, in each iteration,
+     * the number of feasible individuals does not exceed the total population
+     * size.
      */
-    [[nodiscard]] std::vector<size_t> const &feasiblePops() const
+    [[nodiscard]] std::vector<size_t> const &numFeasiblePop() const
     {
-        return numFeasible;
+        return numFeasiblePop_;
     }
 
     /**
@@ -108,9 +120,9 @@ public:
      * individuals at the current iteration.
      * */
 
-    [[nodiscard]] std::vector<double> const &feasibleAvgObjectives() const
+    [[nodiscard]] std::vector<double> const &feasObjectives() const
     {
-        return feasibleAvgObjectives_;
+        return feasObjectives_;
     }
 
     /**
@@ -118,9 +130,9 @@ public:
      * individuals at the current iteration.
      * */
 
-    [[nodiscard]] std::vector<double> const &infeasibleAvgObjectives() const
+    [[nodiscard]] std::vector<double> const &infeasObjectives() const
     {
-        return infeasibleAvgObjectives_;
+        return infeasObjectives_;
     }
 
     /**
@@ -137,7 +149,7 @@ public:
      * collected for each iteration are exported. Uses `,` as default
      * separator.
      */
-    void toCsv(std::string const &path, const char sep = ',') const;
+    void toCsv(std::string const &path, char const sep = ',') const;
 
     Statistics(Params &params);
 };
