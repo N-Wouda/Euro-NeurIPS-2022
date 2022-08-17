@@ -33,6 +33,8 @@ struct Config
     size_t repairProbability = 50;  // probability of repair if infeasible
     size_t repairBooster = 10;      // penalty booster when repairing
 
+    size_t selectProbability = 90;  // offspring selection probability
+
     // Weight for diversity criterion. If 0, weight is set to 1 - nbElite /
     // populationSize
     double diversityWeight = 0.0;
@@ -74,6 +76,7 @@ struct Config
                     double targetFeasible = 0.2,
                     size_t repairProbability = 50,
                     size_t repairBooster = 10,
+                    size_t selectProbability = 90,
                     double diversityWeight = 0.,
                     int nbVeh = INT_MAX,
                     size_t nbGranular = 40,
@@ -98,6 +101,7 @@ struct Config
           targetFeasible(targetFeasible),
           repairProbability(repairProbability),
           repairBooster(repairBooster),
+          selectProbability(selectProbability),
           diversityWeight(diversityWeight),
           nbVeh(nbVeh),
           nbGranular(nbGranular),

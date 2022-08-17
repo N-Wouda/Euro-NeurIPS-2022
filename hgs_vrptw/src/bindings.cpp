@@ -72,6 +72,7 @@ PYBIND11_MODULE(hgspy, m)
                       double,
                       size_t,
                       size_t,
+                      size_t,
                       double,
                       int,
                       size_t,
@@ -96,6 +97,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("targetFeasible") = 0.2,
              py::arg("repairProbability") = 50,
              py::arg("repairBooster") = 10,
+             py::arg("selectProbability") = 90,
              py::arg("diversityWeight") = 0.,
              py::arg("nbVeh") = INT_MAX,
              py::arg("nbGranular") = 40,
@@ -120,6 +122,7 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("targetFeasible", &Config::targetFeasible)
         .def_readonly("repairProbability", &Config::repairProbability)
         .def_readonly("repairBooster", &Config::repairBooster)
+        .def_readonly("selectProbability", &Config::selectProbability)
         .def_readonly("diversityWeight", &Config::diversityWeight)
         .def_readonly("nbVeh", &Config::nbVeh)
         .def_readonly("nbGranular", &Config::nbGranular)
@@ -196,6 +199,7 @@ PYBIND11_MODULE(hgspy, m)
     // Crossover operators (as a submodule)
     py::module xOps = m.def_submodule("crossover");
 
+    xOps.def("alternating_exchange", &alternatingExchange);
     xOps.def("ordered_exchange", &orderedExchange);
     xOps.def("selective_route_exchange", &selectiveRouteExchange);
 
