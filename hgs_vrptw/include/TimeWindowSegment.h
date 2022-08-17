@@ -17,7 +17,7 @@ class TimeWindowSegment
     int twLate = 0;       // Latest visit moment of last client in segment
     int lastRelease = 0;  // Latest release time; cannot leave depot before
 
-    [[nodiscard]] inline TWS merge(TWS const &other) const
+    [[nodiscard]] TWS merge(TWS const &other) const
     {
         int const dist = params->dist(idxLast, other.idxFirst);
         int const delta = duration - timeWarp + dist;
@@ -36,7 +36,7 @@ class TimeWindowSegment
 
 public:
     template <typename... Args>
-    [[nodiscard]] inline static TWS
+    [[nodiscard]] static TWS
     merge(TWS const &first, TWS const &second, Args... args)
     {
         auto const res = first.merge(second);
@@ -50,13 +50,13 @@ public:
     /**
      * Returns the time warp along the segment, assuming we can depart in time.
      */
-    [[nodiscard]] inline int segmentTimeWarp() const { return timeWarp; }
+    [[nodiscard]] int segmentTimeWarp() const { return timeWarp; }
 
     /**
      * Total time warp, that is, the time warp along the the segment, and
      * potential time warp due to too late a release time.
      */
-    [[nodiscard]] inline int totalTimeWarp() const
+    [[nodiscard]] int totalTimeWarp() const
     {
         return segmentTimeWarp() + std::max(lastRelease - twLate, 0);
     }

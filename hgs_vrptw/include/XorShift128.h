@@ -57,7 +57,7 @@ public:
     /**
      * Returns a random integer in the range [0, high).
      */
-    template <std::integral T> inline result_type randint(T high)
+    template <std::integral T> result_type randint(T high)
     {
         return operator()() % high;
     }

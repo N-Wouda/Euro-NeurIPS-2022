@@ -6,6 +6,8 @@ project(hgs_vrptw
 
 set(CMAKE_CXX_STANDARD 20)
 
+# Ignore unused parameters, because the LS operators depend on this (sometimes
+# the parameters are used, but not by every operator)
 add_definitions(-Werror -Wall -Wextra -Wpedantic -fPIC -Wno-unused-parameter)
 
 if (CMAKE_BUILD_TYPE MATCHES RELEASE)
@@ -17,6 +19,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 include_directories(include)
+include_directories(include/operators)
 include_directories(include/stop)
 
 add_subdirectory(extern)

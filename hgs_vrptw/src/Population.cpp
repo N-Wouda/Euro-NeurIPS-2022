@@ -46,6 +46,7 @@ void Population::addIndividual(Individual const &indiv)
         while (population.size() > params.config.minimumPopulationSize)
             removeWorstBiasedFitness();
     }
+
     if (indiv.isFeasible() && indiv < bestSol)
         bestSol = indiv;
 }
@@ -109,8 +110,10 @@ bool Population::removeDuplicate()
             return true;
         }
     }
+
     return false;
 }
+
 void Population::removeWorstBiasedFitness()
 {
     updateBiasedFitness();

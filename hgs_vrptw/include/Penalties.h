@@ -11,13 +11,13 @@ class Penalties
 
 public:
     // Computes the total excess capacity penalty for the given load
-    [[nodiscard]] inline int load(int currLoad) const
+    [[nodiscard]] int load(int currLoad) const
     {
         return std::max(currLoad - vehicleCapacity, 0) * loadPenalty;
     }
 
     // Computes the total time warp penalty for the given time window data
-    [[nodiscard]] inline int timeWarp(TimeWindowSegment const &twData) const
+    [[nodiscard]] int timeWarp(TimeWindowSegment const &twData) const
     {
         return twData.totalTimeWarp() * timePenalty;
     }
