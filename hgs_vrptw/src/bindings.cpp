@@ -88,7 +88,6 @@ PYBIND11_MODULE(hgspy, m)
                       int,
                       int,
                       int,
-                      int,
                       int>(),
              py::arg("seed") = 0,
              py::arg("nbIter") = 20'000,
@@ -112,7 +111,6 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("nbGranular") = 40,
              py::arg("weightWaitTime") = 2,
              py::arg("weightTimeWarp") = 10,
-             py::arg("intensificationProbability") = 15,
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
              py::arg("minCircleSectorSizeDegrees") = 15)
         .def_readonly("seed", &Config::seed)
@@ -137,8 +135,6 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("nbGranular", &Config::nbGranular)
         .def_readonly("weightWaitTime", &Config::weightWaitTime)
         .def_readonly("weightTimeWarp", &Config::weightTimeWarp)
-        .def_readonly("intensificationProbability",
-                      &Config::intensificationProbability)
         .def_readonly("circleSectorOverlapTolerance",
                       &Config::circleSectorOverlapTolerance)
         .def_readonly("minCircleSectorSize", &Config::minCircleSectorSize);

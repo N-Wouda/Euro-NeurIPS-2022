@@ -49,9 +49,6 @@ struct Config
     int weightWaitTime = 2;   // weight for wait-time nearness
     int weightTimeWarp = 10;  // weight for time warp nearness
 
-    // Probability intensification moves are performed during LS ([0-100])
-    int intensificationProbability = 15;
-
     // Margin to take (in degrees 0 - 359 as ints [0 - 65536]) to determine
     // overlap of circle sectors for SWAP*
     int circleSectorOverlapTolerance = 0;
@@ -82,7 +79,6 @@ struct Config
                     size_t nbGranular = 40,
                     int weightWaitTime = 2,
                     int weightTimeWarp = 10,
-                    int intensificationProbability = 15,
                     int circleSectorOverlapToleranceDegrees = 0,
                     int minCircleSectorSizeDegrees = 15)
         : seed(seed),
@@ -106,8 +102,7 @@ struct Config
           nbVeh(nbVeh),
           nbGranular(nbGranular),
           weightWaitTime(weightWaitTime),
-          weightTimeWarp(weightTimeWarp),
-          intensificationProbability(intensificationProbability)
+          weightTimeWarp(weightTimeWarp)
     {
         auto const overlap = circleSectorOverlapToleranceDegrees / 360. * 65536;
         circleSectorOverlapTolerance = static_cast<int>(overlap);

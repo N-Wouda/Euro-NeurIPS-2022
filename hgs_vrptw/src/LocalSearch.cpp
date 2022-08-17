@@ -27,9 +27,6 @@ void LocalSearch::search()
     if (nodeOps.empty() && routeOps.empty())
         throw std::runtime_error("No known node or route operators.");
 
-    bool const shouldIntensify
-        = rng.randint(100) < (unsigned)params.config.intensificationProbability;
-
     searchCompleted = false;
     nbMoves = 0;
 
@@ -40,45 +37,39 @@ void LocalSearch::search()
     std::vector<int> lastTestedRoutes(params.nbVehicles, -1);
     lastModified = std::vector<int>(params.nbVehicles, 0);
 
-    for (int step = 0; !searchCompleted; ++step)
+    // At least two iterations as empty routes are not evaluated in the first
+    for (int step = 0; step != 2 || !searchCompleted; ++step)
     {
-        if (step > 1)                // At least two loops as some moves with
-            searchCompleted = true;  // empty routes are not done in the first
+        searchCompleted = true;
 
-        /* ROUTE IMPROVEMENT (RI) MOVES SUBJECT TO A PROXIMITY RESTRICTION */
-        for (int const u : orderNodes)
+        // Node operators are evaluated at neighbouring (U, V) pairs.
+        for (int const uClient : orderNodes)
         {
-            Node *nodeU = &clients[u];
-            auto const lastTestedNode = lastTestedNodes[nodeU->client];
-            lastTestedNodes[nodeU->client] = nbMoves;
+            Node *U = &clients[uClient];
+            auto const lastTestedNode = lastTestedNodes[U->client];
+            lastTestedNodes[U->client] = nbMoves;
 
-            // Randomizing the order of the neighborhoods within this loop does
-            // not matter much as we are already randomizing the order of the
-            // node pairs (and it's not very common to find improving moves of
-            // different types for the same node pair)
-            for (auto const v : params.getNeighboursOf(nodeU->client))
+            // Shuffling the neighbours in this loop should not matter much as
+            // we are already randomizing the nodes U.
+            for (auto const vClient : params.getNeighboursOf(U->client))
             {
-                Node *nodeV = &clients[v];
-                int lastModifiedRoute
-                    = std::max(lastModified[nodeU->route->idx],
-                               lastModified[nodeV->route->idx]);
+                Node *V = &clients[vClient];
+                auto const lastModifiedRoute = std::max(
+                    lastModified[U->route->idx], lastModified[V->route->idx]);
 
-                // only evaluate moves involving routes that have been modified
-                // since last move evaluations for nodeU
+                // Evaluate operators only if routes have changed recently.
                 if (step == 0 || lastModifiedRoute > lastTestedNode)
                 {
-                    if (applyNodeOperators(nodeU, nodeV))
+                    if (applyNodeOperators(U, V))
                         continue;
 
-                    // Trying moves that insert nodeU directly after the depot
-                    if (nodeV->prev->isDepot()
-                        && applyNodeOperators(nodeU, nodeV->prev))
+                    if (p(V)->isDepot() && applyNodeOperators(U, p(V)))
                         continue;
                 }
             }
 
-            /* MOVES INVOLVING AN EMPTY ROUTE -- NOT TESTED IN THE FIRST LOOP TO
-             * AVOID INCREASING TOO MUCH THE FLEET SIZE */
+            // Empty route moves are not tested in the first iterations to avoid
+            // increasing the fleet size too much.
             if (step > 0)
             {
                 auto pred = [](auto const &route) { return route.empty(); };
@@ -87,35 +78,34 @@ void LocalSearch::search()
                 if (empty == routes.end())
                     continue;
 
-                if (applyNodeOperators(nodeU, empty->depot))
+                if (applyNodeOperators(U, empty->depot))
                     continue;
             }
         }
 
-        /* (SWAP*) MOVES LIMITED TO ROUTE PAIRS WHOSE CIRCLE SECTORS OVERLAP */
-        if (searchCompleted && shouldIntensify)
-        {
+        // Route operators are evaluated only after node operators get stuck.
+        if (searchCompleted)
             for (int const rU : orderRoutes)
             {
-                Route &routeU = routes[rU];
+                auto &routeU = routes[rU];
 
                 if (routeU.empty())
                     continue;
 
-                int lastTested = lastTestedRoutes[routeU.idx];
+                auto const lastTested = lastTestedRoutes[routeU.idx];
                 lastTestedRoutes[routeU.idx] = nbMoves;
 
                 for (int const rV : orderRoutes)
                 {
-                    Route &routeV = routes[rV];
+                    auto &routeV = routes[rV];
 
                     if (routeV.empty() || routeU.idx >= routeV.idx)
                         continue;
 
-                    if (step > 0
-                        && std::max(lastModified[routeU.idx],
-                                    lastModified[routeV.idx])
-                               <= lastTested)
+                    auto const lastModifiedRoute = std::max(
+                        lastModified[routeU.idx], lastModified[routeV.idx]);
+
+                    if (step > 0 && lastModifiedRoute <= lastTested)
                         continue;
 
                     if (!routeU.overlapsWith(routeV))
@@ -125,7 +115,6 @@ void LocalSearch::search()
                         continue;
                 }
             }
-        }
     }
 }
 
