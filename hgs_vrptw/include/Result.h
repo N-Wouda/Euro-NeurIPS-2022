@@ -20,7 +20,7 @@ public:
     Result(Individual const &bestFound,
            Statistics stats,
            size_t numIters,
-           duration runTime)
+           double runTime)
         : bestFound(bestFound),
           stats(std::move(stats)),
           numIters(numIters),

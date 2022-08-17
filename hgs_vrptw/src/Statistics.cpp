@@ -8,23 +8,29 @@
 
 void Statistics::collectFrom(Population const &population)
 {
+
+    currIters_.push_back(numIters_ * params.config.collectNbIter);
     numIters_++;
 
-    std::chrono::duration<double> diff = clock::now() - lastIter;
-    iterTimes.push_back(diff.count());
+    auto const now = clock::now();
+
+    std::chrono::duration<double> const runTime = now - start;
+    runTimes_.push_back(runTime.count());
+
+    std::chrono::duration<double> const iterTime = now - lastIter;
+    iterTimes_.push_back(iterTime.count());
+
     lastIter = clock::now();  // update for next call
+
+    auto const nPops = population.population.size();
+    popSizes_.push_back(nPops);
 
     auto const numFeas = std::count_if(
         population.population.begin(),
         population.population.end(),
         [](Individual const *indiv) { return indiv->isFeasible(); });
 
-    currIters_.push_back((numIters_ - 1) * params.config.collectNbIter);
-
-    numFeasible.push_back(numFeas);
-
-    auto const nPops = population.population.size();
-    popSize.push_back(nPops);
+    numFeasiblePop_.push_back(numFeas);
 
     double const totalDiversity = std::accumulate(
         population.population.begin(),
@@ -67,16 +73,16 @@ void Statistics::collectFrom(Population const &population)
         currObjectives_.push_back(INT_MAX);  // INT_MAX as substitute for inf
 
     if (nbFeasible != 0)
-        feasibleAvgObjectives_.push_back(
+        feasObjectives_.push_back(
             static_cast<double>(totalFeasible / nbFeasible));
     else
-        feasibleAvgObjectives_.push_back(INT_MAX);
+        feasObjectives_.push_back(INT_MAX);
 
     if (nbInfeasible != 0)
-        infeasibleAvgObjectives_.push_back(
+        infeasObjectives_.push_back(
             static_cast<double>(totalInfeasible / nbInfeasible));
     else
-        infeasibleAvgObjectives_.push_back(INT_MAX);
+        infeasObjectives_.push_back(INT_MAX);
 
     // Best objectives
     auto const &best = population.bestSol;

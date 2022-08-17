@@ -63,6 +63,7 @@ public:
     {
         return runTimes_;
     }
+
     /**
      * Returns a vector of run times in seconds, indicating the elapsed time
      * between the current and last collected iteration.
