@@ -27,15 +27,13 @@ void LocalSearch::search()
     if (nodeOps.empty() && routeOps.empty())
         throw std::runtime_error("No known node or route operators.");
 
-    searchCompleted = false;
-    nbMoves = 0;
-
     // Caches the last time node or routes were tested for modification (uses
     // nbMoves to track this). The lastModified field, in contrast, track when
     // a route was last *actually* modified.
     std::vector<int> lastTestedNodes(params.nbClients + 1, -1);
     std::vector<int> lastTestedRoutes(params.nbVehicles, -1);
     lastModified = std::vector<int>(params.nbVehicles, 0);
+    nbMoves = 0;
 
     // At least two iterations as empty routes are not evaluated in the first
     for (int step = 0; step <= 1 || !searchCompleted; ++step)
@@ -87,31 +85,30 @@ void LocalSearch::search()
         if (searchCompleted)
             for (int const rU : orderRoutes)
             {
-                auto &routeU = routes[rU];
+                auto &U = routes[rU];
 
-                if (routeU.empty())
+                if (U.empty())
                     continue;
 
-                auto const lastTested = lastTestedRoutes[routeU.idx];
-                lastTestedRoutes[routeU.idx] = nbMoves;
+                auto const lastTested = lastTestedRoutes[U.idx];
+                lastTestedRoutes[U.idx] = nbMoves;
 
-                for (int const rV : orderRoutes)
+                // Shuffling in this loop should not matter much as we are
+                // already randomizing the routes U.
+                for (int rV = 0; rV != U.idx; ++rV)
                 {
-                    auto &routeV = routes[rV];
+                    auto &V = routes[rV];
 
-                    if (routeV.empty() || routeU.idx >= routeV.idx)
+                    if (V.empty() || !U.overlapsWith(V))
                         continue;
 
-                    auto const lastModifiedRoute = std::max(
-                        lastModified[routeU.idx], lastModified[routeV.idx]);
+                    auto const lastModifiedRoute
+                        = std::max(lastModified[U.idx], lastModified[V.idx]);
 
                     if (step > 0 && lastModifiedRoute <= lastTested)
                         continue;
 
-                    if (!routeU.overlapsWith(routeV))
-                        continue;
-
-                    if (applyRouteOperators(&routeU, &routeV))
+                    if (applyRouteOperators(&U, &V))
                         continue;
                 }
             }
