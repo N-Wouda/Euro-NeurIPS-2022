@@ -40,7 +40,7 @@ public:
      */
     virtual void apply(Arg *U, Arg *V){};
 
-    LocalSearchOperator(Params const &params): d_params(params) {}
+    explicit LocalSearchOperator(Params const &params) : d_params(params) {}
 
     virtual ~LocalSearchOperator() = default;
 };

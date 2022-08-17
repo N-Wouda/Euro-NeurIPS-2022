@@ -24,6 +24,8 @@ public:
     {
     }
 
+    Matrix(size_t nRows, size_t nCols) : cols_(nCols), data_(nRows * nCols) {}
+
     [[nodiscard]] T &operator()(size_t row, size_t col)
     {
         return data_[cols_ * row + col];

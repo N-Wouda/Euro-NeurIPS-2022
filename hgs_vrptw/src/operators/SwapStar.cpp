@@ -166,9 +166,10 @@ int SwapStar::test(Route *routeU, Route *routeV)
     }
     else
     {
-        deltaCost += d_params.dist(best.V->client, n(best.VAfter)->client)
-                     + d_params.dist(p(best.U)->client, n(best.U)->client)
-                     - d_params.dist(best.VAfter->client, n(best.VAfter)->client);
+        deltaCost
+            += d_params.dist(best.V->client, n(best.VAfter)->client)
+               + d_params.dist(p(best.U)->client, n(best.U)->client)
+               - d_params.dist(best.VAfter->client, n(best.VAfter)->client);
     }
 
     if (best.UAfter == p(best.V))
@@ -178,9 +179,10 @@ int SwapStar::test(Route *routeU, Route *routeV)
     }
     else
     {
-        deltaCost += d_params.dist(best.U->client, n(best.UAfter)->client)
-                     + d_params.dist(p(best.V)->client, n(best.V)->client)
-                     - d_params.dist(best.UAfter->client, n(best.UAfter)->client);
+        deltaCost
+            += d_params.dist(best.U->client, n(best.UAfter)->client)
+               + d_params.dist(p(best.V)->client, n(best.V)->client)
+               - d_params.dist(best.UAfter->client, n(best.UAfter)->client);
     }
 
     // It is not possible to have UAfter == V or VAfter == U, so the positions

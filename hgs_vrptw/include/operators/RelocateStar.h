@@ -32,7 +32,7 @@ public:
             nodeToInsert->insertAfter(insertionPoint);
     }
 
-    RelocateStar(Params const &params)
+    explicit RelocateStar(Params const &params)
         : LocalSearchOperator<Route>(params), relocate(params)
     {
     }
