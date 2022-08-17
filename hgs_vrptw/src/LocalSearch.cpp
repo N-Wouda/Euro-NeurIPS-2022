@@ -38,7 +38,7 @@ void LocalSearch::search()
     lastModified = std::vector<int>(params.nbVehicles, 0);
 
     // At least two iterations as empty routes are not evaluated in the first
-    for (int step = 0; step != 2 || !searchCompleted; ++step)
+    for (int step = 0; step <= 1 || !searchCompleted; ++step)
     {
         searchCompleted = true;
 
