@@ -3,6 +3,7 @@ import importlib.machinery
 import importlib.util
 import json
 import os
+import re
 
 import numpy as np
 
@@ -372,3 +373,31 @@ def tabulate(headers, rows) -> str:
         )
 
     return "\n".join(lines)
+
+
+def static_time_limit(n_clients: int, phase: str) -> int:
+    """
+    Returns the time limit (in seconds) for solving the static problem for
+    the passed-in number of clients and competition phase.
+
+    Instances are grouped into categories of <300/300-500/>500 customers.
+    - 3/5/8 minutes for the quali(fication) phase
+    - 5/10/15 minutes for the final phase
+    """
+    if phase not in ["quali", "final"]:
+        raise ValueError("Phase must be one of ['quali', 'final'].")
+
+    if n_clients < 300:
+        return 180 if phase == "quali" else 300
+
+    elif 300 <= n_clients <= 500:
+        return 300 if phase == "quali" else 600
+
+    else:
+        return 480 if phase == "quali" else 900
+
+def name2size(name:str)->int:
+    """
+    Extracts the instance size (i.e., num clients) from the instance name.
+    """
+    return int(re.search(r'-n(\d\d\d)-', name).group(1))
