@@ -21,8 +21,6 @@
  */
 class SwapStar : public LocalSearchOperator<Route>
 {
-    using LocalSearchOperator::LocalSearchOperator;
-
     struct ThreeBest  // stores three best SWAP* insertion points
     {
         std::array<int, 3> costs = {INT_MAX, INT_MAX, INT_MAX};
@@ -55,6 +53,12 @@ class SwapStar : public LocalSearchOperator<Route>
                 locs[0] = placeInsert;
             }
         }
+
+        void clear()
+        {
+            costs = {INT_MAX, INT_MAX, INT_MAX};
+            locs = {nullptr, nullptr, nullptr};
+        }
     };
 
     struct BestMove  // tracks the best SWAP* move
@@ -68,10 +72,10 @@ class SwapStar : public LocalSearchOperator<Route>
         Node *VAfter = nullptr;
     };
 
-    // Preprocesses the given routes. This populates a vector of ThreeBest
+    // Preprocesses the given routes. This populates the cache of ThreeBest
     // structs, storing the three best positions in the second route for
     // inserting nodes from the first route.
-    std::vector<ThreeBest> preprocess(Route *R1, Route *R2);
+    void preprocess(Route *R1, Route *R2);
 
     // Gets the bestPos reinsert point for U in the route of V, assuming V is
     // removed. Returns the cost delta.
@@ -80,12 +84,21 @@ class SwapStar : public LocalSearchOperator<Route>
                            Node *&pos,
                            SwapStar::ThreeBest const &bestPos);
 
+    Matrix<ThreeBest> cache;
     BestMove best;
 
 public:
+    void init(Individual const &indiv, Penalties const *penalties) override;
+
     int test(Route *U, Route *V) override;
 
     void apply(Route *U, Route *V) override;
+
+    explicit SwapStar(Params const &params)
+        : LocalSearchOperator<Route>(params),
+          cache(d_params.nbVehicles, d_params.nbClients + 1)
+    {
+    }
 };
 
 #endif  // SWAPSTAR_H

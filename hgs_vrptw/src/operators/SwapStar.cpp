@@ -5,13 +5,12 @@ namespace
 using TWS = TimeWindowSegment;
 }
 
-std::vector<SwapStar::ThreeBest> SwapStar::preprocess(Route *R1, Route *R2)
+void SwapStar::preprocess(Route *R1, Route *R2)
 {
-    std::vector<ThreeBest> from2to;  // stores insertion points for each node
-
     for (Node *U = n(R1->depot); !U->isDepot(); U = n(U))
     {
-        auto &currentOption = from2to.emplace_back();
+        auto &currentOption = cache(R2->idx, U->client);
+        currentOption.clear();
 
         // Performs the preprocessing
         // Note: when removing U and adding V to a route, the timewarp
@@ -49,8 +48,6 @@ std::vector<SwapStar::ThreeBest> SwapStar::preprocess(Route *R1, Route *R2)
             currentOption.maybeAdd(deltaCost - deltaRemoval, V);
         }
     }
-
-    return from2to;
 }
 
 // Gets the best reinsert point for U in the route of V, assuming V is removed.
@@ -93,20 +90,29 @@ int SwapStar::getBestInsertPoint(Node *U,
     return bestCost;
 }
 
+void SwapStar::init(Individual const &indiv, Penalties const *penalties)
+{
+    LocalSearchOperator<Route>::init(indiv, penalties);
+
+    for (int rIdx = 0; rIdx != d_params.nbVehicles; ++rIdx)
+        for (int cIdx = 0; cIdx != d_params.nbClients; ++cIdx)
+            cache(rIdx, cIdx).clear();
+}
+
 int SwapStar::test(Route *routeU, Route *routeV)
 {
     best = {};
 
-    auto const u2v = preprocess(routeU, routeV);  // TODO can we cache some of
-    auto const v2u = preprocess(routeV, routeU);  //   this?
+    preprocess(routeU, routeV);  // TODO can we cache some of
+    preprocess(routeV, routeU);  //   this?
 
     for (Node *U = n(routeU->depot); !U->isDepot(); U = n(U))
     {
-        auto const &bestU = u2v[U->position - 1];
+        auto const &bestU = cache(routeV->idx, U->client);
 
         for (Node *V = n(routeV->depot); !V->isDepot(); V = n(V))
         {
-            auto const &bestV = v2u[V->position - 1];
+            auto const &bestV = cache(routeU->idx, V->client);
 
             // We cannot determine impact on time warp without impacting
             // performance too much (cubic vs. currently quadratic)
