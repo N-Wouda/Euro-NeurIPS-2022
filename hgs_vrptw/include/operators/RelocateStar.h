@@ -7,7 +7,8 @@
 #include "Route.h"
 
 /**
- * Performs the best (1, 0)-exchange move between routes U and V.
+ * Performs the best (1, 0)-exchange move between routes U and V. Tests both
+ * ways: from U to V, and from V to U.
  */
 class RelocateStar : public LocalSearchOperator<Route>
 {

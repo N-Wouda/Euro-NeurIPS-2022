@@ -6,14 +6,15 @@ int RelocateStar::test(Route *U, Route *V)
     insertionPoint = nullptr;
     nodeToInsert = nullptr;
 
-    auto eval = [&](auto *nodeU, auto *nodeV) {
-        int const deltaCost = relocate.test(nodeU, nodeV);
+    auto eval = [&](auto *N1, auto *N2)
+    {
+        int const deltaCost = relocate.test(N1, N2);
 
         if (deltaCost < bestCost)
         {
             bestCost = deltaCost;
-            insertionPoint = nodeV;
-            nodeToInsert = nodeU;
+            insertionPoint = N2;
+            nodeToInsert = N1;
         }
     };
 
@@ -22,7 +23,10 @@ int RelocateStar::test(Route *U, Route *V)
         eval(nodeU, V->depot);
 
         for (auto *nodeV = n(V->depot); !nodeV->isDepot(); nodeV = n(nodeV))
-            eval(nodeU, nodeV);
+        {
+            eval(nodeU, nodeV);  // test inserting U after V
+            eval(nodeV, nodeU);  // test inserting V after U
+        }
     }
 
     return bestCost;
