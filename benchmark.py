@@ -62,6 +62,7 @@ def solve(loc: str, seed: int, **kwargs):
         ls.add_route_operator(op)
 
     algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
+    algo.add_crossover_operator(hgspy.crossover.alternating_exchange)
     algo.add_crossover_operator(hgspy.crossover.ordered_exchange)
     algo.add_crossover_operator(hgspy.crossover.selective_route_exchange)
 
