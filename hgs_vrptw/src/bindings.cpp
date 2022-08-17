@@ -1,18 +1,22 @@
 #include "Config.h"
+#include "Exchange.h"
 #include "GeneticAlgorithm.h"
 #include "Individual.h"
 #include "LocalSearch.h"
-#include "Params.h"
-#include "Population.h"
-#include "Result.h"
-#include "Statistics.h"
-#include "XorShift128.h"
-#include "crossover.h"
-#include "operators.h"
-
+#include "LocalSearchOperator.h"
 #include "MaxIterations.h"
 #include "MaxRuntime.h"
+#include "MoveTwoClientsReversed.h"
+#include "Params.h"
+#include "Population.h"
+#include "RelocateStar.h"
+#include "Result.h"
+#include "Statistics.h"
 #include "StoppingCriterion.h"
+#include "SwapStar.h"
+#include "TwoOpt.h"
+#include "XorShift128.h"
+#include "crossover.h"
 
 #include <pybind11/chrono.h>
 #include <pybind11/functional.h>
@@ -47,9 +51,14 @@ PYBIND11_MODULE(hgspy, m)
         .def(py::init<Params &, XorShift128 &>(),
              py::arg("params"),
              py::arg("rng"))
-        .def("add_node_operator", &LocalSearch::addNodeOperator, py::arg("op"))
-        .def(
-            "add_route_operator", &LocalSearch::addRouteOperator, py::arg("op"))
+        .def("add_node_operator",
+             static_cast<void (LocalSearch::*)(LocalSearchOperator<Node> &)>(
+                 &LocalSearch::addNodeOperator),
+             py::arg("op"))
+        .def("add_route_operator",
+             static_cast<void (LocalSearch::*)(LocalSearchOperator<Route> &)>(
+                 &LocalSearch::addRouteOperator),
+             py::arg("op"))
         .def("__call__",
              &LocalSearch::operator(),
              py::arg("indiv"),
@@ -72,6 +81,7 @@ PYBIND11_MODULE(hgspy, m)
                       size_t,
                       size_t,
                       double,
+                      size_t,
                       size_t,
                       size_t,
                       double,
@@ -99,6 +109,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("targetFeasible") = 0.2,
              py::arg("repairProbability") = 50,
              py::arg("repairBooster") = 10,
+             py::arg("selectProbability") = 90,
              py::arg("diversityWeight") = 0.,
              py::arg("nbVeh") = INT_MAX,
              py::arg("nbGranular") = 40,
@@ -124,6 +135,7 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("targetFeasible", &Config::targetFeasible)
         .def_readonly("repairProbability", &Config::repairProbability)
         .def_readonly("repairBooster", &Config::repairBooster)
+        .def_readonly("selectProbability", &Config::selectProbability)
         .def_readonly("diversityWeight", &Config::diversityWeight)
         .def_readonly("nbVeh", &Config::nbVeh)
         .def_readonly("nbGranular", &Config::nbGranular)
@@ -211,21 +223,53 @@ PYBIND11_MODULE(hgspy, m)
     // Crossover operators (as a submodule)
     py::module xOps = m.def_submodule("crossover");
 
+    xOps.def("alternating_exchange", &alternatingExchange);
     xOps.def("ordered_exchange", &orderedExchange);
     xOps.def("selective_route_exchange", &selectiveRouteExchange);
 
     // Local search operators (as a submodule)
     py::module lsOps = m.def_submodule("operators");
 
-    lsOps.def("move_single_client", &moveSingleClient);
-    lsOps.def("move_two_clients", &moveTwoClients);
-    lsOps.def("move_two_clients_reversed", &moveTwoClientsReversed);
-    lsOps.def("swap_two_client_pairs", &swapTwoClientPairs);
-    lsOps.def("swap_two_clients_for_one", &swapTwoClientsForOne);
-    lsOps.def("swap_two_single_clients", &swapTwoSingleClients);
-    lsOps.def("two_opt_between_routes", &twoOptBetweenRoutes);
-    lsOps.def("two_opt_within_route", &twoOptWithinRoute);
+    py::class_<LocalSearchOperator<Node>>(lsOps, "NodeLocalSearchOperator");
+    py::class_<LocalSearchOperator<Route>>(lsOps, "RouteLocalSearchOperator");
 
-    lsOps.def("relocate_star", &relocateStar);
-    lsOps.def("swap_star", &swapStar);
+    py::class_<Exchange<1, 0>, LocalSearchOperator<Node>>(lsOps, "Exchange10")
+        .def(py::init<>());
+
+    py::class_<Exchange<2, 0>, LocalSearchOperator<Node>>(lsOps, "Exchange20")
+        .def(py::init<>());
+
+    py::class_<Exchange<3, 0>, LocalSearchOperator<Node>>(lsOps, "Exchange30")
+        .def(py::init<>());
+
+    py::class_<Exchange<1, 1>, LocalSearchOperator<Node>>(lsOps, "Exchange11")
+        .def(py::init<>());
+
+    py::class_<Exchange<2, 1>, LocalSearchOperator<Node>>(lsOps, "Exchange21")
+        .def(py::init<>());
+
+    py::class_<Exchange<3, 1>, LocalSearchOperator<Node>>(lsOps, "Exchange31")
+        .def(py::init<>());
+
+    py::class_<Exchange<2, 2>, LocalSearchOperator<Node>>(lsOps, "Exchange22")
+        .def(py::init<>());
+
+    py::class_<Exchange<3, 2>, LocalSearchOperator<Node>>(lsOps, "Exchange32")
+        .def(py::init<>());
+
+    py::class_<Exchange<3, 3>, LocalSearchOperator<Node>>(lsOps, "Exchange33")
+        .def(py::init<>());
+
+    py::class_<MoveTwoClientsReversed, LocalSearchOperator<Node>>(
+        lsOps, "MoveTwoClientsReversed")
+        .def(py::init<>());
+
+    py::class_<TwoOpt, LocalSearchOperator<Node>>(lsOps, "TwoOpt")
+        .def(py::init<>());
+
+    py::class_<RelocateStar, LocalSearchOperator<Route>>(lsOps, "RelocateStar")
+        .def(py::init<>());
+
+    py::class_<SwapStar, LocalSearchOperator<Route>>(lsOps, "SwapStar")
+        .def(py::init<>());
 }

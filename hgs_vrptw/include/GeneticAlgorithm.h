@@ -35,8 +35,8 @@ class GeneticAlgorithm
 
     /**
      * Runs the crossover algorithm: each given crossover operator is applied
-     * once, its resulting offspring inspected, and the best offspring in terms
-     * of penalised cost is returned.
+     * once, its resulting offspring inspected, and a geometric acceptance
+     * criterion is applied to select the offspring to return.
      */
     [[nodiscard]] Individual crossover() const;
 

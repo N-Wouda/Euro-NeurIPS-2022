@@ -24,12 +24,12 @@ public:
     {
     }
 
-    [[nodiscard]] inline T &operator()(size_t row, size_t col)
+    [[nodiscard]] T &operator()(size_t row, size_t col)
     {
         return data_[cols_ * row + col];
     }
 
-    [[nodiscard]] inline T operator()(size_t row, size_t col) const
+    [[nodiscard]] T operator()(size_t row, size_t col) const
     {
         return data_[cols_ * row + col];
     }
