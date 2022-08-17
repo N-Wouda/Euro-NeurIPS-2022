@@ -33,12 +33,12 @@ void Route::update()
     node->cumulatedDistance = 0;
     node->cumulatedReversalDistance = 0;
 
-    if (!node->next->isDepot())
-        sector.initialize(params->clients[node->next->client].angle);
+    if (!n(node)->isDepot())
+        sector.initialize(params->clients[n(node)->client].angle);
 
     do
     {
-        node = node->next;
+        node = n(node);
         nodes.push_back(node);
 
         place++;
@@ -47,15 +47,15 @@ void Route::update()
         load += params->clients[node->client].demand;
         node->cumulatedLoad = load;
 
-        distance += params->dist(node->prev->client, node->client);
+        distance += params->dist(p(node)->client, node->client);
         node->cumulatedDistance = distance;
 
-        reverseDistance += params->dist(node->client, node->prev->client);
-        reverseDistance -= params->dist(node->prev->client, node->client);
+        reverseDistance += params->dist(node->client, p(node)->client);
+        reverseDistance -= params->dist(p(node)->client, node->client);
 
         node->cumulatedReversalDistance = reverseDistance;
 
-        node->twBefore = TWS::merge(node->prev->twBefore, node->tw);
+        node->twBefore = TWS::merge(p(node)->twBefore, node->tw);
 
         if (!node->isDepot())
         {
@@ -74,8 +74,8 @@ void Route::update()
     // Time window data in reverse direction, node should be end depot now
     do
     {
-        node = node->prev;
-        node->twAfter = TWS::merge(node->tw, node->next->twAfter);
+        node = p(node);
+        node->twAfter = TWS::merge(node->tw, n(node)->twAfter);
     } while (!node->isDepot());
 
     if (empty())
@@ -172,7 +172,7 @@ void Route::installJumpPoints(Node const *node)
 std::ostream &operator<<(std::ostream &out, Route const &route)
 {
     out << "Route #" << route.idx + 1 << ":";  // route number
-    for (auto *node = route.depot->next; !node->isDepot(); node = node->next)
+    for (auto *node = n(route.depot); !node->isDepot(); node = n(node))
         out << ' ' << node->client;  // client index
     out << '\n';
 

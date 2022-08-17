@@ -30,23 +30,23 @@ try
 
     LocalSearch ls(params, rng);
 
-    auto moveSingle = Exchange<1, 0>();
-    ls.addNodeOperator(moveSingle);
+    auto exchange10 = Exchange<1, 0>();
+    ls.addNodeOperator(exchange10);
 
-    auto moveTwo = Exchange<2, 0>();
-    ls.addNodeOperator(moveTwo);
+    auto exchange20 = Exchange<2, 0>();
+    ls.addNodeOperator(exchange20);
 
-    auto moveTwoReverse = MoveTwoClientsReversed();
-    ls.addNodeOperator(moveTwoReverse);
+    auto reverse20 = MoveTwoClientsReversed();
+    ls.addNodeOperator(reverse20);
 
-    auto swapTwoPairs = Exchange<2, 2>();
-    ls.addNodeOperator(swapTwoPairs);
+    auto exchange22 = Exchange<2, 2>();
+    ls.addNodeOperator(exchange22);
 
-    auto swapTwoForOne = Exchange<2, 1>();
-    ls.addNodeOperator(swapTwoForOne);
+    auto exchange21 = Exchange<2, 1>();
+    ls.addNodeOperator(exchange21);
 
-    auto swapSingle = Exchange<1, 1>();
-    ls.addNodeOperator(swapSingle);
+    auto exchange11 = Exchange<1, 1>();
+    ls.addNodeOperator(exchange11);
 
     auto twoOpt = TwoOpt();
     ls.addNodeOperator(twoOpt);

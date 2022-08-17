@@ -49,7 +49,7 @@ void LocalSearch::search()
         for (int const u : orderNodes)
         {
             Node *nodeU = &clients[u];
-            int lastTestedNode = lastTestedNodes[nodeU->client];
+            auto const lastTestedNode = lastTestedNodes[nodeU->client];
             lastTestedNodes[nodeU->client] = nbMoves;
 
             // Randomizing the order of the neighborhoods within this loop does

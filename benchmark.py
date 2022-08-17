@@ -41,12 +41,12 @@ def solve(loc: str, seed: int, **kwargs):
     ls = hgspy.LocalSearch(params, rng)
 
     node_ops = [
-        hgspy.operators.MoveSingleClient(),
-        hgspy.operators.MoveTwoClients(),
+        hgspy.operators.Exchange10(),
+        hgspy.operators.Exchange11(),
+        hgspy.operators.Exchange20(),
         hgspy.operators.MoveTwoClientsReversed(),
-        hgspy.operators.SwapTwoClientPairs(),
-        hgspy.operators.SwapTwoClientsForOne(),
-        hgspy.operators.SwapTwoSingleClients(),
+        hgspy.operators.Exchange21(),
+        hgspy.operators.Exchange22(),
         hgspy.operators.TwoOpt(),
     ]
 

@@ -59,7 +59,7 @@ bool Exchange<N, M>::adjacent(Node *U, Node *V) const
 }
 
 template <size_t N, size_t M>
-int Exchange<N, M>::testPureMove(Node *U, Node *V) const
+int Exchange<N, M>::testRelocateMove(Node *U, Node *V) const
 {
     if (isDepotInSegments(U, V) || overlap(U, V) || U == n(V))
         return 0;
@@ -222,7 +222,7 @@ int Exchange<N, M>::testSwapMove(Node *U, Node *V) const
 template <size_t N, size_t M> int Exchange<N, M>::test(Node *U, Node *V)
 {
     if constexpr (M == 0)  // special case where nothing in V is moved
-        return testPureMove(U, V);
+        return testRelocateMove(U, V);
     else
         return testSwapMove(U, V);
 }

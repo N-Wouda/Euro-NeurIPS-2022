@@ -218,28 +218,35 @@ PYBIND11_MODULE(hgspy, m)
     py::class_<LocalSearchOperator<Node>>(lsOps, "NodeLocalSearchOperator");
     py::class_<LocalSearchOperator<Route>>(lsOps, "RouteLocalSearchOperator");
 
-    py::class_<Exchange<1, 0>, LocalSearchOperator<Node>>(lsOps,
-                                                          "MoveSingleClient")
+    py::class_<Exchange<1, 0>, LocalSearchOperator<Node>>(lsOps, "Exchange10")
         .def(py::init<>());
 
-    py::class_<Exchange<2, 0>, LocalSearchOperator<Node>>(lsOps,
-                                                          "MoveTwoClients")
+    py::class_<Exchange<2, 0>, LocalSearchOperator<Node>>(lsOps, "Exchange20")
+        .def(py::init<>());
+
+    py::class_<Exchange<3, 0>, LocalSearchOperator<Node>>(lsOps, "Exchange30")
+        .def(py::init<>());
+
+    py::class_<Exchange<1, 1>, LocalSearchOperator<Node>>(lsOps, "Exchange11")
+        .def(py::init<>());
+
+    py::class_<Exchange<2, 1>, LocalSearchOperator<Node>>(lsOps, "Exchange21")
+        .def(py::init<>());
+
+    py::class_<Exchange<3, 1>, LocalSearchOperator<Node>>(lsOps, "Exchange31")
+        .def(py::init<>());
+
+    py::class_<Exchange<2, 2>, LocalSearchOperator<Node>>(lsOps, "Exchange22")
+        .def(py::init<>());
+
+    py::class_<Exchange<3, 2>, LocalSearchOperator<Node>>(lsOps, "Exchange32")
+        .def(py::init<>());
+
+    py::class_<Exchange<3, 3>, LocalSearchOperator<Node>>(lsOps, "Exchange33")
         .def(py::init<>());
 
     py::class_<MoveTwoClientsReversed, LocalSearchOperator<Node>>(
         lsOps, "MoveTwoClientsReversed")
-        .def(py::init<>());
-
-    py::class_<Exchange<2, 2>, LocalSearchOperator<Node>>(lsOps,
-                                                          "SwapTwoClientPairs")
-        .def(py::init<>());
-
-    py::class_<Exchange<2, 1>, LocalSearchOperator<Node>>(
-        lsOps, "SwapTwoClientsForOne")
-        .def(py::init<>());
-
-    py::class_<Exchange<1, 1>, LocalSearchOperator<Node>>(
-        lsOps, "SwapTwoSingleClients")
         .def(py::init<>());
 
     py::class_<TwoOpt, LocalSearchOperator<Node>>(lsOps, "TwoOpt")

@@ -90,12 +90,12 @@ def solve_static_vrptw(instance, time_limit=3600, seed=1, plot=False):
     ls = hgspy.LocalSearch(params, rng)
 
     node_ops = [
-        hgspy.operators.MoveSingleClient(),
-        hgspy.operators.MoveTwoClients(),
+        hgspy.operators.Exchange10(),
+        hgspy.operators.Exchange11(),
+        hgspy.operators.Exchange20(),
         hgspy.operators.MoveTwoClientsReversed(),
-        hgspy.operators.SwapTwoClientPairs(),
-        hgspy.operators.SwapTwoClientsForOne(),
-        hgspy.operators.SwapTwoSingleClients(),
+        hgspy.operators.Exchange21(),
+        hgspy.operators.Exchange22(),
         hgspy.operators.TwoOpt(),
     ]
 

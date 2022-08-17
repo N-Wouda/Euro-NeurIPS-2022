@@ -11,7 +11,7 @@
  */
 template <size_t N, size_t M> class Exchange : public LocalSearchOperator<Node>
 {
-    static_assert(N >= M && N > 0, "N < M or M == 0 does not make sense");
+    static_assert(N >= M && N > 0, "N < M or N == 0 does not make sense");
 
     // Returns the last nodes to be moved in the segments of U and V
     std::pair<Node *, Node *> getEnds(Node *U, Node *V) const;
@@ -26,7 +26,7 @@ template <size_t N, size_t M> class Exchange : public LocalSearchOperator<Node>
     inline bool adjacent(Node *U, Node *V) const;
 
     // Special case that's applied when M == 0
-    int testPureMove(Node *U, Node *V) const;
+    int testRelocateMove(Node *U, Node *V) const;
 
     // Applied when M != 0
     int testSwapMove(Node *U, Node *V) const;
