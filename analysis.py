@@ -9,6 +9,7 @@ import matplotlib
 import numpy as np
 from tqdm.contrib.concurrent import process_map
 
+import plot
 import tools
 
 matplotlib.use("Agg")  # Don't show plots
@@ -137,61 +138,13 @@ def save_results(res, results_dir, inst_name):
 
 
 def plot_single_run(path, stats):
-    _, (ax_pop, ax_objs, ax_obj) = plt.subplots(
+    _, (ax_pop, ax_objs, ax_inc) = plt.subplots(
         nrows=3, ncols=1, figsize=(8, 12)
     )
 
-    iters = stats.curr_iters()
-
-    # Population
-    ax_pop.plot(
-        iters, stats.feasible_pops(), label="# Feasible", c="tab:orange"
-    )
-
-    ax_pop.set_title("Population statistics")
-    ax_pop.set_xlabel("Iteration (#)")
-    ax_pop.set_ylabel("Individuals (#)")
-    ax_pop.legend(frameon=False)
-
-    # Population diversity
-    ax_pop_div = ax_pop.twinx()
-    ax_pop_div.plot(
-        iters, stats.pop_diversity(), label="Diversity", c="tab:red"
-    )
-
-    ax_pop_div.set_ylabel("Avg. diversity")
-    ax_pop_div.legend(frameon=False)
-
-    # Population objectives
-    ax_objs.plot(
-        iters, stats.curr_objectives(), label="Current objective", c="tab:blue"
-    )
-    ax_objs.plot(
-        iters,
-        stats.feasible_avg_objectives(),
-        label="Feasible",
-        c="tab:green",
-    )
-    ax_objs.plot(
-        iters,
-        stats.infeasible_avg_objectives(),
-        label="Infeasible",
-        c="tab:red",
-    )
-
-    ax_objs.legend(frameon=False)
-    # NOTE Use best objectives to set reasonable y-limits
-    times, objs = list(zip(*stats.best_objectives()))
-    ax_objs.set_ylim(min(objs) * 0.98, min(objs) * 1.05)
-    ax_objs.set_ylabel("Objective")
-
-    # Objectives
-    times, objs = list(zip(*stats.best_objectives()))
-    ax_obj.plot(times, objs)
-
-    ax_obj.set_title("Improving objective values")
-    ax_obj.set_xlabel("Run-time (s)")
-    ax_obj.set_ylabel("Objective")
+    plot.plot_population(stats, ax_pop)
+    plot.plot_objectives(stats, ax_objs)
+    plot.plot_incumbents(stats, ax_inc)
 
     plt.tight_layout()
     plt.savefig(path)
