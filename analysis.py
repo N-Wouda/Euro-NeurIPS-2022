@@ -28,11 +28,12 @@ def parse_args():
         "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
     )
     parser.add_argument("--results_dir", type=str)
-    parser.add_argument("--collect_iters", type=int, default=10)
+    parser.add_argument("--collect_iters", type=int, default=1)
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--max_runtime", type=int)
     group.add_argument("--max_iterations", type=int)
+    group.add_argument("--phase", choices=["quali", "final"])
 
     return parser.parse_args()
 
@@ -82,7 +83,10 @@ def solve(loc: str, seed: int, **kwargs):
     algo.add_crossover_operator(hgspy.crossover.ordered_exchange)
     algo.add_crossover_operator(hgspy.crossover.selective_route_exchange)
 
-    if "max_runtime" in kwargs and kwargs["max_runtime"]:
+    if "phase" in kwargs and kwargs["phase"]:
+        t_lim = tools.static_time_limit(tools.name2size(loc), kwargs["phase"])
+        stop = hgspy.stop.MaxRuntime(t_lim)
+    elif "max_runtime" in kwargs and kwargs["max_runtime"]:
         stop = hgspy.stop.MaxRuntime(kwargs["max_runtime"])
     else:
         stop = hgspy.stop.MaxIterations(kwargs["max_iterations"])
@@ -170,7 +174,7 @@ def main():
         (res_dir / _FIGS_DIR).mkdir(exist_ok=True)
 
     func = partial(solve, **vars(args))
-    func_args = sorted(glob(args.instance_pattern))
+    func_args = sorted(glob(args.instance_pattern), key=tools.name2size)
 
     tqdm_kwargs = dict(max_workers=args.num_procs, unit="instance")
     data = process_map(func, func_args, **tqdm_kwargs)
