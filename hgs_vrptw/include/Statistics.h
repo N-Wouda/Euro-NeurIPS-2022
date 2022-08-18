@@ -56,8 +56,8 @@ public:
     }
 
     /**
-     * Returns a vector of run times in seconcds, indicating the elapsed time
-     * since the start of the algorithm.
+     * Returns a vector of run times in seconds, indicating the time between
+     * the start of the algorithm and the collected iteration.
      */
     [[nodiscard]] std::vector<double> const &runTimes() const
     {
@@ -65,8 +65,8 @@ public:
     }
 
     /**
-     * Returns a vector of run times in seconds, indicating the elapsed time
-     * between the current and last collected iteration.
+     * Returns a vector of run times in seconds, indicating the time between
+     * the current and last collected iteration.
      */
     [[nodiscard]] std::vector<double> const &iterTimes() const
     {
@@ -95,10 +95,10 @@ public:
 
     /**
      * Returns a vector of the average population diversity, one element for
-     * each iteration. The average diversity is computed as the average broken
-     * pairs distance for each individual in the population, compared to its
-     * neighbours (the neighbourhood size is controlled by the ``nbClose``
-     * setting).
+     * each collected iteration. The average diversity is computed as the
+     * average broken pairs distance for each individual in the population,
+     * compared to its neighbours (the neighbourhood size is controlled by the
+     * ``nbClose`` setting).
      */
     [[nodiscard]] std::vector<double> const &popDiversity() const
     {
@@ -107,9 +107,8 @@ public:
 
     /**
      * Returns a vector of the best objective value at the current iteration,
-     * one element for each iteration where a feasible best solution exists.
-     * Early iterations where that might not be the case are stored with
-     * value ``INT_MAX`` as substitute for inf.
+     * if a feasible best solution exists. Early iterations where that might
+     * not be the case are stored with value ``INT_MAX`` as substitute for inf.
      */
     [[nodiscard]] std::vector<size_t> const &bestObjectives() const
     {
@@ -117,9 +116,9 @@ public:
     }
 
     /**
-     * Returns a vector of the average objective value of the feasible
-     * individuals at the current iteration.
-     * */
+     * Returns a vector of the average objective value of feasible individuals
+     * one for each collected iteration.
+     */
 
     [[nodiscard]] std::vector<double> const &feasObjectives() const
     {
@@ -127,9 +126,9 @@ public:
     }
 
     /**
-     * Returns a vector of the average objective value of the infeasible
-     * individuals at the current iteration.
-     * */
+     * Returns a vector of the average objective value of infeasible
+     * individuals, one for each collected iteration.
+     */
 
     [[nodiscard]] std::vector<double> const &infeasObjectives() const
     {
@@ -137,7 +136,7 @@ public:
     }
 
     /**
-     * Returns a vector of (datetime, objective)-pairs, one for each time a
+     * Returns a vector of (double, objective)-pairs, one for each time a
      * new, feasible best heuristic solution has been found.
      */
     [[nodiscard]] timedDatapoints const &incumbents() const

@@ -22,6 +22,7 @@ void Statistics::collectFrom(Population const &population)
 
     lastIter = clock::now();  // update for next call
 
+    // Population statistics
     auto const nPops = population.population.size();
     popSizes_.push_back(nPops);
 
@@ -42,50 +43,41 @@ void Statistics::collectFrom(Population const &population)
 
     popDiversity_.push_back(totalDiversity / static_cast<double>(nPops));
 
-    bool foundFeasibleBest = false;
-    size_t totalFeasible = 0;
-    size_t totalInfeasible = 0;
-    size_t nbFeasible = 0;
-    size_t nbInfeasible = 0;
-
-    for (auto const &indiv : population.population)
-    {
-        if (indiv->isFeasible())
-        {
-            nbFeasible += 1;
-            totalFeasible += indiv->cost();
-
-            if (!foundFeasibleBest)
-            {
-                bestObjectives_.push_back(indiv->cost());
-                foundFeasibleBest = true;
-            }
-        }
-        else
-        {
-            nbInfeasible += 1;
-            totalInfeasible += indiv->cost();
-        }
-    }
-
-    // TODO refactor this
-    if (!foundFeasibleBest)
-        bestObjectives_.push_back(INT_MAX);  // INT_MAX as substitute for inf
-
-    if (nbFeasible != 0)
-        feasObjectives_.push_back(
-            static_cast<double>(totalFeasible / nbFeasible));
-    else
-        feasObjectives_.push_back(INT_MAX);
-
-    if (nbInfeasible != 0)
-        infeasObjectives_.push_back(
-            static_cast<double>(totalInfeasible / nbInfeasible));
-    else
-        infeasObjectives_.push_back(INT_MAX);
-
-    // Best objectives
+    // Objectives statistics
     auto const &best = population.bestSol;
+
+    if (!best.isFeasible())
+        bestObjectives_.push_back(INT_MAX);  // INT_MAX as substitute for inf
+    else
+        bestObjectives_.push_back(best.cost());
+
+    auto const costFeas
+        = accumulate(population.population.begin(),
+                     population.population.end(),
+                     0,
+                     [&](size_t sum, Individual const *indiv) {
+                         return indiv->isFeasible() ? sum + indiv->cost() : sum;
+                     });
+
+    if (numFeas == 0)
+        feasObjectives_.push_back(INT_MAX);
+    else
+        feasObjectives_.push_back(static_cast<double>(costFeas / numFeas));
+
+    auto const numInfeas = nPops - numFeas;
+    auto const costInfeas
+        = accumulate(population.population.begin(),
+                     population.population.end(),
+                     0,
+                     [&](size_t sum, Individual const *indiv) {
+                         return indiv->isFeasible() ? sum + indiv->cost() : sum;
+                     });
+
+    if (numInfeas == 0)
+        infeasObjectives_.push_back(INT_MAX);
+    else
+        infeasObjectives_.push_back(
+            static_cast<double>(numInfeas / costInfeas));
 
     if (!best.isFeasible())
         return;
