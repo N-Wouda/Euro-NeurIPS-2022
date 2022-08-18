@@ -3,7 +3,6 @@
 #include "Population.h"
 
 #include <fstream>
-#include <iostream>
 #include <numeric>
 
 void Statistics::collectFrom(Population const &population)
@@ -77,7 +76,7 @@ void Statistics::collectFrom(Population const &population)
         infeasObjectives_.push_back(INT_MAX);
     else
         infeasObjectives_.push_back(
-            static_cast<double>(numInfeas / costInfeas));
+            static_cast<double>(costInfeas / numInfeas));
 
     if (!best.isFeasible())
         return;
