@@ -114,14 +114,14 @@ def solve(loc: str, seed: int, **kwargs):
         int(best.cost()),
         res.get_iterations(),
         finish,
-        len(stats.best_objectives()),
+        len(stats.incumbents()),
     )
 
 
 def save_results(res, results_dir, inst_name):
     """
     Save the best solution, statistics and figures of results.
-    - Solutions are stored as ``<results_dir>/solutions/<inst_name>.sol``.
+    - Solutions are stored as ``<results_dir>/solutions/<inst_name>.txt``.
     - Statistics are stored as ``<results_dir>/statistics/<inst_name>.csv``.
     - Figures are stored as ``<results_dir>/figures/<inst_name>.png``.
     """
@@ -133,7 +133,7 @@ def save_results(res, results_dir, inst_name):
         return str(fi_path)
 
     # Save best solutions
-    sol_path = make_path(_SOLS_DIR, "sol")
+    sol_path = make_path(_SOLS_DIR, "txt")
     best = res.get_best_found()
     stats = res.get_statistics()
     best.export_cvrplib_format(sol_path, sum(stats.run_times()))
@@ -150,9 +150,9 @@ def save_results(res, results_dir, inst_name):
 def plot_single_run(path, stats):
     _, (ax_pop, ax_objs, ax_inc) = plt.subplots(3, 1, figsize=(8, 12))
 
-    plot.plot_population(stats, ax_pop)
-    plot.plot_objectives(stats, ax_objs)
-    plot.plot_incumbents(stats, ax_inc)
+    plotting.plot_population(stats, ax_pop)
+    plotting.plot_objectives(stats, ax_objs)
+    plotting.plot_incumbents(stats, ax_inc)
 
     plt.tight_layout()
     plt.savefig(path)

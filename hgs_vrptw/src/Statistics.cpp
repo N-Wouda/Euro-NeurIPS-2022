@@ -57,7 +57,7 @@ void Statistics::collectFrom(Population const &population)
 
             if (!foundFeasibleBest)
             {
-                currObjectives_.push_back(indiv->cost());
+                bestObjectives_.push_back(indiv->cost());
                 foundFeasibleBest = true;
             }
         }
@@ -70,7 +70,7 @@ void Statistics::collectFrom(Population const &population)
 
     // TODO refactor this
     if (!foundFeasibleBest)
-        currObjectives_.push_back(INT_MAX);  // INT_MAX as substitute for inf
+        bestObjectives_.push_back(INT_MAX);  // INT_MAX as substitute for inf
 
     if (nbFeasible != 0)
         feasObjectives_.push_back(
@@ -90,10 +90,10 @@ void Statistics::collectFrom(Population const &population)
     if (!best.isFeasible())
         return;
 
-    if (bestObjectives_.empty() || best.cost() < bestObjectives_.back().second)
+    if (incumbents_.empty() || best.cost() < incumbents_.back().second)
     {
         std::chrono::duration<double> time = clock::now() - start;
-        bestObjectives_.emplace_back(time.count(), best.cost());
+        incumbents_.emplace_back(time.count(), best.cost());
     }
 }
 
@@ -111,7 +111,7 @@ void Statistics::toCsv(std::string const &path, char const sep) const
         << "population size" << sep
         << "# feasible" << sep
         << "diversity" << sep
-        << "current best objective" << sep
+        << "best objective" << sep
         << "feasible avg. objective" << sep
         << "infeasible avg. objective"
         << "\n";
@@ -124,7 +124,7 @@ void Statistics::toCsv(std::string const &path, char const sep) const
             << popSizes_[it] << sep
             << numFeasiblePop_[it] << sep
             << popDiversity_[it] << sep
-            << currObjectives_[it] << sep
+            << bestObjectives_[it] << sep
             << feasObjectives_[it] << sep
             << infeasObjectives_[it]
             << "\n";

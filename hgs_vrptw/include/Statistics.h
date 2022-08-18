@@ -25,11 +25,11 @@ class Statistics
     std::vector<size_t> popSizes_;
     std::vector<size_t> numFeasiblePop_;
     std::vector<double> popDiversity_;
-    std::vector<size_t> currObjectives_;
+    std::vector<size_t> bestObjectives_;
     std::vector<double> feasObjectives_;
     std::vector<double> infeasObjectives_;
 
-    timedDatapoints bestObjectives_;
+    timedDatapoints incumbents_;
 
 public:
     /**
@@ -111,9 +111,9 @@ public:
      * Early iterations where that might not be the case are stored with
      * value ``INT_MAX`` as substitute for inf.
      */
-    [[nodiscard]] std::vector<size_t> const &currObjectives() const
+    [[nodiscard]] std::vector<size_t> const &bestObjectives() const
     {
-        return currObjectives_;
+        return bestObjectives_;
     }
 
     /**
@@ -140,9 +140,9 @@ public:
      * Returns a vector of (datetime, objective)-pairs, one for each time a
      * new, feasible best heuristic solution has been found.
      */
-    [[nodiscard]] timedDatapoints const &bestObjectives() const
+    [[nodiscard]] timedDatapoints const &incumbents() const
     {
-        return bestObjectives_;
+        return incumbents_;
     }
 
     /**

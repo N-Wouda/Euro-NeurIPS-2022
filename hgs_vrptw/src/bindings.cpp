@@ -178,10 +178,10 @@ PYBIND11_MODULE(hgspy, m)
         .def("pop_sizes", &Statistics::popSizes)
         .def("num_feasible_pop", &Statistics::numFeasiblePop)
         .def("pop_diversity", &Statistics::popDiversity)
-        .def("curr_objectives", &Statistics::currObjectives)
+        .def("best_objectives", &Statistics::bestObjectives)
         .def("feas_objectives", &Statistics::feasObjectives)
         .def("infeas_objectives", &Statistics::infeasObjectives)
-        .def("best_objectives", &Statistics::bestObjectives)
+        .def("incumbents", &Statistics::incumbents)
         .def("to_csv", &Statistics::toCsv);
 
     py::class_<Result>(m, "Result")

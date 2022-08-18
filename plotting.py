@@ -27,7 +27,7 @@ def plot_objectives(stats, ax, x_type="iterations"):
     x, x_label = x_axis(stats, x_type)
 
     ax.plot(
-        x, stats.curr_objectives(), label="Current objective", c="tab:blue"
+        x, stats.best_objectives(), label="Current objective", c="tab:blue"
     )
     ax.plot(x, stats.feas_objectives(), label="Feasible", c="tab:green")
     ax.plot(x, stats.infeas_objectives(), label="Infeasible", c="tab:red")
@@ -36,7 +36,7 @@ def plot_objectives(stats, ax, x_type="iterations"):
     ax.set_xlabel(x_label)
 
     # Use best objectives to set reasonable y-limits
-    best = min(stats.curr_objectives())
+    best = min(stats.best_objectives())
     ax.set_ylim(best * 0.995, best * 1.03)
     ax.set_ylabel("Objective")
 
@@ -44,7 +44,7 @@ def plot_objectives(stats, ax, x_type="iterations"):
 
 
 def plot_incumbents(stats, ax):
-    times, objs = list(zip(*stats.best_objectives()))
+    times, objs = list(zip(*stats.incumbents()))
     ax.plot(times, objs)
 
     ax.set_title("Improving objective values")
