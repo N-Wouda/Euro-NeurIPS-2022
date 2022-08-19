@@ -24,9 +24,10 @@ class Statistics
     std::vector<double> popDiversity_;
     std::vector<size_t> penaltiesCapacity_;
     std::vector<size_t> penaltiesTimeWarp_;
-    std::vector<size_t> bestObjectives_;
-    std::vector<size_t> feasObjectives_;
-    std::vector<size_t> infeasObjectives_;
+    std::vector<size_t> feasBest_;
+    std::vector<size_t> feasAverage_;
+    std::vector<size_t> infeasBest_;
+    std::vector<size_t> infeasAverage_;
 
     timedDatapoints incumbents_;
 
@@ -112,31 +113,39 @@ public:
     }
 
     /**
-     * Returns a vector of the best objective values, one element per iteration,
-     * if a feasible best solution exists. Early iterations where that might
-     * not be the case are stored with value ``INT_MAX`` as substitute for inf.
+     * Returns a vector of the best objective value of feasible individuals,
+     * one element per iteration.
      */
-    [[nodiscard]] std::vector<size_t> const &bestObjectives() const
+    [[nodiscard]] std::vector<size_t> const &feasBest() const
     {
-        return bestObjectives_;
+        return feasBest_;
     }
 
     /**
      * Returns a vector of the average objective value of feasible individuals,
      * one element per iteration.
      */
-    [[nodiscard]] std::vector<size_t> const &feasObjectives() const
+    [[nodiscard]] std::vector<size_t> const &feasAverage() const
     {
-        return feasObjectives_;
+        return feasAverage_;
+    }
+
+    /**
+     * Returns a vector of the best objective value of infeasible individuals,
+     * one element per iteration.
+     */
+    [[nodiscard]] std::vector<size_t> const &infeasBest() const
+    {
+        return infeasBest_;
     }
 
     /**
      * Returns a vector of the average objective value of infeasible
      * individuals, one element per iteration.
      */
-    [[nodiscard]] std::vector<size_t> const &infeasObjectives() const
+    [[nodiscard]] std::vector<size_t> const &infeasAverage() const
     {
-        return infeasObjectives_;
+        return infeasAverage_;
     }
 
     /**

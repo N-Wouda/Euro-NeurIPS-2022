@@ -44,39 +44,59 @@ void Statistics::collectFrom(Population const &population)
     penaltiesTimeWarp_.push_back(population.params.penaltyTimeWarp);
 
     // Objectives statistics
-    auto const &best = population.bestSol;
-
-    if (!best.isFeasible())
-        bestObjectives_.push_back(INT_MAX);  // INT_MAX as substitute for inf
-    else
-        bestObjectives_.push_back(best.cost());
-
-    auto const costFeas
-        = accumulate(population.population.begin(),
-                     population.population.end(),
-                     0,
-                     [&](size_t sum, Individual const *indiv) {
-                         return indiv->isFeasible() ? sum + indiv->cost() : sum;
-                     });
-
-    if (numFeas == 0)
-        feasObjectives_.push_back(INT_MAX);
-    else
-        feasObjectives_.push_back(costFeas / numFeas);
-
-    auto const numInfeas = nPops - numFeas;
-    auto const costInfeas = accumulate(
+    auto itrFeas = std::find_if(
         population.population.begin(),
         population.population.end(),
-        0,
-        [&](size_t sum, Individual const *indiv) {
-            return !indiv->isFeasible() ? sum + indiv->cost() : sum;
-        });
+        [](Individual const *indiv) { return indiv->isFeasible(); });
 
-    if (numInfeas == 0)
-        infeasObjectives_.push_back(INT_MAX);
+    if (itrFeas != population.population.end())
+    {
+        feasBest_.push_back((*itrFeas)->cost());
+
+        auto const costFeas = accumulate(
+            population.population.begin(),
+            population.population.end(),
+            0,
+            [&](size_t sum, Individual const *indiv) {
+                return indiv->isFeasible() ? sum + indiv->cost() : sum;
+            });
+
+        feasAverage_.push_back(costFeas / numFeas);
+    }
+
     else
-        infeasObjectives_.push_back(costInfeas / numInfeas);
+    {
+        feasBest_.push_back(INT_MAX);
+        feasAverage_.push_back(INT_MAX);
+    }
+
+    auto itrInfeas = std::find_if(
+        population.population.begin(),
+        population.population.end(),
+        [](Individual const *indiv) { return !indiv->isFeasible(); });
+
+    if (itrInfeas != population.population.end())
+    {
+        infeasBest_.push_back((*itrInfeas)->cost());
+
+        auto const numInfeas = nPops - numFeas;
+        auto const costInfeas = accumulate(
+            population.population.begin(),
+            population.population.end(),
+            0,
+            [&](size_t sum, Individual const *indiv) {
+                return !indiv->isFeasible() ? sum + indiv->cost() : sum;
+            });
+
+        infeasAverage_.push_back(costInfeas / numInfeas);
+    }
+    else
+    {
+        infeasBest_.push_back(INT_MAX);
+        infeasAverage_.push_back(INT_MAX);
+    }
+
+    auto const &best = population.bestSol;
 
     if (!best.isFeasible())
         return;
@@ -103,8 +123,9 @@ void Statistics::toCsv(std::string const &path, char const sep) const
         << "diversity" << sep
         << "penalty capacity" << sep
         << "penalty time warp" << sep
-        << "best objective" << sep
+        << "feasible best objective" << sep
         << "feasible avg. objective" << sep
+        << "infeasible best. objective" << sep
         << "infeasible avg. objective" << '\n';
 
     for (size_t it = 0; it != numIters_; it++)
@@ -116,9 +137,10 @@ void Statistics::toCsv(std::string const &path, char const sep) const
             << popDiversity_[it] << sep
             << penaltiesCapacity_[it] << sep
             << penaltiesTimeWarp_[it] << sep
-            << bestObjectives_[it] << sep
-            << feasObjectives_[it] << sep
-            << infeasObjectives_[it] << '\n';
+            << feasBest_[it] << sep
+            << feasAverage_[it] << sep
+            << infeasBest_[it] << sep
+            << infeasAverage_[it] << '\n';
     }
     // clang-format on
 }

@@ -176,9 +176,10 @@ PYBIND11_MODULE(hgspy, m)
         .def("pop_diversity", &Statistics::popDiversity)
         .def("penalties_capacity", &Statistics::penaltiesCapacity)
         .def("penalties_time_warp", &Statistics::penaltiesTimeWarp)
-        .def("best_objectives", &Statistics::bestObjectives)
-        .def("feas_objectives", &Statistics::feasObjectives)
-        .def("infeas_objectives", &Statistics::infeasObjectives)
+        .def("feas_best", &Statistics::feasBest)
+        .def("feas_average", &Statistics::feasAverage)
+        .def("infeas_best", &Statistics::infeasBest)
+        .def("infeas_average", &Statistics::infeasAverage)
         .def("incumbents", &Statistics::incumbents)
         .def("to_csv", &Statistics::toCsv);
 
