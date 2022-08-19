@@ -41,7 +41,7 @@ public:
     void collectFrom(Population const &population);
 
     /**
-     * Returns the total number of collected iterations.
+     * Returns the total number of iterations.
      */
     [[nodiscard]] size_t numIters() const { return numIters_; }
 
@@ -57,7 +57,7 @@ public:
 
     /**
      * Returns a vector of run times in seconds, one element per iteration.
-     * Each element indicates the time between the current and last collected
+     * Each element indicates the time between the current and previous
      * iteration.
      */
     [[nodiscard]] std::vector<double> const &iterTimes() const
@@ -112,7 +112,7 @@ public:
     }
 
     /**
-     * Returns a vector of the best objective value, one element per iteration,
+     * Returns a vector of the best objective values, one element per iteration,
      * if a feasible best solution exists. Early iterations where that might
      * not be the case are stored with value ``INT_MAX`` as substitute for inf.
      */
@@ -140,8 +140,8 @@ public:
     }
 
     /**
-     * Returns a vector of (double, objective)-pairs, one for each time a
-     * new, feasible best heuristic solution has been found.
+     * Returns a vector of (runtime, objective)-pairs, one for each time
+     * a new, feasible best heuristic solution has been found.
      */
     [[nodiscard]] timedDatapoints const &incumbents() const
     {
