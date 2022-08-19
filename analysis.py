@@ -28,7 +28,6 @@ def parse_args():
         "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
     )
     parser.add_argument("--results_dir", type=str)
-    parser.add_argument("--collect_iters", type=int, default=1)
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--max_runtime", type=int)
@@ -49,7 +48,6 @@ def solve(loc: str, seed: int, **kwargs):
         seed=seed,
         nbVeh=-1,
         collectStatistics=True,
-        collectNbIter=kwargs["collect_iters"],
     )
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 

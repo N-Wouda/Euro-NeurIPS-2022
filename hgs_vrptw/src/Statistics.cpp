@@ -7,7 +7,6 @@
 
 void Statistics::collectFrom(Population const &population)
 {
-    currIters_.push_back(numIters_);
     numIters_++;
 
     auto const now = clock::now();
@@ -95,8 +94,7 @@ void Statistics::toCsv(std::string const &path, char const sep) const
         throw std::runtime_error("Could not open " + path);
 
     // clang-format off
-    out << "iteration #" << sep
-        << "total run-time (s)" << sep
+    out << "total run-time (s)" << sep
         << "iteration run-time (s)" << sep
         << "population size" << sep
         << "# feasible" << sep
@@ -107,8 +105,7 @@ void Statistics::toCsv(std::string const &path, char const sep) const
 
     for (size_t it = 0; it != numIters_; it++)
     {
-        out << currIters_[it] << sep
-            << runTimes_[it] << sep
+        out << runTimes_[it] << sep
             << iterTimes_[it] << sep
             << popSizes_[it] << sep
             << numFeasiblePop_[it] << sep
@@ -119,5 +116,3 @@ void Statistics::toCsv(std::string const &path, char const sep) const
     }
     // clang-format on
 }
-
-Statistics::Statistics(Params &params) : params(params) {}

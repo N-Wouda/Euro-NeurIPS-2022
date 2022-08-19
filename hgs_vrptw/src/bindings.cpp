@@ -72,7 +72,6 @@ PYBIND11_MODULE(hgspy, m)
                       bool,
                       size_t,
                       size_t,
-                      size_t,
                       double,
                       double,
                       double,
@@ -96,7 +95,6 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("nbIter") = 20'000,
              py::arg("timeLimit") = INT_MAX,
              py::arg("collectStatistics") = false,
-             py::arg("collectNbIter") = 1,
              py::arg("initialTimeWarpPenalty") = 1,
              py::arg("nbPenaltyManagement") = 100,
              py::arg("feasBooster") = 2.,
@@ -122,7 +120,6 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("nbIter", &Config::nbIter)
         .def_readonly("timeLimit", &Config::timeLimit)
         .def_readonly("collectStatistics", &Config::collectStatistics)
-        .def_readonly("collectNbIter", &Config::collectNbIter)
         .def_readonly("initialTimeWarpPenalty", &Config::initialTimeWarpPenalty)
         .def_readonly("nbPenaltyManagement", &Config::nbPenaltyManagement)
         .def_readonly("feasBooster", &Config::feasBooster)
@@ -172,7 +169,6 @@ PYBIND11_MODULE(hgspy, m)
 
     py::class_<Statistics>(m, "Statistics")
         .def("num_iters", &Statistics::numIters)
-        .def("curr_iters", &Statistics::currIters)
         .def("run_times", &Statistics::runTimes)
         .def("iter_times", &Statistics::iterTimes)
         .def("pop_sizes", &Statistics::popSizes)
