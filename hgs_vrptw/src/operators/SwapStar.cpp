@@ -96,8 +96,6 @@ int SwapStar::evaluate(Route *routeU, Route *routeV)
     for (Node *U = n(routeU->depot); !U->isDepot(); U = n(U))
         for (Node *V = n(routeV->depot); !V->isDepot(); V = n(V))
         {
-            // We cannot determine time warp delta without impacting
-            // performance too much (cubic vs. currently quadratic)
             int deltaCost = 0;
 
             int const uDemand = d_params.clients[U->client].demand;
@@ -113,29 +111,37 @@ int SwapStar::evaluate(Route *routeU, Route *routeV)
             deltaCost += removalCosts(routeU->idx, U->client);
             deltaCost += removalCosts(routeV->idx, V->client);
 
-            if (deltaCost < 0)  // an early filter on many moves, before doing
-            {                   // costly work determining insertion points
-                auto [extraV, UAfter] = getBestInsertPoint(U, V);
-                auto [extraU, VAfter] = getBestInsertPoint(V, U);
-                deltaCost += extraU + extraV;
+            if (deltaCost >= 0)  // an early filter on many moves, before doing
+                continue;        // costly work determining insertion points
 
-                if (deltaCost < best.cost)
-                {
-                    best.cost = deltaCost;
+            auto [extraV, UAfter] = getBestInsertPoint(U, V);
 
-                    best.U = U;
-                    best.UAfter = UAfter;
+            if (deltaCost + extraV >= 0)  // continue here avoids evaluating
+                continue;                 // another insert point below
 
-                    best.V = V;
-                    best.VAfter = VAfter;
-                }
+            auto [extraU, VAfter] = getBestInsertPoint(V, U);
+            deltaCost += extraU + extraV;
+
+            // It is possible for positive delta costs to turn negative when we
+            // do a complete evaluation later. But in practice that almost never
+            // happens, and is not worth considering.
+            if (deltaCost < best.cost)
+            {
+                best.cost = deltaCost;
+
+                best.U = U;
+                best.UAfter = UAfter;
+
+                best.V = V;
+                best.VAfter = VAfter;
             }
         }
 
-    if (!best.UAfter || !best.VAfter)
+    if (best.cost >= 0)
         return 0;
 
-    // Compute actual cost including time warp penalty
+    // Now do a full evaluation of the proposed swap move. This includes
+    // possible time warp penalties.
     int const current
         = d_params.dist(p(best.U)->client, best.U->client, n(best.U)->client)
           + d_params.dist(p(best.V)->client, best.V->client, n(best.V)->client);

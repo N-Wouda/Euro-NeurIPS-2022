@@ -59,7 +59,7 @@ class SwapStar : public LocalSearchOperator<Route>
 
     struct BestMove  // tracks the best SWAP* move
     {
-        int cost = INT_MAX;
+        int cost = 0;
 
         Node *U = nullptr;
         Node *UAfter = nullptr;

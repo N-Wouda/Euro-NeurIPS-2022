@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD 20)
 add_definitions(-Werror -Wall -Wextra -Wpedantic -fPIC -Wno-unused-parameter)
 
 if (CMAKE_BUILD_TYPE MATCHES RELEASE)
-    add_definitions(-O3)
+    add_definitions(-O3 -flto)
 endif ()
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
