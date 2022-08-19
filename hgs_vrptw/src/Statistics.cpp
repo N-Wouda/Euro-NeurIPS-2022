@@ -62,13 +62,13 @@ void Statistics::collectFrom(Population const &population)
         feasObjectives_.push_back(static_cast<double>(costFeas / numFeas));
 
     auto const numInfeas = nPops - numFeas;
-    auto const costInfeas
-        = accumulate(population.population.begin(),
-                     population.population.end(),
-                     0,
-                     [&](size_t sum, Individual const *indiv) {
-                         return indiv->isFeasible() ? sum + indiv->cost() : sum;
-                     });
+    auto const costInfeas = accumulate(
+        population.population.begin(),
+        population.population.end(),
+        0,
+        [&](size_t sum, Individual const *indiv) {
+            return !indiv->isFeasible() ? sum + indiv->cost() : sum;
+        });
 
     if (numInfeas == 0)
         infeasObjectives_.push_back(INT_MAX);
