@@ -27,8 +27,8 @@ class Statistics
     std::vector<size_t> penaltiesCapacity_;
     std::vector<size_t> penaltiesTimeWarp_;
     std::vector<size_t> bestObjectives_;
-    std::vector<double> feasObjectives_;
-    std::vector<double> infeasObjectives_;
+    std::vector<size_t> feasObjectives_;
+    std::vector<size_t> infeasObjectives_;
 
     timedDatapoints incumbents_;
 
@@ -127,7 +127,7 @@ public:
      * Returns a vector of the average objective value of feasible individuals,
      * one element per iteration.
      */
-    [[nodiscard]] std::vector<double> const &feasObjectives() const
+    [[nodiscard]] std::vector<size_t> const &feasObjectives() const
     {
         return feasObjectives_;
     }
@@ -136,7 +136,7 @@ public:
      * Returns a vector of the average objective value of infeasible
      * individuals, one element per iteration.
      */
-    [[nodiscard]] std::vector<double> const &infeasObjectives() const
+    [[nodiscard]] std::vector<size_t> const &infeasObjectives() const
     {
         return infeasObjectives_;
     }

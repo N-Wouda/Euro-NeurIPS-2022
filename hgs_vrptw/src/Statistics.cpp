@@ -63,7 +63,7 @@ void Statistics::collectFrom(Population const &population)
     if (numFeas == 0)
         feasObjectives_.push_back(INT_MAX);
     else
-        feasObjectives_.push_back(static_cast<double>(costFeas / numFeas));
+        feasObjectives_.push_back(costFeas / numFeas);
 
     auto const numInfeas = nPops - numFeas;
     auto const costInfeas = accumulate(
@@ -77,8 +77,7 @@ void Statistics::collectFrom(Population const &population)
     if (numInfeas == 0)
         infeasObjectives_.push_back(INT_MAX);
     else
-        infeasObjectives_.push_back(
-            static_cast<double>(costInfeas / numInfeas));
+        infeasObjectives_.push_back(costInfeas / numInfeas);
 
     if (!best.isFeasible())
         return;
