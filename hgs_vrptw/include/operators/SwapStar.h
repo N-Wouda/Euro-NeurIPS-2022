@@ -68,20 +68,16 @@ class SwapStar : public LocalSearchOperator<Route>
         Node *VAfter = nullptr;
     };
 
-    // Preprocess the removal costs of nodes in the given route.
+    // Updates the removal costs of clients in the given route
     void updateRemovalCosts(Route *R1);
 
-    // Preprocesses the given routes. This populates the cache of ThreeBest
-    // structs, storing the three best positions in the second route for
-    // inserting nodes from the first route.
-    void updateInsertionCosts(Route *R1, Route *R2);
+    // Updates the cache storing the three best positions in the given route for
+    // the passed-in node (client).
+    void updateInsertionCost(Route *R, Node *U);
 
-    // Gets the bestPos reinsert point for U in the route of V, assuming V is
-    // removed. Returns the cost delta.
-    int getBestInsertPoint(Node *U,
-                           Node *V,
-                           Node *&pos,
-                           SwapStar::ThreeBest const &bestPos);
+    // Gets the delta cost and reinsert point for U in the route of V, assuming
+    // V is removed.
+    std::pair<int, Node *> getBestInsertPoint(Node *U, Node *V);
 
     Matrix<ThreeBest> cache;
     Matrix<int> removalCosts;
