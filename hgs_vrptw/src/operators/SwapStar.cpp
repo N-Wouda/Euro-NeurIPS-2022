@@ -5,11 +5,29 @@ namespace
 using TWS = TimeWindowSegment;
 }
 
-void SwapStar::preprocess(Route *R1, Route *R2)
+void SwapStar::updateRemovalCosts(Route *R1)
+{
+    auto const currTimeWarp = d_penalties->timeWarp(R1->tw);
+
+    for (Node *U = n(R1->depot); !U->isDepot(); U = n(U))
+    {
+        auto twData = TWS::merge(p(U)->twBefore, n(U)->twAfter);
+        removalCosts(R1->idx, U->client)
+            = d_params.dist(p(U)->client, n(U)->client)
+              - d_params.dist(p(U)->client, U->client, n(U)->client)
+              + d_penalties->timeWarp(twData) - currTimeWarp;
+    }
+}
+
+void SwapStar::updateInsertionCosts(Route *R1, Route *R2)
 {
     for (Node *U = n(R1->depot); !U->isDepot(); U = n(U))
     {
         auto &currentOption = cache(R2->idx, U->client);
+
+        if (!currentOption.shouldUpdate)
+            continue;
+
         currentOption = {};
 
         // Performs the preprocessing
@@ -19,23 +37,18 @@ void SwapStar::preprocess(Route *R1, Route *R2)
         // be bigger than the actual delta timewarp such that assuming
         // independence gives a conservative estimate
 
-        auto twData = TWS::merge(p(U)->twBefore, n(U)->twAfter);
-        int const deltaRemoval
-            = d_params.dist(p(U)->client, n(U)->client)
-              - d_params.dist(p(U)->client, U->client, n(U)->client)
-              + d_penalties->timeWarp(twData) - d_penalties->timeWarp(R1->tw);
-
         // Compute additional timewarp we get when inserting U in R2, this
         // may be actually less if we remove U but we ignore this to have a
         // conservative estimate
-        twData = TWS::merge(R2->depot->twBefore, U->tw, n(R2->depot)->twAfter);
+        auto twData
+            = TWS::merge(R2->depot->twBefore, U->tw, n(R2->depot)->twAfter);
 
         int cost = d_params.dist(0, U->client, n(R2->depot)->client)
                    - d_params.dist(0, n(R2->depot)->client)
                    + d_penalties->timeWarp(twData)
                    - d_penalties->timeWarp(R2->tw);
 
-        currentOption.maybeAdd(cost - deltaRemoval, R2->depot);
+        currentOption.maybeAdd(cost, R2->depot);
 
         for (Node *V = n(R2->depot); !V->isDepot(); V = n(V))
         {
@@ -45,8 +58,10 @@ void SwapStar::preprocess(Route *R1, Route *R2)
                             + d_penalties->timeWarp(twData)
                             - d_penalties->timeWarp(R2->tw);
 
-            currentOption.maybeAdd(deltaCost - deltaRemoval, V);
+            currentOption.maybeAdd(deltaCost, V);
         }
+
+        currentOption.shouldUpdate = false;
     }
 }
 
@@ -93,15 +108,32 @@ int SwapStar::getBestInsertPoint(Node *U,
 void SwapStar::init(Individual const &indiv, Penalties const *penalties)
 {
     LocalSearchOperator<Route>::init(indiv, penalties);
+
     cache.clear();
+    updated = std::vector<bool>(d_params.nbVehicles);
+    removalCosts.clear();
 }
 
 int SwapStar::evaluate(Route *routeU, Route *routeV)
 {
+    // TODO do all possibly improving changes at once (instead of just the
+    //  best)
     best = {};
 
-    preprocess(routeU, routeV);  // TODO can we cache some of
-    preprocess(routeV, routeU);  //   this?
+    if (updated[routeV->idx])
+    {
+        updateRemovalCosts(routeV);
+        updated[routeV->idx] = false;
+    }
+
+    if (updated[routeU->idx])
+    {
+        updateRemovalCosts(routeU);
+        updated[routeV->idx] = false;
+    }
+
+    updateInsertionCosts(routeU, routeV);
+    updateInsertionCosts(routeV, routeU);
 
     for (Node *U = n(routeU->depot); !U->isDepot(); U = n(U))
     {
@@ -124,16 +156,19 @@ int SwapStar::evaluate(Route *routeU, Route *routeV)
             int const deltaLoadPen = loadPenU + loadPenV
                                      - d_penalties->load(routeU->load)
                                      - d_penalties->load(routeV->load);
-            int const bestOption = bestU.costs[0] + bestV.costs[0];
 
-            if (deltaLoadPen + bestOption <= 0)  // quick filter on many moves
+            int const deltaRemovalU = removalCosts(routeU->idx, U->client);
+            int const deltaRemovalV = removalCosts(routeV->idx, V->client);
+            int const deltaRemoval = deltaRemovalU + deltaRemovalV;
+
+            if (deltaLoadPen + deltaRemoval <= 0)  // quick filter on many moves
             {
                 Node *UAfter;
                 Node *VAfter;
 
                 int extraV = getBestInsertPoint(U, V, UAfter, bestU);
                 int extraU = getBestInsertPoint(V, U, VAfter, bestV);
-                int cost = deltaLoadPen + bestOption + extraU + extraV;
+                int cost = deltaLoadPen + deltaRemoval + extraU + extraV;
 
                 if (cost < best.cost)
                 {
@@ -257,6 +292,20 @@ int SwapStar::evaluate(Route *routeU, Route *routeV)
     deltaCost -= d_penalties->load(routeV->load);
 
     return deltaCost;
+}
+
+void SwapStar::update(Route *U, size_t locU)
+{
+    updated[U->idx] = true;
+
+    for (int idx = 1; idx != d_params.nbClients + 1; ++idx)
+        cache(U->idx, idx).shouldUpdate = true;
+}
+
+void SwapStar::update(Route *U, Route *V, size_t locU, size_t locV)
+{
+    update(U, locU);
+    update(V, locV);
 }
 
 void SwapStar::apply(Route *U, Route *V)

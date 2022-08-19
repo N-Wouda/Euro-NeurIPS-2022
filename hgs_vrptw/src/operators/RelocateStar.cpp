@@ -2,19 +2,17 @@
 
 int RelocateStar::evaluate(Route *U, Route *V)
 {
-    bestCost = 0;
-    insertionPoint = nullptr;
-    nodeToInsert = nullptr;
+    moves.clear();
+    int bestCost = 0;
 
-    auto eval = [&](auto *N1, auto *N2)
+    auto eval = [&](Node *N1, Node *N2)
     {
         int const deltaCost = relocate.evaluate(N1, N2);
 
-        if (deltaCost < bestCost)
+        if (deltaCost < 0)
         {
-            bestCost = deltaCost;
-            insertionPoint = N2;
-            nodeToInsert = N1;
+            bestCost = deltaCost < bestCost ? deltaCost : bestCost;
+            moves.emplace_back(deltaCost, N1, N2);
         }
     };
 
@@ -30,4 +28,21 @@ int RelocateStar::evaluate(Route *U, Route *V)
     }
 
     return bestCost;
+}
+
+void RelocateStar::apply(Route *U, Route *V)
+{
+    std::unordered_set<Node *> seen;
+    std::sort(moves.begin(), moves.end());
+
+    for (auto [_, from, to] : moves)
+    {
+        if (seen.contains(to))  // then our calculation is no longer correct as
+            continue;           // we have already altered the insert location.
+
+        from->insertAfter(to);
+        seen.insert(p(from));
+        seen.insert(from);
+        seen.insert(to);
+    }
 }

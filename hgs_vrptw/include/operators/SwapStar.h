@@ -7,6 +7,7 @@
 #include "Route.h"
 
 #include <array>
+#include <vector>
 
 /**
  * Explores the SWAP* neighbourhood of [1]. The SWAP* neighbourhood explores
@@ -23,6 +24,7 @@ class SwapStar : public LocalSearchOperator<Route>
 {
     struct ThreeBest  // stores three best SWAP* insertion points
     {
+        bool shouldUpdate = true;
         std::array<int, 3> costs = {INT_MAX, INT_MAX, INT_MAX};
         std::array<Node *, 3> locs = {nullptr, nullptr, nullptr};
 
@@ -66,10 +68,13 @@ class SwapStar : public LocalSearchOperator<Route>
         Node *VAfter = nullptr;
     };
 
+    // Preprocess the removal costs of nodes in the given route.
+    void updateRemovalCosts(Route *R1);
+
     // Preprocesses the given routes. This populates the cache of ThreeBest
     // structs, storing the three best positions in the second route for
     // inserting nodes from the first route.
-    void preprocess(Route *R1, Route *R2);
+    void updateInsertionCosts(Route *R1, Route *R2);
 
     // Gets the bestPos reinsert point for U in the route of V, assuming V is
     // removed. Returns the cost delta.
@@ -79,6 +84,9 @@ class SwapStar : public LocalSearchOperator<Route>
                            SwapStar::ThreeBest const &bestPos);
 
     Matrix<ThreeBest> cache;
+    Matrix<int> removalCosts;
+    std::vector<bool> updated;
+
     BestMove best;
 
 public:
@@ -88,9 +96,15 @@ public:
 
     void apply(Route *U, Route *V) override;
 
+    void update(Route *U, size_t locU) override;
+
+    void update(Route *U, Route *V, size_t locU, size_t locV) override;
+
     explicit SwapStar(Params const &params)
         : LocalSearchOperator<Route>(params),
-          cache(d_params.nbVehicles, d_params.nbClients + 1)
+          cache(d_params.nbVehicles, d_params.nbClients + 1),
+          removalCosts(d_params.nbVehicles, d_params.nbClients + 1),
+          updated(d_params.nbVehicles)
     {
     }
 };

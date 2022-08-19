@@ -235,7 +235,7 @@ template <size_t N, size_t M> void Exchange<N, M>::apply(Node *U, Node *V)
     // Insert these 'extra' nodes of U after the end of V...
     for (size_t count = 0; count != N - M; ++count)
     {
-        auto *prev = uToInsert->prev;
+        auto *prev = p(uToInsert);
         uToInsert->insertAfter(insertUAfter);
         uToInsert = prev;
     }
@@ -243,11 +243,9 @@ template <size_t N, size_t M> void Exchange<N, M>::apply(Node *U, Node *V)
     // ...and swap the overlapping nodes!
     for (size_t count = 0; count != std::min(N, M); ++count)
     {
-        auto *nextU = U->next;
-        auto *nextV = V->next;
         U->swapWith(V);
-        U = nextU;
-        V = nextV;
+        U = n(U);
+        V = n(V);
     }
 }
 

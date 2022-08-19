@@ -3,6 +3,7 @@
 
 #include "Individual.h"
 #include "Penalties.h"
+#include "Route.h"
 
 template <typename Arg> class LocalSearchOperator
 {
@@ -38,6 +39,10 @@ public:
      * only be called if <code>evaluate()</code> returns a negative delta cost.
      */
     virtual void apply(Arg *U, Arg *V){};
+
+    virtual void update(Route *U, size_t locU){};
+
+    virtual void update(Route *U, Route *V, size_t locU, size_t locV){};
 
     explicit LocalSearchOperator(Params const &params) : d_params(params) {}
 
