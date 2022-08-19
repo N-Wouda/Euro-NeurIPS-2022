@@ -40,6 +40,10 @@ void Statistics::collectFrom(Population const &population)
 
     popDiversity_.push_back(totalDiversity / static_cast<double>(nPops));
 
+    // Penalty statistics
+    penaltiesCapacity_.push_back(params.penaltyCapacity);
+    penaltiesTimeWarp_.push_back(params.penaltyTimeWarp);
+
     // Objectives statistics
     auto const &best = population.bestSol;
 
@@ -99,6 +103,8 @@ void Statistics::toCsv(std::string const &path, char const sep) const
         << "population size" << sep
         << "# feasible" << sep
         << "diversity" << sep
+        << "penalty capacity" << sep
+        << "penalty time warp" << sep
         << "best objective" << sep
         << "feasible avg. objective" << sep
         << "infeasible avg. objective" << '\n';
@@ -110,6 +116,8 @@ void Statistics::toCsv(std::string const &path, char const sep) const
             << popSizes_[it] << sep
             << numFeasiblePop_[it] << sep
             << popDiversity_[it] << sep
+            << penaltiesCapacity_[it] << sep
+            << penaltiesTimeWarp_[it] << sep
             << bestObjectives_[it] << sep
             << feasObjectives_[it] << sep
             << infeasObjectives_[it] << '\n';

@@ -24,6 +24,8 @@ class Statistics
     std::vector<size_t> popSizes_;
     std::vector<size_t> numFeasiblePop_;
     std::vector<double> popDiversity_;
+    std::vector<size_t> penaltiesCapacity_;
+    std::vector<size_t> penaltiesTimeWarp_;
     std::vector<size_t> bestObjectives_;
     std::vector<double> feasObjectives_;
     std::vector<double> infeasObjectives_;
@@ -93,6 +95,22 @@ public:
     [[nodiscard]] std::vector<double> const &popDiversity() const
     {
         return popDiversity_;
+    }
+
+    /**
+     * Returns a vector of capacity penalties, one element per iteration.
+     */
+    [[nodiscard]] std::vector<size_t> const &penaltiesCapacity() const
+    {
+        return penaltiesCapacity_;
+    }
+
+    /**
+     * Returns a vector of time warp penalties, one element per iteration.
+     */
+    [[nodiscard]] std::vector<size_t> const &penaltiesTimeWarp() const
+    {
+        return penaltiesTimeWarp_;
     }
 
     /**
