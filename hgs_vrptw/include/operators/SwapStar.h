@@ -92,9 +92,9 @@ public:
 
     void apply(Route *U, Route *V) override;
 
-    void update(Route *U, size_t locU) override;
+    void update(Route *U) override;
 
-    void update(Route *U, Route *V, size_t locU, size_t locV) override;
+    void update(Route *U, Route *V) override;
 
     explicit SwapStar(Params const &params)
         : LocalSearchOperator<Route>(params),

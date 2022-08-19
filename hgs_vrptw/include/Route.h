@@ -110,10 +110,9 @@ public:  // TODO make fields private
 
     /**
      * Updates this route. To be called after swapping nodes/changing the
-     * solution. Returns the position (idx + 1) of the first node that's
-     * changed.
+     * solution.
      */
-    size_t update();
+    void update();
 };
 
 int Route::distBetween(Node const *start, Node const *end)

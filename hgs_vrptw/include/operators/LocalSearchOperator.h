@@ -40,9 +40,15 @@ public:
      */
     virtual void apply(Arg *U, Arg *V){};
 
-    virtual void update(Route *U, size_t locU){};
+    /**
+     * TODO
+     */
+    virtual void update(Route *U){};
 
-    virtual void update(Route *U, Route *V, size_t locU, size_t locV){};
+    /**
+     * TODO
+     */
+    virtual void update(Route *U, Route *V){};
 
     explicit LocalSearchOperator(Params const &params) : d_params(params) {}
 

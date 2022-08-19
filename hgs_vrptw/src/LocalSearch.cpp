@@ -151,21 +151,21 @@ void LocalSearch::update(Route *U, Route *V)
     nbMoves++;
     searchCompleted = false;
 
-    size_t const locU = U->update();
+    U->update();
     lastModified[U->idx] = nbMoves;
 
     if (U != V)
     {
-        size_t const locV = V->update();
+        V->update();
         lastModified[V->idx] = nbMoves;
 
         for (auto &op : routeOps)
-            op->update(U, V, locU, locV);
+            op->update(U, V);
     }
     else
     {
         for (auto &op : routeOps)
-            op->update(U, locU);
+            op->update(U);
     }
 }
 

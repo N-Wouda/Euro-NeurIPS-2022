@@ -9,14 +9,12 @@ namespace
 using TWS = TimeWindowSegment;
 }
 
-size_t Route::update()
+void Route::update()
 {
+    // TODO simplify updating
     auto const oldNodes = nodes;
 
     load = 0;
-
-    jumps[0].clear();
-    jumps[1].clear();
     nodes.clear();
 
     int distance = 0;
@@ -36,7 +34,10 @@ size_t Route::update()
 
     setupNodes();
 
-    size_t firstChangedPos = 1;
+    jumps[0].clear();
+    jumps[1].clear();
+
+//    size_t firstChangedPos = 1;
     bool foundChange = false;
 
     for (size_t idx_ = 0; idx_ != nodes.size(); ++idx_)
@@ -46,7 +47,7 @@ size_t Route::update()
         if (!foundChange && (idx_ >= oldNodes.size() || node != oldNodes[idx_]))
         {
             foundChange = true;
-            firstChangedPos = idx_ + 1;
+//            firstChangedPos = idx_ + 1;
         }
 
         // TODO use unchanged for caching
@@ -87,7 +88,7 @@ size_t Route::update()
     if (empty())
     {
         angleCenter = 1.e30;
-        return 1;
+        return;
     }
 
     angleCenter = atan2(
@@ -107,8 +108,6 @@ size_t Route::update()
             sector.extend(sector.end + growSectorBy);
         }
     }
-
-    return firstChangedPos;
 }
 
 TimeWindowSegment Route::twBetween(Node const *start, Node const *end)

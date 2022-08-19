@@ -255,12 +255,12 @@ int SwapStar::evaluate(Route *routeU, Route *routeV)
     return deltaCost;
 }
 
-void SwapStar::update(Route *U, size_t locU) { updated[U->idx] = true; }
+void SwapStar::update(Route *U) { updated[U->idx] = true; }
 
-void SwapStar::update(Route *U, Route *V, size_t locU, size_t locV)
+void SwapStar::update(Route *U, Route *V)
 {
-    update(U, locU);
-    update(V, locV);
+    update(U);
+    update(V);
 }
 
 void SwapStar::apply(Route *U, Route *V)
