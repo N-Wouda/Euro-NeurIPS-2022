@@ -13,8 +13,6 @@ class Statistics
     using clock = std::chrono::system_clock;
     using timedDatapoints = std::vector<std::pair<double, size_t>>;
 
-    Params &params;
-
     clock::time_point start = clock::now();
     clock::time_point lastIter = clock::now();
     size_t numIters_ = 0;
@@ -155,8 +153,6 @@ public:
      * for every iteration are exported. Uses `,` as default separator.
      */
     void toCsv(std::string const &path, char const sep = ',') const;
-
-    Statistics(Params &params) : params(params){};
 };
 
 #endif  // STATISTICS_H

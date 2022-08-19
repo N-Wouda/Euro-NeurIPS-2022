@@ -1,5 +1,4 @@
 #include "Statistics.h"
-#include "Params.h"
 #include "Population.h"
 
 #include <fstream>
@@ -41,8 +40,8 @@ void Statistics::collectFrom(Population const &population)
     popDiversity_.push_back(totalDiversity / static_cast<double>(nPops));
 
     // Penalty statistics
-    penaltiesCapacity_.push_back(params.penaltyCapacity);
-    penaltiesTimeWarp_.push_back(params.penaltyTimeWarp);
+    penaltiesCapacity_.push_back(population.params.penaltyCapacity);
+    penaltiesTimeWarp_.push_back(population.params.penaltyTimeWarp);
 
     // Objectives statistics
     auto const &best = population.bestSol;
