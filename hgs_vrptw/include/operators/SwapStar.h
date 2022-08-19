@@ -77,7 +77,7 @@ class SwapStar : public LocalSearchOperator<Route>
 
     // Gets the delta cost and reinsert point for U in the route of V, assuming
     // V is removed.
-    std::pair<int, Node *> getBestInsertPoint(Node *U, Node *V);
+    inline std::pair<int, Node *> getBestInsertPoint(Node *U, Node *V);
 
     Matrix<ThreeBest> cache;
     Matrix<int> removalCosts;

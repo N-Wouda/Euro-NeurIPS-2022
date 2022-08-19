@@ -85,12 +85,18 @@ int SwapStar::evaluate(Route *routeU, Route *routeV)
     {
         updateRemovalCosts(routeV);
         updated[routeV->idx] = false;
+
+        for (int idx = 1; idx != d_params.nbClients + 1; ++idx)
+            cache(routeV->idx, idx).shouldUpdate = true;
     }
 
     if (updated[routeU->idx])
     {
         updateRemovalCosts(routeU);
         updated[routeV->idx] = false;
+
+        for (int idx = 1; idx != d_params.nbClients + 1; ++idx)
+            cache(routeU->idx, idx).shouldUpdate = true;
     }
 
     for (Node *U = n(routeU->depot); !U->isDepot(); U = n(U))
@@ -249,13 +255,7 @@ int SwapStar::evaluate(Route *routeU, Route *routeV)
     return deltaCost;
 }
 
-void SwapStar::update(Route *U, size_t locU)
-{
-    updated[U->idx] = true;
-
-    for (int idx = 1; idx != d_params.nbClients + 1; ++idx)
-        cache(U->idx, idx).shouldUpdate = true;
-}
+void SwapStar::update(Route *U, size_t locU) { updated[U->idx] = true; }
 
 void SwapStar::update(Route *U, Route *V, size_t locU, size_t locV)
 {
