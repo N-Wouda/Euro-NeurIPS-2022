@@ -32,11 +32,11 @@ public:
      * cannot become negative at all. In that case, the returned (non-negative)
      * cost delta does not constitute a full evaluation.
      */
-    virtual int test(Arg *U, Arg *V) { return false; }
+    virtual int evaluate(Arg *U, Arg *V) { return false; }
 
     /**
      * Applies this operator to the given arguments. For improvements, should
-     * only be called if <code>test()</code> returns a negative delta cost.
+     * only be called if <code>evaluate()</code> returns a negative delta cost.
      */
     virtual void apply(Arg *U, Arg *V){};
 

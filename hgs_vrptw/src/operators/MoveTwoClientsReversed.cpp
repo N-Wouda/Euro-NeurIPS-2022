@@ -3,7 +3,7 @@
 #include "Route.h"
 #include "TimeWindowSegment.h"
 
-int MoveTwoClientsReversed::test(Node *U, Node *V)
+int MoveTwoClientsReversed::evaluate(Node *U, Node *V)
 {
     using TWS = TimeWindowSegment;
 

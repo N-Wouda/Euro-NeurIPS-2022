@@ -25,7 +25,7 @@ public:
         relocate.init(indiv, penalties);
     }
 
-    int test(Route *U, Route *V) override;
+    int evaluate(Route *U, Route *V) override;
 
     void apply(Route *U, Route *V) override
     {

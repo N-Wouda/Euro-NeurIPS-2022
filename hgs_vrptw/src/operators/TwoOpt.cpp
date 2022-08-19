@@ -8,7 +8,7 @@ namespace
 using TWS = TimeWindowSegment;
 }
 
-int TwoOpt::withinRouteTest(Node *U, Node *V)
+int TwoOpt::evalWithinRoute(Node *U, Node *V)
 {
     if (U->position + 1 >= V->position)
         return 0;
@@ -39,7 +39,7 @@ int TwoOpt::withinRouteTest(Node *U, Node *V)
     return deltaCost;
 }
 
-int TwoOpt::betweenRouteTest(Node *U, Node *V)
+int TwoOpt::evalBetweenRoutes(Node *U, Node *V)
 {
     int const current = d_params.dist(U->client, n(U)->client)
                         + d_params.dist(V->client, n(V)->client);
@@ -72,7 +72,7 @@ int TwoOpt::betweenRouteTest(Node *U, Node *V)
     return deltaCost;
 }
 
-void TwoOpt::withinRouteApply(Node *U, Node *V)
+void TwoOpt::applyWithinRoute(Node *U, Node *V)
 {
     auto *itRoute = V;
     auto *insertionPoint = U;
@@ -87,7 +87,7 @@ void TwoOpt::withinRouteApply(Node *U, Node *V)
     }
 }
 
-void TwoOpt::betweenRouteApply(Node *U, Node *V)
+void TwoOpt::applyBetweenRoutes(Node *U, Node *V)
 {
     auto *itRouteU = n(U);
     auto *itRouteV = n(V);
@@ -111,19 +111,19 @@ void TwoOpt::betweenRouteApply(Node *U, Node *V)
     }
 }
 
-int TwoOpt::test(Node *U, Node *V)
+int TwoOpt::evaluate(Node *U, Node *V)
 {
     if (U->route->idx > V->route->idx)  // will be tackled in a later iteration
         return 0;                       // - no need to process here already
 
-    return U->route->idx == V->route->idx ? withinRouteTest(U, V)
-                                          : betweenRouteTest(U, V);
+    return U->route == V->route ? evalWithinRoute(U, V)
+                                : evalBetweenRoutes(U, V);
 }
 
 void TwoOpt::apply(Node *U, Node *V)
 {
     if (U->route == V->route)
-        withinRouteApply(U, V);
+        applyWithinRoute(U, V);
     else
-        betweenRouteApply(U, V);
+        applyBetweenRoutes(U, V);
 }

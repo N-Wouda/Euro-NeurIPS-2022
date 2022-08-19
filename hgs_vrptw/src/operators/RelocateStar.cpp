@@ -1,6 +1,6 @@
 #include "RelocateStar.h"
 
-int RelocateStar::test(Route *U, Route *V)
+int RelocateStar::evaluate(Route *U, Route *V)
 {
     bestCost = 0;
     insertionPoint = nullptr;
@@ -8,7 +8,7 @@ int RelocateStar::test(Route *U, Route *V)
 
     auto eval = [&](auto *N1, auto *N2)
     {
-        int const deltaCost = relocate.test(N1, N2);
+        int const deltaCost = relocate.evaluate(N1, N2);
 
         if (deltaCost < bestCost)
         {

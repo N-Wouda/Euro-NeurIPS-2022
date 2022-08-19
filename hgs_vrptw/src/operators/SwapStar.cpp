@@ -99,7 +99,7 @@ void SwapStar::init(Individual const &indiv, Penalties const *penalties)
             cache(rIdx, cIdx).clear();
 }
 
-int SwapStar::test(Route *routeU, Route *routeV)
+int SwapStar::evaluate(Route *routeU, Route *routeV)
 {
     best = {};
 

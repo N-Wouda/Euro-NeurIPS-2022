@@ -90,7 +90,7 @@ class SwapStar : public LocalSearchOperator<Route>
 public:
     void init(Individual const &indiv, Penalties const *penalties) override;
 
-    int test(Route *U, Route *V) override;
+    int evaluate(Route *U, Route *V) override;
 
     void apply(Route *U, Route *V) override;
 
