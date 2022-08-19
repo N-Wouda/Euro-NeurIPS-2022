@@ -20,20 +20,10 @@ class RelocateStar : public LocalSearchOperator<Route>
         int deltaCost = 0;
         Node *from = nullptr;
         Node *to = nullptr;
-
-        bool operator<(Move const &other) const
-        {
-            return deltaCost < other.deltaCost;
-        }
-
-        Move(int deltaCost, Node *from, Node *to)
-            : deltaCost(deltaCost), from(from), to(to)
-        {
-        }
     };
 
     Exchange<1, 0> relocate;
-    std::vector<Move> moves;
+    Move move;
 
 public:
     void init(Individual const &indiv, Penalties const *penalties) override
@@ -44,7 +34,7 @@ public:
 
     int evaluate(Route *U, Route *V) override;
 
-    void apply(Route *U, Route *V) override;
+    void apply(Route *U, Route *V) override { move.from->insertAfter(move.to); }
 
     explicit RelocateStar(Params const &params)
         : LocalSearchOperator<Route>(params), relocate(params)
