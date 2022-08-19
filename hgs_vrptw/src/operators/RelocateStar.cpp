@@ -10,6 +10,7 @@ int RelocateStar::evaluate(Route *U, Route *V)
 
         if (deltaCost < move.deltaCost)
         {
+            move.deltaCost = deltaCost;
             move.from = N1;
             move.to = N2;
         }

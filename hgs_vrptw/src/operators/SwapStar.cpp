@@ -115,16 +115,14 @@ int SwapStar::evaluate(Route *routeU, Route *routeV)
                 continue;        // costly work determining insertion points
 
             auto [extraV, UAfter] = getBestInsertPoint(U, V);
+            deltaCost += extraV;
 
-            if (deltaCost + extraV >= 0)  // continue here avoids evaluating
-                continue;                 // another insert point below
+            if (deltaCost >= 0)  // continuing here avoids evaluating another
+                continue;        // costly insertion point below
 
             auto [extraU, VAfter] = getBestInsertPoint(V, U);
-            deltaCost += extraU + extraV;
+            deltaCost += extraU;
 
-            // It is possible for positive delta costs to turn negative when we
-            // do a complete evaluation later. But in practice that almost never
-            // happens, and is not worth considering.
             if (deltaCost < best.cost)
             {
                 best.cost = deltaCost;
@@ -137,8 +135,11 @@ int SwapStar::evaluate(Route *routeU, Route *routeV)
             }
         }
 
+    // It is possible for positive delta costs to turn negative when we  do a
+    // complete evaluation. But in practice that almost never happens, and is
+    // not worth considering.
     if (best.cost >= 0)
-        return 0;
+        return best.cost;
 
     // Now do a full evaluation of the proposed swap move. This includes
     // possible time warp penalties.
