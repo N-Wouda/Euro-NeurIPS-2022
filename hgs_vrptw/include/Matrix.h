@@ -42,6 +42,8 @@ public:
     }
 
     [[nodiscard]] size_t size() const { return data_.size(); }
+
+    void clear() { data_ = std::vector<T>(data_.size()); }
 };
 
 #endif

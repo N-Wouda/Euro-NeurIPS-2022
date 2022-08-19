@@ -40,13 +40,15 @@ class Route
     // Vector of jump distance by nodes. Each element is a JumpNode, which lets
     // us jump to the next node in the route a given jump distance away. Very
     // useful for speeding up time window calculations along the route.
-    std::vector<std::vector<JumpNode>> jumps;
-    size_t nbCustomers;         // Number of customers in the route
+    std::vector<std::vector<JumpNode>> jumps = {{}, {}};
+
     CircleSector sector;        // Circle sector of the route's clients
     std::vector<Node *> nodes;  // List of nodes (in order) in this solution.
 
     // Sets jump points, pointing to the current node from earlier route nodes.
     void installJumpPoints(Node const *node);
+
+    void setupNodes();
 
 public:  // TODO make fields private
     Params const *params;
@@ -84,7 +86,12 @@ public:  // TODO make fields private
             sector, other.sector, params->config.circleSectorOverlapTolerance);
     }
 
-    [[nodiscard]] bool empty() const { return nbCustomers == 0; }
+    [[nodiscard]] bool empty() const { return size() == 0; }
+
+    [[nodiscard]] size_t size() const
+    {
+        return nodes.size() - 1;  // exclude end depot
+    }
 
     /**
      * Calculates time window data for segment [start, end] in the same route.
@@ -103,9 +110,10 @@ public:  // TODO make fields private
 
     /**
      * Updates this route. To be called after swapping nodes/changing the
-     * solution.
+     * solution. Returns the position (idx + 1) of the first node that's
+     * changed.
      */
-    void update();
+    size_t update();
 };
 
 int Route::distBetween(Node const *start, Node const *end)

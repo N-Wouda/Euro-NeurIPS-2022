@@ -53,12 +53,6 @@ class SwapStar : public LocalSearchOperator<Route>
                 locs[0] = placeInsert;
             }
         }
-
-        void clear()
-        {
-            costs = {INT_MAX, INT_MAX, INT_MAX};
-            locs = {nullptr, nullptr, nullptr};
-        }
     };
 
     struct BestMove  // tracks the best SWAP* move

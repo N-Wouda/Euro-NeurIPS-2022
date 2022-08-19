@@ -10,7 +10,7 @@ void SwapStar::preprocess(Route *R1, Route *R2)
     for (Node *U = n(R1->depot); !U->isDepot(); U = n(U))
     {
         auto &currentOption = cache(R2->idx, U->client);
-        currentOption.clear();
+        currentOption = {};
 
         // Performs the preprocessing
         // Note: when removing U and adding V to a route, the timewarp
@@ -93,10 +93,7 @@ int SwapStar::getBestInsertPoint(Node *U,
 void SwapStar::init(Individual const &indiv, Penalties const *penalties)
 {
     LocalSearchOperator<Route>::init(indiv, penalties);
-
-    for (int rIdx = 0; rIdx != d_params.nbVehicles; ++rIdx)
-        for (int cIdx = 0; cIdx != d_params.nbClients; ++cIdx)
-            cache(rIdx, cIdx).clear();
+    cache.clear();
 }
 
 int SwapStar::evaluate(Route *routeU, Route *routeV)

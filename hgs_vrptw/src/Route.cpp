@@ -9,53 +9,47 @@ namespace
 using TWS = TimeWindowSegment;
 }
 
-void Route::update()
+size_t Route::update()
 {
-    size_t const prevSize = nodes.size();
+    auto const oldNodes = nodes;
 
     load = 0;
-    jumps = {{}, {}};
-    jumps[0].reserve(prevSize);  // Route's size has likely changed since the
-    jumps[1].reserve(prevSize);  // last update, but probably not *much*.
 
-    nodes = {};
-    nodes.reserve(prevSize);
+    jumps[0].clear();
+    jumps[1].clear();
+    nodes.clear();
 
-    size_t place = 0;
     int distance = 0;
     int reverseDistance = 0;
     int cumulatedX = 0;
     int cumulatedY = 0;
 
-    auto *node = depot;
-    node->position = 0;
-    node->cumulatedLoad = 0;
-    node->cumulatedDistance = 0;
-    node->cumulatedReversalDistance = 0;
+    depot->position = 0;
+    depot->cumulatedLoad = 0;
+    depot->cumulatedDistance = 0;
+    depot->cumulatedReversalDistance = 0;
 
-    if (!n(node)->isDepot())
-        sector.initialize(params->clients[n(node)->client].angle);
+    if (!n(depot)->isDepot())
+        sector.initialize(params->clients[n(depot)->client].angle);
+    else
+        sector.initialize(params->clients[0].angle);
 
-    do
+    setupNodes();
+
+    size_t firstChangedPos = 1;
+    bool foundChange = false;
+
+    for (size_t idx_ = 0; idx_ != nodes.size(); ++idx_)
     {
-        node = n(node);
-        nodes.push_back(node);
+        auto *node = nodes[idx_];
 
-        place++;
-        node->position = place;
+        if (!foundChange && (idx_ >= oldNodes.size() || node != oldNodes[idx_]))
+        {
+            foundChange = true;
+            firstChangedPos = idx_ + 1;
+        }
 
-        load += params->clients[node->client].demand;
-        node->cumulatedLoad = load;
-
-        distance += params->dist(p(node)->client, node->client);
-        node->cumulatedDistance = distance;
-
-        reverseDistance += params->dist(node->client, p(node)->client);
-        reverseDistance -= params->dist(p(node)->client, node->client);
-
-        node->cumulatedReversalDistance = reverseDistance;
-
-        node->twBefore = TWS::merge(p(node)->twBefore, node->tw);
+        // TODO use unchanged for caching
 
         if (!node->isDepot())
         {
@@ -65,11 +59,23 @@ void Route::update()
             sector.extend(params->clients[node->client].angle);
         }
 
-        installJumpPoints(node);
-    } while (!node->isDepot());
+        load += params->clients[node->client].demand;
+        distance += params->dist(p(node)->client, node->client);
 
+        reverseDistance += params->dist(node->client, p(node)->client);
+        reverseDistance -= params->dist(p(node)->client, node->client);
+
+        node->position = idx_ + 1;
+        node->cumulatedLoad = load;
+        node->cumulatedDistance = distance;
+        node->cumulatedReversalDistance = reverseDistance;
+        node->twBefore = TWS::merge(p(node)->twBefore, node->tw);
+
+        installJumpPoints(node);
+    }
+
+    auto *node = nodes.back();
     tw = node->twBefore;
-    nbCustomers = place - 1;
 
     // Time window data in reverse direction, node should be end depot now
     do
@@ -81,12 +87,12 @@ void Route::update()
     if (empty())
     {
         angleCenter = 1.e30;
-        return;
+        return 1;
     }
 
     angleCenter = atan2(
-        cumulatedY / static_cast<double>(nbCustomers) - params->clients[0].y,
-        cumulatedX / static_cast<double>(nbCustomers) - params->clients[0].x);
+        cumulatedY / static_cast<double>(size()) - params->clients[0].y,
+        cumulatedX / static_cast<double>(size()) - params->clients[0].x);
 
     // Enforce minimum size of circle sector
     if (params->config.minCircleSectorSize > 0)
@@ -101,6 +107,8 @@ void Route::update()
             sector.extend(sector.end + growSectorBy);
         }
     }
+
+    return firstChangedPos;
 }
 
 TimeWindowSegment Route::twBetween(Node const *start, Node const *end)
@@ -167,6 +175,17 @@ void Route::installJumpPoints(Node const *node)
             else
                 toNextJump = &jumps[idx_].emplace_back(prev, node);
         }
+}
+
+void Route::setupNodes()
+{
+    auto *node = depot;
+
+    do
+    {
+        node = n(node);
+        nodes.push_back(node);
+    } while (!node->isDepot());
 }
 
 std::ostream &operator<<(std::ostream &out, Route const &route)
