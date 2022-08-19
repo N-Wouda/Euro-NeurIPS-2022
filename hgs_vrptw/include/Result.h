@@ -4,13 +4,11 @@
 #include "Individual.h"
 #include "Statistics.h"
 
-#include <chrono>
 #include <utility>
 #include <vector>
 
 class Result
 {
-    using duration = std::chrono::duration<double>;
     Individual const &bestFound;
     Statistics stats;
     size_t numIters;
@@ -41,12 +39,12 @@ public:
     /**
      * Returns the total number of iterations.
      */
-    [[nodiscard]] size_t const &getIterations() const { return numIters; }
+    [[nodiscard]] size_t getIterations() const { return numIters; }
 
     /**
      * Returns the total elapsed runtime in seconds.
      */
-    [[nodiscard]] double const &getRunTime() const { return runTime; }
+    [[nodiscard]] double getRunTime() const { return runTime; }
 };
 
 #endif  // RESULT_H

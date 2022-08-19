@@ -119,7 +119,6 @@ public:
      * Returns a vector of the average objective value of feasible individuals
      * one for each collected iteration.
      */
-
     [[nodiscard]] std::vector<double> const &feasObjectives() const
     {
         return feasObjectives_;
@@ -129,7 +128,6 @@ public:
      * Returns a vector of the average objective value of infeasible
      * individuals, one for each collected iteration.
      */
-
     [[nodiscard]] std::vector<double> const &infeasObjectives() const
     {
         return infeasObjectives_;

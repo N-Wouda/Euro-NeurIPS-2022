@@ -7,8 +7,7 @@
 
 void Statistics::collectFrom(Population const &population)
 {
-
-    currIters_.push_back(numIters_ * params.config.collectNbIter);
+    currIters_.push_back(numIters_);
     numIters_++;
 
     auto const now = clock::now();
@@ -104,8 +103,7 @@ void Statistics::toCsv(std::string const &path, char const sep) const
         << "diversity" << sep
         << "best objective" << sep
         << "feasible avg. objective" << sep
-        << "infeasible avg. objective"
-        << "\n";
+        << "infeasible avg. objective" << '\n';
 
     for (size_t it = 0; it != numIters_; it++)
     {
@@ -117,8 +115,7 @@ void Statistics::toCsv(std::string const &path, char const sep) const
             << popDiversity_[it] << sep
             << bestObjectives_[it] << sep
             << feasObjectives_[it] << sep
-            << infeasObjectives_[it]
-            << "\n";
+            << infeasObjectives_[it] << '\n';
     }
     // clang-format on
 }
