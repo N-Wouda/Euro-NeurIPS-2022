@@ -54,7 +54,7 @@ class Route
     // Sets the angle and sector data.
     void setupSector();
 
-    // Sets the tw member data, and the forward / backward time window data
+    // Sets time window member and forward node time windows
     void setupRouteTimeWindows();
 
 public:  // TODO make fields private

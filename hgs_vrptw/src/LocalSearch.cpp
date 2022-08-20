@@ -69,7 +69,7 @@ void LocalSearch::search()
                 }
             }
 
-            // Empty route moves are not tested in the first iterations to avoid
+            // Empty route moves are not tested in the first iteration to avoid
             // increasing the fleet size too much.
             if (step > 0)
             {
@@ -158,8 +158,8 @@ void LocalSearch::update(Route *U, Route *V)
     U->update();
     lastModified[U->idx] = nbMoves;
 
-    for (auto &op : routeOps)
-        op->update(U);
+    for (auto &op : routeOps)  // TODO only route operators use this (SWAP*).
+        op->update(U);         //  Maybe later also expand to node ops?
 
     if (U != V)
     {
