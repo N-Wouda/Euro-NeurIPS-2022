@@ -73,7 +73,7 @@ void SwapStar::init(Individual const &indiv, Penalties const *penalties)
     LocalSearchOperator<Route>::init(indiv, penalties);
 
     cache.clear();
-    updated = std::vector<bool>(d_params.nbVehicles);
+    updated = std::vector<bool>(d_params.nbVehicles, true);
     removalCosts.clear();
 }
 
@@ -253,14 +253,6 @@ int SwapStar::evaluate(Route *routeU, Route *routeV)
     deltaCost -= d_penalties->load(routeV->load);
 
     return deltaCost;
-}
-
-void SwapStar::update(Route *U) { updated[U->idx] = true; }
-
-void SwapStar::update(Route *U, Route *V)
-{
-    update(U);
-    update(V);
 }
 
 void SwapStar::apply(Route *U, Route *V)

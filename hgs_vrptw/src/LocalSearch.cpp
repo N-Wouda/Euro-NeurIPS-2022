@@ -154,18 +154,16 @@ void LocalSearch::update(Route *U, Route *V)
     U->update();
     lastModified[U->idx] = nbMoves;
 
+    for (auto &op : routeOps)
+        op->update(U);
+
     if (U != V)
     {
         V->update();
         lastModified[V->idx] = nbMoves;
 
         for (auto &op : routeOps)
-            op->update(U, V);
-    }
-    else
-    {
-        for (auto &op : routeOps)
-            op->update(U);
+            op->update(V);
     }
 }
 

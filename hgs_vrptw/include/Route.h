@@ -48,7 +48,14 @@ class Route
     // Sets jump points, pointing to the current node from earlier route nodes.
     void installJumpPoints(Node const *node);
 
-    void setupNodes();
+    // Populates the nodes vector.
+    inline void setupNodes();
+
+    // Sets the angle and sector data.
+    inline void setupSector();
+
+    // Sets the tw member data, and the forward / backward time window data
+    inline void setupRouteTimeWindows();
 
 public:  // TODO make fields private
     Params const *params;

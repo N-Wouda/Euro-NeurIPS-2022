@@ -41,14 +41,11 @@ public:
     virtual void apply(Arg *U, Arg *V){};
 
     /**
-     * TODO
+     * Called when a route has been changed. Can be used to update caches, but
+     * the implementation should be fast: this is called every time something
+     * changes!
      */
     virtual void update(Route *U){};
-
-    /**
-     * TODO
-     */
-    virtual void update(Route *U, Route *V){};
 
     explicit LocalSearchOperator(Params const &params) : d_params(params) {}
 
