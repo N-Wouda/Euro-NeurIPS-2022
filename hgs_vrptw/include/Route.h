@@ -13,40 +13,16 @@
 
 class Route
 {
-    // These fields are used for some internal jump point calculations. Can be
-    // updated with new jump point offsets.
-    constexpr static std::array<size_t, 2> jumpPts = {4, 8};
-    constexpr static size_t jumpOffset = std::bit_width(4UL);
+    constexpr static size_t jumpDistance = 4;
 
-    struct JumpNode
-    {
-        Node const *from = nullptr;
-        Node const *to = nullptr;
-        TimeWindowSegment tw;
-
-        JumpNode() = default;
-
-        JumpNode(Node const *from, Node const *to)
-            : from(from), to(to), tw(Route::twBetween(from, to))
-        {
-        }
-
-        JumpNode(Node const *from, Node const *to, TimeWindowSegment tw)
-            : from(from), to(to), tw(tw)
-        {
-        }
-    };
-
-    // Vector of jump distance by nodes. Each element is a JumpNode, which lets
-    // us jump to the next node in the route a given jump distance away. Very
-    // useful for speeding up time window calculations along the route.
-    std::vector<std::vector<JumpNode>> jumps = {{}, {}};
+    // Vector of jumps. Each element is a time window segment of the route
+    // between the indexed node and the node jumpDistance ahead in the route.
+    // This lets us jump to the next node in the route a given jump distance
+    // away. Very useful for speeding up time window calculations.
+    std::vector<TimeWindowSegment> jumps = {};
 
     CircleSector sector;        // Circle sector of the route's clients
     std::vector<Node *> nodes;  // List of nodes (in order) in this solution.
-
-    // Sets jump points, pointing to the current node from earlier route nodes.
-    void installJumpPoints(Node const *node);
 
     // Populates the nodes vector.
     void setupNodes();

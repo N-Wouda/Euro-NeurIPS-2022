@@ -1,6 +1,5 @@
 #include "Route.h"
 
-#include <bit>
 #include <cmath>
 #include <ostream>
 
@@ -28,26 +27,16 @@ void Route::update()
             foundChange = true;
 
             if (pos > 0)  // change at pos, so everything before is the same
-            {
+            {             // and we can re-use cumulative calculations
                 load = nodes[pos - 1]->cumulatedLoad;
                 distance = nodes[pos - 1]->cumulatedDistance;
                 reverseDistance = nodes[pos - 1]->cumulatedReversalDistance;
             }
 
-            for (size_t jumpIdx = 0; jumpIdx != jumps.size(); ++jumpIdx)
-            {
-                if (pos <= jumpPts[jumpIdx])
-                {
-                    jumps[jumpIdx].clear();
-                    continue;
-                }
-
-                auto const jumpSize = jumpPts[jumpIdx];
-                size_t offset = pos - jumpSize;
-
-                auto &jumpList = jumps[jumpIdx];
-                jumpList.erase(jumpList.begin() + offset, jumpList.end());
-            }
+            if (pos <= jumpDistance)
+                jumps.clear();
+            else
+                jumps.erase(jumps.begin() + pos - jumpDistance, jumps.end());
         }
 
         if (!foundChange)
@@ -65,7 +54,18 @@ void Route::update()
         node->cumulatedReversalDistance = reverseDistance;
         node->twBefore = TWS::merge(p(node)->twBefore, node->tw);
 
-        installJumpPoints(node);
+        if (node->position > jumpDistance && nodes.size() > jumpDistance)
+        {
+            // We cannot yet use Route::twBetween here since the jumps are
+            // obviously not yet available.
+            auto *prev = nodes[pos - jumpDistance];
+            auto tws = prev->tw;
+
+            for (auto step = prev->position; step != node->position; ++step)
+                tws = TWS::merge(tws, nodes[step]->tw);
+
+            jumps.emplace_back(tws);
+        }
     }
 
     setupSector();
@@ -83,59 +83,21 @@ TimeWindowSegment Route::twBetween(Node const *start, Node const *end)
     if (end->isDepot())
         return start->twAfter;
 
-    Node const *node = start;
-    TimeWindowSegment data = start->tw;
-    auto const &jumps = start->route->jumps;
+    auto step = start->position;
+    auto data = start->tw;
 
-    while (node != end)
-    {
-        auto const dist = end->position - node->position;
+    auto const *route = start->route;
+    auto const &jumps = route->jumps;
 
-        if (dist >= jumpPts.front())  // can make at least one jump
-        {
-            auto const pos = std::bit_floor(std::min(dist, jumpPts.back()));
-            auto const &jumpList = jumps[std::bit_width(pos) - jumpOffset];
+    // Jump as much as we can...
+    for (; step + jumpDistance <= end->position; step += jumpDistance)
+        data = TWS::merge(data, jumps[step - 1]);
 
-            if (jumpList.size() >= node->position)  // jump list contains node
-            {
-                auto const &jumpNode = jumpList[node->position - 1];
-                data = TWS::merge(data, jumpNode.tw);
-                node = jumpNode.to;
-
-                continue;
-            }
-        }
-
-        node = node->next;
-        data = TWS::merge(data, node->tw);
-    }
+    // ...and do the rest in one-step updates.
+    for (; step != end->position; ++step)
+        data = TWS::merge(data, route->nodes[step]->tw);
 
     return data;
-}
-
-void Route::installJumpPoints(Node const *node)
-{
-    JumpNode const *toNextJump = nullptr;
-
-    for (size_t const position : jumpPts)
-        if (node->position > position && nodes.size() > position)
-        {
-            auto *prev = nodes[node->position - position - 1];
-            auto const idx_ = std::bit_width(position) - jumpOffset;
-
-            if (toNextJump)
-            {
-                // After installing earlier, part way jumps, part of the way
-                // of larger jumps is already known. We reuse that by computing
-                // the time window between (prev, part way) separately and then
-                // merging that with (part way, node) which we already know.
-                auto const prev2jump = Route::twBetween(prev, toNextJump->from);
-                auto const prev2node = TWS::merge(prev2jump, toNextJump->tw);
-                toNextJump = &jumps[idx_].emplace_back(prev, node, prev2node);
-            }
-            else
-                toNextJump = &jumps[idx_].emplace_back(prev, node);
-        }
 }
 
 void Route::setupNodes()
@@ -187,9 +149,12 @@ void Route::setupSector()
         }
     }
 
-    angleCenter = atan2(
-        cumulatedY / static_cast<double>(size()) - params->clients[0].y,
-        cumulatedX / static_cast<double>(size()) - params->clients[0].x);
+    // This computes a pseudo-angle that sorts roughly equivalently to the atan2
+    // angle, but is much faster to compute. See the following post for details:
+    // https://stackoverflow.com/a/16561333/4316405.
+    auto dy = cumulatedY / static_cast<double>(size()) - params->clients[0].y;
+    auto dx = cumulatedX / static_cast<double>(size()) - params->clients[0].x;
+    angleCenter = std::copysign(1. - dx / (std::fabs(dx) + std::fabs(dy)), dy);
 
     // Enforce minimum size of circle sector
     if (params->config.minCircleSectorSize > 0)
