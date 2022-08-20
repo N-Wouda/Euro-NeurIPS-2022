@@ -141,9 +141,9 @@ int SwapStar::evaluate(Route *routeU, Route *routeV)
             }
         }
 
-    // It is possible for positive delta costs to turn negative when we  do a
+    // It is possible for positive delta costs to turn negative when we do a
     // complete evaluation. But in practice that almost never happens, and is
-    // not worth considering.
+    // not worth spending time on.
     if (best.cost >= 0)
         return best.cost;
 
