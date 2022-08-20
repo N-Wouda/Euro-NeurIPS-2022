@@ -23,9 +23,6 @@ void Route::update()
     setupSector();
     setupRouteTimeWindows();
 
-    jumps[0].clear();
-    jumps[1].clear();
-
     bool foundChange = false;
 
     for (size_t pos = 0; pos != nodes.size(); ++pos)
@@ -43,16 +40,24 @@ void Route::update()
                 reverseDistance = nodes[pos - 1]->cumulatedReversalDistance;
             }
 
-            //            for (auto &jumpList : jumps)  // can reuse all jump
-            //            nodes up to pos
-            //            {
-            //                jumpList.erase(jumpList.begin() + pos,
-            //                jumpList.end()); jumpList.reserve(nodes.size());
-            //            }
+            for (size_t jumpIdx = 0; jumpIdx != jumps.size(); ++jumpIdx)
+            {
+                if (pos <= jumpPts[jumpIdx])
+                {
+                    jumps[jumpIdx].clear();
+                    continue;
+                }
+
+                auto const jumpSize = jumpPts[jumpIdx];
+                size_t offset = pos - jumpSize;
+
+                auto &jumpList = jumps[jumpIdx];
+                jumpList.erase(jumpList.begin() + offset, jumpList.end());
+            }
         }
 
-        //        if (!foundChange)
-        //            continue;
+        if (!foundChange)
+            continue;
 
         load += params->clients[node->client].demand;
         distance += params->dist(p(node)->client, node->client);
