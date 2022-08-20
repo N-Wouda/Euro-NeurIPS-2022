@@ -87,6 +87,7 @@ PYBIND11_MODULE(hgspy, m)
                       size_t,
                       int,
                       int,
+                      size_t,
                       int,
                       int>(),
              py::arg("seed") = 0,
@@ -111,6 +112,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("nbGranular") = 40,
              py::arg("weightWaitTime") = 2,
              py::arg("weightTimeWarp") = 10,
+             py::arg("intensificationProbability") = 35,
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
              py::arg("minCircleSectorSizeDegrees") = 15)
         .def_readonly("seed", &Config::seed)

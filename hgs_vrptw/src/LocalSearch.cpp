@@ -27,6 +27,9 @@ void LocalSearch::search()
     if (nodeOps.empty() && routeOps.empty())
         throw std::runtime_error("No known node or route operators.");
 
+    bool const intensify
+        = rng.randint(100) < params.config.intensificationProbability;
+
     // Caches the last time node or routes were tested for modification (uses
     // nbMoves to track this). The lastModified field, in contrast, track when
     // a route was last *actually* modified.
@@ -81,8 +84,9 @@ void LocalSearch::search()
             }
         }
 
-        // Route operators are evaluated only after node operators get stuck.
-        if (searchCompleted)
+        // Route operators are evaluated only after node operators get stuck,
+        // and only sometimes when we want to intensify the search.
+        if (searchCompleted && intensify)
             for (int const rU : orderRoutes)
             {
                 auto &U = routes[rU];

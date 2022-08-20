@@ -77,6 +77,9 @@ public:
                     = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-repairBooster")
                 config.repairBooster = static_cast<size_t>(atoi(argv[i + 1]));
+            else if (std::string(argv[i]) == "-intensificationProbability")
+                config.intensificationProbability
+                    = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-diversityWeight")
                 config.diversityWeight = atof(argv[i + 1]);
             else if (std::string(argv[i])
