@@ -108,11 +108,11 @@ int SwapStar::evaluate(Route *routeU, Route *routeV)
             int const vDemand = d_params.clients[V->client].demand;
             int const loadDiff = uDemand - vDemand;
 
-            deltaCost += d_penalties->load(routeU->load - loadDiff);
-            deltaCost -= d_penalties->load(routeU->load);
+            deltaCost += d_penalties->load(routeU->load() - loadDiff);
+            deltaCost -= d_penalties->load(routeU->load());
 
-            deltaCost += d_penalties->load(routeV->load + loadDiff);
-            deltaCost -= d_penalties->load(routeV->load);
+            deltaCost += d_penalties->load(routeV->load() + loadDiff);
+            deltaCost -= d_penalties->load(routeV->load());
 
             deltaCost += removalCosts(routeU->idx, U->client);
             deltaCost += removalCosts(routeV->idx, V->client);
@@ -246,11 +246,11 @@ int SwapStar::evaluate(Route *routeU, Route *routeV)
     auto const uDemand = d_params.clients[best.U->client].demand;
     auto const vDemand = d_params.clients[best.V->client].demand;
 
-    deltaCost += d_penalties->load(routeU->load - uDemand + vDemand);
-    deltaCost -= d_penalties->load(routeU->load);
+    deltaCost += d_penalties->load(routeU->load() - uDemand + vDemand);
+    deltaCost -= d_penalties->load(routeU->load());
 
-    deltaCost += d_penalties->load(routeV->load + uDemand - vDemand);
-    deltaCost -= d_penalties->load(routeV->load);
+    deltaCost += d_penalties->load(routeV->load() + uDemand - vDemand);
+    deltaCost -= d_penalties->load(routeV->load());
 
     return deltaCost;
 }

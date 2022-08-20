@@ -49,20 +49,19 @@ class Route
     void installJumpPoints(Node const *node);
 
     // Populates the nodes vector.
-    inline void setupNodes();
+    void setupNodes();
 
     // Sets the angle and sector data.
-    inline void setupSector();
+    void setupSector();
 
     // Sets the tw member data, and the forward / backward time window data
-    inline void setupRouteTimeWindows();
+    void setupRouteTimeWindows();
 
 public:  // TODO make fields private
     Params const *params;
 
     int idx;               // Route index
     Node *depot;           // Pointer to the associated depot
-    int load;              // Total load on the route
     TimeWindowSegment tw;  // Time window data of the route
     double angleCenter;    // Angle of the barycenter of the route
 
@@ -79,7 +78,7 @@ public:  // TODO make fields private
      */
     [[nodiscard]] bool hasExcessCapacity() const
     {
-        return load > params->vehicleCapacity;
+        return load() > params->vehicleCapacity;
     }
 
     /**
@@ -87,6 +86,15 @@ public:  // TODO make fields private
      */
     [[nodiscard]] bool hasTimeWarp() const { return tw.totalTimeWarp() > 0; }
 
+    /**
+     * Returns total load on this route.
+     */
+    [[nodiscard]] int load() const { return nodes.back()->cumulatedLoad; }
+
+    /**
+     * Tests if this route overlaps the other route, that is, whether their
+     * circle sectors overlap with a given tolerance.
+     */
     [[nodiscard]] bool overlapsWith(Route const &other) const
     {
         return CircleSector::overlap(

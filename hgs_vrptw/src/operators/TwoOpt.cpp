@@ -63,11 +63,11 @@ int TwoOpt::evalBetweenRoutes(Node *U, Node *V)
 
     int const deltaLoad = U->cumulatedLoad - V->cumulatedLoad;
 
-    deltaCost += d_penalties->load(U->route->load - deltaLoad);
-    deltaCost -= d_penalties->load(U->route->load);
+    deltaCost += d_penalties->load(U->route->load() - deltaLoad);
+    deltaCost -= d_penalties->load(U->route->load());
 
-    deltaCost += d_penalties->load(V->route->load + deltaLoad);
-    deltaCost -= d_penalties->load(V->route->load);
+    deltaCost += d_penalties->load(V->route->load() + deltaLoad);
+    deltaCost -= d_penalties->load(V->route->load());
 
     return deltaCost;
 }

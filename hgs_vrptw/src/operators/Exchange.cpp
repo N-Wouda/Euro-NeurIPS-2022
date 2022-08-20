@@ -88,14 +88,14 @@ int Exchange<N, M>::evalRelocateMove(Node *U, Node *V) const
 
         auto const loadDiff = Route::loadBetween(U, endU);
 
-        deltaCost += d_penalties->load(U->route->load - loadDiff);
-        deltaCost -= d_penalties->load(U->route->load);
+        deltaCost += d_penalties->load(U->route->load() - loadDiff);
+        deltaCost -= d_penalties->load(U->route->load());
 
         if (deltaCost >= 0)    // if delta cost of just U's route is not enough
             return deltaCost;  // even without V, the move will never be good
 
-        deltaCost += d_penalties->load(V->route->load + loadDiff);
-        deltaCost -= d_penalties->load(V->route->load);
+        deltaCost += d_penalties->load(V->route->load() + loadDiff);
+        deltaCost -= d_penalties->load(V->route->load());
 
         auto vTWS
             = TWS::merge(V->twBefore, Route::twBetween(U, endU), n(V)->twAfter);
@@ -179,11 +179,11 @@ int Exchange<N, M>::evalSwapMove(Node *U, Node *V) const
         auto const loadV = Route::loadBetween(V, endV);
         auto const loadDiff = loadU - loadV;
 
-        deltaCost += d_penalties->load(U->route->load - loadDiff);
-        deltaCost -= d_penalties->load(U->route->load);
+        deltaCost += d_penalties->load(U->route->load() - loadDiff);
+        deltaCost -= d_penalties->load(U->route->load());
 
-        deltaCost += d_penalties->load(V->route->load + loadDiff);
-        deltaCost -= d_penalties->load(V->route->load);
+        deltaCost += d_penalties->load(V->route->load() + loadDiff);
+        deltaCost -= d_penalties->load(V->route->load());
     }
     else  // within same route
     {

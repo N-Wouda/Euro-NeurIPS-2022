@@ -12,17 +12,11 @@ using TWS = TimeWindowSegment;
 void Route::update()
 {
     auto const oldNodes = nodes;
+    setupNodes();
 
-    load = 0;
-    nodes.clear();
-
+    int load = 0;
     int distance = 0;
     int reverseDistance = 0;
-
-    setupNodes();
-    setupSector();
-    setupRouteTimeWindows();
-
     bool foundChange = false;
 
     for (size_t pos = 0; pos != nodes.size(); ++pos)
@@ -69,9 +63,13 @@ void Route::update()
         node->cumulatedLoad = load;
         node->cumulatedDistance = distance;
         node->cumulatedReversalDistance = reverseDistance;
+        node->twBefore = TWS::merge(p(node)->twBefore, node->tw);
 
         installJumpPoints(node);
     }
+
+    setupSector();
+    setupRouteTimeWindows();
 }
 
 TimeWindowSegment Route::twBetween(Node const *start, Node const *end)
@@ -142,6 +140,7 @@ void Route::installJumpPoints(Node const *node)
 
 void Route::setupNodes()
 {
+    nodes.clear();
     auto *node = depot;
 
     do
@@ -153,9 +152,6 @@ void Route::setupNodes()
 
 void Route::setupRouteTimeWindows()
 {
-    for (auto *node : nodes)  // backward time window data
-        node->twBefore = TWS::merge(p(node)->twBefore, node->tw);
-
     auto *node = nodes.back();
     tw = node->twBefore;  // whole route time window data
 
