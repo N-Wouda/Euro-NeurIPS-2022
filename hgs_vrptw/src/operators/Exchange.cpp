@@ -26,17 +26,13 @@ std::pair<Node *, Node *> Exchange<N, M>::getEnds(Node *U, Node *V) const
 }
 
 template <size_t N, size_t M>
-bool Exchange<N, M>::isDepotInSegments(Node *U, Node *V) const
+bool Exchange<N, M>::containsDepot(Node *node, size_t segLength) const
 {
-    auto eval = [&](Node *node, size_t chainLength) {
-        for (size_t count = 0; count != chainLength; ++count, node = n(node))
-            if (node->isDepot())
-                return true;
+    for (size_t count = 0; count != segLength; ++count, node = n(node))
+        if (node->isDepot())
+            return true;
 
-        return false;
-    };
-
-    return eval(U, N) || eval(V, M);
+    return false;
 }
 
 template <size_t N, size_t M>
@@ -61,9 +57,6 @@ bool Exchange<N, M>::adjacent(Node *U, Node *V) const
 template <size_t N, size_t M>
 int Exchange<N, M>::evalRelocateMove(Node *U, Node *V) const
 {
-    if (isDepotInSegments(U, V) || overlap(U, V) || U == n(V))
-        return 0;
-
     auto const [endU, _] = getEnds(U, V);
 
     int const current = Route::distBetween(p(U), n(endU))
@@ -105,7 +98,9 @@ int Exchange<N, M>::evalRelocateMove(Node *U, Node *V) const
     }
     else  // within same route
     {
-        if (!U->route->hasTimeWarp() && deltaCost >= 0)
+        auto const *route = U->route;
+
+        if (!route->hasTimeWarp() && deltaCost >= 0)
             return deltaCost;
 
         if (U->position < V->position)
@@ -127,7 +122,7 @@ int Exchange<N, M>::evalRelocateMove(Node *U, Node *V) const
             deltaCost += d_penalties->timeWarp(tws);
         }
 
-        deltaCost -= d_penalties->timeWarp(U->route->tw);
+        deltaCost -= d_penalties->timeWarp(route->tw);
     }
 
     return deltaCost;
@@ -136,13 +131,6 @@ int Exchange<N, M>::evalRelocateMove(Node *U, Node *V) const
 template <size_t N, size_t M>
 int Exchange<N, M>::evalSwapMove(Node *U, Node *V) const
 {
-    if constexpr (N == M)  // symmetric, so only have to evaluate this once
-        if (U->client >= V->client)
-            return 0;
-
-    if (isDepotInSegments(U, V) || overlap(U, V) || adjacent(U, V))
-        return 0;
-
     auto const [endU, endV] = getEnds(U, V);
 
     int const current
@@ -219,10 +207,27 @@ int Exchange<N, M>::evalSwapMove(Node *U, Node *V) const
 
 template <size_t N, size_t M> int Exchange<N, M>::evaluate(Node *U, Node *V)
 {
+    if (containsDepot(U, N) || containsDepot(V, M) || overlap(U, V))
+        return 0;
+
     if constexpr (M == 0)  // special case where nothing in V is moved
+    {
+        if (U == n(V))
+            return 0;
+
         return evalRelocateMove(U, V);
+    }
     else
+    {
+        if constexpr (N == M)  // symmetric, so only have to evaluate this once
+            if (U->client >= V->client)
+                return 0;
+
+        if (adjacent(U, V))
+            return 0;
+
         return evalSwapMove(U, V);
+    }
 }
 
 template <size_t N, size_t M> void Exchange<N, M>::apply(Node *U, Node *V)

@@ -46,7 +46,9 @@ int MoveTwoClientsReversed::evaluate(Node *U, Node *V)
     }
     else  // within same route
     {
-        if (!U->route->hasTimeWarp() && deltaCost >= 0)
+        auto const *route = U->route;
+
+        if (!route->hasTimeWarp() && deltaCost >= 0)
             return deltaCost;
 
         if (U->position < V->position)
@@ -70,7 +72,7 @@ int MoveTwoClientsReversed::evaluate(Node *U, Node *V)
             deltaCost += d_penalties->timeWarp(uTWS);
         }
 
-        deltaCost -= d_penalties->timeWarp(U->route->tw);
+        deltaCost -= d_penalties->timeWarp(route->tw);
     }
 
     return deltaCost;

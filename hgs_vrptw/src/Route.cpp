@@ -56,15 +56,15 @@ void Route::update()
 
         if (node->position > jumpDistance && nodes.size() > jumpDistance)
         {
-            // We cannot yet use Route::twBetween here since the jumps are
-            // obviously not yet available.
+            // We cannot use Route::twBetween here since the jumps are obviously
+            // not yet available.
             auto *prev = nodes[pos - jumpDistance];
-            auto tws = prev->tw;
+            auto jump = prev->tw;
 
             for (auto step = prev->position; step != node->position; ++step)
-                tws = TWS::merge(tws, nodes[step]->tw);
+                jump = TWS::merge(jump, nodes[step]->tw);
 
-            jumps.emplace_back(tws);
+            jumps.emplace_back(jump);
         }
     }
 
@@ -79,9 +79,6 @@ TimeWindowSegment Route::twBetween(Node const *start, Node const *end)
 
     if (start->isDepot())
         return end->twBefore;
-
-    if (end->isDepot())
-        return start->twAfter;
 
     auto step = start->position;
     auto data = start->tw;
