@@ -3,10 +3,10 @@
 #include "Route.h"
 #include "TimeWindowSegment.h"
 
+using TWS = TimeWindowSegment;
+
 int MoveTwoClientsReversed::evaluate(Node *U, Node *V)
 {
-    using TWS = TimeWindowSegment;
-
     if (U == n(V) || n(U) == V || n(U)->isDepot())
         return 0;
 

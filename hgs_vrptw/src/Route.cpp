@@ -3,10 +3,7 @@
 #include <cmath>
 #include <ostream>
 
-namespace
-{
 using TWS = TimeWindowSegment;
-}
 
 void Route::update()
 {

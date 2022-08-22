@@ -3,10 +3,7 @@
 #include "Route.h"
 #include "TimeWindowSegment.h"
 
-namespace
-{
 using TWS = TimeWindowSegment;
-}
 
 template <size_t N, size_t M>
 std::pair<Node *, Node *> Exchange<N, M>::getEnds(Node *U, Node *V) const

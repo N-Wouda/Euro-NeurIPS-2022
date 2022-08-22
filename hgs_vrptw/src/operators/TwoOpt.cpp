@@ -3,10 +3,7 @@
 #include "Route.h"
 #include "TimeWindowSegment.h"
 
-namespace
-{
 using TWS = TimeWindowSegment;
-}
 
 int TwoOpt::evalWithinRoute(Node *U, Node *V)
 {

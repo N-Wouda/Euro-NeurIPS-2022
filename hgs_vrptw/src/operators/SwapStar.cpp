@@ -1,9 +1,6 @@
 #include "SwapStar.h"
 
-namespace
-{
 using TWS = TimeWindowSegment;
-}
 
 void SwapStar::updateRemovalCosts(Route *R1)
 {
