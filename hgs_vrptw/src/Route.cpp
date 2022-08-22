@@ -72,27 +72,20 @@ void Route::update()
     setupRouteTimeWindows();
 }
 
-TimeWindowSegment Route::twBetween(Node const *start, Node const *end)
+TimeWindowSegment Route::twBetween(size_t start, size_t end) const
 {
-    assert(start->route == end->route);
-    assert(start->position <= end->position);
+    assert(start <= end);
 
-    if (start->isDepot())
-        return end->twBefore;
-
-    auto step = start->position;
-    auto data = start->tw;
-
-    auto const *route = start->route;
-    auto const &jumps = route->jumps;
+    auto data = nodes[start - 1]->tw;
+    auto nbJumps = (end - start) / jumpDistance;
 
     // Jump as much as we can...
-    for (; step + jumpDistance <= end->position; step += jumpDistance)
-        data = TWS::merge(data, jumps[step - 1]);
+    for (size_t step = 0; step != nbJumps; ++step)
+        data = TWS::merge(data, jumps[start + step * jumpDistance - 1]);
 
     // ...and do the rest in one-step updates.
-    for (; step != end->position; ++step)
-        data = TWS::merge(data, route->nodes[step]->tw);
+    for (size_t step = start + nbJumps * jumpDistance; step != end; ++step)
+        data = TWS::merge(data, nodes[step]->tw);
 
     return data;
 }

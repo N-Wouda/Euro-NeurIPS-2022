@@ -85,19 +85,19 @@ public:  // TODO make fields private
     }
 
     /**
-     * Calculates time window data for segment [start, end] in the same route.
+     * Calculates time window data for segment [start, end].
      */
-    static TimeWindowSegment twBetween(Node const *start, Node const *end);
+    [[nodiscard]] TimeWindowSegment twBetween(size_t start, size_t end) const;
 
     /**
-     * Calculates the distance for segment [start, end] in the same route.
+     * Calculates the distance for segment [start, end].
      */
-    static inline int distBetween(Node const *start, Node const *end);
+    [[nodiscard]] inline int distBetween(size_t start, size_t end) const;
 
     /**
-     * Calculates the load for segment [start, end] in the same route.
+     * Calculates the load for segment [start, end].
      */
-    static inline int loadBetween(Node const *start, Node const *end);
+    [[nodiscard]] inline int loadBetween(size_t start, size_t end) const;
 
     /**
      * Updates this route. To be called after swapping nodes/changing the
@@ -106,23 +106,30 @@ public:  // TODO make fields private
     void update();
 };
 
-int Route::distBetween(Node const *start, Node const *end)
+int Route::distBetween(size_t start, size_t end) const
 {
-    assert(start->route == end->route);
-    assert(start->position <= end->position);
-    assert(end->cumulatedDistance >= start->cumulatedDistance);
+    assert(start <= end && end <= nodes.size());
 
-    return end->cumulatedDistance - start->cumulatedDistance;
+    auto const startDist = start == 0 ? 0 : nodes[start - 1]->cumulatedDistance;
+    auto const endDist = nodes[end - 1]->cumulatedDistance;
+
+    assert(startDist <= endDist);
+
+    return endDist - startDist;
 }
 
-int Route::loadBetween(Node const *start, Node const *end)
+int Route::loadBetween(size_t start, size_t end) const
 {
-    assert(start->route == end->route);
-    assert(start->position <= end->position);
-    assert(end->cumulatedLoad >= start->cumulatedLoad);
+    assert(start <= end && end <= nodes.size());
 
-    auto const atStart = start->params->clients[start->client].demand;
-    return end->cumulatedLoad - start->cumulatedLoad + atStart;
+    auto const *startNode = start == 0 ? depot : nodes[start - 1];
+    auto const atStart = params->clients[startNode->client].demand;
+    auto const startLoad = startNode->cumulatedLoad;
+    auto const endLoad = nodes[end - 1]->cumulatedLoad;
+
+    assert(startLoad <= endLoad);
+
+    return endLoad - startLoad + atStart;
 }
 
 // Outputs a route into a given ostream in CVRPLib format

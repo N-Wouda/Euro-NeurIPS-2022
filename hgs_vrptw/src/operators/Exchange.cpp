@@ -58,12 +58,14 @@ template <size_t N, size_t M>
 int Exchange<N, M>::evalRelocateMove(Node *U, Node *V) const
 {
     auto const [endU, _] = getEnds(U, V);
+    auto const posU = U->position;
+    auto const posV = V->position;
 
-    int const current = Route::distBetween(p(U), n(endU))
+    int const current = U->route->distBetween(posU - 1, posU + N)
                         + d_params.dist(V->client, n(V)->client);
 
     int const proposed = d_params.dist(V->client, U->client)
-                         + Route::distBetween(U, endU)
+                         + U->route->distBetween(posU, posU + N - 1)
                          + d_params.dist(endU->client, n(V)->client)
                          + d_params.dist(p(U)->client, n(endU)->client);
 
@@ -79,7 +81,7 @@ int Exchange<N, M>::evalRelocateMove(Node *U, Node *V) const
         deltaCost += d_penalties->timeWarp(uTWS);
         deltaCost -= d_penalties->timeWarp(U->route->tw);
 
-        auto const loadDiff = Route::loadBetween(U, endU);
+        auto const loadDiff = U->route->loadBetween(posU, posU + N - 1);
 
         deltaCost += d_penalties->load(U->route->load() - loadDiff);
         deltaCost -= d_penalties->load(U->route->load());
@@ -90,8 +92,9 @@ int Exchange<N, M>::evalRelocateMove(Node *U, Node *V) const
         deltaCost += d_penalties->load(V->route->load() + loadDiff);
         deltaCost -= d_penalties->load(V->route->load());
 
-        auto vTWS
-            = TWS::merge(V->twBefore, Route::twBetween(U, endU), n(V)->twAfter);
+        auto vTWS = TWS::merge(V->twBefore,
+                               U->route->twBetween(posU, posU + N - 1),
+                               n(V)->twAfter);
 
         deltaCost += d_penalties->timeWarp(vTWS);
         deltaCost -= d_penalties->timeWarp(V->route->tw);
@@ -103,11 +106,11 @@ int Exchange<N, M>::evalRelocateMove(Node *U, Node *V) const
         if (!route->hasTimeWarp() && deltaCost >= 0)
             return deltaCost;
 
-        if (U->position < V->position)
+        if (posU < posV)
         {
             auto const tws = TWS::merge(p(U)->twBefore,
-                                        Route::twBetween(n(endU), V),
-                                        Route::twBetween(U, endU),
+                                        route->twBetween(posU + N, posV),
+                                        route->twBetween(posU, posU + N - 1),
                                         n(V)->twAfter);
 
             deltaCost += d_penalties->timeWarp(tws);
@@ -115,8 +118,8 @@ int Exchange<N, M>::evalRelocateMove(Node *U, Node *V) const
         else
         {
             auto const tws = TWS::merge(V->twBefore,
-                                        Route::twBetween(U, endU),
-                                        Route::twBetween(n(V), p(U)),
+                                        route->twBetween(posU, posU + N - 1),
+                                        route->twBetween(posV + 1, posU - 1),
                                         n(endU)->twAfter);
 
             deltaCost += d_penalties->timeWarp(tws);
@@ -132,39 +135,46 @@ template <size_t N, size_t M>
 int Exchange<N, M>::evalSwapMove(Node *U, Node *V) const
 {
     auto const [endU, endV] = getEnds(U, V);
+    auto const posU = U->position;
+    auto const posV = V->position;
 
-    int const current
-        = Route::distBetween(p(U), n(endU)) + Route::distBetween(p(V), n(endV));
+    int const current = U->route->distBetween(posU - 1, posU + N)
+                        + V->route->distBetween(posV - 1, posV + M);
 
     int const proposed
         //   p(U) -> V -> ... -> endV -> n(endU)
         // + p(V) -> U -> ... -> endU -> n(endV)
-        = d_params.dist(p(U)->client, V->client) + Route::distBetween(V, endV)
+        = d_params.dist(p(U)->client, V->client)
+          + V->route->distBetween(posV, posV + M - 1)
           + d_params.dist(endV->client, n(endU)->client)
-          + d_params.dist(p(V)->client, U->client) + Route::distBetween(U, endU)
+          + d_params.dist(p(V)->client, U->client)
+          + U->route->distBetween(posU, posU + N - 1)
           + d_params.dist(endU->client, n(endV)->client);
 
     int deltaCost = proposed - current;
 
     if (U->route != V->route)
     {
+
         if (U->route->isFeasible() && V->route->isFeasible() && deltaCost >= 0)
             return deltaCost;
 
-        auto uTWS = TWS::merge(
-            p(U)->twBefore, Route::twBetween(V, endV), n(endU)->twAfter);
+        auto uTWS = TWS::merge(p(U)->twBefore,
+                               V->route->twBetween(posV, posV + M - 1),
+                               n(endU)->twAfter);
 
         deltaCost += d_penalties->timeWarp(uTWS);
         deltaCost -= d_penalties->timeWarp(U->route->tw);
 
-        auto vTWS = TWS::merge(
-            p(V)->twBefore, Route::twBetween(U, endU), n(endV)->twAfter);
+        auto vTWS = TWS::merge(p(V)->twBefore,
+                               U->route->twBetween(posU, posU + N - 1),
+                               n(endV)->twAfter);
 
         deltaCost += d_penalties->timeWarp(vTWS);
         deltaCost -= d_penalties->timeWarp(V->route->tw);
 
-        auto const loadU = Route::loadBetween(U, endU);
-        auto const loadV = Route::loadBetween(V, endV);
+        auto const loadU = U->route->loadBetween(posU, posU + N - 1);
+        auto const loadV = V->route->loadBetween(posV, posV + M - 1);
         auto const loadDiff = loadU - loadV;
 
         deltaCost += d_penalties->load(U->route->load() - loadDiff);
@@ -175,15 +185,17 @@ int Exchange<N, M>::evalSwapMove(Node *U, Node *V) const
     }
     else  // within same route
     {
-        if (!U->route->hasTimeWarp() && deltaCost >= 0)
+        auto const *route = U->route;
+
+        if (!route->hasTimeWarp() && deltaCost >= 0)
             return deltaCost;
 
-        if (U->position < V->position)
+        if (posU < posV)
         {
             auto const tws = TWS::merge(p(U)->twBefore,
-                                        Route::twBetween(V, endV),
-                                        Route::twBetween(n(endU), p(V)),
-                                        Route::twBetween(U, endU),
+                                        route->twBetween(posV, posV + M - 1),
+                                        route->twBetween(posU + N, posV - 1),
+                                        route->twBetween(posU, posU + N - 1),
                                         n(endV)->twAfter);
 
             deltaCost += d_penalties->timeWarp(tws);
@@ -191,9 +203,9 @@ int Exchange<N, M>::evalSwapMove(Node *U, Node *V) const
         else
         {
             auto const tws = TWS::merge(p(V)->twBefore,
-                                        Route::twBetween(U, endU),
-                                        Route::twBetween(n(endV), p(U)),
-                                        Route::twBetween(V, endV),
+                                        route->twBetween(posU, posU + N - 1),
+                                        route->twBetween(posV + M, posU - 1),
+                                        route->twBetween(posV, posV + M - 1),
                                         n(endU)->twAfter);
 
             deltaCost += d_penalties->timeWarp(tws);

@@ -196,19 +196,21 @@ int SwapStar::evaluate(Route *routeU, Route *routeV)
     }
     else if (best.VAfter->position < best.U->position)
     {
-        auto uTWS = TWS::merge(best.VAfter->twBefore,
-                               best.V->tw,
-                               Route::twBetween(n(best.VAfter), p(best.U)),
-                               n(best.U)->twAfter);
+        auto uTWS = TWS::merge(
+            best.VAfter->twBefore,
+            best.V->tw,
+            routeU->twBetween(best.VAfter->position + 1, best.U->position - 1),
+            n(best.U)->twAfter);
 
         deltaCost += d_penalties->timeWarp(uTWS);
     }
     else
     {
-        auto uTWS = TWS::merge(p(best.U)->twBefore,
-                               Route::twBetween(n(best.U), best.VAfter),
-                               best.V->tw,
-                               n(best.VAfter)->twAfter);
+        auto uTWS = TWS::merge(
+            p(best.U)->twBefore,
+            routeU->twBetween(best.U->position + 1, best.VAfter->position),
+            best.V->tw,
+            n(best.VAfter)->twAfter);
 
         deltaCost += d_penalties->timeWarp(uTWS);
     }
@@ -223,19 +225,21 @@ int SwapStar::evaluate(Route *routeU, Route *routeV)
     }
     else if (best.UAfter->position < best.V->position)
     {
-        auto vTWS = TWS::merge(best.UAfter->twBefore,
-                               best.U->tw,
-                               Route::twBetween(n(best.UAfter), p(best.V)),
-                               n(best.V)->twAfter);
+        auto vTWS = TWS::merge(
+            best.UAfter->twBefore,
+            best.U->tw,
+            routeV->twBetween(best.UAfter->position + 1, best.V->position - 1),
+            n(best.V)->twAfter);
 
         deltaCost += d_penalties->timeWarp(vTWS);
     }
     else
     {
-        auto vTWS = TWS::merge(p(best.V)->twBefore,
-                               Route::twBetween(n(best.V), best.UAfter),
-                               best.U->tw,
-                               n(best.UAfter)->twAfter);
+        auto vTWS = TWS::merge(
+            p(best.V)->twBefore,
+            routeV->twBetween(best.V->position + 1, best.UAfter->position),
+            best.U->tw,
+            n(best.UAfter)->twAfter);
 
         deltaCost += d_penalties->timeWarp(vTWS);
     }
