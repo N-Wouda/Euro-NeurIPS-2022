@@ -69,9 +69,10 @@ void SwapStar::init(Individual const &indiv, Penalties const *penalties)
 {
     LocalSearchOperator<Route>::init(indiv, penalties);
 
-    cache.clear();
-    updated = std::vector<bool>(d_params.nbVehicles, true);
-    removalCosts.clear();
+    cache.reset();
+    removalCosts.reset();
+
+    std::fill(updated.begin(), updated.end(), true);
 }
 
 int SwapStar::evaluate(Route *routeU, Route *routeV)
