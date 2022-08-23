@@ -11,13 +11,15 @@
  */
 template <size_t N, size_t M> class Exchange : public LocalSearchOperator<Node>
 {
+    using LocalSearchOperator::LocalSearchOperator;
+
     static_assert(N >= M && N > 0, "N < M or N == 0 does not make sense");
 
     // Returns the last nodes to be moved in the segments of U and V
-    std::pair<Node *, Node *> getEnds(Node *U, Node *V) const;
+    inline std::pair<Node *, Node *> getEnds(Node *U, Node *V) const;
 
-    // Tests if the to-be-moved segments of U or V contain the depot
-    inline bool isDepotInSegments(Node *U, Node *V) const;
+    // Tests if the segment starting at node of given length contains the depot
+    inline bool containsDepot(Node *node, size_t segLength) const;
 
     // Tests if the segments of U and V overlap in the same route
     inline bool overlap(Node *U, Node *V) const;
@@ -26,13 +28,13 @@ template <size_t N, size_t M> class Exchange : public LocalSearchOperator<Node>
     inline bool adjacent(Node *U, Node *V) const;
 
     // Special case that's applied when M == 0
-    int testRelocateMove(Node *U, Node *V) const;
+    int evalRelocateMove(Node *U, Node *V) const;
 
     // Applied when M != 0
-    int testSwapMove(Node *U, Node *V) const;
+    int evalSwapMove(Node *U, Node *V) const;
 
 public:
-    int test(Node *U, Node *V) override;
+    int evaluate(Node *U, Node *V) override;
 
     void apply(Node *U, Node *V) override;
 };

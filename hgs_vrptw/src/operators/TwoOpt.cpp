@@ -3,23 +3,18 @@
 #include "Route.h"
 #include "TimeWindowSegment.h"
 
-namespace
-{
 using TWS = TimeWindowSegment;
-}
 
-int TwoOpt::withinRouteTest(Node *U, Node *V)
+int TwoOpt::evalWithinRoute(Node *U, Node *V)
 {
-    auto const &params = *U->params;
-
     if (U->position + 1 >= V->position)
         return 0;
 
-    int deltaCost = params.dist(U->client, V->client)
-                    + params.dist(n(U)->client, n(V)->client)
+    int deltaCost = d_params.dist(U->client, V->client)
+                    + d_params.dist(n(U)->client, n(V)->client)
                     + V->cumulatedReversalDistance
-                    - params.dist(U->client, n(U)->client)
-                    - params.dist(V->client, n(V)->client)
+                    - d_params.dist(U->client, n(U)->client)
+                    - d_params.dist(V->client, n(V)->client)
                     - n(U)->cumulatedReversalDistance;
 
     if (!U->route->hasTimeWarp() && deltaCost >= 0)
@@ -41,14 +36,12 @@ int TwoOpt::withinRouteTest(Node *U, Node *V)
     return deltaCost;
 }
 
-int TwoOpt::betweenRouteTest(Node *U, Node *V)
+int TwoOpt::evalBetweenRoutes(Node *U, Node *V)
 {
-    auto const &params = *U->params;
-
-    int const current = params.dist(U->client, n(U)->client)
-                        + params.dist(V->client, n(V)->client);
-    int const proposed = params.dist(U->client, n(V)->client)
-                         + params.dist(V->client, n(U)->client);
+    int const current = d_params.dist(U->client, n(U)->client)
+                        + d_params.dist(V->client, n(V)->client);
+    int const proposed = d_params.dist(U->client, n(V)->client)
+                         + d_params.dist(V->client, n(U)->client);
 
     int deltaCost = proposed - current;
 
@@ -67,16 +60,16 @@ int TwoOpt::betweenRouteTest(Node *U, Node *V)
 
     int const deltaLoad = U->cumulatedLoad - V->cumulatedLoad;
 
-    deltaCost += d_penalties->load(U->route->load - deltaLoad);
-    deltaCost -= d_penalties->load(U->route->load);
+    deltaCost += d_penalties->load(U->route->load() - deltaLoad);
+    deltaCost -= d_penalties->load(U->route->load());
 
-    deltaCost += d_penalties->load(V->route->load + deltaLoad);
-    deltaCost -= d_penalties->load(V->route->load);
+    deltaCost += d_penalties->load(V->route->load() + deltaLoad);
+    deltaCost -= d_penalties->load(V->route->load());
 
     return deltaCost;
 }
 
-void TwoOpt::withinRouteApply(Node *U, Node *V)
+void TwoOpt::applyWithinRoute(Node *U, Node *V)
 {
     auto *itRoute = V;
     auto *insertionPoint = U;
@@ -91,7 +84,7 @@ void TwoOpt::withinRouteApply(Node *U, Node *V)
     }
 }
 
-void TwoOpt::betweenRouteApply(Node *U, Node *V)
+void TwoOpt::applyBetweenRoutes(Node *U, Node *V)
 {
     auto *itRouteU = n(U);
     auto *itRouteV = n(V);
@@ -115,19 +108,19 @@ void TwoOpt::betweenRouteApply(Node *U, Node *V)
     }
 }
 
-int TwoOpt::test(Node *U, Node *V)
+int TwoOpt::evaluate(Node *U, Node *V)
 {
     if (U->route->idx > V->route->idx)  // will be tackled in a later iteration
         return 0;                       // - no need to process here already
 
-    return U->route->idx == V->route->idx ? withinRouteTest(U, V)
-                                          : betweenRouteTest(U, V);
+    return U->route == V->route ? evalWithinRoute(U, V)
+                                : evalBetweenRoutes(U, V);
 }
 
 void TwoOpt::apply(Node *U, Node *V)
 {
     if (U->route == V->route)
-        withinRouteApply(U, V);
+        applyWithinRoute(U, V);
     else
-        betweenRouteApply(U, V);
+        applyBetweenRoutes(U, V);
 }

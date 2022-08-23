@@ -48,6 +48,9 @@ class LocalSearch
 
     [[nodiscard]] bool applyRouteOperators(Route *U, Route *V);
 
+    // Updates solution state after an improving local search move
+    void update(Route *U, Route *V);
+
     // Performs the actual local search procedure
     void search();
 

@@ -3,10 +3,7 @@
 #include "Route.h"
 #include "TimeWindowSegment.h"
 
-namespace
-{
 using TWS = TimeWindowSegment;
-}
 
 template <size_t N, size_t M>
 std::pair<Node *, Node *> Exchange<N, M>::getEnds(Node *U, Node *V) const
@@ -26,17 +23,13 @@ std::pair<Node *, Node *> Exchange<N, M>::getEnds(Node *U, Node *V) const
 }
 
 template <size_t N, size_t M>
-bool Exchange<N, M>::isDepotInSegments(Node *U, Node *V) const
+bool Exchange<N, M>::containsDepot(Node *node, size_t segLength) const
 {
-    auto eval = [&](Node *node, size_t chainLength) {
-        for (size_t count = 0; count != chainLength; ++count, node = n(node))
-            if (node->isDepot())
-                return true;
+    for (size_t count = 0; count != segLength; ++count, node = n(node))
+        if (node->isDepot())
+            return true;
 
-        return false;
-    };
-
-    return eval(U, N) || eval(V, M);
+    return false;
 }
 
 template <size_t N, size_t M>
@@ -59,21 +52,19 @@ bool Exchange<N, M>::adjacent(Node *U, Node *V) const
 }
 
 template <size_t N, size_t M>
-int Exchange<N, M>::testRelocateMove(Node *U, Node *V) const
+int Exchange<N, M>::evalRelocateMove(Node *U, Node *V) const
 {
-    if (isDepotInSegments(U, V) || overlap(U, V) || U == n(V))
-        return 0;
-
     auto const [endU, _] = getEnds(U, V);
-    auto const &params = *U->params;
+    auto const posU = U->position;
+    auto const posV = V->position;
 
-    int const current = Route::distBetween(p(U), n(endU))
-                        + params.dist(V->client, n(V)->client);
+    int const current = U->route->distBetween(posU - 1, posU + N)
+                        + d_params.dist(V->client, n(V)->client);
 
-    int const proposed = params.dist(V->client, U->client)
-                         + Route::distBetween(U, endU)
-                         + params.dist(endU->client, n(V)->client)
-                         + params.dist(p(U)->client, n(endU)->client);
+    int const proposed = d_params.dist(V->client, U->client)
+                         + U->route->distBetween(posU, posU + N - 1)
+                         + d_params.dist(endU->client, n(V)->client)
+                         + d_params.dist(p(U)->client, n(endU)->client);
 
     int deltaCost = proposed - current;
 
@@ -87,33 +78,36 @@ int Exchange<N, M>::testRelocateMove(Node *U, Node *V) const
         deltaCost += d_penalties->timeWarp(uTWS);
         deltaCost -= d_penalties->timeWarp(U->route->tw);
 
-        auto const loadDiff = Route::loadBetween(U, endU);
+        auto const loadDiff = U->route->loadBetween(posU, posU + N - 1);
 
-        deltaCost += d_penalties->load(U->route->load - loadDiff);
-        deltaCost -= d_penalties->load(U->route->load);
+        deltaCost += d_penalties->load(U->route->load() - loadDiff);
+        deltaCost -= d_penalties->load(U->route->load());
 
         if (deltaCost >= 0)    // if delta cost of just U's route is not enough
             return deltaCost;  // even without V, the move will never be good
 
-        deltaCost += d_penalties->load(V->route->load + loadDiff);
-        deltaCost -= d_penalties->load(V->route->load);
+        deltaCost += d_penalties->load(V->route->load() + loadDiff);
+        deltaCost -= d_penalties->load(V->route->load());
 
-        auto vTWS
-            = TWS::merge(V->twBefore, Route::twBetween(U, endU), n(V)->twAfter);
+        auto vTWS = TWS::merge(V->twBefore,
+                               U->route->twBetween(posU, posU + N - 1),
+                               n(V)->twAfter);
 
         deltaCost += d_penalties->timeWarp(vTWS);
         deltaCost -= d_penalties->timeWarp(V->route->tw);
     }
     else  // within same route
     {
-        if (!U->route->hasTimeWarp() && deltaCost >= 0)
+        auto const *route = U->route;
+
+        if (!route->hasTimeWarp() && deltaCost >= 0)
             return deltaCost;
 
-        if (U->position < V->position)
+        if (posU < posV)
         {
             auto const tws = TWS::merge(p(U)->twBefore,
-                                        Route::twBetween(n(endU), V),
-                                        Route::twBetween(U, endU),
+                                        route->twBetween(posU + N, posV),
+                                        route->twBetween(posU, posU + N - 1),
                                         n(V)->twAfter);
 
             deltaCost += d_penalties->timeWarp(tws);
@@ -121,83 +115,84 @@ int Exchange<N, M>::testRelocateMove(Node *U, Node *V) const
         else
         {
             auto const tws = TWS::merge(V->twBefore,
-                                        Route::twBetween(U, endU),
-                                        Route::twBetween(n(V), p(U)),
+                                        route->twBetween(posU, posU + N - 1),
+                                        route->twBetween(posV + 1, posU - 1),
                                         n(endU)->twAfter);
 
             deltaCost += d_penalties->timeWarp(tws);
         }
 
-        deltaCost -= d_penalties->timeWarp(U->route->tw);
+        deltaCost -= d_penalties->timeWarp(route->tw);
     }
 
     return deltaCost;
 }
 
 template <size_t N, size_t M>
-int Exchange<N, M>::testSwapMove(Node *U, Node *V) const
+int Exchange<N, M>::evalSwapMove(Node *U, Node *V) const
 {
-    if constexpr (N == M)  // symmetric, so only have to evaluate this once
-        if (U->client >= V->client)
-            return 0;
-
-    if (isDepotInSegments(U, V) || overlap(U, V) || adjacent(U, V))
-        return 0;
-
-    auto const &params = *U->params;
     auto const [endU, endV] = getEnds(U, V);
+    auto const posU = U->position;
+    auto const posV = V->position;
 
-    int const current
-        = Route::distBetween(p(U), n(endU)) + Route::distBetween(p(V), n(endV));
+    int const current = U->route->distBetween(posU - 1, posU + N)
+                        + V->route->distBetween(posV - 1, posV + M);
 
     int const proposed
         //   p(U) -> V -> ... -> endV -> n(endU)
         // + p(V) -> U -> ... -> endU -> n(endV)
-        = params.dist(p(U)->client, V->client) + Route::distBetween(V, endV)
-          + params.dist(endV->client, n(endU)->client)
-          + params.dist(p(V)->client, U->client) + Route::distBetween(U, endU)
-          + params.dist(endU->client, n(endV)->client);
+        = d_params.dist(p(U)->client, V->client)
+          + V->route->distBetween(posV, posV + M - 1)
+          + d_params.dist(endV->client, n(endU)->client)
+          + d_params.dist(p(V)->client, U->client)
+          + U->route->distBetween(posU, posU + N - 1)
+          + d_params.dist(endU->client, n(endV)->client);
 
     int deltaCost = proposed - current;
 
     if (U->route != V->route)
     {
+
         if (U->route->isFeasible() && V->route->isFeasible() && deltaCost >= 0)
             return deltaCost;
 
-        auto uTWS = TWS::merge(
-            p(U)->twBefore, Route::twBetween(V, endV), n(endU)->twAfter);
+        auto uTWS = TWS::merge(p(U)->twBefore,
+                               V->route->twBetween(posV, posV + M - 1),
+                               n(endU)->twAfter);
 
         deltaCost += d_penalties->timeWarp(uTWS);
         deltaCost -= d_penalties->timeWarp(U->route->tw);
 
-        auto vTWS = TWS::merge(
-            p(V)->twBefore, Route::twBetween(U, endU), n(endV)->twAfter);
+        auto vTWS = TWS::merge(p(V)->twBefore,
+                               U->route->twBetween(posU, posU + N - 1),
+                               n(endV)->twAfter);
 
         deltaCost += d_penalties->timeWarp(vTWS);
         deltaCost -= d_penalties->timeWarp(V->route->tw);
 
-        auto const loadU = Route::loadBetween(U, endU);
-        auto const loadV = Route::loadBetween(V, endV);
+        auto const loadU = U->route->loadBetween(posU, posU + N - 1);
+        auto const loadV = V->route->loadBetween(posV, posV + M - 1);
         auto const loadDiff = loadU - loadV;
 
-        deltaCost += d_penalties->load(U->route->load - loadDiff);
-        deltaCost -= d_penalties->load(U->route->load);
+        deltaCost += d_penalties->load(U->route->load() - loadDiff);
+        deltaCost -= d_penalties->load(U->route->load());
 
-        deltaCost += d_penalties->load(V->route->load + loadDiff);
-        deltaCost -= d_penalties->load(V->route->load);
+        deltaCost += d_penalties->load(V->route->load() + loadDiff);
+        deltaCost -= d_penalties->load(V->route->load());
     }
     else  // within same route
     {
-        if (!U->route->hasTimeWarp() && deltaCost >= 0)
+        auto const *route = U->route;
+
+        if (!route->hasTimeWarp() && deltaCost >= 0)
             return deltaCost;
 
-        if (U->position < V->position)
+        if (posU < posV)
         {
             auto const tws = TWS::merge(p(U)->twBefore,
-                                        Route::twBetween(V, endV),
-                                        Route::twBetween(n(endU), p(V)),
-                                        Route::twBetween(U, endU),
+                                        route->twBetween(posV, posV + M - 1),
+                                        route->twBetween(posU + N, posV - 1),
+                                        route->twBetween(posU, posU + N - 1),
                                         n(endV)->twAfter);
 
             deltaCost += d_penalties->timeWarp(tws);
@@ -205,9 +200,9 @@ int Exchange<N, M>::testSwapMove(Node *U, Node *V) const
         else
         {
             auto const tws = TWS::merge(p(V)->twBefore,
-                                        Route::twBetween(U, endU),
-                                        Route::twBetween(n(endV), p(U)),
-                                        Route::twBetween(V, endV),
+                                        route->twBetween(posU, posU + N - 1),
+                                        route->twBetween(posV + M, posU - 1),
+                                        route->twBetween(posV, posV + M - 1),
                                         n(endU)->twAfter);
 
             deltaCost += d_penalties->timeWarp(tws);
@@ -219,12 +214,29 @@ int Exchange<N, M>::testSwapMove(Node *U, Node *V) const
     return deltaCost;
 }
 
-template <size_t N, size_t M> int Exchange<N, M>::test(Node *U, Node *V)
+template <size_t N, size_t M> int Exchange<N, M>::evaluate(Node *U, Node *V)
 {
+    if (containsDepot(U, N) || containsDepot(V, M) || overlap(U, V))
+        return 0;
+
     if constexpr (M == 0)  // special case where nothing in V is moved
-        return testRelocateMove(U, V);
+    {
+        if (U == n(V))
+            return 0;
+
+        return evalRelocateMove(U, V);
+    }
     else
-        return testSwapMove(U, V);
+    {
+        if constexpr (N == M)  // symmetric, so only have to evaluate this once
+            if (U->client >= V->client)
+                return 0;
+
+        if (adjacent(U, V))
+            return 0;
+
+        return evalSwapMove(U, V);
+    }
 }
 
 template <size_t N, size_t M> void Exchange<N, M>::apply(Node *U, Node *V)
@@ -237,7 +249,7 @@ template <size_t N, size_t M> void Exchange<N, M>::apply(Node *U, Node *V)
     // Insert these 'extra' nodes of U after the end of V...
     for (size_t count = 0; count != N - M; ++count)
     {
-        auto *prev = uToInsert->prev;
+        auto *prev = p(uToInsert);
         uToInsert->insertAfter(insertUAfter);
         uToInsert = prev;
     }
@@ -245,11 +257,9 @@ template <size_t N, size_t M> void Exchange<N, M>::apply(Node *U, Node *V)
     // ...and swap the overlapping nodes!
     for (size_t count = 0; count != std::min(N, M); ++count)
     {
-        auto *nextU = U->next;
-        auto *nextV = V->next;
         U->swapWith(V);
-        U = nextU;
-        V = nextV;
+        U = n(U);
+        V = n(V);
     }
 }
 

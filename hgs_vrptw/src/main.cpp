@@ -30,31 +30,31 @@ try
 
     LocalSearch ls(params, rng);
 
-    auto exchange10 = Exchange<1, 0>();
+    auto exchange10 = Exchange<1, 0>(params);
     ls.addNodeOperator(exchange10);
 
-    auto exchange20 = Exchange<2, 0>();
+    auto exchange20 = Exchange<2, 0>(params);
     ls.addNodeOperator(exchange20);
 
-    auto reverse20 = MoveTwoClientsReversed();
+    auto reverse20 = MoveTwoClientsReversed(params);
     ls.addNodeOperator(reverse20);
 
-    auto exchange22 = Exchange<2, 2>();
+    auto exchange22 = Exchange<2, 2>(params);
     ls.addNodeOperator(exchange22);
 
-    auto exchange21 = Exchange<2, 1>();
+    auto exchange21 = Exchange<2, 1>(params);
     ls.addNodeOperator(exchange21);
 
-    auto exchange11 = Exchange<1, 1>();
+    auto exchange11 = Exchange<1, 1>(params);
     ls.addNodeOperator(exchange11);
 
-    auto twoOpt = TwoOpt();
+    auto twoOpt = TwoOpt(params);
     ls.addNodeOperator(twoOpt);
 
-    auto relocateStar = RelocateStar();
+    auto relocateStar = RelocateStar(params);
     ls.addRouteOperator(relocateStar);
 
-    auto swapStar = SwapStar();
+    auto swapStar = SwapStar(params);
     ls.addRouteOperator(swapStar);
 
     GeneticAlgorithm solver(params, rng, pop, ls);

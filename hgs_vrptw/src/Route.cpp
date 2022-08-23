@@ -1,62 +1,132 @@
 #include "Route.h"
 
-#include <bit>
 #include <cmath>
 #include <ostream>
 
-namespace
-{
 using TWS = TimeWindowSegment;
-}
 
 void Route::update()
 {
-    size_t const prevSize = nodes.size();
+    auto const oldNodes = nodes;
+    setupNodes();
 
-    load = 0;
-    jumps = {{}, {}};
-    jumps[0].reserve(prevSize);  // Route's size has likely changed since the
-    jumps[1].reserve(prevSize);  // last update, but probably not *much*.
-
-    nodes = {};
-    nodes.reserve(prevSize);
-
-    size_t place = 0;
+    int load = 0;
     int distance = 0;
     int reverseDistance = 0;
-    int cumulatedX = 0;
-    int cumulatedY = 0;
+    bool foundChange = false;
 
+    for (size_t pos = 0; pos != nodes.size(); ++pos)
+    {
+        auto *node = nodes[pos];
+
+        if (!foundChange && (pos >= oldNodes.size() || node != oldNodes[pos]))
+        {
+            foundChange = true;
+
+            if (pos > 0)  // change at pos, so everything before is the same
+            {             // and we can re-use cumulative calculations
+                load = nodes[pos - 1]->cumulatedLoad;
+                distance = nodes[pos - 1]->cumulatedDistance;
+                reverseDistance = nodes[pos - 1]->cumulatedReversalDistance;
+            }
+
+            if (pos <= jumpDistance)
+                jumps.clear();
+            else
+                jumps.erase(jumps.begin() + pos - jumpDistance, jumps.end());
+        }
+
+        if (!foundChange)
+            continue;
+
+        load += params->clients[node->client].demand;
+        distance += params->dist(p(node)->client, node->client);
+
+        reverseDistance += params->dist(node->client, p(node)->client);
+        reverseDistance -= params->dist(p(node)->client, node->client);
+
+        node->position = pos + 1;
+        node->cumulatedLoad = load;
+        node->cumulatedDistance = distance;
+        node->cumulatedReversalDistance = reverseDistance;
+        node->twBefore = TWS::merge(p(node)->twBefore, node->tw);
+
+        if (node->position > jumpDistance && nodes.size() > jumpDistance)
+        {
+            // We cannot use Route::twBetween here since the jumps are obviously
+            // not yet available.
+            auto *prev = nodes[pos - jumpDistance];
+            auto jump = prev->tw;
+
+            for (auto step = prev->position; step != node->position; ++step)
+                jump = TWS::merge(jump, nodes[step]->tw);
+
+            jumps.emplace_back(jump);
+        }
+    }
+
+    setupSector();
+    setupRouteTimeWindows();
+}
+
+TimeWindowSegment Route::twBetween(size_t start, size_t end) const
+{
+    assert(start <= end);
+
+    auto data = nodes[start - 1]->tw;
+    auto nbJumps = (end - start) / jumpDistance;
+
+    // Jump as much as we can...
+    for (size_t step = 0; step != nbJumps; ++step)
+        data = TWS::merge(data, jumps[start + step * jumpDistance - 1]);
+
+    // ...and do the rest in one-step updates.
+    for (size_t step = start + nbJumps * jumpDistance; step != end; ++step)
+        data = TWS::merge(data, nodes[step]->tw);
+
+    return data;
+}
+
+void Route::setupNodes()
+{
+    nodes.clear();
     auto *node = depot;
-    node->position = 0;
-    node->cumulatedLoad = 0;
-    node->cumulatedDistance = 0;
-    node->cumulatedReversalDistance = 0;
-
-    if (!n(node)->isDepot())
-        sector.initialize(params->clients[n(node)->client].angle);
 
     do
     {
         node = n(node);
         nodes.push_back(node);
+    } while (!node->isDepot());
+}
 
-        place++;
-        node->position = place;
+void Route::setupRouteTimeWindows()
+{
+    auto *node = nodes.back();
+    tw = node->twBefore;  // whole route time window data
 
-        load += params->clients[node->client].demand;
-        node->cumulatedLoad = load;
+    do  // forward time window data
+    {
+        auto *prev = p(node);
+        prev->twAfter = TWS::merge(prev->tw, node->twAfter);
+        node = prev;
+    } while (!node->isDepot());
+}
 
-        distance += params->dist(p(node)->client, node->client);
-        node->cumulatedDistance = distance;
+void Route::setupSector()
+{
+    if (empty())
+    {
+        angleCenter = 1.e30;
+        return;
+    }
 
-        reverseDistance += params->dist(node->client, p(node)->client);
-        reverseDistance -= params->dist(p(node)->client, node->client);
+    sector.initialize(params->clients[n(depot)->client].angle);
 
-        node->cumulatedReversalDistance = reverseDistance;
+    int cumulatedX = 0;
+    int cumulatedY = 0;
 
-        node->twBefore = TWS::merge(p(node)->twBefore, node->tw);
-
+    for (auto *node : nodes)
+    {
         if (!node->isDepot())
         {
             cumulatedX += params->clients[node->client].x;
@@ -64,34 +134,19 @@ void Route::update()
 
             sector.extend(params->clients[node->client].angle);
         }
-
-        installJumpPoints(node);
-    } while (!node->isDepot());
-
-    tw = node->twBefore;
-    nbCustomers = place - 1;
-
-    // Time window data in reverse direction, node should be end depot now
-    do
-    {
-        node = p(node);
-        node->twAfter = TWS::merge(node->tw, n(node)->twAfter);
-    } while (!node->isDepot());
-
-    if (empty())
-    {
-        angleCenter = 1.e30;
-        return;
     }
 
-    angleCenter = atan2(
-        cumulatedY / static_cast<double>(nbCustomers) - params->clients[0].y,
-        cumulatedX / static_cast<double>(nbCustomers) - params->clients[0].x);
+    // This computes a pseudo-angle that sorts roughly equivalently to the atan2
+    // angle, but is much faster to compute. See the following post for details:
+    // https://stackoverflow.com/a/16561333/4316405.
+    auto dy = cumulatedY / static_cast<double>(size()) - params->clients[0].y;
+    auto dx = cumulatedX / static_cast<double>(size()) - params->clients[0].x;
+    angleCenter = std::copysign(1. - dx / (std::fabs(dx) + std::fabs(dy)), dy);
 
     // Enforce minimum size of circle sector
     if (params->config.minCircleSectorSize > 0)
     {
-        const int growSectorBy = (params->config.minCircleSectorSize
+        int const growSectorBy = (params->config.minCircleSectorSize
                                   - CircleSector::positive_mod(sector) + 1)
                                  / 2;
 
@@ -101,72 +156,6 @@ void Route::update()
             sector.extend(sector.end + growSectorBy);
         }
     }
-}
-
-TimeWindowSegment Route::twBetween(Node const *start, Node const *end)
-{
-    assert(start->route == end->route);
-    assert(start->position <= end->position);
-
-    if (start->isDepot())
-        return end->twBefore;
-
-    if (end->isDepot())
-        return start->twAfter;
-
-    Node const *node = start;
-    TimeWindowSegment data = start->tw;
-    auto const &jumps = start->route->jumps;
-
-    while (node != end)
-    {
-        auto const dist = end->position - node->position;
-
-        if (dist >= jumpPts.front())  // can make at least one jump
-        {
-            auto const pos = std::bit_floor(std::min(dist, jumpPts.back()));
-            auto const &jumpList = jumps[std::bit_width(pos) - jumpOffset];
-
-            if (jumpList.size() >= node->position)  // jump list contains node
-            {
-                auto const &jumpNode = jumpList[node->position - 1];
-                data = TWS::merge(data, jumpNode.tw);
-                node = jumpNode.to;
-
-                continue;
-            }
-        }
-
-        node = node->next;
-        data = TWS::merge(data, node->tw);
-    }
-
-    return data;
-}
-
-void Route::installJumpPoints(Node const *node)
-{
-    JumpNode const *toNextJump = nullptr;
-
-    for (size_t const position : jumpPts)
-        if (node->position > position && nodes.size() > position)
-        {
-            auto *prev = nodes[node->position - position - 1];
-            auto const idx_ = std::bit_width(position) - jumpOffset;
-
-            if (toNextJump)
-            {
-                // After installing earlier, part way jumps, part of the way
-                // of larger jumps is already known. We reuse that by computing
-                // the time window between (prev, part way) separately and then
-                // merging that with (part way, node) which we already know.
-                auto const prev2jump = Route::twBetween(prev, toNextJump->from);
-                auto const prev2node = TWS::merge(prev2jump, toNextJump->tw);
-                toNextJump = &jumps[idx_].emplace_back(prev, node, prev2node);
-            }
-            else
-                toNextJump = &jumps[idx_].emplace_back(prev, node);
-        }
 }
 
 std::ostream &operator<<(std::ostream &out, Route const &route)

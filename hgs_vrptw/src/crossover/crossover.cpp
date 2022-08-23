@@ -1,13 +1,13 @@
 #include "crossover.h"
 
-namespace
-{
 using Parents = std::pair<Individual const *, Individual const *>;
 using Client = int;
 using ClientSet = std::unordered_set<Client>;
 using Route = std::vector<Client>;
 using Routes = std::vector<Route>;
 
+namespace
+{
 struct InsertPos  // best insert position, used to plan unplanned clients
 {
     int deltaCost;

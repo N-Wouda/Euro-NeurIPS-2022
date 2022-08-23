@@ -13,47 +13,31 @@
 
 class Route
 {
-    // These fields are used for some internal jump point calculations. Can be
-    // updated with new jump point offsets.
-    constexpr static std::array<size_t, 2> jumpPts = {4, 8};
-    constexpr static size_t jumpOffset = std::bit_width(4UL);
+    constexpr static size_t jumpDistance = 4;
 
-    struct JumpNode
-    {
-        Node const *from = nullptr;
-        Node const *to = nullptr;
-        TimeWindowSegment tw;
+    // Vector of jumps. Each element is a time window segment of the route
+    // between the indexed node and the node jumpDistance ahead in the route.
+    // This lets us jump to the next node in the route a given jump distance
+    // away. Very useful for speeding up time window calculations.
+    std::vector<TimeWindowSegment> jumps = {};
 
-        JumpNode() = default;
-
-        JumpNode(Node const *from, Node const *to)
-            : from(from), to(to), tw(Route::twBetween(from, to))
-        {
-        }
-
-        JumpNode(Node const *from, Node const *to, TimeWindowSegment tw)
-            : from(from), to(to), tw(tw)
-        {
-        }
-    };
-
-    // Vector of jump distance by nodes. Each element is a JumpNode, which lets
-    // us jump to the next node in the route a given jump distance away. Very
-    // useful for speeding up time window calculations along the route.
-    std::vector<std::vector<JumpNode>> jumps;
-    size_t nbCustomers;         // Number of customers in the route
     CircleSector sector;        // Circle sector of the route's clients
     std::vector<Node *> nodes;  // List of nodes (in order) in this solution.
 
-    // Sets jump points, pointing to the current node from earlier route nodes.
-    void installJumpPoints(Node const *node);
+    // Populates the nodes vector.
+    void setupNodes();
+
+    // Sets the angle and sector data.
+    void setupSector();
+
+    // Sets time window member and forward node time windows
+    void setupRouteTimeWindows();
 
 public:  // TODO make fields private
     Params const *params;
 
     int idx;               // Route index
     Node *depot;           // Pointer to the associated depot
-    int load;              // Total load on the route
     TimeWindowSegment tw;  // Time window data of the route
     double angleCenter;    // Angle of the barycenter of the route
 
@@ -70,7 +54,7 @@ public:  // TODO make fields private
      */
     [[nodiscard]] bool hasExcessCapacity() const
     {
-        return load > params->vehicleCapacity;
+        return load() > params->vehicleCapacity;
     }
 
     /**
@@ -78,28 +62,42 @@ public:  // TODO make fields private
      */
     [[nodiscard]] bool hasTimeWarp() const { return tw.totalTimeWarp() > 0; }
 
+    /**
+     * Returns total load on this route.
+     */
+    [[nodiscard]] int load() const { return nodes.back()->cumulatedLoad; }
+
+    /**
+     * Tests if this route overlaps the other route, that is, whether their
+     * circle sectors overlap with a given tolerance.
+     */
     [[nodiscard]] bool overlapsWith(Route const &other) const
     {
         return CircleSector::overlap(
             sector, other.sector, params->config.circleSectorOverlapTolerance);
     }
 
-    [[nodiscard]] bool empty() const { return nbCustomers == 0; }
+    [[nodiscard]] bool empty() const { return size() == 0; }
+
+    [[nodiscard]] size_t size() const
+    {
+        return nodes.size() - 1;  // exclude end depot
+    }
 
     /**
-     * Calculates time window data for segment [start, end] in the same route.
+     * Calculates time window data for segment [start, end].
      */
-    static TimeWindowSegment twBetween(Node const *start, Node const *end);
+    [[nodiscard]] TimeWindowSegment twBetween(size_t start, size_t end) const;
 
     /**
-     * Calculates the distance for segment [start, end] in the same route.
+     * Calculates the distance for segment [start, end].
      */
-    static inline int distBetween(Node const *start, Node const *end);
+    [[nodiscard]] inline int distBetween(size_t start, size_t end) const;
 
     /**
-     * Calculates the load for segment [start, end] in the same route.
+     * Calculates the load for segment [start, end].
      */
-    static inline int loadBetween(Node const *start, Node const *end);
+    [[nodiscard]] inline int loadBetween(size_t start, size_t end) const;
 
     /**
      * Updates this route. To be called after swapping nodes/changing the
@@ -108,23 +106,30 @@ public:  // TODO make fields private
     void update();
 };
 
-int Route::distBetween(Node const *start, Node const *end)
+int Route::distBetween(size_t start, size_t end) const
 {
-    assert(start->route == end->route);
-    assert(start->position <= end->position);
-    assert(end->cumulatedDistance >= start->cumulatedDistance);
+    assert(start <= end && end <= nodes.size());
 
-    return end->cumulatedDistance - start->cumulatedDistance;
+    auto const startDist = start == 0 ? 0 : nodes[start - 1]->cumulatedDistance;
+    auto const endDist = nodes[end - 1]->cumulatedDistance;
+
+    assert(startDist <= endDist);
+
+    return endDist - startDist;
 }
 
-int Route::loadBetween(Node const *start, Node const *end)
+int Route::loadBetween(size_t start, size_t end) const
 {
-    assert(start->route == end->route);
-    assert(start->position <= end->position);
-    assert(end->cumulatedLoad >= start->cumulatedLoad);
+    assert(start <= end && end <= nodes.size());
 
-    auto const atStart = start->params->clients[start->client].demand;
-    return end->cumulatedLoad - start->cumulatedLoad + atStart;
+    auto const *startNode = start == 0 ? depot : nodes[start - 1];
+    auto const atStart = params->clients[startNode->client].demand;
+    auto const startLoad = startNode->cumulatedLoad;
+    auto const endLoad = nodes[end - 1]->cumulatedLoad;
+
+    assert(startLoad <= endLoad);
+
+    return endLoad - startLoad + atStart;
 }
 
 // Outputs a route into a given ostream in CVRPLib format

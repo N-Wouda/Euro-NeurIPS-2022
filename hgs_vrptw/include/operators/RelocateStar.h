@@ -7,15 +7,20 @@
 #include "Route.h"
 
 /**
- * Performs the best (1, 0)-exchange move between routes U and V.
+ * Performs the best (1, 0)-exchange move between routes U and V. Tests both
+ * ways: from U to V, and from V to U.
  */
 class RelocateStar : public LocalSearchOperator<Route>
 {
-    Exchange<1, 0> relocate;
+    struct Move
+    {
+        int deltaCost = 0;
+        Node *from = nullptr;
+        Node *to = nullptr;
+    };
 
-    int bestCost = 0;
-    Node *insertionPoint = nullptr;
-    Node *nodeToInsert = nullptr;
+    Exchange<1, 0> relocate;
+    Move move;
 
 public:
     void init(Individual const &indiv, Penalties const *penalties) override
@@ -24,12 +29,13 @@ public:
         relocate.init(indiv, penalties);
     }
 
-    int test(Route *U, Route *V) override;
+    int evaluate(Route *U, Route *V) override;
 
-    void apply(Route *U, Route *V) override
+    void apply(Route *U, Route *V) override { move.from->insertAfter(move.to); }
+
+    explicit RelocateStar(Params const &params)
+        : LocalSearchOperator<Route>(params), relocate(params)
     {
-        if (insertionPoint && nodeToInsert)
-            nodeToInsert->insertAfter(insertionPoint);
     }
 };
 
