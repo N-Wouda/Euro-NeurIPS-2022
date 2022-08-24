@@ -319,7 +319,7 @@ Params::Params(Config const &config, std::string const &instPath)
     }
 
     int maxDist = dist_.max();
-    nbVehicles = (config.nbVeh <= INT_MAX ? nbClients : config.nbVeh);
+    nbVehicles = (config.nbVeh >= nbClients ? nbClients : config.nbVeh);
 
     // Calculate, for all vertices, the correlation for the nbGranular closest
     // vertices
@@ -363,7 +363,7 @@ Params::Params(Config const &config,
                std::vector<int> const &releases)
     : config(config),
       nbClients(static_cast<int>(coords.size()) - 1),
-      nbVehicles((config.nbVeh <= INT_MAX ? nbClients : config.nbVeh)),
+      nbVehicles((config.nbVeh >= nbClients ? nbClients : config.nbVeh)),
       vehicleCapacity(vehicleCap)
 {
     dist_ = Matrix<int>(distMat.size());
