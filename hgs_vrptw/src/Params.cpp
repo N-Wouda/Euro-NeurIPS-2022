@@ -379,11 +379,20 @@ Params::Params(Config const &config,
       nbClients(static_cast<int>(coords.size()) - 1),
       vehicleCapacity(vehicleCap)
 {
-    // Number of vehicles: 30% above LP bin packing heuristic, and three more
-    // just in case.
-    int totalDemand = std::accumulate(demands.begin(), demands.end(), 0);
-    auto const vehicleMargin = std::ceil(1.3 * totalDemand / vehicleCapacity);
-    nbVehicles = static_cast<int>(vehicleMargin) + 3;
+    // Default initialization if the number of vehicles is not provided
+    if (config.nbVeh == INT_MAX)
+    {
+        // 30% above LP bin packing heuristic, and three more just in case
+        nbVehicles = config.nbVeh;
+        int totalDemand = std::accumulate(demands.begin(), demands.end(), 0);
+        auto const vehicleMargin
+            = std::ceil(1.3 * totalDemand / vehicleCapacity);
+        nbVehicles = static_cast<int>(vehicleMargin) + 3;
+    }
+    else if (config.nbVeh == -1)  // unlimited
+    {
+        nbVehicles = nbClients;
+    }
 
     dist_ = Matrix<int>(distMat.size());
 
