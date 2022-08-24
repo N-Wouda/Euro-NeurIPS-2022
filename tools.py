@@ -399,3 +399,13 @@ def name2size(name:str)->int:
     Extracts the instance size (i.e., num clients) from the instance name.
     """
     return int(re.search(r'-n(\d\d\d)-', name).group(1))
+
+
+def n_vehicles_bin_pack(instance, margin=1.5):
+    """
+    Computes the number of vehicles for the given instance using a bin packing
+    heuristic: ``n_vehicles = margin * total demand / vehicle capacity``.
+    """
+    total_demand = instance['demand'].sum()
+    n_vehicles = np.ceil(margin * total_demand / instance['capacity'], dtype=int)
+    return n_vehicles

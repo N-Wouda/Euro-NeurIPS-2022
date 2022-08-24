@@ -15,7 +15,10 @@
 Params::Params(Config const &config, std::string const &instPath)
     : config(config)
 {
-    nbVehicles = config.nbVeh;
+    if (config.nbVeh == INT_MAX)
+        nbVehicles = nbClients;
+    else
+        nbVehicles = config.nbVeh;
 
     // Initialize some parameter values
     std::string content, content2, content3;
@@ -320,19 +323,6 @@ Params::Params(Config const &config, std::string const &instPath)
             throw std::runtime_error("Vehicle capacity is undefined");
     }
 
-    // Default initialization if the number of vehicles has not been provided by
-    // the user
-    if (nbVehicles == INT_MAX)
-    {
-        // Safety margin: 30% + 3 more vehicles than the trivial bin packing LB
-        nbVehicles = static_cast<int>(
-            std::ceil(1.3 * totalDemand / vehicleCapacity) + 3.);
-    }
-    else if (nbVehicles == -1)  // unlimited
-    {
-        nbVehicles = nbClients;
-    }
-
     int maxDist = dist_.max();
 
     // Calculate, for all vertices, the correlation for the nbGranular closest
@@ -379,17 +369,7 @@ Params::Params(Config const &config,
       nbClients(static_cast<int>(coords.size()) - 1),
       vehicleCapacity(vehicleCap)
 {
-    // Default initialization if the number of vehicles is not provided
     if (config.nbVeh == INT_MAX)
-    {
-        // 30% above LP bin packing heuristic, and three more just in case
-        nbVehicles = config.nbVeh;
-        int totalDemand = std::accumulate(demands.begin(), demands.end(), 0);
-        auto const vehicleMargin
-            = std::ceil(1.3 * totalDemand / vehicleCapacity);
-        nbVehicles = static_cast<int>(vehicleMargin) + 3;
-    }
-    else if (config.nbVeh == -1)  // unlimited number of vehicles
         nbVehicles = nbClients;
     else
         nbVehicles = config.nbVeh;
