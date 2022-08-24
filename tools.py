@@ -2,6 +2,7 @@ import glob
 import importlib.machinery
 import importlib.util
 import json
+import math
 import os
 import re
 
@@ -399,3 +400,12 @@ def name2size(name:str)->int:
     Extracts the instance size (i.e., num clients) from the instance name.
     """
     return int(re.search(r'-n(\d\d\d)-', name).group(1))
+
+
+def n_vehicles_bin_pack(instance, margin=1.3):
+    """
+    Computes the number of vehicles for the given instance using a bin packing
+    heuristic.
+    """
+    total_demand = instance['demands'].sum()
+    return math.ceil(margin * total_demand / instance['capacity']) + 3

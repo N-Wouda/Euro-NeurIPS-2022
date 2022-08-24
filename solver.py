@@ -47,7 +47,7 @@ def solve_static_vrptw(instance, time_limit=3600, seed=1):
 
     hgspy = tools.get_hgspy_module()
 
-    config = hgspy.Config(seed=seed, nbVeh=-1)
+    config = hgspy.Config(seed=seed, nbVeh=tools.n_vehicles_bin_pack(instance))
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=seed)
