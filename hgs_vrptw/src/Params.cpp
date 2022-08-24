@@ -390,9 +390,7 @@ Params::Params(Config const &config,
         nbVehicles = static_cast<int>(vehicleMargin) + 3;
     }
     else if (config.nbVeh == -1)  // unlimited number of vehicles
-    {
         nbVehicles = nbClients;
-    }
     else
         nbVehicles = config.nbVeh;
 
