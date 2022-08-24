@@ -63,10 +63,9 @@ void Statistics::collectFrom(Population const &population)
 
         feasAverage_.push_back(costFeas / numFeas);
     }
-
     else
     {
-        feasBest_.push_back(INT_MAX);
+        feasBest_.push_back(INT_MAX);  // INT_MAX as substitute for inf
         feasAverage_.push_back(INT_MAX);
     }
 
@@ -92,7 +91,7 @@ void Statistics::collectFrom(Population const &population)
     }
     else
     {
-        infeasBest_.push_back(INT_MAX);
+        infeasBest_.push_back(INT_MAX);  // INT_MAX as substitute for inf
         infeasAverage_.push_back(INT_MAX);
     }
 

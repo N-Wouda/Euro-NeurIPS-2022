@@ -389,10 +389,8 @@ def static_time_limit(n_clients: int, phase: str) -> int:
 
     if n_clients < 300:
         return 180 if phase == "quali" else 300
-
     elif 300 <= n_clients <= 500:
         return 300 if phase == "quali" else 600
-
     else:
         return 480 if phase == "quali" else 900
 

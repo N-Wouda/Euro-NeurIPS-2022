@@ -114,7 +114,8 @@ public:
 
     /**
      * Returns a vector of the best objective value of feasible individuals,
-     * one element per iteration.
+     * one element per iteration. If there are no feasible individuals, then
+     * ``INT_MAX`` is stored.
      */
     [[nodiscard]] std::vector<size_t> const &feasBest() const
     {
@@ -123,7 +124,8 @@ public:
 
     /**
      * Returns a vector of the average objective value of feasible individuals,
-     * one element per iteration.
+     * one element per iteration. If there are no feasible individuals, then
+     * ``INT_MAX`` is stored.
      */
     [[nodiscard]] std::vector<size_t> const &feasAverage() const
     {
@@ -132,7 +134,8 @@ public:
 
     /**
      * Returns a vector of the best objective value of infeasible individuals,
-     * one element per iteration.
+     * one element per iteration. If there are no infeasible individuals, then
+     * ``INT_MAX`` is stored.
      */
     [[nodiscard]] std::vector<size_t> const &infeasBest() const
     {
@@ -141,7 +144,8 @@ public:
 
     /**
      * Returns a vector of the average objective value of infeasible
-     * individuals, one element per iteration.
+     * individuals, one element per iteration. If there are no infeasible
+     * individuals, then ``INT_MAX`` is stored.
      */
     [[nodiscard]] std::vector<size_t> const &infeasAverage() const
     {
