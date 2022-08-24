@@ -46,8 +46,8 @@ def solve(loc: str, seed: int, **kwargs):
 
     config = hgspy.Config(
         seed=seed,
-        collectStatistics=True,
         nbVeh=tools.n_vehicles_bin_pack(instance),
+        collectStatistics=True,
     )
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
