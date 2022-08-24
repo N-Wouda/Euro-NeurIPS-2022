@@ -15,11 +15,6 @@
 Params::Params(Config const &config, std::string const &instPath)
     : config(config)
 {
-    if (config.nbVeh == INT_MAX)
-        nbVehicles = nbClients;
-    else
-        nbVehicles = config.nbVeh;
-
     // Initialize some parameter values
     std::string content, content2, content3;
     int serviceTimeData = 0;
@@ -324,6 +319,7 @@ Params::Params(Config const &config, std::string const &instPath)
     }
 
     int maxDist = dist_.max();
+    nbVehicles = (config.nbVeh <= INT_MAX ? nbClients : config.nbVeh);
 
     // Calculate, for all vertices, the correlation for the nbGranular closest
     // vertices
@@ -367,13 +363,9 @@ Params::Params(Config const &config,
                std::vector<int> const &releases)
     : config(config),
       nbClients(static_cast<int>(coords.size()) - 1),
+      nbVehicles((config.nbVeh <= INT_MAX ? nbClients : config.nbVeh)),
       vehicleCapacity(vehicleCap)
 {
-    if (config.nbVeh == INT_MAX)
-        nbVehicles = nbClients;
-    else
-        nbVehicles = config.nbVeh;
-
     dist_ = Matrix<int>(distMat.size());
 
     for (size_t i = 0; i != distMat.size(); ++i)

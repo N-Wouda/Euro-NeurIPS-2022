@@ -2,6 +2,7 @@ import glob
 import importlib.machinery
 import importlib.util
 import json
+import math
 import os
 import re
 
@@ -401,11 +402,10 @@ def name2size(name:str)->int:
     return int(re.search(r'-n(\d\d\d)-', name).group(1))
 
 
-def n_vehicles_bin_pack(instance, margin=1.6):
+def n_vehicles_bin_pack(instance, margin=1.3):
     """
     Computes the number of vehicles for the given instance using a bin packing
-    heuristic: ``n_vehicles = margin * total demand / vehicle capacity``.
+    heuristic.
     """
-    total_demand = instance['demand'].sum()
-    n_vehicles = np.ceil(margin * total_demand / instance['capacity'], dtype=int)
-    return n_vehicles
+    total_demand = instance['demands'].sum()
+    return math.ceil(margin * total_demand / instance['capacity']) + 3
