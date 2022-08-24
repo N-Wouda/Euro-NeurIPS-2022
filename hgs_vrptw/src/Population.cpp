@@ -44,7 +44,10 @@ void Population::addIndividual(Individual const &indiv)
                 break;
 
         while (population.size() > params.config.minimumPopulationSize)
+        {
+            updateBiasedFitness();
             removeWorstBiasedFitness();
+        }
     }
 
     if (indiv.isFeasible() && indiv < bestSol)
@@ -95,8 +98,6 @@ void Population::updateBiasedFitness()
 
 bool Population::removeDuplicate()
 {
-    updateBiasedFitness();
-
     for (size_t idx = 0; idx != population.size(); idx++)
     {
         auto const *indiv = population[idx];
@@ -116,8 +117,6 @@ bool Population::removeDuplicate()
 
 void Population::removeWorstBiasedFitness()
 {
-    updateBiasedFitness();
-
     auto const worstFitness = std::max_element(fitness.begin(), fitness.end());
     auto const worstIdx = std::distance(fitness.begin(), worstFitness);
     auto const *worstIndividual = population[worstIdx];

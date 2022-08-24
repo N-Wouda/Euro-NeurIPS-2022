@@ -7,6 +7,7 @@
 #include "Route.h"
 
 #include <array>
+#include <vector>
 
 /**
  * Explores the SWAP* neighbourhood of [1]. The SWAP* neighbourhood explores
@@ -23,6 +24,7 @@ class SwapStar : public LocalSearchOperator<Route>
 {
     struct ThreeBest  // stores three best SWAP* insertion points
     {
+        bool shouldUpdate = true;
         std::array<int, 3> costs = {INT_MAX, INT_MAX, INT_MAX};
         std::array<Node *, 3> locs = {nullptr, nullptr, nullptr};
 
@@ -57,7 +59,7 @@ class SwapStar : public LocalSearchOperator<Route>
 
     struct BestMove  // tracks the best SWAP* move
     {
-        int cost = INT_MAX;
+        int cost = 0;
 
         Node *U = nullptr;
         Node *UAfter = nullptr;
@@ -66,24 +68,39 @@ class SwapStar : public LocalSearchOperator<Route>
         Node *VAfter = nullptr;
     };
 
-    // Preprocesses the given routes. This populates a vector of ThreeBest
-    // structs, storing the three best positions in the second route for
-    // inserting nodes from the first route.
-    std::vector<ThreeBest> preprocess(Route *R1, Route *R2);
+    // Updates the removal costs of clients in the given route
+    void updateRemovalCosts(Route *R1);
 
-    // Gets the bestPos reinsert point for U in the route of V, assuming V is
-    // removed. Returns the cost delta.
-    int getBestInsertPoint(Node *U,
-                           Node *V,
-                           Node *&pos,
-                           SwapStar::ThreeBest const &bestPos);
+    // Updates the cache storing the three best positions in the given route for
+    // the passed-in node (client).
+    void updateInsertionCost(Route *R, Node *U);
+
+    // Gets the delta cost and reinsert point for U in the route of V, assuming
+    // V is removed.
+    inline std::pair<int, Node *> getBestInsertPoint(Node *U, Node *V);
+
+    Matrix<ThreeBest> cache;
+    Matrix<int> removalCosts;
+    std::vector<bool> updated;
 
     BestMove best;
 
 public:
-    int test(Route *U, Route *V) override;
+    void init(Individual const &indiv, Penalties const *penalties) override;
+
+    int evaluate(Route *U, Route *V) override;
 
     void apply(Route *U, Route *V) override;
+
+    void update(Route *U) override { updated[U->idx] = true; }
+
+    explicit SwapStar(Params const &params)
+        : LocalSearchOperator<Route>(params),
+          cache(d_params.nbVehicles, d_params.nbClients + 1),
+          removalCosts(d_params.nbVehicles, d_params.nbClients + 1),
+          updated(d_params.nbVehicles, true)
+    {
+    }
 };
 
 #endif  // SWAPSTAR_H

@@ -24,12 +24,14 @@ public:
     {
     }
 
-    [[nodiscard]] T &operator()(size_t row, size_t col)
+    Matrix(size_t nRows, size_t nCols) : cols_(nCols), data_(nRows * nCols) {}
+
+    [[nodiscard]] decltype(auto) operator()(size_t row, size_t col)
     {
         return data_[cols_ * row + col];
     }
 
-    [[nodiscard]] T operator()(size_t row, size_t col) const
+    [[nodiscard]] decltype(auto) operator()(size_t row, size_t col) const
     {
         return data_[cols_ * row + col];
     }
@@ -40,6 +42,8 @@ public:
     }
 
     [[nodiscard]] size_t size() const { return data_.size(); }
+
+    void reset() { std::fill(data_.begin(), data_.end(), T{}); }
 };
 
 #endif

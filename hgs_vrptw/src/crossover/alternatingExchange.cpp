@@ -3,13 +3,10 @@
 #include <unordered_set>
 #include <vector>
 
-namespace
-{
 using Client = int;
 using ClientSet = std::unordered_set<Client>;
 using Parents = std::pair<Individual const *, Individual const *>;
 using Tour = std::vector<Client>;
-}  // namespace
 
 Individual alternatingExchange(Parents const &parents,
                                Params const &params,

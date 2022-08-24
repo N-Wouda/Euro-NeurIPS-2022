@@ -1,10 +1,10 @@
 #include "crossover.h"
 
-namespace
-{
 using Parents = std::pair<Individual const *, Individual const *>;
 using Offsets = std::pair<unsigned, unsigned>;
 
+namespace
+{
 Offsets getStartEnd(int n, XorShift128 &rng)
 {
     size_t start = rng.randint(n);

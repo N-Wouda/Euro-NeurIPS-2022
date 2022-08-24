@@ -2,13 +2,10 @@
 
 #include <unordered_set>
 
-namespace
-{
 using Client = int;
 using ClientSet = std::unordered_set<Client>;
 using Route = std::vector<Client>;
 using Routes = std::vector<Route>;
-}  // namespace
 
 Individual selectiveRouteExchange(
     std::pair<Individual const *, Individual const *> const &parents,

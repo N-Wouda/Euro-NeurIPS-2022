@@ -13,16 +13,18 @@
  */
 class TwoOpt : public LocalSearchOperator<Node>
 {
-    int withinRouteTest(Node *U, Node *V);
+    using LocalSearchOperator::LocalSearchOperator;
 
-    int betweenRouteTest(Node *U, Node *V);
+    int evalWithinRoute(Node *U, Node *V);
 
-    void withinRouteApply(Node *U, Node *V);
+    int evalBetweenRoutes(Node *U, Node *V);
 
-    void betweenRouteApply(Node *U, Node *V);
+    void applyWithinRoute(Node *U, Node *V);
+
+    void applyBetweenRoutes(Node *U, Node *V);
 
 public:
-    int test(Node *U, Node *V) override;
+    int evaluate(Node *U, Node *V) override;
 
     void apply(Node *U, Node *V) override;
 };

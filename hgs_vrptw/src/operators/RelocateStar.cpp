@@ -1,29 +1,29 @@
 #include "RelocateStar.h"
 
-int RelocateStar::test(Route *U, Route *V)
+int RelocateStar::evaluate(Route *U, Route *V)
 {
-    bestCost = 0;
-    insertionPoint = nullptr;
-    nodeToInsert = nullptr;
-
-    auto eval = [&](auto *nodeU, auto *nodeV) {
-        int const deltaCost = relocate.test(nodeU, nodeV);
-
-        if (deltaCost < bestCost)
-        {
-            bestCost = deltaCost;
-            insertionPoint = nodeV;
-            nodeToInsert = nodeU;
-        }
-    };
+    move = {};
 
     for (auto *nodeU = n(U->depot); !nodeU->isDepot(); nodeU = n(nodeU))
     {
-        eval(nodeU, V->depot);
+        int deltaCost = relocate.evaluate(nodeU, V->depot);  // test after depot
+
+        if (deltaCost < move.deltaCost)
+            move = {deltaCost, nodeU, V->depot};
 
         for (auto *nodeV = n(V->depot); !nodeV->isDepot(); nodeV = n(nodeV))
-            eval(nodeU, nodeV);
+        {
+            deltaCost = relocate.evaluate(nodeU, nodeV);  // test U after V
+
+            if (deltaCost < move.deltaCost)
+                move = {deltaCost, nodeU, nodeV};
+
+            deltaCost = relocate.evaluate(nodeV, nodeU);  // test V after U
+
+            if (deltaCost < move.deltaCost)
+                move = {deltaCost, nodeV, nodeU};
+        }
     }
 
-    return bestCost;
+    return move.deltaCost;
 }
