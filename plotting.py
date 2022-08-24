@@ -22,7 +22,7 @@ def plot_population(stats, ax, step=None, plot_runtimes=False):
         x_vals,
         stats.pop_sizes()[::step],
         label="# Feasible",
-        c="tab:orange",
+        c="tab:blue",
     )
 
     # Number feasible individuals

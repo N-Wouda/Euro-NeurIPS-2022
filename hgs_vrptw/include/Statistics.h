@@ -158,8 +158,8 @@ public:
     }
 
     /**
-     * Exports the collected statistics as CSV. Only statistics that were
-     * for every iteration are exported. Uses `,` as default separator.
+     * Exports the collected statistics as CSV. Only statistics that have been
+     * collected for each iteration are exported. Uses `,` as default separator.
      */
     void toCsv(std::string const &path, char const sep = ',') const;
 };
