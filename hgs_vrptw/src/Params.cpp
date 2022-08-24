@@ -363,7 +363,7 @@ Params::Params(Config const &config,
                std::vector<int> const &releases)
     : config(config),
       nbClients(static_cast<int>(coords.size()) - 1),
-      nbVehicles((config.nbVeh >= nbClients ? nbClients : config.nbVeh)),
+      nbVehicles(config.nbVeh >= nbClients ? nbClients : config.nbVeh),
       vehicleCapacity(vehicleCap)
 {
     dist_ = Matrix<int>(distMat.size());
