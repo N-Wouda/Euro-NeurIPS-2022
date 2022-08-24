@@ -389,10 +389,12 @@ Params::Params(Config const &config,
             = std::ceil(1.3 * totalDemand / vehicleCapacity);
         nbVehicles = static_cast<int>(vehicleMargin) + 3;
     }
-    else if (config.nbVeh == -1)  // unlimited
+    else if (config.nbVeh == -1)  // unlimited number of vehicles
     {
         nbVehicles = nbClients;
     }
+    else
+        nbVehicles = config.nbVeh;
 
     dist_ = Matrix<int>(distMat.size());
 
