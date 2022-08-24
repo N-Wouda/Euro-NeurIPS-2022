@@ -11,17 +11,25 @@ class Population;  // forward declaration
 class Statistics
 {
     using clock = std::chrono::system_clock;
-    using timedDatapoints = std::vector<std::pair<clock::time_point, size_t>>;
+    using timedDatapoints = std::vector<std::pair<double, size_t>>;
 
+    clock::time_point start = clock::now();
     clock::time_point lastIter = clock::now();
     size_t numIters_ = 0;
 
-    std::vector<size_t> popSize;
-    std::vector<size_t> numFeasible;
+    std::vector<double> runTimes_;
+    std::vector<double> iterTimes_;
+    std::vector<size_t> popSizes_;
+    std::vector<size_t> numFeasiblePop_;
     std::vector<double> popDiversity_;
-    std::vector<double> iterTimes;
-    std::vector<size_t> currObjectives_;
-    timedDatapoints bestObjectives_;
+    std::vector<size_t> penaltiesCapacity_;
+    std::vector<size_t> penaltiesTimeWarp_;
+    std::vector<size_t> feasBest_;
+    std::vector<size_t> feasAverage_;
+    std::vector<size_t> infeasBest_;
+    std::vector<size_t> infeasAverage_;
+
+    timedDatapoints incumbents_;
 
 public:
     /**
@@ -39,36 +47,47 @@ public:
     [[nodiscard]] size_t numIters() const { return numIters_; }
 
     /**
-     * Returns a vector of run times, one element per iteration. The run times
-     * are in seconds.
+     * Returns a vector of run times in seconds, one element per iteration.
+     * Each element indicates the time between the current iteration and the
+     * start of the algorithm.
      */
     [[nodiscard]] std::vector<double> const &runTimes() const
     {
-        return iterTimes;
+        return runTimes_;
     }
 
     /**
-     * Returns a vector of population sizes, one element for each iteration.
+     * Returns a vector of run times in seconds, one element per iteration.
+     * Each element indicates the time between the current and previous
+     * iteration.
+     */
+    [[nodiscard]] std::vector<double> const &iterTimes() const
+    {
+        return iterTimes_;
+    }
+
+    /**
+     * Returns a vector of population sizes, one element per iteration.
      */
     [[nodiscard]] std::vector<size_t> const &popSizes() const
     {
-        return popSize;
+        return popSizes_;
     }
 
     /**
      * Returns a vector of the number of feasible individuals in the population,
-     * one element for each iteration. Of course, in each iteration, the number
-     * of feasible individuals does not exceed the total population size.
+     * one element per iteration. Of course, in each iteration, the number of
+     * feasible individuals does not exceed the total population size.
      */
-    [[nodiscard]] std::vector<size_t> const &feasiblePops() const
+    [[nodiscard]] std::vector<size_t> const &numFeasiblePop() const
     {
-        return numFeasible;
+        return numFeasiblePop_;
     }
 
     /**
-     * Returns a vector of the average population diversity, one element for
-     * each iteration. The average diversity is computed as the average broken
-     * pairs distance for each individual in the population, compared to its
+     * Returns a vector of the average population diversity, one element per
+     * iteration. The average diversity is computed as the average broken pairs
+     * distance for each individual in the population, compared to its
      * neighbours (the neighbourhood size is controlled by the ``nbClose``
      * setting).
      */
@@ -78,25 +97,75 @@ public:
     }
 
     /**
-     * Returns a vector of the best objective value at the current iteration,
-     * one element for each iteration where a feasible best solution exists.
-     * Early iterations where that might not be the case are missing from
-     * this vector: use ``numIters() - currObjectives().size()`` to determine
-     * the iteration from where on this information is available.
+     * Returns a vector of capacity penalties, one element per iteration.
      */
-    [[nodiscard]] std::vector<size_t> const &currObjectives() const
+    [[nodiscard]] std::vector<size_t> const &penaltiesCapacity() const
     {
-        return currObjectives_;
+        return penaltiesCapacity_;
     }
 
     /**
-     * Returns a vector of (datetime, objective)-pairs, one for each time a
-     * new, feasible best heuristic solution has been found.
+     * Returns a vector of time warp penalties, one element per iteration.
      */
-    [[nodiscard]] timedDatapoints const &bestObjectives() const
+    [[nodiscard]] std::vector<size_t> const &penaltiesTimeWarp() const
     {
-        return bestObjectives_;
+        return penaltiesTimeWarp_;
     }
+
+    /**
+     * Returns a vector of the best objective value of feasible individuals,
+     * one element per iteration. If there are no feasible individuals, then
+     * ``INT_MAX`` is stored.
+     */
+    [[nodiscard]] std::vector<size_t> const &feasBest() const
+    {
+        return feasBest_;
+    }
+
+    /**
+     * Returns a vector of the average objective value of feasible individuals,
+     * one element per iteration. If there are no feasible individuals, then
+     * ``INT_MAX`` is stored.
+     */
+    [[nodiscard]] std::vector<size_t> const &feasAverage() const
+    {
+        return feasAverage_;
+    }
+
+    /**
+     * Returns a vector of the best objective value of infeasible individuals,
+     * one element per iteration. If there are no infeasible individuals, then
+     * ``INT_MAX`` is stored.
+     */
+    [[nodiscard]] std::vector<size_t> const &infeasBest() const
+    {
+        return infeasBest_;
+    }
+
+    /**
+     * Returns a vector of the average objective value of infeasible
+     * individuals, one element per iteration. If there are no infeasible
+     * individuals, then ``INT_MAX`` is stored.
+     */
+    [[nodiscard]] std::vector<size_t> const &infeasAverage() const
+    {
+        return infeasAverage_;
+    }
+
+    /**
+     * Returns a vector of (runtime, objective)-pairs, one for each time
+     * a new, feasible best heuristic solution has been found.
+     */
+    [[nodiscard]] timedDatapoints const &incumbents() const
+    {
+        return incumbents_;
+    }
+
+    /**
+     * Exports the collected statistics as CSV. Only statistics that have been
+     * collected for each iteration are exported. Uses `,` as default separator.
+     */
+    void toCsv(std::string const &path, char const sep = ',') const;
 };
 
 #endif  // STATISTICS_H

@@ -4,10 +4,19 @@ from functools import partial
 from glob import glob
 from pathlib import Path
 
+import matplotlib.pyplot as plt
+import matplotlib
 import numpy as np
 from tqdm.contrib.concurrent import process_map
 
+import plotting
 import tools
+
+matplotlib.use("Agg")  # Don't show plots
+
+_SOLS_DIR = "solutions/"
+_STATS_DIR = "statistics/"
+_FIGS_DIR = "figures/"
 
 
 def parse_args():
@@ -18,6 +27,7 @@ def parse_args():
     parser.add_argument(
         "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
     )
+    parser.add_argument("--results_dir", type=str)
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--max_runtime", type=int)
@@ -34,7 +44,11 @@ def solve(loc: str, seed: int, **kwargs):
     instance = tools.read_vrplib(path)
     start = datetime.now()
 
-    config = hgspy.Config(seed=seed, nbVeh=-1)
+    config = hgspy.Config(
+        seed=seed,
+        nbVeh=-1,
+        collectStatistics=True,
+    )
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=seed)
@@ -76,6 +90,7 @@ def solve(loc: str, seed: int, **kwargs):
         stop = hgspy.stop.MaxIterations(kwargs["max_iterations"])
 
     res = algo.run(stop)
+    finish = round((datetime.now() - start).total_seconds(), 3)
 
     best = res.get_best_found()
     routes = [route for route in best.get_routes() if route]
@@ -89,17 +104,72 @@ def solve(loc: str, seed: int, **kwargs):
     except AssertionError:
         is_ok = "N"
 
+    # Only save results for runs with feasible solutions and if results_dir
+    # is a non-empty string
+    if is_ok == "Y" and "results_dir" in kwargs and kwargs["results_dir"]:
+        save_results(res, kwargs["results_dir"], path.stem)
+
+    stats = res.get_statistics()
     return (
         path.stem,
         is_ok,
         int(best.cost()),
         res.get_iterations(),
-        round((datetime.now() - start).total_seconds(), 3),
+        finish,
+        len(stats.incumbents()),
     )
+
+
+def save_results(res, results_dir, inst_name):
+    """
+    Save the best solution, statistics and figures of results.
+    - Solutions are stored as ``<results_dir>/solutions/<inst_name>.txt``.
+    - Statistics are stored as ``<results_dir>/statistics/<inst_name>.csv``.
+    - Figures are stored as ``<results_dir>/figures/<inst_name>.png``.
+    """
+    res_dir = Path(results_dir)
+
+    def make_path(subdir, extension):
+        dir_path = res_dir / subdir
+        fi_path = dir_path / (inst_name + "." + extension)
+        return str(fi_path)
+
+    # Save best solutions
+    sol_path = make_path(_SOLS_DIR, "txt")
+    best = res.get_best_found()
+    stats = res.get_statistics()
+    best.export_cvrplib_format(sol_path, sum(stats.run_times()))
+
+    # Save statistics
+    stats_path = make_path(_STATS_DIR, "csv")
+    stats.to_csv(stats_path, ",")
+
+    # Save plots
+    figs_path = make_path(_FIGS_DIR, "png")
+    plot_single_run(figs_path, stats)
+
+
+def plot_single_run(path, stats):
+    _, (ax_pop, ax_objs, ax_inc) = plt.subplots(3, 1, figsize=(8, 12))
+
+    plotting.plot_population(stats, ax_pop)
+    plotting.plot_objectives(stats, ax_objs)
+    plotting.plot_incumbents(stats, ax_inc)
+
+    plt.tight_layout()
+    plt.savefig(path)
 
 
 def main():
     args = parse_args()
+
+    # Make directories to save results
+    if args.results_dir is not None:
+        res_dir = Path(args.results_dir)
+        res_dir.mkdir()
+        (res_dir / _SOLS_DIR).mkdir(exist_ok=True)
+        (res_dir / _STATS_DIR).mkdir(exist_ok=True)
+        (res_dir / _FIGS_DIR).mkdir(exist_ok=True)
 
     func = partial(solve, **vars(args))
     func_args = sorted(glob(args.instance_pattern), key=tools.name2size)
@@ -113,6 +183,7 @@ def main():
         ("obj", int),
         ("iters", int),
         ("time", float),
+        ("nb_improv", int),
     ]
     data = np.array(data, dtype=dtypes)
 
@@ -122,6 +193,7 @@ def main():
         "Objective",
         "Iters. (#)",
         "Time (s)",
+        "Improv. (#)",
     ]
     table = tools.tabulate(headers, data)
 
@@ -135,6 +207,7 @@ def main():
 
     print(f"     Avg. iterations: {data['iters'].mean():.0f}")
     print(f"   Avg. run-time (s): {data['time'].mean():.2f}")
+    print(f"Avg. improving moves: {data['nb_improv'].mean():.1f}")
     print(f"        Total not OK: {np.count_nonzero(data['ok'] == 'N')}")
 
 

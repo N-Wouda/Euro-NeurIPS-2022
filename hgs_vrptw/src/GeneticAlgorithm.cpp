@@ -7,11 +7,14 @@
 #include "Result.h"
 #include "Statistics.h"
 
+#include <chrono>
 #include <numeric>
 #include <stdexcept>
 
 Result GeneticAlgorithm::run(StoppingCriterion &stop)
 {
+    using clock = std::chrono::system_clock;
+
     if (operators.empty())
         throw std::runtime_error("Cannot run genetic algorithm without "
                                  "crossover operators.");
@@ -24,6 +27,7 @@ Result GeneticAlgorithm::run(StoppingCriterion &stop)
     size_t iter = 0;
     size_t nbIterNonProd = 1;
 
+    auto start = clock::now();
     while (not stop())
     {
         iter++;
@@ -55,7 +59,8 @@ Result GeneticAlgorithm::run(StoppingCriterion &stop)
             stats.collectFrom(population);
     }
 
-    return {population.getBestFound(), stats};
+    std::chrono::duration<double> runTime = clock::now() - start;
+    return {population.getBestFound(), stats, iter, runTime.count()};
 }
 
 Individual GeneticAlgorithm::crossover() const

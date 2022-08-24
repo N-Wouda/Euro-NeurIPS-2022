@@ -44,7 +44,8 @@ PYBIND11_MODULE(hgspy, m)
         .def("get_tour", &Individual::getTour)
         .def("is_feasible", &Individual::isFeasible)
         .def("has_excess_capacity", &Individual::hasExcessCapacity)
-        .def("has_time_warp", &Individual::hasTimeWarp);
+        .def("has_time_warp", &Individual::hasTimeWarp)
+        .def("export_cvrplib_format", &Individual::exportCVRPLibFormat);
 
     py::class_<LocalSearch>(m, "LocalSearch")
         .def(py::init<Params &, XorShift128 &>(),
@@ -167,11 +168,18 @@ PYBIND11_MODULE(hgspy, m)
     py::class_<Statistics>(m, "Statistics")
         .def("num_iters", &Statistics::numIters)
         .def("run_times", &Statistics::runTimes)
+        .def("iter_times", &Statistics::iterTimes)
         .def("pop_sizes", &Statistics::popSizes)
-        .def("feasible_pops", &Statistics::feasiblePops)
+        .def("num_feasible_pop", &Statistics::numFeasiblePop)
         .def("pop_diversity", &Statistics::popDiversity)
-        .def("curr_objectives", &Statistics::currObjectives)
-        .def("best_objectives", &Statistics::bestObjectives);
+        .def("penalties_capacity", &Statistics::penaltiesCapacity)
+        .def("penalties_time_warp", &Statistics::penaltiesTimeWarp)
+        .def("feas_best", &Statistics::feasBest)
+        .def("feas_average", &Statistics::feasAverage)
+        .def("infeas_best", &Statistics::infeasBest)
+        .def("infeas_average", &Statistics::infeasAverage)
+        .def("incumbents", &Statistics::incumbents)
+        .def("to_csv", &Statistics::toCsv);
 
     py::class_<Result>(m, "Result")
         .def("get_best_found",
@@ -179,6 +187,12 @@ PYBIND11_MODULE(hgspy, m)
              py::return_value_policy::reference)
         .def("get_statistics",
              &Result::getStatistics,
+             py::return_value_policy::reference)
+        .def("get_iterations",
+             &Result::getIterations,
+             py::return_value_policy::reference)
+        .def("get_run_time",
+             &Result::getRunTime,
              py::return_value_policy::reference);
 
     py::class_<GeneticAlgorithm>(m, "GeneticAlgorithm")
