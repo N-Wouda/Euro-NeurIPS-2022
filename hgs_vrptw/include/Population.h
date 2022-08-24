@@ -16,23 +16,30 @@ class Population
 
     using Parents = std::pair<Individual const *, Individual const *>;
 
+    struct Subpopulation
+    {
+        std::vector<Individual *> individuals;  // Ordered asc. by cost
+        std::vector<double> fitness;            // Population fitness
+    };
+
     Params &params;    // Problem parameters
     XorShift128 &rng;  // Random number generator
 
-    std::vector<Individual *> population;  // Population ordered asc. by cost
-    std::vector<double> fitness;           // Population fitness
-    Individual bestSol;                    // best observed solution
+    Subpopulation feasible;
+    Subpopulation infeasible;
 
-    // Evaluates the biased fitness of all individuals in the population
-    void updateBiasedFitness();
+    Individual bestSol;
 
-    // Removes a duplicate individual from the population if there exists one.
-    // If there are multiple duplicate individuals, then the one with the lowest
-    // index in `population` is removed first.
-    bool removeDuplicate();
+    // Evaluates the biased fitness of all individuals in the subpopulation
+    void updateBiasedFitness(Subpopulation &);
+
+    // Removes a duplicate individual from the subpopulation if there exists
+    // one. If there are multiple duplicate individuals, then the one with the
+    // lowest index in ``individuals`` is removed first.
+    bool removeDuplicate(Subpopulation &);
 
     // Removes the worst individual in terms of biased fitness
-    void removeWorstBiasedFitness();
+    void removeWorstBiasedFitness(Subpopulation &);
 
     // Generates a population of passed-in size
     void generatePopulation(size_t popSize);
@@ -55,8 +62,14 @@ public:
      */
     void reorder()
     {
-        std::sort(population.begin(),
-                  population.end(),
+        std::sort(feasible.individuals.begin(),
+                  feasible.individuals.end(),
+                  [](auto const &indiv1, auto const &indiv2) {
+                      return indiv1->cost() < indiv2->cost();
+                  });
+
+        std::sort(infeasible.individuals.begin(),
+                  infeasible.individuals.end(),
                   [](auto const &indiv1, auto const &indiv2) {
                       return indiv1->cost() < indiv2->cost();
                   });
