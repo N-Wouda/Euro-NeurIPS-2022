@@ -52,6 +52,7 @@ Result GeneticAlgorithm::run(StoppingCriterion &stop)
         if (iter % params.config.nbPenaltyManagement == 0)
         {
             updatePenalties();
+            // BUG fitness needs to be reordered too here I think
             population.reorder();  // re-order since penalties have changed
         }
 

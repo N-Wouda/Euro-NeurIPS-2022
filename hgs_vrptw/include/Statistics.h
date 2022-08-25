@@ -21,13 +21,14 @@ class Statistics
     std::vector<double> iterTimes_;
     std::vector<size_t> popSizes_;
     std::vector<size_t> numFeasiblePop_;
-    std::vector<double> popDiversity_;
-    std::vector<size_t> penaltiesCapacity_;
-    std::vector<size_t> penaltiesTimeWarp_;
+    std::vector<double> feasDiversity_;
+    std::vector<double> infeasDiversity_;
     std::vector<size_t> feasBest_;
     std::vector<size_t> feasAverage_;
     std::vector<size_t> infeasBest_;
     std::vector<size_t> infeasAverage_;
+    std::vector<size_t> penaltiesCapacity_;
+    std::vector<size_t> penaltiesTimeWarp_;
 
     timedDatapoints incumbents_;
 
@@ -85,31 +86,27 @@ public:
     }
 
     /**
-     * Returns a vector of the average population diversity, one element per
-     * iteration. The average diversity is computed as the average broken pairs
-     * distance for each individual in the population, compared to its
-     * neighbours (the neighbourhood size is controlled by the ``nbClose``
-     * setting).
+     * Returns a vector of the average feasible subpopulation diversity, one
+     * element per iteration. The average diversity is computed as the average
+     * broken pairs distance for each individual in the subpopulation, compared
+     * to its neighbours (the neighbourhood size is controlled by the
+     * ``nbClose`` setting).
      */
-    [[nodiscard]] std::vector<double> const &popDiversity() const
+    [[nodiscard]] std::vector<double> const &feasDiversity() const
     {
-        return popDiversity_;
+        return feasDiversity_;
     }
 
     /**
-     * Returns a vector of capacity penalties, one element per iteration.
+     * Returns a vector of the average infeasible subpopulation diversity, one
+     * element per iteration. The average diversity is computed as the average
+     * broken pairs distance for each individual in the subpopulation, compared
+     * to its neighbours (the neighbourhood size is controlled by the
+     * ``nbClose`` setting).
      */
-    [[nodiscard]] std::vector<size_t> const &penaltiesCapacity() const
+    [[nodiscard]] std::vector<double> const &infeasDiversity() const
     {
-        return penaltiesCapacity_;
-    }
-
-    /**
-     * Returns a vector of time warp penalties, one element per iteration.
-     */
-    [[nodiscard]] std::vector<size_t> const &penaltiesTimeWarp() const
-    {
-        return penaltiesTimeWarp_;
+        return infeasDiversity_;
     }
 
     /**
@@ -150,6 +147,22 @@ public:
     [[nodiscard]] std::vector<size_t> const &infeasAverage() const
     {
         return infeasAverage_;
+    }
+
+    /**
+     * Returns a vector of capacity penalties, one element per iteration.
+     */
+    [[nodiscard]] std::vector<size_t> const &penaltiesCapacity() const
+    {
+        return penaltiesCapacity_;
+    }
+
+    /**
+     * Returns a vector of time warp penalties, one element per iteration.
+     */
+    [[nodiscard]] std::vector<size_t> const &penaltiesTimeWarp() const
+    {
+        return penaltiesTimeWarp_;
     }
 
     /**
