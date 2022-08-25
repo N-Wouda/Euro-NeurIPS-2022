@@ -13,7 +13,7 @@ def x_axis(stats, step, plot_runtimes):
 def plot_population(stats, ax, step=None, plot_runtimes=False):
 
     if step is None:
-        step = min(1, stats.num_iters() // _N_POINTS)
+        step = max(1, stats.num_iters() // _N_POINTS)
 
     x_vals, x_label = x_axis(stats, step, plot_runtimes)
 
@@ -39,13 +39,28 @@ def plot_population(stats, ax, step=None, plot_runtimes=False):
 
     # Population diversity
     ax_div = ax.twinx()
-    line_pop_diversity = ax_div.plot(
-        x_vals, stats.pop_diversity()[::step], label="Diversity", c="tab:red"
+    line_feas_diversity = ax_div.plot(
+        x_vals,
+        stats.feas_diversity()[::step],
+        label="Feas. diversity",
+        c="tab:green",
+    )
+    line_infeas_diversity = ax_div.plot(
+        x_vals,
+        stats.infeas_diversity()[::step],
+        label="Infeas. diversity",
+        c="tab:red",
     )
     ax_div.set_ylabel("Avg. diversity")
 
     # Place different ax labels in one legend
-    lines = line_pop_sizes + line_num_feasible_pop + line_pop_diversity
+    lines = (
+        line_pop_sizes
+        + line_num_feasible_pop
+        + line_feas_diversity
+        + line_infeas_diversity
+    )
+
     labels = [line.get_label() for line in lines]
     ax.legend(lines, labels, frameon=False)
 

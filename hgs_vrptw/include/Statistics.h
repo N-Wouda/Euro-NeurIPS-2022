@@ -22,9 +22,9 @@ class Statistics
     std::vector<size_t> popSizes_;
     std::vector<size_t> numFeasiblePop_;
     std::vector<double> feasDiversity_;
-    std::vector<double> infeasDiversity_;
     std::vector<size_t> feasBest_;
     std::vector<size_t> feasAverage_;
+    std::vector<double> infeasDiversity_;
     std::vector<size_t> infeasBest_;
     std::vector<size_t> infeasAverage_;
     std::vector<size_t> penaltiesCapacity_;
@@ -98,18 +98,6 @@ public:
     }
 
     /**
-     * Returns a vector of the average infeasible subpopulation diversity, one
-     * element per iteration. The average diversity is computed as the average
-     * broken pairs distance for each individual in the subpopulation, compared
-     * to its neighbours (the neighbourhood size is controlled by the
-     * ``nbClose`` setting).
-     */
-    [[nodiscard]] std::vector<double> const &infeasDiversity() const
-    {
-        return infeasDiversity_;
-    }
-
-    /**
      * Returns a vector of the best objective value of feasible individuals,
      * one element per iteration. If there are no feasible individuals, then
      * ``INT_MAX`` is stored.
@@ -127,6 +115,18 @@ public:
     [[nodiscard]] std::vector<size_t> const &feasAverage() const
     {
         return feasAverage_;
+    }
+
+    /**
+     * Returns a vector of the average infeasible subpopulation diversity, one
+     * element per iteration. The average diversity is computed as the average
+     * broken pairs distance for each individual in the subpopulation, compared
+     * to its neighbours (the neighbourhood size is controlled by the
+     * ``nbClose`` setting).
+     */
+    [[nodiscard]] std::vector<double> const &infeasDiversity() const
+    {
+        return infeasDiversity_;
     }
 
     /**

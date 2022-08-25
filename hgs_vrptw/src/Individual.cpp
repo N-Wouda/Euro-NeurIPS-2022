@@ -253,6 +253,9 @@ void Individual::brokenPairsDistance(Individual *other)
 
 double Individual::avgBrokenPairsDistanceClosest() const
 {
+    if (indivsPerProximity.empty())
+        return 0;
+
     size_t maxSize
         = std::min(params->config.nbClose, indivsPerProximity.size());
 
