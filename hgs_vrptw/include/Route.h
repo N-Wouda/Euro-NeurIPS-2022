@@ -19,7 +19,7 @@ class Route
     // between the indexed node and the node jumpDistance ahead in the route.
     // This lets us jump to the next node in the route a given jump distance
     // away. Very useful for speeding up time window calculations.
-    std::vector<TimeWindowSegment> jumps = {};
+    std::vector<TimeWindowSegment> jumps;
 
     CircleSector sector;        // Circle sector of the route's clients
     std::vector<Node *> nodes;  // List of nodes (in order) in this solution.
@@ -36,9 +36,9 @@ class Route
 public:  // TODO make fields private
     Params const *params;
 
-    int idx;               // Route index
-    Node *depot;           // Pointer to the associated depot
-    double angleCenter;    // Angle of the barycenter of the route
+    int idx;             // Route index
+    Node *depot;         // Pointer to the associated depot
+    double angleCenter;  // Angle of the barycenter of the route
 
     /**
      * Tests if this route is feasible.
