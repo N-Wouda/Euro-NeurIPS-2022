@@ -23,7 +23,6 @@ class Route
 
     CircleSector sector;        // Circle sector of the route's clients
     std::vector<Node *> nodes;  // List of nodes (in order) in this solution.
-    TimeWindowSegment tw;       // Time window data of the route
 
     // Populates the nodes vector.
     void setupNodes();
@@ -31,7 +30,7 @@ class Route
     // Sets the angle and sector data.
     void setupSector();
 
-    // Sets time window member and forward node time windows
+    // Sets forward node time windows.
     void setupRouteTimeWindows();
 
 public:  // TODO make fields private
@@ -70,7 +69,11 @@ public:  // TODO make fields private
     /**
      * Returns total time warp on this route.
      */
-    [[nodiscard]] int timeWarp() const { return tw.totalTimeWarp(); }
+    [[nodiscard]] int timeWarp() const
+    {
+        auto const &tw = nodes.back()->twBefore;
+        return tw.totalTimeWarp();
+    }
 
     /**
      * Tests if this route overlaps the other route, that is, whether their

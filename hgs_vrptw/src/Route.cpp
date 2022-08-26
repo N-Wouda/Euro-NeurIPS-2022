@@ -102,7 +102,6 @@ void Route::setupNodes()
 void Route::setupRouteTimeWindows()
 {
     auto *node = nodes.back();
-    tw = node->twBefore;  // whole route time window data
 
     do  // forward time window data
     {
