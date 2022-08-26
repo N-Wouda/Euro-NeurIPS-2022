@@ -30,8 +30,8 @@ int TwoOpt::evalWithinRoute(Node *U, Node *V)
 
     tws = TWS::merge(tws, n(V)->twAfter);
 
-    deltaCost += d_penalties->timeWarp(tws);
-    deltaCost -= d_penalties->timeWarp(U->route->tw);
+    deltaCost += d_penalties->timeWarp(tws.totalTimeWarp());
+    deltaCost -= d_penalties->timeWarp(U->route->timeWarp());
 
     return deltaCost;
 }
@@ -50,13 +50,13 @@ int TwoOpt::evalBetweenRoutes(Node *U, Node *V)
 
     auto const uTWS = TWS::merge(U->twBefore, n(V)->twAfter);
 
-    deltaCost += d_penalties->timeWarp(uTWS);
-    deltaCost -= d_penalties->timeWarp(U->route->tw);
+    deltaCost += d_penalties->timeWarp(uTWS.totalTimeWarp());
+    deltaCost -= d_penalties->timeWarp(U->route->timeWarp());
 
     auto const vTWS = TWS::merge(V->twBefore, n(U)->twAfter);
 
-    deltaCost += d_penalties->timeWarp(vTWS);
-    deltaCost -= d_penalties->timeWarp(V->route->tw);
+    deltaCost += d_penalties->timeWarp(vTWS.totalTimeWarp());
+    deltaCost -= d_penalties->timeWarp(V->route->timeWarp());
 
     int const deltaLoad = U->cumulatedLoad - V->cumulatedLoad;
 

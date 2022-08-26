@@ -75,8 +75,8 @@ int Exchange<N, M>::evalRelocateMove(Node *U, Node *V) const
 
         auto uTWS = TWS::merge(p(U)->twBefore, n(endU)->twAfter);
 
-        deltaCost += d_penalties->timeWarp(uTWS);
-        deltaCost -= d_penalties->timeWarp(U->route->tw);
+        deltaCost += d_penalties->timeWarp(uTWS.totalTimeWarp());
+        deltaCost -= d_penalties->timeWarp(U->route->timeWarp());
 
         auto const loadDiff = U->route->loadBetween(posU, posU + N - 1);
 
@@ -93,8 +93,8 @@ int Exchange<N, M>::evalRelocateMove(Node *U, Node *V) const
                                U->route->twBetween(posU, posU + N - 1),
                                n(V)->twAfter);
 
-        deltaCost += d_penalties->timeWarp(vTWS);
-        deltaCost -= d_penalties->timeWarp(V->route->tw);
+        deltaCost += d_penalties->timeWarp(vTWS.totalTimeWarp());
+        deltaCost -= d_penalties->timeWarp(V->route->timeWarp());
     }
     else  // within same route
     {
@@ -110,7 +110,7 @@ int Exchange<N, M>::evalRelocateMove(Node *U, Node *V) const
                                         route->twBetween(posU, posU + N - 1),
                                         n(V)->twAfter);
 
-            deltaCost += d_penalties->timeWarp(tws);
+            deltaCost += d_penalties->timeWarp(tws.totalTimeWarp());
         }
         else
         {
@@ -119,10 +119,10 @@ int Exchange<N, M>::evalRelocateMove(Node *U, Node *V) const
                                         route->twBetween(posV + 1, posU - 1),
                                         n(endU)->twAfter);
 
-            deltaCost += d_penalties->timeWarp(tws);
+            deltaCost += d_penalties->timeWarp(tws.totalTimeWarp());
         }
 
-        deltaCost -= d_penalties->timeWarp(route->tw);
+        deltaCost -= d_penalties->timeWarp(route->timeWarp());
     }
 
     return deltaCost;
@@ -160,15 +160,15 @@ int Exchange<N, M>::evalSwapMove(Node *U, Node *V) const
                                V->route->twBetween(posV, posV + M - 1),
                                n(endU)->twAfter);
 
-        deltaCost += d_penalties->timeWarp(uTWS);
-        deltaCost -= d_penalties->timeWarp(U->route->tw);
+        deltaCost += d_penalties->timeWarp(uTWS.totalTimeWarp());
+        deltaCost -= d_penalties->timeWarp(U->route->timeWarp());
 
         auto vTWS = TWS::merge(p(V)->twBefore,
                                U->route->twBetween(posU, posU + N - 1),
                                n(endV)->twAfter);
 
-        deltaCost += d_penalties->timeWarp(vTWS);
-        deltaCost -= d_penalties->timeWarp(V->route->tw);
+        deltaCost += d_penalties->timeWarp(vTWS.totalTimeWarp());
+        deltaCost -= d_penalties->timeWarp(V->route->timeWarp());
 
         auto const loadU = U->route->loadBetween(posU, posU + N - 1);
         auto const loadV = V->route->loadBetween(posV, posV + M - 1);
@@ -195,7 +195,7 @@ int Exchange<N, M>::evalSwapMove(Node *U, Node *V) const
                                         route->twBetween(posU, posU + N - 1),
                                         n(endV)->twAfter);
 
-            deltaCost += d_penalties->timeWarp(tws);
+            deltaCost += d_penalties->timeWarp(tws.totalTimeWarp());
         }
         else
         {
@@ -205,10 +205,10 @@ int Exchange<N, M>::evalSwapMove(Node *U, Node *V) const
                                         route->twBetween(posV, posV + M - 1),
                                         n(endU)->twAfter);
 
-            deltaCost += d_penalties->timeWarp(tws);
+            deltaCost += d_penalties->timeWarp(tws.totalTimeWarp());
         }
 
-        deltaCost -= d_penalties->timeWarp(U->route->tw);
+        deltaCost -= d_penalties->timeWarp(U->route->timeWarp());
     }
 
     return deltaCost;

@@ -1,8 +1,6 @@
 #ifndef PENALTIES_H
 #define PENALTIES_H
 
-#include "TimeWindowSegment.h"
-
 class Penalties
 {
     int vehicleCapacity;
@@ -16,10 +14,10 @@ public:
         return std::max(currLoad - vehicleCapacity, 0) * loadPenalty;
     }
 
-    // Computes the total time warp penalty for the given time window data
-    [[nodiscard]] int timeWarp(TimeWindowSegment const &twData) const
+    // Computes the total time warp penalty for the given time warp
+    [[nodiscard]] int timeWarp(int currTimeWarp) const
     {
-        return twData.totalTimeWarp() * timePenalty;
+        return currTimeWarp * timePenalty;
     }
 
     Penalties(int vehicleCapacity, int loadPenalty, int timePenalty)

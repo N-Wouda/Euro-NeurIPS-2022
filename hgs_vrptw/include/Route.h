@@ -23,6 +23,7 @@ class Route
 
     CircleSector sector;        // Circle sector of the route's clients
     std::vector<Node *> nodes;  // List of nodes (in order) in this solution.
+    TimeWindowSegment tw;       // Time window data of the route
 
     // Populates the nodes vector.
     void setupNodes();
@@ -38,7 +39,6 @@ public:  // TODO make fields private
 
     int idx;               // Route index
     Node *depot;           // Pointer to the associated depot
-    TimeWindowSegment tw;  // Time window data of the route
     double angleCenter;    // Angle of the barycenter of the route
 
     /**
@@ -60,12 +60,17 @@ public:  // TODO make fields private
     /**
      * Determines whether this route is time-feasible.
      */
-    [[nodiscard]] bool hasTimeWarp() const { return tw.totalTimeWarp() > 0; }
+    [[nodiscard]] bool hasTimeWarp() const { return timeWarp() > 0; }
 
     /**
      * Returns total load on this route.
      */
     [[nodiscard]] int load() const { return nodes.back()->cumulatedLoad; }
+
+    /**
+     * Returns total time warp on this route.
+     */
+    [[nodiscard]] int timeWarp() const { return tw.totalTimeWarp(); }
 
     /**
      * Tests if this route overlaps the other route, that is, whether their

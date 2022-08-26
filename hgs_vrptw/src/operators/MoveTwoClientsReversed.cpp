@@ -28,8 +28,8 @@ int MoveTwoClientsReversed::evaluate(Node *U, Node *V)
 
         auto uTWS = TWS::merge(p(U)->twBefore, nn(U)->twAfter);
 
-        deltaCost += d_penalties->timeWarp(uTWS);
-        deltaCost -= d_penalties->timeWarp(U->route->tw);
+        deltaCost += d_penalties->timeWarp(uTWS.totalTimeWarp());
+        deltaCost -= d_penalties->timeWarp(U->route->timeWarp());
 
         auto const loadDiff = U->route->loadBetween(posU, posU + 1);
 
@@ -44,8 +44,8 @@ int MoveTwoClientsReversed::evaluate(Node *U, Node *V)
 
         auto vTWS = TWS::merge(V->twBefore, n(U)->tw, U->tw, n(V)->twAfter);
 
-        deltaCost += d_penalties->timeWarp(vTWS);
-        deltaCost -= d_penalties->timeWarp(V->route->tw);
+        deltaCost += d_penalties->timeWarp(vTWS.totalTimeWarp());
+        deltaCost -= d_penalties->timeWarp(V->route->timeWarp());
     }
     else  // within same route
     {
@@ -62,7 +62,7 @@ int MoveTwoClientsReversed::evaluate(Node *U, Node *V)
                                          U->tw,
                                          n(V)->twAfter);
 
-            deltaCost += d_penalties->timeWarp(uTWS);
+            deltaCost += d_penalties->timeWarp(uTWS.totalTimeWarp());
         }
         else
         {
@@ -72,10 +72,10 @@ int MoveTwoClientsReversed::evaluate(Node *U, Node *V)
                                          route->twBetween(posV + 1, posU - 1),
                                          nn(U)->twAfter);
 
-            deltaCost += d_penalties->timeWarp(uTWS);
+            deltaCost += d_penalties->timeWarp(uTWS.totalTimeWarp());
         }
 
-        deltaCost -= d_penalties->timeWarp(route->tw);
+        deltaCost -= d_penalties->timeWarp(route->timeWarp());
     }
 
     return deltaCost;
