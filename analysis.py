@@ -80,6 +80,7 @@ def solve(loc: str, seed: int, **kwargs):
     algo.add_crossover_operator(hgspy.crossover.alternating_exchange)
     algo.add_crossover_operator(hgspy.crossover.ordered_exchange)
     algo.add_crossover_operator(hgspy.crossover.selective_route_exchange)
+    algo.add_crossover_operator(hgspy.crossover.broken_pairs_exchange)
 
     if "phase" in kwargs and kwargs["phase"]:
         t_lim = tools.static_time_limit(tools.name2size(loc), kwargs["phase"])

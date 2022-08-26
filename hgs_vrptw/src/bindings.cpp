@@ -90,7 +90,8 @@ PYBIND11_MODULE(hgspy, m)
                       int,
                       size_t,
                       int,
-                      int>(),
+                      int,
+                      double>(),
              py::arg("seed") = 0,
              py::arg("nbIter") = 20'000,
              py::arg("timeLimit") = INT_MAX,
@@ -115,7 +116,8 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("weightTimeWarp") = 10,
              py::arg("intensificationProbability") = 25,
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
-             py::arg("minCircleSectorSizeDegrees") = 15)
+             py::arg("minCircleSectorSizeDegrees") = 15,
+             py::arg("destructionRate") = 0.10)
         .def_readonly("seed", &Config::seed)
         .def_readonly("nbIter", &Config::nbIter)
         .def_readonly("timeLimit", &Config::timeLimit)
@@ -140,7 +142,8 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("weightTimeWarp", &Config::weightTimeWarp)
         .def_readonly("circleSectorOverlapTolerance",
                       &Config::circleSectorOverlapTolerance)
-        .def_readonly("minCircleSectorSize", &Config::minCircleSectorSize);
+        .def_readonly("minCircleSectorSize", &Config::minCircleSectorSize)
+        .def_readonly("destructionRate", &Config::destructionRate);
 
     py::class_<Params>(m, "Params")
         .def(py::init<Config const &,
@@ -221,6 +224,7 @@ PYBIND11_MODULE(hgspy, m)
     py::module xOps = m.def_submodule("crossover");
 
     xOps.def("alternating_exchange", &alternatingExchange);
+    xOps.def("broken_pairs_exchange", &brokenPairsExchange);
     xOps.def("ordered_exchange", &orderedExchange);
     xOps.def("selective_route_exchange", &selectiveRouteExchange);
 
