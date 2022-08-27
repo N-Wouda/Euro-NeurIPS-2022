@@ -117,7 +117,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("intensificationProbability") = 25,
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
              py::arg("minCircleSectorSizeDegrees") = 15,
-             py::arg("destructionRate") = 0.10)
+             py::arg("destructionRate") = 0.12)
         .def_readonly("seed", &Config::seed)
         .def_readonly("nbIter", &Config::nbIter)
         .def_readonly("timeLimit", &Config::timeLimit)

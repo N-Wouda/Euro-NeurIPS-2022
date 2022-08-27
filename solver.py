@@ -78,6 +78,7 @@ def solve_static_vrptw(instance, time_limit=3600, seed=1):
 
     algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
     algo.add_crossover_operator(hgspy.crossover.alternating_exchange)
+    algo.add_crossover_operator(hgspy.crossover.broken_pairs_exchange)
     algo.add_crossover_operator(hgspy.crossover.ordered_exchange)
     algo.add_crossover_operator(hgspy.crossover.selective_route_exchange)
 

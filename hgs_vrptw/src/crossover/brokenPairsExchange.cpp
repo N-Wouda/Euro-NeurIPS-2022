@@ -1,4 +1,5 @@
 #include "crossover.h"
+#include <algorithm>
 #include <functional>
 #include <unordered_map>
 #include <unordered_set>
@@ -62,36 +63,74 @@ Individual brokenPairsExchange(
     size_t const maxNumRemovals
         = params.config.destructionRate * params.nbClients;
 
-    // Store the clients to remove
-    ClientSet removeA;
+    // Compute the broken pairs
+    ClientSet brokenPairs;
     for (auto const [cust, succ] : succA)
-    {
-        if (removeA.size() > maxNumRemovals)
-            break;
-
         if (succ != succB[cust])
-            removeA.insert(cust);
-    }
+            brokenPairs.insert(cust);
 
-    ClientSet removeB;
-    for (auto const [cust, succ] : succB)
+    // TODO Do we only want to do 1 crossover?
+    // * // Only repair remove/repair the worst individual
+    // auto &worst = (parents.first > parents.second) ? routesA : routesB;
+
+    // // Compute consecutive customers strings of broken pairs
+    // std::shuffle(worst.begin(), worst.end(), rng);
+
+    // ClientSet removed;
+    // for (auto const &route : worst)
+    // {
+    //     for (auto const cust : route)
+    //     {
+    //         if (rng.randint(100) < 10 || removed.size() > maxNumRemovals)
+    //             break;
+
+    //         if (brokenPairs.contains(cust))
+    //             removed.insert(cust);
+    //     }
+    // }
+
+    // removeClients(worst, removed);
+    // crossover::greedyRepair(worst, removed, params);
+    // return {&params, worst};
+
+    // Compute consecutive customers strings of broken pairs
+    std::shuffle(routesA.begin(), routesA.end(), rng);
+
+    ClientSet removedA;
+    for (auto const &route : routesA)
     {
-        if (removeB.size() > maxNumRemovals)
-            break;
+        for (auto const cust : route)
+        {
+            if (removedA.size() > maxNumRemovals)
+                break;
 
-        if (succ != succA[cust])
-            removeB.insert(cust);
+            if (brokenPairs.contains(cust))
+                removedA.insert(cust);
+        }
     }
 
-    // Remove customers from both parents
-    removeClients(routesA, removeA);
-    removeClients(routesB, removeB);
-
-    // Repair both parents
-    crossover::greedyRepair(routesA, removeA, params);
-    crossover::greedyRepair(routesB, removeB, params);
-
+    removeClients(routesA, removedA);
+    crossover::greedyRepair(routesA, removedA, params);
     Individual indivA{&params, routesA};
+
+    // Do the same for routesB
+    std::shuffle(routesB.begin(), routesB.end(), rng);
+
+    ClientSet removedB;
+    for (auto const &route : routesB)
+    {
+        for (auto const cust : route)
+        {
+            if (removedB.size() > maxNumRemovals)
+                break;
+
+            if (brokenPairs.contains(cust))
+                removedB.insert(cust);
+        }
+    }
+
+    removeClients(routesB, removedB);
+    crossover::greedyRepair(routesB, removedB, params);
     Individual indivB{&params, routesB};
 
     return std::min(indivA, indivB);
