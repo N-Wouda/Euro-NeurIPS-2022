@@ -46,12 +46,12 @@ Individual brokenPairsExchange(
     auto succA = std::vector<size_t>(params.nbClients, 0);
     for (auto const &route : routesA)
         for (size_t idx = 1; idx < route.size(); idx++)
-            succA[route[idx] - 1] = route[idx];
+            succA[route[idx - 1]] = route[idx];
 
     auto succB = std::vector<size_t>(params.nbClients, 0);
     for (auto const &route : routesB)
         for (size_t idx = 1; idx < route.size(); idx++)
-            succB[route[idx] - 1] = route[idx];
+            succB[route[idx - 1]] = route[idx];
 
     ClientSet brokenPairs;
     for (auto client = 1; client != params.nbClients; client++)
