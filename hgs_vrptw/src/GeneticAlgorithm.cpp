@@ -25,17 +25,17 @@ Result GeneticAlgorithm::run(StoppingCriterion &stop)
     Statistics stats;
 
     size_t iter = 0;
-    size_t nbIterNonProd = 1;
+    size_t nbIterNoImprove = 1;
 
     auto start = clock::now();
     while (not stop())
     {
         iter++;
 
-        if (nbIterNonProd == params.config.nbIter)  // restart population after
-        {                                           // this number of useless
-            population.restart();                   // iterations
-            nbIterNonProd = 1;
+        if (nbIterNoImprove == params.config.nbIter)  // restart population
+        {                                             // after this number of
+            population.restart();                     // non-improving iters
+            nbIterNoImprove = 1;
         }
 
         auto const currBest = population.getBestFound().cost();
@@ -43,10 +43,12 @@ Result GeneticAlgorithm::run(StoppingCriterion &stop)
         auto offspring = crossover();
         educate(offspring);
 
-        if (currBest > population.getBestFound().cost())  // has new best!
-            nbIterNonProd = 1;
+        auto const newBest = population.getBestFound().cost();
+
+        if (currBest > newBest)  // has new best!
+            nbIterNoImprove = 1;
         else
-            nbIterNonProd++;
+            nbIterNoImprove++;
 
         // Diversification and penalty management
         if (iter % params.config.nbPenaltyManagement == 0)
