@@ -31,15 +31,15 @@ class Population
     Individual bestSol;
 
     // Evaluates the biased fitness of all individuals in the subpopulation
-    void updateBiasedFitness(Subpopulation &);
+    void updateBiasedFitness(Subpopulation &subpop);
 
     // Removes a duplicate individual from the subpopulation if there exists
     // one. If there are multiple duplicate individuals, then the one with the
     // lowest index in ``individuals`` is removed first.
-    bool removeDuplicate(Subpopulation &);
+    bool removeDuplicate(Subpopulation &subpop);
 
     // Removes the worst individual in terms of biased fitness
-    void removeWorstBiasedFitness(Subpopulation &);
+    void removeWorstBiasedFitness(Subpopulation &subpop);
 
     // Generates a population of passed-in size
     void generatePopulation(size_t popSize);

@@ -18,10 +18,6 @@ void Statistics::collectFrom(Population const &pop)
 
     lastIter = clock::now();  // update for next call
 
-    // Penalty statistics
-    penaltiesCapacity_.push_back(pop.params.penaltyCapacity);
-    penaltiesTimeWarp_.push_back(pop.params.penaltyTimeWarp);
-
     // TODO Use numFeas and numInfeas instead of total popsize?
     // Population statistics
     auto const numFeas = pop.feasible.individuals.size();
@@ -29,11 +25,11 @@ void Statistics::collectFrom(Population const &pop)
     popSizes_.push_back(numFeas + numInfeas);
     numFeasiblePop_.push_back(numFeas);
 
-    auto const opDiversity = [&](double val, Individual const *indiv) {
+    auto const opDiversity = [](double val, Individual const *indiv) {
         return val + indiv->avgBrokenPairsDistanceClosest();
     };
 
-    auto const opCost = [&](size_t sum, Individual const *indiv) {
+    auto const opCost = [](size_t sum, Individual const *indiv) {
         return sum + indiv->cost();
     };
 

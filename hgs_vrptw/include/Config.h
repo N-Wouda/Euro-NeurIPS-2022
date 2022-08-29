@@ -61,12 +61,12 @@ struct Config
     int minCircleSectorSize = static_cast<int>(15 / 360. * 65536);
 
     // Percentage of customers to remove in brokenPairsExchange
-    double destructionRate = 0.20;
+    size_t destroyPct = 20;
 
     explicit Config(int seed = 0,
                     size_t nbIter = 20'000,
                     int timeLimit = INT_MAX,
-                    bool collectStatistics = false,
+                    bool collectStatistics = true,
                     size_t initialTimeWarpPenalty = 1,
                     size_t nbPenaltyManagement = 100,
                     double feasBooster = 2.,
@@ -88,7 +88,7 @@ struct Config
                     size_t intensificationProbability = 25,
                     int circleSectorOverlapToleranceDegrees = 0,
                     int minCircleSectorSizeDegrees = 15,
-                    double destructionRate = 0.20)
+                    size_t destroyPct = 20)
         : seed(seed),
           nbIter(nbIter),
           timeLimit(timeLimit),
@@ -112,7 +112,7 @@ struct Config
           weightWaitTime(weightWaitTime),
           weightTimeWarp(weightTimeWarp),
           intensificationProbability(intensificationProbability),
-          destructionRate(destructionRate)
+          destroyPct(destroyPct)
     {
         auto const overlap = circleSectorOverlapToleranceDegrees / 360. * 65536;
         circleSectorOverlapTolerance = static_cast<int>(overlap);

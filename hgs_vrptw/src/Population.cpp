@@ -160,20 +160,18 @@ Individual const *Population::getBinaryTournament()
 
     // TODO refactor this with lambdas
     auto const idx1 = rng.randint(popSize);
-    auto const *indiv1 = (idx1 < feasSize)
+    auto const *indiv1 = idx1 < feasSize
                              ? feasible.individuals[idx1]
                              : infeasible.individuals[idx1 - feasSize];
-    auto const fitness1 = (idx1 < feasSize)
-                              ? feasible.fitness[idx1]
-                              : infeasible.fitness[idx1 - feasSize];
+    auto const fitness1 = idx1 < feasSize ? feasible.fitness[idx1]
+                                          : infeasible.fitness[idx1 - feasSize];
 
     auto const idx2 = rng.randint(popSize);
-    auto const *indiv2 = (idx2 < feasSize)
+    auto const *indiv2 = idx2 < feasSize
                              ? feasible.individuals[idx2]
                              : infeasible.individuals[idx2 - feasSize];
-    auto const fitness2 = (idx2 < feasSize)
-                              ? feasible.fitness[idx2]
-                              : infeasible.fitness[idx2 - feasSize];
+    auto const fitness2 = idx2 < feasSize ? feasible.fitness[idx2]
+                                          : infeasible.fitness[idx2 - feasSize];
 
     return fitness1 < fitness2 ? indiv1 : indiv2;
 }
