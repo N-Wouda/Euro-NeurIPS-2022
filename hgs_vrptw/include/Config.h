@@ -35,10 +35,6 @@ struct Config
 
     size_t selectProbability = 90;  // offspring selection probability
 
-    // Weight for diversity criterion. If 0, weight is set to 1 - nbElite /
-    // populationSize
-    double diversityWeight = 0.0;
-
     int nbVeh = INT_MAX;  // Number of vehicles
 
     // Granular search parameter, limits the number of moves in the RI local
@@ -80,7 +76,6 @@ struct Config
                     size_t repairProbability = 50,
                     size_t repairBooster = 10,
                     size_t selectProbability = 90,
-                    double diversityWeight = 0.,
                     int nbVeh = INT_MAX,
                     size_t nbGranular = 40,
                     int weightWaitTime = 2,
@@ -106,7 +101,6 @@ struct Config
           repairProbability(repairProbability),
           repairBooster(repairBooster),
           selectProbability(selectProbability),
-          diversityWeight(diversityWeight),
           nbVeh(nbVeh),
           nbGranular(nbGranular),
           weightWaitTime(weightWaitTime),

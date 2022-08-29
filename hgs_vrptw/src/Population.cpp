@@ -58,7 +58,6 @@ void Population::addIndividual(Individual const &indiv)
 
 void Population::updateBiasedFitness(std::vector<Member> &subpop)
 {
-
     if (subpop.size() == 1)
     {
         subpop[0].fitness = 0;

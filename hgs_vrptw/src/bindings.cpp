@@ -83,7 +83,6 @@ PYBIND11_MODULE(hgspy, m)
                       size_t,
                       size_t,
                       size_t,
-                      double,
                       int,
                       size_t,
                       int,
@@ -109,7 +108,6 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("repairProbability") = 50,
              py::arg("repairBooster") = 10,
              py::arg("selectProbability") = 90,
-             py::arg("diversityWeight") = 0.,
              py::arg("nbVeh") = INT_MAX,
              py::arg("nbGranular") = 40,
              py::arg("weightWaitTime") = 2,
@@ -135,7 +133,6 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("repairProbability", &Config::repairProbability)
         .def_readonly("repairBooster", &Config::repairBooster)
         .def_readonly("selectProbability", &Config::selectProbability)
-        .def_readonly("diversityWeight", &Config::diversityWeight)
         .def_readonly("nbVeh", &Config::nbVeh)
         .def_readonly("nbGranular", &Config::nbGranular)
         .def_readonly("weightWaitTime", &Config::weightWaitTime)
