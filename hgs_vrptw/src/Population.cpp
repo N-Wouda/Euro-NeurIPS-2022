@@ -84,18 +84,8 @@ void Population::updateBiasedFitness(std::vector<Member> &subpop)
         // measure from 0 to 1
         double const divRank = idx / (popSize - 1);
         double const fitRank = ranking[idx].second / (popSize - 1);
-
-        // Elite individuals cannot be smaller than population size
-        // TODO can this be removed?
-        if (subpop.size() <= params.config.nbElite)
-            subpop[ranking[idx].second].fitness = fitRank;
-        // TODO can this be removed?
-        else if (params.config.diversityWeight > 0)
-            subpop[ranking[idx].second].fitness
-                = fitRank + params.config.diversityWeight * divRank;
-        else
-            subpop[ranking[idx].second].fitness
-                = fitRank + (1.0 - params.config.nbElite / popSize) * divRank;
+        subpop[ranking[idx].second].fitness
+            = fitRank + (1.0 - params.config.nbElite / popSize) * divRank;
     }
 }
 
@@ -132,11 +122,11 @@ void Population::removeWorstBiasedFitness(std::vector<Member> &subpop)
 
 void Population::restart()
 {
-    for (Member &feas : feasible)
-        delete feas.indiv;
+    for (Member &member : feasible)
+        delete member.indiv;
 
-    for (Member &infeas : infeasible)
-        delete infeas.indiv;
+    for (Member &member : infeasible)
+        delete member.indiv;
 
     feasible.clear();
     infeasible.clear();

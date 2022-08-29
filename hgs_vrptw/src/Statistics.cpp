@@ -39,9 +39,9 @@ void Statistics::collectFrom(Population const &pop)
         feasDiversity_.push_back(feasDiv / static_cast<double>(numFeas));
         feasBest_.push_back(pop.feasible[0].indiv->cost());
 
-        auto const costFeas
+        auto const feasCost
             = accumulate(pop.feasible.begin(), pop.feasible.end(), 0, opCost);
-        feasAverage_.push_back(costFeas / numFeas);
+        feasAverage_.push_back(feasCost / numFeas);
     }
     else
     {
@@ -58,9 +58,9 @@ void Statistics::collectFrom(Population const &pop)
 
         infeasBest_.push_back(pop.infeasible[0].indiv->cost());
 
-        auto const costInfeas = accumulate(
+        auto const infeasCost = accumulate(
             pop.infeasible.begin(), pop.infeasible.end(), 0, opCost);
-        infeasAverage_.push_back(costInfeas / numInfeas);
+        infeasAverage_.push_back(infeasCost / numInfeas);
     }
     else
     {
