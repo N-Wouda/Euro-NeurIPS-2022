@@ -109,7 +109,6 @@ void Statistics::toCsv(std::string const &path, char const sep) const
 
     for (size_t it = 0; it != numIters_; it++)
     {
-        std::cout<<it<< '\n';
         out << runTimes_[it] << sep
             << iterTimes_[it] << sep
             << popSizes_[it] << sep

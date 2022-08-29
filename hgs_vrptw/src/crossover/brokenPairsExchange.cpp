@@ -54,7 +54,7 @@ Individual brokenPairsExchange(
             succB[route[idx] - 1] = route[idx];
 
     ClientSet brokenPairs;
-    for (auto client = 0; client != params.nbClients; client++)
+    for (auto client = 1; client != params.nbClients; client++)
         if (succA[client] != succB[client])
             brokenPairs.insert(client);
 

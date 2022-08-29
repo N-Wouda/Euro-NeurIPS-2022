@@ -73,8 +73,7 @@ public:
     Parents selectParents();
 
     /**
-     * Returns the best feasible solution that was observed during
-     * iteration.
+     * Returns the best feasible solution that was observed during iteration.
      */
     [[nodiscard]] Individual const &getBestFound() const { return bestSol; }
 
