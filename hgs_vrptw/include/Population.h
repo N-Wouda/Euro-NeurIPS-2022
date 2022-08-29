@@ -16,30 +16,30 @@ class Population
 
     using Parents = std::pair<Individual const *, Individual const *>;
 
-    struct Subpopulation
-    {
-        std::vector<Individual *> individuals;  // Ordered asc. by cost
-        std::vector<double> fitness;            // Population fitness
-    };
-
     Params &params;    // Problem parameters
     XorShift128 &rng;  // Random number generator
 
-    Subpopulation feasible;
-    Subpopulation infeasible;
+    struct Member
+    {
+        Individual *indiv;
+        double fitness;
+    };
+
+    std::vector<Member> feasible;
+    std::vector<Member> infeasible;
 
     Individual bestSol;
 
     // Evaluates the biased fitness of all individuals in the subpopulation
-    void updateBiasedFitness(Subpopulation &subpop);
+    void updateBiasedFitness(std::vector<Member> &subpop);
 
     // Removes a duplicate individual from the subpopulation if there exists
     // one. If there are multiple duplicate individuals, then the one with the
     // lowest index in ``individuals`` is removed first.
-    bool removeDuplicate(Subpopulation &subpop);
+    bool removeDuplicate(std::vector<Member> &subpop);
 
     // Removes the worst individual in terms of biased fitness
-    void removeWorstBiasedFitness(Subpopulation &subpop);
+    void removeWorstBiasedFitness(std::vector<Member> &subpop);
 
     // Generates a population of passed-in size
     void generatePopulation(size_t popSize);
@@ -62,24 +62,19 @@ public:
      */
     void reorder()
     {
-        std::sort(feasible.individuals.begin(),
-                  feasible.individuals.end(),
-                  [](auto const &indiv1, auto const &indiv2) {
-                      return indiv1->cost() < indiv2->cost();
-                  });
-
-        std::sort(infeasible.individuals.begin(),
-                  infeasible.individuals.end(),
-                  [](auto const &indiv1, auto const &indiv2) {
-                      return indiv1->cost() < indiv2->cost();
-                  });
+        auto const op = [](auto const &subs1, auto const &subs2) {
+            return subs1.indiv->cost() < subs2.indiv->cost();
+        };
+        std::sort(feasible.begin(), feasible.end(), op);
+        std::sort(infeasible.begin(), infeasible.end(), op);
     }
 
     // Selects two (if possible non-identical) parents by binary tournament
     Parents selectParents();
 
     /**
-     * Returns the best feasible solution that was observed during iteration.
+     * Returns the best feasible solution that was observed during
+     * iteration.
      */
     [[nodiscard]] Individual const &getBestFound() const { return bestSol; }
 

@@ -66,7 +66,7 @@ struct Config
     explicit Config(int seed = 0,
                     size_t nbIter = 20'000,
                     int timeLimit = INT_MAX,
-                    bool collectStatistics = true,
+                    bool collectStatistics = false,
                     size_t initialTimeWarpPenalty = 1,
                     size_t nbPenaltyManagement = 100,
                     double feasBooster = 2.,

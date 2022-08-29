@@ -43,19 +43,18 @@ Individual brokenPairsExchange(
     auto &routesB = parents.second->getRoutes();
 
     // Find all successors and broken pairs
-    // TODO check again based on what Niels said
-    Successors succA;
+    auto succA = std::vector<size_t>(params.nbClients, 0);
     for (auto const &route : routesA)
-        for (size_t idx = 0; idx < route.size(); idx++)
-            succA[route[idx]] = route[idx + 1];
+        for (size_t idx = 1; idx < route.size(); idx++)
+            succA[route[idx] - 1] = route[idx];
 
-    Successors succB;
+    auto succB = std::vector<size_t>(params.nbClients, 0);
     for (auto const &route : routesB)
-        for (size_t idx = 0; idx < route.size(); idx++)
-            succB[route[idx]] = route[idx + 1];
+        for (size_t idx = 1; idx < route.size(); idx++)
+            succB[route[idx] - 1] = route[idx];
 
     ClientSet brokenPairs;
-    for (auto const client : succA)
+    for (auto client = 0; client != params.nbClients; client++)
         if (succA[client] != succB[client])
             brokenPairs.insert(client);
 
@@ -66,6 +65,7 @@ Individual brokenPairsExchange(
     auto worst = parents.first > parents.second ? routesA : routesB;
     std::shuffle(worst.begin(), worst.end(), rng);
 
+    // Remove consecutive broken pairs
     ClientSet removed;
     for (auto const &route : worst)
         for (auto const client : route)

@@ -20,33 +20,27 @@ void Statistics::collectFrom(Population const &pop)
 
     // TODO Use numFeas and numInfeas instead of total popsize?
     // Population statistics
-    auto const numFeas = pop.feasible.individuals.size();
-    auto const numInfeas = pop.infeasible.individuals.size();
+    auto const numFeas = pop.feasible.size();
+    auto const numInfeas = pop.infeasible.size();
     popSizes_.push_back(numFeas + numInfeas);
     numFeasiblePop_.push_back(numFeas);
 
-    auto const opDiversity = [](double val, Individual const *indiv) {
-        return val + indiv->avgBrokenPairsDistanceClosest();
+    auto const opDiversity = [](double val, auto const &subs) {
+        return val + subs.indiv->avgBrokenPairsDistanceClosest();
     };
 
-    auto const opCost = [](size_t sum, Individual const *indiv) {
-        return sum + indiv->cost();
-    };
+    auto const opCost
+        = [](size_t sum, auto const &subs) { return sum + subs.indiv->cost(); };
 
-    if (pop.feasible.individuals.size() > 0)
+    if (pop.feasible.size() > 0)
     {
-        double const feasDiv = std::accumulate(pop.feasible.individuals.begin(),
-                                               pop.feasible.individuals.end(),
-                                               0.,
-                                               opDiversity);
+        double const feasDiv = std::accumulate(
+            pop.feasible.begin(), pop.feasible.end(), 0., opDiversity);
         feasDiversity_.push_back(feasDiv / static_cast<double>(numFeas));
+        feasBest_.push_back(pop.feasible[0].indiv->cost());
 
-        feasBest_.push_back(pop.feasible.individuals[0]->cost());
-
-        auto const costFeas = accumulate(pop.feasible.individuals.begin(),
-                                         pop.feasible.individuals.end(),
-                                         0,
-                                         opCost);
+        auto const costFeas
+            = accumulate(pop.feasible.begin(), pop.feasible.end(), 0, opCost);
         feasAverage_.push_back(costFeas / numFeas);
     }
     else
@@ -56,21 +50,16 @@ void Statistics::collectFrom(Population const &pop)
         feasAverage_.push_back(INT_MAX);
     }
 
-    if (pop.infeasible.individuals.size() > 0)
+    if (pop.infeasible.size() > 0)
     {
-        double const infeasDiv
-            = std::accumulate(pop.infeasible.individuals.begin(),
-                              pop.infeasible.individuals.end(),
-                              0.,
-                              opDiversity);
+        double const infeasDiv = std::accumulate(
+            pop.infeasible.begin(), pop.infeasible.end(), 0., opDiversity);
         infeasDiversity_.push_back(infeasDiv / static_cast<double>(numInfeas));
 
-        infeasBest_.push_back(pop.infeasible.individuals[0]->cost());
+        infeasBest_.push_back(pop.infeasible[0].indiv->cost());
 
-        auto const costInfeas = accumulate(pop.infeasible.individuals.begin(),
-                                           pop.infeasible.individuals.end(),
-                                           0,
-                                           opCost);
+        auto const costInfeas = accumulate(
+            pop.infeasible.begin(), pop.infeasible.end(), 0, opCost);
         infeasAverage_.push_back(costInfeas / numInfeas);
     }
     else
@@ -120,6 +109,7 @@ void Statistics::toCsv(std::string const &path, char const sep) const
 
     for (size_t it = 0; it != numIters_; it++)
     {
+        std::cout<<it<< '\n';
         out << runTimes_[it] << sep
             << iterTimes_[it] << sep
             << popSizes_[it] << sep
