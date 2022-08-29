@@ -84,8 +84,12 @@ void Population::updateBiasedFitness(std::vector<Member> &subpop)
         // measure from 0 to 1
         double const divRank = idx / (popSize - 1);
         double const fitRank = ranking[idx].second / (popSize - 1);
-        subpop[ranking[idx].second].fitness
-            = fitRank + (1.0 - params.config.nbElite / popSize) * divRank;
+
+        if (subpop.size() <= params.config.nbElite)
+            subpop[ranking[idx].second].fitness = fitRank;
+        else
+            subpop[ranking[idx].second].fitness
+                = fitRank + (1.0 - params.config.nbElite / popSize) * divRank;
     }
 }
 
