@@ -33,6 +33,7 @@ void removeClients(Routes &routes, ClientSet const &clients)
         route.erase(position);
     }
 }
+}  // namespace
 
 Individual brokenPairsExchange(
     std::pair<Individual const *, Individual const *> const &parents,
@@ -42,7 +43,7 @@ Individual brokenPairsExchange(
     auto routesA = parents.first->getRoutes();
     auto routesB = parents.second->getRoutes();
 
-    // Find client successors in both parents
+    // Find all successors and broken pairs
     Successors succA;
     for (auto const &route : routesA)
         for (int idx = 0; idx <= static_cast<int>(route.size()) - 1; idx++)
@@ -53,25 +54,16 @@ Individual brokenPairsExchange(
         for (int idx = 0; idx <= static_cast<int>(route.size()) - 1; idx++)
             succB[route[idx]] = route[idx + 1];
 
-    // Compute number of broken pairs
-    size_t nBrokenPairs = 0;
-    for (int idx = 0; idx != params.nbClients; idx++)
-        nBrokenPairs += succA[idx] == succB[idx] ? 1 : 0;
-
-    // Compute the maximum number of client removals
-    size_t const maxNumRemovals
-        = params.config.destructionRate * params.nbClients;
-
-    // Compute the broken pairs
     ClientSet brokenPairs;
     for (auto const [cust, succ] : succA)
         if (succ != succB[cust])
             brokenPairs.insert(cust);
 
-    // Only repair remove/repair the worst individual
-    auto &worst = (parents.first > parents.second) ? routesA : routesB;
+    size_t const maxNumRemovals
+        = params.config.destructionRate * params.nbClients;
 
-    // Compute consecutive customers strings of broken pairs
+    // Only consider the worst parent routes
+    auto &worst = (parents.first > parents.second) ? routesA : routesB;
     std::shuffle(worst.begin(), worst.end(), rng);
 
     ClientSet removed;
@@ -79,7 +71,7 @@ Individual brokenPairsExchange(
     {
         for (auto const cust : route)
         {
-            if (removed.size() > maxNumRemovals)
+            if (removed.size() >= maxNumRemovals)
                 break;
 
             if (brokenPairs.contains(cust))
@@ -91,46 +83,3 @@ Individual brokenPairsExchange(
     crossover::greedyRepair(worst, removed, params);
     return {&params, worst};
 }
-
-// NOTE Code below computes broken pair removals for both parents
-// // Compute consecutive customers strings of broken pairs
-// std::shuffle(routesA.begin(), routesA.end(), rng);
-
-// ClientSet removedA;
-// for (auto const &route : routesA)
-// {
-//     for (auto const cust : route)
-//     {
-//         if (removedA.size() > maxNumRemovals)
-//             break;
-
-//         if (brokenPairs.contains(cust))
-//             removedA.insert(cust);
-//     }
-// }
-
-// removeClients(routesA, removedA);
-// crossover::greedyRepair(routesA, removedA, params);
-// Individual indivA{&params, routesA};
-
-// // Do the same for routesB
-// std::shuffle(routesB.begin(), routesB.end(), rng);
-
-// ClientSet removedB;
-// for (auto const &route : routesB)
-// {
-//     for (auto const cust : route)
-//     {
-//         if (removedB.size() > maxNumRemovals)
-//             break;
-
-//         if (brokenPairs.contains(cust))
-//             removedB.insert(cust);
-//     }
-// }
-
-// removeClients(routesB, removedB);
-// crossover::greedyRepair(routesB, removedB, params);
-// Individual indivB{&params, routesB};
-
-// return std::min(indivA, indivB);

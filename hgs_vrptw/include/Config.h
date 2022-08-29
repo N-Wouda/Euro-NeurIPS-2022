@@ -61,7 +61,7 @@ struct Config
     int minCircleSectorSize = static_cast<int>(15 / 360. * 65536);
 
     // Percentage of customers to remove in brokenPairsExchange
-    double destructionRate = 0.12;
+    double destructionRate = 0.20;
 
     explicit Config(int seed = 0,
                     size_t nbIter = 20'000,
@@ -88,7 +88,7 @@ struct Config
                     size_t intensificationProbability = 25,
                     int circleSectorOverlapToleranceDegrees = 0,
                     int minCircleSectorSizeDegrees = 15,
-                    double destructionRate = 0.12)
+                    double destructionRate = 0.20)
         : seed(seed),
           nbIter(nbIter),
           timeLimit(timeLimit),
