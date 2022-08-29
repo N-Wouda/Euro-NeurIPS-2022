@@ -145,7 +145,7 @@ def save_results(res, results_dir, inst_name):
     sol_path = make_path(_SOLS_DIR, "txt")
     best = res.get_best_found()
     stats = res.get_statistics()
-    best.export_cvrplib_format(sol_path, sum(stats.run_times()))
+    best.export_cvrplib_format(sol_path, res.getRunTime())
 
     # Save statistics
     stats_path = make_path(_STATS_DIR, "csv")
