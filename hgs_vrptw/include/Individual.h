@@ -126,6 +126,11 @@ public:
         return cost() < other.cost();
     }
 
+    bool operator==(Individual const &other) const
+    {
+        return cost() == other.cost() && routes_ == other.getRoutes();
+    }
+
     Individual(Params const *params, XorShift128 *rng);  // random individual
 
     Individual(Params const *params, Tour tour);

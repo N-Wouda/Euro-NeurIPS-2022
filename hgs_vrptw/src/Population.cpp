@@ -163,12 +163,10 @@ std::pair<Individual const *, Individual const *> Population::selectParents()
     Individual const *par1 = getBinaryTournament();
     Individual const *par2 = getBinaryTournament();
 
-    // TODO We need to check that par1 and par2 do not have identical routes.
     size_t numTries = 1;
-    while (par1 == par2 && numTries++ < 10)  // try again a few more times if
-        par2 = getBinaryTournament();        // same parent
-
-    return std::make_pair(par1, par2);
+    while ((par1 == par2 || *par1 == *par2) && numTries++ < 10)
+        par2 = getBinaryTournament();   // Try again few more times
+    return std::make_pair(par1, par2);  // if same parent
 }
 
 Population::Population(Params &params, XorShift128 &rng)
