@@ -113,7 +113,7 @@ bool Population::removeDuplicate(std::vector<Member> &subpop)
 void Population::removeWorstBiasedFitness(std::vector<Member> &subpop)
 {
     auto const worstFitness = std::max_element(
-        subpop.begin(), subpop.end(), [](const Member &a, const Member &b) {
+        subpop.begin(), subpop.end(), [](Member const &a, Member const &b) {
             return a.fitness < b.fitness;
         });
     auto const worstIdx = std::distance(subpop.begin(), worstFitness);
