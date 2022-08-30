@@ -128,7 +128,7 @@ public:
 
     bool operator==(Individual const &other) const
     {
-        return cost() == other.cost() && routes_ == other.getRoutes();
+        return cost() == other.cost() && routes_ == other.routes_;
     }
 
     Individual(Params const *params, XorShift128 *rng);  // random individual
