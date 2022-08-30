@@ -14,32 +14,33 @@ class Population
 {
     friend class Statistics;  // used to collect population statistics
 
-    using Parents = std::pair<Individual const *, Individual const *>;
-
-    Params &params;    // Problem parameters
-    XorShift128 &rng;  // Random number generator
-
-    struct Member
+    struct IndividualWrapper
     {
         Individual *indiv;
         double fitness;
     };
 
-    std::vector<Member> feasible;
-    std::vector<Member> infeasible;
+    using Parents = std::pair<Individual const *, Individual const *>;
+    using SubPopulation = std::vector<IndividualWrapper>;
+
+    Params &params;    // Problem parameters
+    XorShift128 &rng;  // Random number generator
+
+    SubPopulation feasible;
+    SubPopulation infeasible;
 
     Individual bestSol;
 
     // Evaluates the biased fitness of all individuals in the subpopulation
-    void updateBiasedFitness(std::vector<Member> &subpop);
+    void updateBiasedFitness(SubPopulation &subPop);
 
     // Removes a duplicate individual from the subpopulation if there exists
     // one. If there are multiple duplicate individuals, then the one with the
     // lowest index in ``individuals`` is removed first.
-    bool removeDuplicate(std::vector<Member> &subpop);
+    bool removeDuplicate(SubPopulation &subPop);
 
     // Removes the worst individual in terms of biased fitness
-    void removeWorstBiasedFitness(std::vector<Member> &subpop);
+    void removeWorstBiasedFitness(SubPopulation &subPop);
 
     // Generates a population of passed-in size
     void generatePopulation(size_t popSize);
