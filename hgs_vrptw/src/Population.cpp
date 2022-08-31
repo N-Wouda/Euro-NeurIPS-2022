@@ -75,11 +75,11 @@ void Population::updateBiasedFitness(SubPopulation &subPop)
     for (size_t idx = 0; idx != popSize; idx++)
     {
         // Ranking the individuals based on the diversity and fitness rank
-        auto const divWeight = popSize > params.config.nbElite
-                                   ? (popSize - params.config.nbElite)
-                                   : 0;
+        auto const divWeight
+            = std::max<size_t>(0, popSize - params.config.nbElite);
         auto const divRank = idx;
         auto const fitRank = ranking[idx].second;
+
         subPop[fitRank].fitness = popSize * fitRank + divWeight * divRank;
     }
 }
@@ -112,26 +112,25 @@ void Population::restart()
 {
     feasible.clear();
     infeasible.clear();
+
     generatePopulation(params.config.minimumPopulationSize);
 }
 
 Individual const *Population::getBinaryTournament()
 {
-
     auto const feasSize = feasible.size();
     auto const popSize = feasSize + infeasible.size();
 
-    auto const idx1 = rng.randint(popSize);
-    auto const &indivWrapper1
-        = idx1 < feasSize ? feasible[idx1] : infeasible[idx1 - feasSize];
+    auto const getIndividual = [&](auto const idx) -> auto &
+    {
+        return idx < feasSize ? feasible[idx] : infeasible[idx - feasSize];
+    };
 
-    auto const idx2 = rng.randint(popSize);
-    auto const &indivWrapper2
-        = idx2 < feasSize ? feasible[idx2] : infeasible[idx2 - feasSize];
+    auto const &wrapper1 = getIndividual(rng.randint(popSize));
+    auto const &wrapper2 = getIndividual(rng.randint(popSize));
 
-    return indivWrapper1.fitness < indivWrapper2.fitness
-               ? indivWrapper1.indiv.get()
-               : indivWrapper2.indiv.get();
+    return wrapper1.fitness < wrapper2.fitness ? wrapper1.indiv.get()
+                                               : wrapper2.indiv.get();
 }
 
 std::pair<Individual const *, Individual const *> Population::selectParents()
@@ -140,9 +139,11 @@ std::pair<Individual const *, Individual const *> Population::selectParents()
     Individual const *par2 = getBinaryTournament();
 
     size_t numTries = 1;
-    while ((par1 == par2 || *par1 == *par2) && numTries++ < 10)
-        par2 = getBinaryTournament();   // Try again few more times
-    return std::make_pair(par1, par2);  // if same parent
+    while ((par1 == par2 || *par1 == *par2)  // Try again few more times
+           && numTries++ < 10)               // if same parent
+        par2 = getBinaryTournament();
+
+    return std::make_pair(par1, par2);
 }
 
 Population::Population(Params &params, XorShift128 &rng)
@@ -152,5 +153,3 @@ Population::Population(Params &params, XorShift128 &rng)
 {
     generatePopulation(params.config.minimumPopulationSize);
 }
-
-Population::~Population() {}

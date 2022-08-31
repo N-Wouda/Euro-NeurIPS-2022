@@ -90,7 +90,7 @@ public:
 
     Population(Params &params, XorShift128 &rng);
 
-    ~Population();
+    ~Population(){};
 };
 
 #endif
