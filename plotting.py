@@ -24,16 +24,24 @@ def plot_instance(name, instance, routes=(), save_in=None):
     """
     fig, ax = plt.subplots(figsize=(16, 12))
 
-    idx = ~instance['is_depot']
+    is_client = ~instance['is_depot']
+    coords = instance['coords'][is_client].T
+    tws_open = instance["time_windows"][is_client, 0]
+    tws_close = instance["time_windows"][is_client, 1]
+    depot_coords = instance['coords'][~is_client].T
 
-    ax.scatter(*instance['coords'][idx].T, c="blue", s=(0.0005 * instance["time_windows"][idx, 1]) ** 2, alpha=0.1)
-    ax.scatter(*instance['coords'][idx].T, c="blue", s=(0.0001 * instance["time_windows"][idx, 0]) ** 2)
-    ax.scatter(*instance['coords'][~idx].T, c="orange", s=500, marker="*")
+    ax.scatter(*coords, c="blue", s=(0.0005 * tws_close) ** 2, alpha=0.1)
+    ax.scatter(*coords, c="blue", s=(0.0001 * tws_open) ** 2)
+    ax.scatter(*depot_coords, c="orange", s=500, marker="*")
+
     ax.set_title(name)
+
     ax.set_xticks((0, np.max(instance['coords'])))
     ax.set_yticks((0, np.max(instance['coords'])))
+
     ax.set_xlim(0, np.max(instance['coords']))
     ax.set_ylim(0, np.max(instance['coords']))
+
     ax.set_aspect('equal', 'box')
 
     for route in routes:
