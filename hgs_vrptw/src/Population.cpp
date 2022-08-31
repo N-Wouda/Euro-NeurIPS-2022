@@ -34,6 +34,7 @@ void Population::addIndividual(Individual const &indiv)
         place--;
 
     subPop.emplace(subPop.begin() + place, std::move(myIndividual));
+    updateBiasedFitness(subPop);
 
     // Trigger a survivor selection if the maximum population size is exceeded
     size_t maxPopSize
@@ -121,9 +122,7 @@ void Population::restart()
 {
     feasible.clear();
     infeasible.clear();
-
-    size_t const popSize = 4 * params.config.minimumPopulationSize;
-    generatePopulation(popSize);
+    generatePopulation(params.config.minimumPopulationSize);
 }
 
 Individual const *Population::getBinaryTournament()
@@ -133,22 +132,20 @@ Individual const *Population::getBinaryTournament()
     auto const popSize = feasSize + infeasible.size();
 
     auto const idx1 = rng.randint(popSize);
-    auto const &member1
+    auto const &indivWrapper1
         = idx1 < feasSize ? feasible[idx1] : infeasible[idx1 - feasSize];
 
     auto const idx2 = rng.randint(popSize);
-    auto const &member2
+    auto const &indivWrapper2
         = idx2 < feasSize ? feasible[idx2] : infeasible[idx2 - feasSize];
 
-    return member1.fitness < member2.fitness ? member1.indiv.get()
-                                             : member2.indiv.get();
+    return indivWrapper1.fitness < indivWrapper2.fitness
+               ? indivWrapper1.indiv.get()
+               : indivWrapper2.indiv.get();
 }
 
 std::pair<Individual const *, Individual const *> Population::selectParents()
 {
-    updateBiasedFitness(feasible);
-    updateBiasedFitness(infeasible);
-
     Individual const *par1 = getBinaryTournament();
     Individual const *par2 = getBinaryTournament();
 
@@ -163,10 +160,7 @@ Population::Population(Params &params, XorShift128 &rng)
       rng(rng),
       bestSol(&params, &rng)  // random initial best solution
 {
-    // Generate a new population somewhat larger than the minimum size, so we
-    // get a set of reasonable candidates early on.
-    size_t const popSize = 4 * params.config.minimumPopulationSize;
-    generatePopulation(popSize);
+    generatePopulation(params.config.minimumPopulationSize);
 }
 
 Population::~Population() {}
