@@ -38,12 +38,12 @@ Result GeneticAlgorithm::run(StoppingCriterion &stop)
             nbIterNoImprove = 1;
         }
 
-        auto const currBest = population.getCurrentBest();
+        auto const currBest = population.getCurrentBestFeasibleCost();
 
         auto offspring = crossover();
         educate(offspring);
 
-        auto const newBest = population.getCurrentBest();
+        auto const newBest = population.getCurrentBestFeasibleCost();
 
         if (currBest > newBest)  // has new best!
             nbIterNoImprove = 1;

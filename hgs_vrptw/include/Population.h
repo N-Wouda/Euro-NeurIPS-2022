@@ -83,10 +83,11 @@ public:
      * Returns the current best objective value in the feasible sub-population.
      * Returns ``INT_MAX`` instead if no feasible solution exists.
      */
-    [[nodiscard]] size_t getCurrentBest() const
+    [[nodiscard]] size_t getCurrentBestFeasibleCost() const
     {
         return feasible.size() > 0 ? feasible[0].indiv->cost() : INT_MAX;
     }
+
     Population(Params &params, XorShift128 &rng);
 
     ~Population();
