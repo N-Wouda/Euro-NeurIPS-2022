@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 _N_POINTS = 100
 
@@ -8,6 +9,31 @@ def x_axis(stats, step, plot_runtimes):
         return stats.run_times()[::step], "Run-time (s)"
     else:
         return np.arange(0, stats.num_iters(), step), "Iteration (#)"
+
+
+def plot_instance(name, instance, routes=(), save_in=None):
+    fig, ax = plt.subplots(figsize=(16, 12))
+
+    idx = ~instance['is_depot']
+
+    ax.scatter(*instance['coords'][idx].T, c="blue", s=(0.0005 * instance["time_windows"][idx, 1]) ** 2, alpha=0.1)
+    ax.scatter(*instance['coords'][idx].T, c="blue", s=(0.0001 * instance["time_windows"][idx, 0]) ** 2)
+    ax.scatter(*instance['coords'][~idx].T, c="orange", s=500, marker="*")
+    ax.set_title(name)
+    ax.set_xticks((0, np.max(instance['coords'])))
+    ax.set_yticks((0, np.max(instance['coords'])))
+    ax.set_xlim(0, np.max(instance['coords']))
+    ax.set_ylim(0, np.max(instance['coords']))
+    ax.set_aspect('equal', 'box')
+
+    for route in routes:
+        ax.plot(*instance['coords'][[0] + route + [0]].T, linewidth=0.1)
+
+    if save_in is None:
+        plt.show()
+    else:
+        plt.savefig("%s/%s.png" % (save_in, name.rstrip(".txt")))
+        plt.close()
 
 
 def plot_population(stats, ax, step=None, plot_runtimes=False):
