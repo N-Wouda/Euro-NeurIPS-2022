@@ -152,9 +152,9 @@ def save_results(res, results_dir, inst_name):
 def plot_single_run(path, stats):
     _, (ax_pop, ax_objs, ax_inc) = plt.subplots(3, 1, figsize=(8, 12))
 
-    plotting.plot_population(stats, ax_pop)
-    plotting.plot_objectives(stats, ax_objs)
-    plotting.plot_incumbents(stats, ax_inc)
+    plotting.plot_population(ax_pop, stats)
+    plotting.plot_objectives(ax_objs, stats)
+    plotting.plot_incumbents(ax_inc, stats)
 
     plt.tight_layout()
     plt.savefig(path)
