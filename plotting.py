@@ -12,6 +12,16 @@ def x_axis(stats, step, plot_runtimes):
 
 
 def plot_instance(name, instance, routes=(), save_in=None):
+    """
+    Plot an instance and optionally a solution.
+    This plot contains the depot location (yellow star) and customer locations.
+    A customer is represented with a blue dot, with a size relative to when it's time window opens.
+    Around this dot, the relative size of the blue circle represents when a time windows closes.
+    Required parameters are the instance name and dictionary.
+    Optionally, a list of routes can be provided to be plotted.
+    When a save_in location is specified, the plot is saved there,
+    otherwise the plot will be shown during execution.
+    """
     fig, ax = plt.subplots(figsize=(16, 12))
 
     idx = ~instance['is_depot']
