@@ -83,14 +83,14 @@ PYBIND11_MODULE(hgspy, m)
                       size_t,
                       size_t,
                       size_t,
-                      double,
                       int,
                       size_t,
                       int,
                       int,
                       size_t,
                       int,
-                      int>(),
+                      int,
+                      size_t>(),
              py::arg("seed") = 0,
              py::arg("nbIter") = 20'000,
              py::arg("timeLimit") = INT_MAX,
@@ -108,14 +108,14 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("repairProbability") = 50,
              py::arg("repairBooster") = 10,
              py::arg("selectProbability") = 90,
-             py::arg("diversityWeight") = 0.,
              py::arg("nbVeh") = INT_MAX,
              py::arg("nbGranular") = 40,
              py::arg("weightWaitTime") = 2,
              py::arg("weightTimeWarp") = 10,
              py::arg("intensificationProbability") = 25,
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
-             py::arg("minCircleSectorSizeDegrees") = 15)
+             py::arg("minCircleSectorSizeDegrees") = 15,
+             py::arg("destroyPct") = 20)
         .def_readonly("seed", &Config::seed)
         .def_readonly("nbIter", &Config::nbIter)
         .def_readonly("timeLimit", &Config::timeLimit)
@@ -133,14 +133,14 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("repairProbability", &Config::repairProbability)
         .def_readonly("repairBooster", &Config::repairBooster)
         .def_readonly("selectProbability", &Config::selectProbability)
-        .def_readonly("diversityWeight", &Config::diversityWeight)
         .def_readonly("nbVeh", &Config::nbVeh)
         .def_readonly("nbGranular", &Config::nbGranular)
         .def_readonly("weightWaitTime", &Config::weightWaitTime)
         .def_readonly("weightTimeWarp", &Config::weightTimeWarp)
         .def_readonly("circleSectorOverlapTolerance",
                       &Config::circleSectorOverlapTolerance)
-        .def_readonly("minCircleSectorSize", &Config::minCircleSectorSize);
+        .def_readonly("minCircleSectorSize", &Config::minCircleSectorSize)
+        .def_readonly("destroyPct", &Config::destroyPct);
 
     py::class_<Params>(m, "Params")
         .def(py::init<Config const &,
@@ -171,13 +171,14 @@ PYBIND11_MODULE(hgspy, m)
         .def("iter_times", &Statistics::iterTimes)
         .def("pop_sizes", &Statistics::popSizes)
         .def("num_feasible_pop", &Statistics::numFeasiblePop)
-        .def("pop_diversity", &Statistics::popDiversity)
-        .def("penalties_capacity", &Statistics::penaltiesCapacity)
-        .def("penalties_time_warp", &Statistics::penaltiesTimeWarp)
+        .def("feas_diversity", &Statistics::feasDiversity)
         .def("feas_best", &Statistics::feasBest)
         .def("feas_average", &Statistics::feasAverage)
+        .def("infeas_diversity", &Statistics::infeasDiversity)
         .def("infeas_best", &Statistics::infeasBest)
         .def("infeas_average", &Statistics::infeasAverage)
+        .def("penalties_capacity", &Statistics::penaltiesCapacity)
+        .def("penalties_time_warp", &Statistics::penaltiesTimeWarp)
         .def("incumbents", &Statistics::incumbents)
         .def("to_csv", &Statistics::toCsv);
 
@@ -221,6 +222,7 @@ PYBIND11_MODULE(hgspy, m)
     py::module xOps = m.def_submodule("crossover");
 
     xOps.def("alternating_exchange", &alternatingExchange);
+    xOps.def("broken_pairs_exchange", &brokenPairsExchange);
     xOps.def("ordered_exchange", &orderedExchange);
     xOps.def("selective_route_exchange", &selectiveRouteExchange);
 

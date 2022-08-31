@@ -57,4 +57,15 @@ Individual alternatingExchange(
     Params const &params,
     XorShift128 &rng);
 
+/**
+ * Performs one Broken Pair Crossover of the given parents. A client is removed
+ * from the worst parents if its successor is not identical to the client's
+ * sucessor in the other parent. Removed clients are greedily re-inserted in the
+ * solution.
+ */
+Individual brokenPairsExchange(
+    std::pair<Individual const *, Individual const *> const &parents,
+    Params const &params,
+    XorShift128 &rng);
+
 #endif  // CROSSOVER_H
