@@ -6,6 +6,7 @@
 #include "Statistics.h"
 #include "XorShift128.h"
 
+#include <memory>
 #include <vector>
 
 // Class representing the population of a genetic algorithm with do binary
@@ -16,7 +17,7 @@ class Population
 
     struct IndividualWrapper
     {
-        Individual *indiv;
+        std::unique_ptr<Individual> indiv;
         double fitness;
     };
 

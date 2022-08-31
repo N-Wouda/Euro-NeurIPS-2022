@@ -3,6 +3,7 @@
 #include "Individual.h"
 #include "Params.h"
 
+#include <memory>
 #include <vector>
 
 void Population::generatePopulation(size_t numToGenerate)
@@ -18,13 +19,13 @@ void Population::addIndividual(Individual const &indiv)
 {
     // Create a copy of the individual and update the proximity structures
     // calculating inter-individual distances within its subpopulation
-    auto *myIndividual = new Individual(indiv);
+    IndividualWrapper myIndividual = {std::make_unique<Individual>(indiv), 0.};
 
     // Find the individual's subpopulation
-    auto &subPop = myIndividual->isFeasible() ? feasible : infeasible;
+    auto &subPop = myIndividual.indiv->isFeasible() ? feasible : infeasible;
 
     for (auto const &other : subPop)
-        myIndividual->brokenPairsDistance(other.indiv);
+        myIndividual.indiv->brokenPairsDistance(other.indiv.get());
 
     // Identify the correct location in the population and insert the individual
     // TODO binsearch?
@@ -32,7 +33,7 @@ void Population::addIndividual(Individual const &indiv)
     while (place > 0 && subPop[place - 1].indiv->cost() > indiv.cost())
         place--;
 
-    subPop.emplace(subPop.begin() + place, IndividualWrapper{myIndividual, 0.});
+    subPop.emplace(subPop.begin() + place, std::move(myIndividual));
 
     // Trigger a survivor selection if the maximum population size is exceeded
     size_t maxPopSize
@@ -96,13 +97,9 @@ bool Population::removeDuplicate(SubPopulation &subPop)
 {
     for (size_t idx = 0; idx != subPop.size(); idx++)
     {
-        auto const *indiv = subPop[idx].indiv;
-
-        if (indiv->hasClone())
+        if (subPop[idx].indiv->hasClone())
         {
             subPop.erase(subPop.begin() + idx);
-            delete indiv;
-
             return true;
         }
     }
@@ -117,20 +114,11 @@ void Population::removeWorstBiasedFitness(SubPopulation &subPop)
             return a.fitness < b.fitness;
         });
     auto const worstIdx = std::distance(subPop.begin(), worstFitness);
-    auto const *worstIndividual = subPop[worstIdx].indiv;
-
     subPop.erase(subPop.begin() + worstIdx);
-    delete worstIndividual;
 }
 
 void Population::restart()
 {
-    for (auto &member : feasible)
-        delete member.indiv;
-
-    for (auto &member : infeasible)
-        delete member.indiv;
-
     feasible.clear();
     infeasible.clear();
 
@@ -145,14 +133,15 @@ Individual const *Population::getBinaryTournament()
     auto const popSize = feasSize + infeasible.size();
 
     auto const idx1 = rng.randint(popSize);
-    auto const member1
+    auto const &member1
         = idx1 < feasSize ? feasible[idx1] : infeasible[idx1 - feasSize];
 
     auto const idx2 = rng.randint(popSize);
-    auto const member2
+    auto const &member2
         = idx2 < feasSize ? feasible[idx2] : infeasible[idx2 - feasSize];
 
-    return member1.fitness < member2.fitness ? member1.indiv : member2.indiv;
+    return member1.fitness < member2.fitness ? member1.indiv.get()
+                                             : member2.indiv.get();
 }
 
 std::pair<Individual const *, Individual const *> Population::selectParents()
@@ -180,11 +169,4 @@ Population::Population(Params &params, XorShift128 &rng)
     generatePopulation(popSize);
 }
 
-Population::~Population()
-{
-    for (auto &indivWrapper : feasible)
-        delete indivWrapper.indiv;
-
-    for (auto &indivWrapper : infeasible)
-        delete indivWrapper.indiv;
-}
+Population::~Population() {}
