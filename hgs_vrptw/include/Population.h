@@ -64,8 +64,8 @@ public:
      */
     void reorder()
     {
-        auto const op = [](auto const &subs1, auto const &subs2) {
-            return subs1.indiv->cost() < subs2.indiv->cost();
+        auto const op = [](auto const &wrapper1, auto const &wrapper2) {
+            return wrapper1.indiv->cost() < wrapper2.indiv->cost();
         };
         std::sort(feasible.begin(), feasible.end(), op);
         std::sort(infeasible.begin(), infeasible.end(), op);
