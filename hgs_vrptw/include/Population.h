@@ -80,17 +80,15 @@ public:
     [[nodiscard]] Individual const &getBestFound() const { return bestSol; }
 
     /**
-     * Returns the current best objective value in the feasible sub-population.
-     * Returns ``INT_MAX`` instead if no feasible solution exists.
+     * Returns the current best objective value in the feasible sub-population
+     * or ``INT_MAX`` if no feasible solution exists.
      */
     [[nodiscard]] size_t getCurrentBestFeasibleCost() const
     {
-        return feasible.size() > 0 ? feasible[0].indiv->cost() : INT_MAX;
+        return !feasible.empty() ? feasible[0].indiv->cost() : INT_MAX;
     }
 
     Population(Params &params, XorShift128 &rng);
-
-    ~Population(){};
 };
 
 #endif
