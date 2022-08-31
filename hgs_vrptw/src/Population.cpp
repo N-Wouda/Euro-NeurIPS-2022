@@ -62,25 +62,23 @@ void Population::updateBiasedFitness(SubPopulation &subPop)
 {
     // Ranking the individuals based on their diversity contribution (decreasing
     // order of broken pairs distance)
-    std::vector<std::pair<double, size_t>> ranking;
+    std::vector<std::pair<double, size_t>> diversity;
     for (size_t idx = 0; idx != subPop.size(); idx++)
     {
         auto const dist = subPop[idx].indiv->avgBrokenPairsDistanceClosest();
-        ranking.emplace_back(dist, idx);
+        diversity.emplace_back(dist, idx);
     }
 
-    std::sort(ranking.begin(), ranking.end(), std::greater<>());
+    std::sort(diversity.begin(), diversity.end(), std::greater<>());
 
     auto const popSize = subPop.size();
-    for (size_t idx = 0; idx != popSize; idx++)
+    for (size_t divRank = 0; divRank != popSize; divRank++)
     {
-        // Ranking the individuals based on the diversity and fitness rank
-        auto const divWeight
-            = std::max<size_t>(0, popSize - params.config.nbElite);
-        auto const divRank = idx;
-        auto const fitRank = ranking[idx].second;
+        // Ranking the individuals based on the cost and diversity rank
+        auto const costRank = diversity[divRank].second;
+        auto const divWeight = std::max(0UL, popSize - params.config.nbElite);
 
-        subPop[fitRank].fitness = popSize * fitRank + divWeight * divRank;
+        subPop[costRank].fitness = popSize * costRank + divWeight * divRank;
     }
 }
 
@@ -100,7 +98,7 @@ bool Population::removeDuplicate(SubPopulation &subPop)
 
 void Population::removeWorstBiasedFitness(SubPopulation &subPop)
 {
-    auto const worstFitness = std::max_element(
+    auto const &worstFitness = std::max_element(
         subPop.begin(), subPop.end(), [](auto const &a, auto const &b) {
             return a.fitness < b.fitness;
         });
@@ -139,7 +137,7 @@ std::pair<Individual const *, Individual const *> Population::selectParents()
     Individual const *par2 = getBinaryTournament();
 
     size_t numTries = 1;
-    while ((par1 == par2 || *par1 == *par2)  // Try again few more times
+    while ((par1 == par2 || *par1 == *par2)  // Try again a few more times
            && numTries++ < 10)               // if same parent
         par2 = getBinaryTournament();
 

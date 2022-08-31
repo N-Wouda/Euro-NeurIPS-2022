@@ -8,7 +8,6 @@ using Clients = std::vector<Client>;
 using ClientSet = std::unordered_set<Client>;
 using Route = std::vector<Client>;
 using Routes = std::vector<Route>;
-using Successors = std::vector<Client>;
 
 namespace
 {
@@ -40,30 +39,32 @@ Individual brokenPairsExchange(
     Params const &params,
     XorShift128 &rng)
 {
-    auto &routesA = parents.first->getRoutes();
-    auto &routesB = parents.second->getRoutes();
+    auto const &routesA = parents.first->getRoutes();
+    auto const &routesB = parents.second->getRoutes();
 
-    // Find all successors and broken pairs
+    // Find all broken pairs between the two parents
     Clients succA(params.nbClients + 1, 0);
     for (auto const &route : routesA)
-        for (size_t idx = 1; idx < route.size(); idx++)
+        for (size_t idx = 1; idx <= route.size(); idx++)
             succA[route[idx - 1]] = route[idx];
 
     Clients succB(params.nbClients + 1, 0);
     for (auto const &route : routesB)
-        for (size_t idx = 1; idx < route.size(); idx++)
+        for (size_t idx = 1; idx <= route.size(); idx++)
             succB[route[idx - 1]] = route[idx];
 
     ClientSet brokenPairs;
-    for (Client client = 1; client != params.nbClients + 1; client++)
+    for (Client client = 1; client <= params.nbClients; client++)
         if (succA[client] != succB[client])
             brokenPairs.insert(client);
 
     size_t const maxNumRemovals
         = params.config.destroyPct * params.nbClients / 100;
 
-    // Only consider the worst parent routes
+    // Only destroy-and-repair the worst parent routes
     auto worst = parents.first > parents.second ? routesA : routesB;
+
+    // Go through the routes in random order
     std::shuffle(worst.begin(), worst.end(), rng);
 
     // Remove consecutive broken pairs
