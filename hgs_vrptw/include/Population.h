@@ -18,26 +18,26 @@ class Population
     struct IndividualWrapper
     {
         std::unique_ptr<Individual> indiv;
-        double fitness;
+        size_t fitness;
     };
 
-    using Parents = std::pair<Individual const *, Individual const *>;
     using SubPopulation = std::vector<IndividualWrapper>;
+    using Parents = std::pair<Individual const *, Individual const *>;
 
     Params &params;    // Problem parameters
     XorShift128 &rng;  // Random number generator
 
-    SubPopulation feasible;
-    SubPopulation infeasible;
+    SubPopulation feasible;    // Sub-population ordered asc. by cost
+    SubPopulation infeasible;  // Sub-population ordered asc. by cost
 
     Individual bestSol;
 
-    // Evaluates the biased fitness of all individuals in the subpopulation
+    // Evaluates the biased fitness of all individuals in the sub-population
     void updateBiasedFitness(SubPopulation &subPop);
 
-    // Removes a duplicate individual from the subpopulation if there exists
+    // Removes a duplicate individual from the sub-population if there exists
     // one. If there are multiple duplicate individuals, then the one with the
-    // lowest index in ``individuals`` is removed first.
+    // lowest index in the sub-population is removed first.
     bool removeDuplicate(SubPopulation &subPop);
 
     // Removes the worst individual in terms of biased fitness

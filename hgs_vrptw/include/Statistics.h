@@ -86,9 +86,9 @@ public:
     }
 
     /**
-     * Returns a vector of the average feasible subpopulation diversity, one
+     * Returns a vector of the average feasible sub-population diversity, one
      * element per iteration. The average diversity is computed as the average
-     * broken pairs distance for each individual in the subpopulation, compared
+     * broken pairs distance for each individual in the sub-population, compared
      * to its neighbours (the neighbourhood size is controlled by the
      * ``nbClose`` setting).
      */
@@ -118,9 +118,9 @@ public:
     }
 
     /**
-     * Returns a vector of the average infeasible subpopulation diversity, one
+     * Returns a vector of the average infeasible sub-population diversity, one
      * element per iteration. The average diversity is computed as the average
-     * broken pairs distance for each individual in the subpopulation, compared
+     * broken pairs distance for each individual in the sub-population, compared
      * to its neighbours (the neighbourhood size is controlled by the
      * ``nbClose`` setting).
      */

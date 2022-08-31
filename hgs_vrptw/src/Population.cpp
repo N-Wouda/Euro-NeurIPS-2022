@@ -19,7 +19,7 @@ void Population::addIndividual(Individual const &indiv)
 {
     // Create a copy of the individual and update the proximity structures
     // calculating inter-individual distances within its subpopulation
-    IndividualWrapper myIndividual = {std::make_unique<Individual>(indiv), 0.};
+    IndividualWrapper myIndividual = {std::make_unique<Individual>(indiv), 0};
 
     // Find the individual's subpopulation
     auto &subPop = myIndividual.indiv->isFeasible() ? feasible : infeasible;
@@ -60,12 +60,6 @@ void Population::addIndividual(Individual const &indiv)
 
 void Population::updateBiasedFitness(SubPopulation &subPop)
 {
-    if (subPop.size() == 1)
-    {
-        subPop[0].fitness = 0;
-        return;
-    }
-
     // Ranking the individuals based on their diversity contribution (decreasing
     // order of broken pairs distance)
     std::vector<std::pair<double, size_t>> ranking;
@@ -77,20 +71,16 @@ void Population::updateBiasedFitness(SubPopulation &subPop)
 
     std::sort(ranking.begin(), ranking.end(), std::greater<>());
 
-    auto const popSize = static_cast<double>(subPop.size());
-
-    for (size_t idx = 0; idx != subPop.size(); idx++)
+    auto const popSize = subPop.size();
+    for (size_t idx = 0; idx != popSize; idx++)
     {
-        // Ranking the individuals based on the diversity rank and diversity
-        // measure from 0 to 1
-        double const divRank = idx / (popSize - 1);
-        double const fitRank = ranking[idx].second / (popSize - 1);
-
-        if (subPop.size() <= params.config.nbElite)
-            subPop[ranking[idx].second].fitness = fitRank;
-        else
-            subPop[ranking[idx].second].fitness
-                = fitRank + (1.0 - params.config.nbElite / popSize) * divRank;
+        // Ranking the individuals based on the diversity and fitness rank
+        auto const divWeight = popSize > params.config.nbElite
+                                   ? (popSize - params.config.nbElite)
+                                   : 0;
+        auto const divRank = idx;
+        auto const fitRank = ranking[idx].second;
+        subPop[fitRank].fitness = popSize * fitRank + divWeight * divRank;
     }
 }
 

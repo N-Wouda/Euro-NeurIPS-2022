@@ -58,7 +58,7 @@ Individual alternatingExchange(
     XorShift128 &rng);
 
 /**
- * Performs one Broken Pair Crossovers of the given parents. A client is removed
+ * Performs one Broken Pair Crossover of the given parents. A client is removed
  * from the worst parents if its successor is not identical to the client's
  * sucessor in the other parent. Removed clients are greedily re-inserted in the
  * solution.
