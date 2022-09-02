@@ -58,36 +58,22 @@ bool Exchange<N, M>::isLikelyBadMove(Node *U, Node *V) const
 
     double score = 1.74;  // intercept
 
+    score += -8.37 * d_params.dist(p(U)->client, V->client) / maxDist;
+    score += -7.77 * d_params.dist(p(V)->client, U->client) / maxDist;
+
+    score += 6.12 * d_params.dist(p(U)->client, U->client) / maxDist;
+    score += 8.9 * d_params.dist(p(V)->client, V->client) / maxDist;
+
     if constexpr (M == 0)
-    {
-        score += -8.37 * d_params.dist(p(U)->client, V->client) / maxDist;
-        score += -7.77 * d_params.dist(p(V)->client, U->client) / maxDist;
-        score += -0.02 * d_params.dist(V->client, n(endU)->client) / maxDist;
-        score += 0.06 * d_params.dist(endU->client, n(V)->client) / maxDist;
-        score += 6.12 * d_params.dist(p(U)->client, U->client) / maxDist;
-        score += 8.9 * d_params.dist(p(V)->client, V->client) / maxDist;
-        score += 0.08 * d_params.dist(endU->client, n(endU)->client) / maxDist;
         score += 4.28 * d_params.dist(V->client, n(V)->client) / maxDist;
-        score += -1.24 * !U->route->hasTimeWarp();
-        score += -0.58 * !V->route->hasTimeWarp();
-        score += -1.31 * !U->route->hasExcessCapacity();
-        score += -0.51 * !V->route->hasExcessCapacity();
-    }
     else
-    {
-        score += -8.37 * d_params.dist(p(U)->client, V->client) / maxDist;
-        score += -7.77 * d_params.dist(p(V)->client, U->client) / maxDist;
-        score += -0.02 * d_params.dist(endV->client, n(endU)->client) / maxDist;
-        score += 0.06 * d_params.dist(endU->client, n(endV)->client) / maxDist;
-        score += 6.12 * d_params.dist(p(U)->client, U->client) / maxDist;
-        score += 8.9 * d_params.dist(p(V)->client, V->client) / maxDist;
-        score += 0.08 * d_params.dist(endU->client, n(endU)->client) / maxDist;
         score += 4.28 * d_params.dist(endV->client, n(endV)->client) / maxDist;
-        score += -1.24 * !U->route->hasTimeWarp();
-        score += -0.58 * !V->route->hasTimeWarp();
-        score += -1.31 * !U->route->hasExcessCapacity();
-        score += -0.51 * !V->route->hasExcessCapacity();
-    }
+
+    score += -1.24 * !U->route->hasTimeWarp();
+    score += -0.58 * !V->route->hasTimeWarp();
+
+    score += -1.31 * !U->route->hasExcessCapacity();
+    score += -0.51 * !V->route->hasExcessCapacity();
 
     // Move is likely bad if score (inner product of coef and feat) is negative
     return score < 0;
