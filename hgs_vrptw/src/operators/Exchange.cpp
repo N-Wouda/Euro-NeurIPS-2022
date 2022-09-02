@@ -3,9 +3,6 @@
 #include "Route.h"
 #include "TimeWindowSegment.h"
 
-#include <array>
-#include <numeric>
-
 using TWS = TimeWindowSegment;
 
 template <size_t N, size_t M>
