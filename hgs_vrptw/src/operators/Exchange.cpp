@@ -28,11 +28,10 @@ std::pair<Node *, Node *> Exchange<N, M>::getEnds(Node *U, Node *V) const
 template <size_t N, size_t M>
 bool Exchange<N, M>::containsDepot(Node *node, size_t segLength) const
 {
-    for (size_t count = 0; count != segLength; ++count, node = n(node))
-        if (node->isDepot())
-            return true;
-
-    return false;
+    // clang-format off
+    return node->isDepot()
+        || node->position + segLength - 1 >= node->route->size();
+    // clang-format on
 }
 
 template <size_t N, size_t M>
@@ -262,8 +261,12 @@ int Exchange<N, M>::evalSwapMove(Node *U, Node *V) const
 
 template <size_t N, size_t M> int Exchange<N, M>::evaluate(Node *U, Node *V)
 {
-    if (containsDepot(U, N) || containsDepot(V, M) || overlap(U, V))
+    if (containsDepot(U, N) || overlap(U, V))
         return 0;
+
+    if constexpr (M > 0)
+        if (containsDepot(V, M))
+            return 0;
 
     if (isLikelyBadMove(U, V))
         return 0;
