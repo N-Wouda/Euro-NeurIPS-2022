@@ -39,6 +39,7 @@ class Params
     std::vector<std::vector<int>> neighbours;
 
     Matrix<int> dist_;  // Distance matrix (+depot)
+    int maxDist_;       // Maximum distance in the distance matrix
 
     /**
      * Calculate, for all vertices, the correlation ('nearness') of the
@@ -67,6 +68,8 @@ public:
     {
         return neighbours[client];
     }
+
+    [[nodiscard]] int maxDist() const { return maxDist_; }
 
     [[nodiscard]] int &dist(size_t row, size_t col) { return dist_(row, col); }
 
