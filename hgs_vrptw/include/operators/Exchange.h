@@ -15,9 +15,6 @@ template <size_t N, size_t M> class Exchange : public LocalSearchOperator<Node>
 
     static_assert(N >= M && N > 0, "N < M or N == 0 does not make sense");
 
-    // Returns the last nodes to be moved in the segments of U and V
-    inline std::pair<Node *, Node *> getEnds(Node *U, Node *V) const;
-
     // Tests if the segment starting at node of given length contains the depot
     inline bool containsDepot(Node *node, size_t segLength) const;
 

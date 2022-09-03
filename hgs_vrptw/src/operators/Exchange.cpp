@@ -6,23 +6,6 @@
 using TWS = TimeWindowSegment;
 
 template <size_t N, size_t M>
-std::pair<Node *, Node *> Exchange<N, M>::getEnds(Node *U, Node *V) const
-{
-    Node *endU = U;
-    for (size_t count = 1; count != N; ++count)
-        endU = n(endU);
-
-    if constexpr (M == 0)
-        return std::make_pair(endU, nullptr);
-
-    Node *endV = V;
-    for (size_t count = 1; count != M; ++count)
-        endV = n(endV);
-
-    return std::make_pair(endU, endV);
-}
-
-template <size_t N, size_t M>
 bool Exchange<N, M>::containsDepot(Node *node, size_t segLength) const
 {
     // clang-format off
@@ -53,7 +36,6 @@ bool Exchange<N, M>::adjacent(Node *U, Node *V) const
 template <size_t N, size_t M>
 bool Exchange<N, M>::isLikelyBadMove(Node *U, Node *V) const
 {
-    auto const [endU, endV] = getEnds(U, V);
     auto const maxDist = static_cast<double>(d_params.maxDist());
 
     double score = 1.74;  // intercept
@@ -67,7 +49,10 @@ bool Exchange<N, M>::isLikelyBadMove(Node *U, Node *V) const
     if constexpr (M == 0)
         score += 4.28 * d_params.dist(V->client, n(V)->client) / maxDist;
     else
+    {
+        auto *endV = (*V->route)[V->position + M - 1];
         score += 4.28 * d_params.dist(endV->client, n(endV)->client) / maxDist;
+    }
 
     score += -1.24 * !U->route->hasTimeWarp();
     score += -0.58 * !V->route->hasTimeWarp();
@@ -82,7 +67,7 @@ bool Exchange<N, M>::isLikelyBadMove(Node *U, Node *V) const
 template <size_t N, size_t M>
 int Exchange<N, M>::evalRelocateMove(Node *U, Node *V) const
 {
-    auto const [endU, _] = getEnds(U, V);
+    auto *endU = (*U->route)[U->position + N - 1];
     auto const posU = U->position;
     auto const posV = V->position;
 
@@ -159,7 +144,9 @@ int Exchange<N, M>::evalRelocateMove(Node *U, Node *V) const
 template <size_t N, size_t M>
 int Exchange<N, M>::evalSwapMove(Node *U, Node *V) const
 {
-    auto const [endU, endV] = getEnds(U, V);
+    auto *endU = (*U->route)[U->position + N - 1];
+    auto *endV = (*V->route)[V->position + M - 1];
+
     auto const posU = U->position;
     auto const posV = V->position;
 
@@ -276,10 +263,8 @@ template <size_t N, size_t M> int Exchange<N, M>::evaluate(Node *U, Node *V)
 
 template <size_t N, size_t M> void Exchange<N, M>::apply(Node *U, Node *V)
 {
-    auto const [endU, endV] = getEnds(U, V);
-
-    auto *insertUAfter = M == 0 ? V : endV;
-    auto *uToInsert = endU;
+    auto *uToInsert = (*U->route)[U->position + N - 1];
+    auto *insertUAfter = M == 0 ? V : (*V->route)[V->position + M - 1];
 
     // Insert these 'extra' nodes of U after the end of V...
     for (size_t count = 0; count != N - M; ++count)

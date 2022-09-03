@@ -41,6 +41,15 @@ public:  // TODO make fields private
     double angleCenter;  // Angle of the barycenter of the route
 
     /**
+     * Returns the client or depot node at the given position.
+     */
+    [[nodiscard]] Node *operator[](size_t position) const
+    {
+        assert(position > 0);
+        return nodes[position - 1];
+    }
+
+    /**
      * Tests if this route is feasible.
      */
     [[nodiscard]] bool isFeasible() const
