@@ -318,8 +318,7 @@ Params::Params(Config const &config, std::string const &instPath)
             throw std::runtime_error("Vehicle capacity is undefined");
     }
 
-    nbVehicles = (config.nbVeh >= nbClients ? nbClients : config.nbVeh);
-
+    nbVehicles = config.nbVeh >= nbClients ? nbClients : config.nbVeh;
     maxDist_ = dist_.max();
 
     // Calculate, for all vertices, the correlation for the nbGranular closest

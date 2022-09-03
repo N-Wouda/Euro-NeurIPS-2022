@@ -36,29 +36,33 @@ bool Exchange<N, M>::adjacent(Node *U, Node *V) const
 template <size_t N, size_t M>
 bool Exchange<N, M>::isLikelyBadMove(Node *U, Node *V) const
 {
-    auto const maxDist = static_cast<double>(d_params.maxDist());
+    int score = 0;
 
-    double score = 1.74;  // intercept
+    score += -837 * d_params.dist(p(U)->client, V->client);
+    score += -777 * d_params.dist(p(V)->client, U->client);
 
-    score += -8.37 * d_params.dist(p(U)->client, V->client) / maxDist;
-    score += -7.77 * d_params.dist(p(V)->client, U->client) / maxDist;
-
-    score += 6.12 * d_params.dist(p(U)->client, U->client) / maxDist;
-    score += 8.9 * d_params.dist(p(V)->client, V->client) / maxDist;
+    score += 612 * d_params.dist(p(U)->client, U->client);
+    score += 890 * d_params.dist(p(V)->client, V->client);
 
     if constexpr (M == 0)
-        score += 4.28 * d_params.dist(V->client, n(V)->client) / maxDist;
+        score += 428 * d_params.dist(V->client, n(V)->client);
     else
     {
         auto *endV = (*V->route)[V->position + M - 1];
-        score += 4.28 * d_params.dist(endV->client, n(endV)->client) / maxDist;
+        score += 428 * d_params.dist(endV->client, n(endV)->client);
     }
 
-    score += -1.24 * !U->route->hasTimeWarp();
-    score += -0.58 * !V->route->hasTimeWarp();
+    // First tally up all distances before normalising them here (that's a
+    // little faster, since we only need to divide once now).
+    score /= d_params.maxDist();
 
-    score += -1.31 * !U->route->hasExcessCapacity();
-    score += -0.51 * !V->route->hasExcessCapacity();
+    score += -124 * !U->route->hasTimeWarp();
+    score += -58 * !V->route->hasTimeWarp();
+
+    score += -131 * !U->route->hasExcessCapacity();
+    score += -51 * !V->route->hasExcessCapacity();
+
+    score += 174;  // the intercept
 
     // Move is likely bad if score (inner product of coef and feat) is negative
     return score < 0;

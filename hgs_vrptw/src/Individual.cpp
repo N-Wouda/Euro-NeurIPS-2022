@@ -32,7 +32,7 @@ struct ClientSplits
     std::vector<int> cumLoad;
     std::vector<int> cumServ;
 
-    explicit ClientSplits(Params const &params, std::vector<int> const &tour)
+    ClientSplits(Params const &params, std::vector<int> const &tour)
         : vehicleCap(params.vehicleCapacity),
           capPenalty(params.penaltyCapacity),
           splits(params.nbClients + 1),
