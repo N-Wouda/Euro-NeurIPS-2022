@@ -233,8 +233,8 @@ void Individual::brokenPairsDistance(Individual *other)
 
     for (int j = 1; j <= params->nbClients; j++)
     {
-        auto const &[tPred, tSucc] = this->neighbours[j];
-        auto const &[oPred, oSucc] = other->neighbours[j];
+        auto const [tPred, tSucc] = this->neighbours[j];
+        auto const [oPred, oSucc] = other->neighbours[j];
 
         // Increase the difference if the successor of j in this individual is
         // not directly linked to j in other
@@ -245,10 +245,8 @@ void Individual::brokenPairsDistance(Individual *other)
         diffs += tPred == 0 && oPred != 0 && oSucc != 0;
     }
 
-    double const dist = static_cast<double>(diffs) / params->nbClients;
-
-    other->indivsPerProximity.insert({dist, this});
-    indivsPerProximity.insert({dist, other});
+    other->indivsPerProximity.insert({diffs, this});
+    indivsPerProximity.insert({diffs, other});
 }
 
 double Individual::avgBrokenPairsDistanceClosest() const
@@ -259,7 +257,7 @@ double Individual::avgBrokenPairsDistanceClosest() const
     size_t maxSize
         = std::min(params->config.nbClose, indivsPerProximity.size());
 
-    double result = 0;
+    int result = 0;
     auto it = indivsPerProximity.begin();
 
     for (size_t itemCount = 0; itemCount != maxSize; ++itemCount)
@@ -268,7 +266,8 @@ double Individual::avgBrokenPairsDistanceClosest() const
         ++it;
     }
 
-    return result / static_cast<double>(maxSize);
+    // Normalise broken pairs distance by # of clients and close neighbours
+    return result / (params->nbClients * static_cast<double>(maxSize));
 }
 
 void Individual::exportCVRPLibFormat(std::string const &path, double time) const
@@ -336,14 +335,8 @@ Individual::Individual(Params const *params, Routes routes)
 
 Individual::~Individual()
 {
-    for (auto &[_, other] : indivsPerProximity)  // remove ourselves from
-    {                                            // other's proximity list
-        auto it = other->indivsPerProximity.begin();
-        while (it->second != this)
-            ++it;
-
-        other->indivsPerProximity.erase(it);
-    }
+    for (auto [diffs, other] : indivsPerProximity)
+        other->indivsPerProximity.erase({diffs, this});
 }
 
 std::ostream &operator<<(std::ostream &out, Individual const &indiv)

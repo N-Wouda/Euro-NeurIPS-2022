@@ -24,7 +24,7 @@ class Individual
     // The other individuals in the population (cannot be the depot 0), ordered
     // by increasing proximity (the set container follows a natural ordering
     // based on the value of the first pair)
-    std::multiset<std::pair<double, Individual *>> indivsPerProximity;
+    std::multiset<std::pair<int, Individual *>> indivsPerProximity;
 
     Params const *params;  // Problem parameters
 
@@ -105,8 +105,7 @@ public:
     [[nodiscard]] bool hasClone() const
     {
         return !indivsPerProximity.empty()
-               // Another individual with zero proximity indicates duplicity
-               && indivsPerProximity.begin()->first < FLT_EPSILON;
+               && indivsPerProximity.begin()->first == 0;
     }
 
     // Computes and stores a distance measure with another individual, based on

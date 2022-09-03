@@ -100,7 +100,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("feasBooster") = 2.,
              py::arg("penaltyIncrease") = 1.2,
              py::arg("penaltyDecrease") = 0.85,
-             py::arg("minimumPopulationSize") = 25,
+             py::arg("minPopSize") = 25,
              py::arg("generationSize") = 40,
              py::arg("nbElite") = 4,
              py::arg("nbClose") = 5,
@@ -125,7 +125,7 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("feasBooster", &Config::feasBooster)
         .def_readonly("penaltyIncrease", &Config::penaltyIncrease)
         .def_readonly("penaltyDecrease", &Config::penaltyDecrease)
-        .def_readonly("minimumPopulationSize", &Config::minimumPopulationSize)
+        .def_readonly("minPopSize", &Config::minPopSize)
         .def_readonly("generationSize", &Config::generationSize)
         .def_readonly("nbElite", &Config::nbElite)
         .def_readonly("nbClose", &Config::nbClose)
