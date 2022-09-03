@@ -48,7 +48,8 @@ bool Exchange<N, M>::isLikelyBadMove(Node *U, Node *V) const
     // we are free to multiply the weights by some fixed positive number since
     // we only care about the sign. This means we can use integer arithmetic.
     // Finally, we avoid normalisation divisions by multiplying the non-distance
-    // parts with the maximum distance.
+    // parts with the maximum distance (which is positive, so it does not affect
+    // the score's sign).
     int distScore = 0;
 
     // Multiply the notebook weights by 100. We do not implement "DELTA_DIST_UN"
