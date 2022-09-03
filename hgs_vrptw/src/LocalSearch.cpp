@@ -55,6 +55,7 @@ void LocalSearch::search()
             for (auto const vClient : params.getNeighboursOf(U->client))
             {
                 Node *V = &clients[vClient];
+
                 auto const lastModifiedRoute = std::max(
                     lastModified[U->route->idx], lastModified[V->route->idx]);
 

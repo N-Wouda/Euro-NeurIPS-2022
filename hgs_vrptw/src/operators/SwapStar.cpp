@@ -69,10 +69,6 @@ std::pair<int, Node *> SwapStar::getBestInsertPoint(Node *U, Node *V)
 void SwapStar::init(Individual const &indiv, Penalties const *penalties)
 {
     LocalSearchOperator<Route>::init(indiv, penalties);
-
-    cache.reset();
-    removalCosts.reset();
-
     std::fill(updated.begin(), updated.end(), true);
 }
 
