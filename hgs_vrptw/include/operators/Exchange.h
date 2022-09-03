@@ -24,10 +24,6 @@ template <size_t N, size_t M> class Exchange : public LocalSearchOperator<Node>
     // Tests if the segments of U and V are adjacent in the same route
     inline bool adjacent(Node *U, Node *V) const;
 
-    // Determines whether evaluating the (N, M) exchange move between given U
-    // and V is not likely to result in a better objective value.
-    inline bool isLikelyBadMove(Node *U, Node *V) const;
-
     // Special case that's applied when M == 0
     int evalRelocateMove(Node *U, Node *V) const;
 

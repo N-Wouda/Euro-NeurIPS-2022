@@ -34,58 +34,6 @@ bool Exchange<N, M>::adjacent(Node *U, Node *V) const
 }
 
 template <size_t N, size_t M>
-bool Exchange<N, M>::isLikelyBadMove(Node *U, Node *V) const
-{
-    // The code below implements the classifier of the ``predict_bad_ls_moves``
-    // notebook. To speed things up we apply a few additional tricks. A logistic
-    // classifier determines if something's 0 or 1 in the following manner:
-    //   1) score = w^T x
-    //   2) p(score) = 1 / (1 + exp(-score))
-    //   3) assign 1 if p(score) >= 0.5, else 0
-    // This works out as follows: if the score is non-negative, x is assigned
-    // one. Else zero. So we only have to evaluate the score's sign! That is
-    // faster than determining the probability using exponentiation. Further,
-    // we are free to multiply the weights by some fixed positive number since
-    // we only care about the sign. This means we can use integer arithmetic.
-    // Finally, we avoid normalisation divisions by multiplying the non-distance
-    // parts with the maximum distance (which is positive, so it does not affect
-    // the score's sign).
-    int distScore = 0;
-
-    // Multiply the notebook weights by 100. We do not implement "DELTA_DIST_UN"
-    // since that one has barely any weight (only 0.01 in the notebook).
-    if constexpr (M == 0)
-    {
-        distScore += -934 * d_params.dist(V->client, U->client);
-        distScore += -934 * -d_params.dist(p(U)->client, U->client);
-    }
-    else
-    {
-        auto *endU = (*U->route)[U->position + N - 1];
-        auto *endV = (*V->route)[V->position + M - 1];
-
-        distScore += -934 * d_params.dist(p(V)->client, U->client);
-        distScore += -934 * -d_params.dist(p(U)->client, U->client);
-
-        distScore += -1119 * d_params.dist(p(U)->client, V->client);
-        distScore += -1119 * -d_params.dist(p(V)->client, V->client);
-
-        distScore += -91 * d_params.dist(endV->client, n(endU)->client);
-        distScore += -91 * -d_params.dist(endV->client, n(endV)->client);
-    }
-
-    int feasScore = -89;  // intercept
-
-    feasScore += 149 * U->route->hasTimeWarp();
-    feasScore += 81 * V->route->hasTimeWarp();
-
-    feasScore += 158 * U->route->hasExcessCapacity();
-    feasScore += 25 * V->route->hasExcessCapacity();
-
-    return distScore + feasScore * d_params.maxDist() < 0;
-}
-
-template <size_t N, size_t M>
 int Exchange<N, M>::evalRelocateMove(Node *U, Node *V) const
 {
     auto *endU = (*U->route)[U->position + N - 1];
@@ -258,9 +206,6 @@ template <size_t N, size_t M> int Exchange<N, M>::evaluate(Node *U, Node *V)
     if constexpr (M > 0)
         if (containsDepot(V, M))
             return 0;
-
-    if (isLikelyBadMove(U, V))
-        return 0;
 
     if constexpr (M == 0)  // special case where nothing in V is moved
     {
