@@ -159,8 +159,8 @@ void LocalSearch::update(Route *U, Route *V)
     U->update();
     lastModified[U->idx] = nbMoves;
 
-    for (auto op : routeOps)   // TODO only route operators use this (SWAP*).
-        op->update(U);         //  Maybe later also expand to node ops?
+    for (auto op : routeOps)  // TODO only route operators use this (SWAP*).
+        op->update(U);        //  Maybe later also expand to node ops?
 
     if (U != V)
     {
