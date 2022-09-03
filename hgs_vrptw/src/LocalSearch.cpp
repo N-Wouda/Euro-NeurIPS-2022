@@ -125,7 +125,7 @@ bool LocalSearch::applyNodeOperators(Node *U, Node *V)
     for (auto op : nodeOps)
         if (op->evaluate(U, V) < 0)
         {
-            auto *routeU = U->route;  // copy these because the operator could
+            auto *routeU = U->route;  // copy pointers because the operator can
             auto *routeV = V->route;  // modify the node's route membership
 
             op->apply(U, V);

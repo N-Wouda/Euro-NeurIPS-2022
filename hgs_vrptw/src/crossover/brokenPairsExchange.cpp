@@ -63,13 +63,22 @@ Individual brokenPairsExchange(
 
     // Only destroy-and-repair the worst parent routes
     auto worst = parents.first > parents.second ? routesA : routesB;
+    auto const numRoutes = parents.first > parents.second
+                               ? parents.first->numRoutes()
+                               : parents.second->numRoutes();
 
-    // Go through the routes in random order
-    std::shuffle(worst.begin(), worst.end(), rng);
+    // Go through the non-empty routes in random order
+    std::shuffle(worst.begin(), worst.begin() + numRoutes, rng);
 
     // Remove consecutive broken pairs
     ClientSet removed;
+    removed.reserve(maxNumRemovals);
+
     for (auto const &route : worst)
+    {
+        if (route.empty())
+            break;
+
         for (auto const client : route)
         {
             if (removed.size() >= maxNumRemovals)
@@ -78,6 +87,7 @@ Individual brokenPairsExchange(
             if (brokenPairs.contains(client))
                 removed.insert(client);
         }
+    }
 
     removeClients(worst, removed);
     crossover::greedyRepair(worst, removed, params);
