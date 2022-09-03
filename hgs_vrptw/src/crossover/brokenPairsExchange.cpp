@@ -45,12 +45,12 @@ Individual brokenPairsExchange(
     // Find all broken pairs between the two parents
     Clients succA(params.nbClients + 1, 0);
     for (auto const &route : routesA)
-        for (size_t idx = 1; idx <= route.size(); idx++)
+        for (size_t idx = 1; idx < route.size(); idx++)
             succA[route[idx - 1]] = route[idx];
 
     Clients succB(params.nbClients + 1, 0);
     for (auto const &route : routesB)
-        for (size_t idx = 1; idx <= route.size(); idx++)
+        for (size_t idx = 1; idx < route.size(); idx++)
             succB[route[idx - 1]] = route[idx];
 
     ClientSet brokenPairs;
