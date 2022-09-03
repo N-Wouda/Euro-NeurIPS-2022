@@ -15,8 +15,6 @@
 Params::Params(Config const &config, std::string const &instPath)
     : config(config)
 {
-    nbVehicles = config.nbVeh;
-
     // Initialize some parameter values
     std::string content, content2, content3;
     int serviceTimeData = 0;
@@ -320,18 +318,7 @@ Params::Params(Config const &config, std::string const &instPath)
             throw std::runtime_error("Vehicle capacity is undefined");
     }
 
-    // Default initialization if the number of vehicles has not been provided by
-    // the user
-    if (nbVehicles == INT_MAX)
-    {
-        // Safety margin: 30% + 3 more vehicles than the trivial bin packing LB
-        nbVehicles = static_cast<int>(
-            std::ceil(1.3 * totalDemand / vehicleCapacity) + 3.);
-    }
-    else if (nbVehicles == -1)  // unlimited
-    {
-        nbVehicles = nbClients;
-    }
+    nbVehicles = (config.nbVeh >= nbClients ? nbClients : config.nbVeh);
 
     maxDist_ = dist_.max();
 
@@ -377,14 +364,9 @@ Params::Params(Config const &config,
                std::vector<int> const &releases)
     : config(config),
       nbClients(static_cast<int>(coords.size()) - 1),
+      nbVehicles(config.nbVeh >= nbClients ? nbClients : config.nbVeh),
       vehicleCapacity(vehicleCap)
 {
-    // Number of vehicles: 30% above LP bin packing heuristic, and three more
-    // just in case.
-    int totalDemand = std::accumulate(demands.begin(), demands.end(), 0);
-    auto const vehicleMargin = std::ceil(1.3 * totalDemand / vehicleCapacity);
-    nbVehicles = static_cast<int>(vehicleMargin) + 3;
-
     dist_ = Matrix<int>(distMat.size());
 
     for (size_t i = 0; i != distMat.size(); ++i)
