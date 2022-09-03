@@ -36,36 +36,52 @@ bool Exchange<N, M>::adjacent(Node *U, Node *V) const
 template <size_t N, size_t M>
 bool Exchange<N, M>::isLikelyBadMove(Node *U, Node *V) const
 {
-    int score = 0;
+    // The code below implements the classifier of the ``predict_bad_ls_moves``
+    // notebook. To speed things up we apply a few additional tricks. A logistic
+    // classifier determines if something's 0 or 1 in the following manner:
+    //   1) score = w^T x
+    //   2) p(score) = 1 / (1 + exp(-score))
+    //   3) assign 1 if p(score) >= 0.5, else 0
+    // This works out as follows: if the score is non-negative, x is assigned
+    // one. Else zero. So we only have to evaluate the score's sign! That is
+    // faster than determining the probability using exponentiation. Further,
+    // we are free to multiply the weights by some fixed positive number since
+    // we only care about the sign. This means we can use integer arithmetic.
+    // Finally, we avoid normalisation divisions by multiplying the non-distance
+    // parts with the maximum distance.
+    int distScore = 0;
 
-    score += -837 * d_params.dist(p(U)->client, V->client);
-    score += -777 * d_params.dist(p(V)->client, U->client);
-
-    score += 612 * d_params.dist(p(U)->client, U->client);
-    score += 890 * d_params.dist(p(V)->client, V->client);
-
+    // Multiply the notebook weights by 100. We do not implement "DELTA_DIST_UN"
+    // since that one has barely any weight (only 0.01 in the notebook).
     if constexpr (M == 0)
-        score += 428 * d_params.dist(V->client, n(V)->client);
+    {
+        distScore += -934 * d_params.dist(V->client, U->client);
+        distScore += -934 * -d_params.dist(p(U)->client, U->client);
+    }
     else
     {
+        auto *endU = (*U->route)[U->position + N - 1];
         auto *endV = (*V->route)[V->position + M - 1];
-        score += 428 * d_params.dist(endV->client, n(endV)->client);
+
+        distScore += -934 * d_params.dist(p(V)->client, U->client);
+        distScore += -934 * -d_params.dist(p(U)->client, U->client);
+
+        distScore += -1119 * d_params.dist(p(U)->client, V->client);
+        distScore += -1119 * -d_params.dist(p(V)->client, V->client);
+
+        distScore += -91 * d_params.dist(endV->client, n(endU)->client);
+        distScore += -91 * -d_params.dist(endV->client, n(endV)->client);
     }
 
-    // First tally up all distances before normalising them here (that's a
-    // little faster, since we only need to divide once now).
-    score /= d_params.maxDist();
+    int feasScore = -89;  // intercept
 
-    score += -124 * !U->route->hasTimeWarp();
-    score += -58 * !V->route->hasTimeWarp();
+    feasScore += 149 * U->route->hasTimeWarp();
+    feasScore += 81 * V->route->hasTimeWarp();
 
-    score += -131 * !U->route->hasExcessCapacity();
-    score += -51 * !V->route->hasExcessCapacity();
+    feasScore += 158 * U->route->hasExcessCapacity();
+    feasScore += 25 * V->route->hasExcessCapacity();
 
-    score += 174;  // the intercept
-
-    // Move is likely bad if score (inner product of coef and feat) is negative
-    return score < 0;
+    return distScore + feasScore * d_params.maxDist() < 0;
 }
 
 template <size_t N, size_t M>
