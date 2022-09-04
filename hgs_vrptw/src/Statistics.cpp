@@ -32,7 +32,7 @@ void Statistics::collectFrom(Population const &pop)
     auto const opCost
         = [](size_t sum, auto const &subs) { return sum + subs.indiv->cost(); };
 
-    if (pop.feasible.size() > 0)
+    if (!pop.feasible.empty())
     {
         double const feasDiv = std::accumulate(
             pop.feasible.begin(), pop.feasible.end(), 0., opDiversity);
@@ -50,7 +50,7 @@ void Statistics::collectFrom(Population const &pop)
         feasAverage_.push_back(INT_MAX);
     }
 
-    if (pop.infeasible.size() > 0)
+    if (!pop.infeasible.empty())
     {
         double const infeasDiv = std::accumulate(
             pop.infeasible.begin(), pop.infeasible.end(), 0., opDiversity);

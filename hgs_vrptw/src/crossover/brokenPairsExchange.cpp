@@ -1,95 +1,49 @@
 #include "crossover.h"
+
 #include <algorithm>
-#include <functional>
-#include <unordered_set>
 
 using Client = int;
 using Clients = std::vector<Client>;
-using ClientSet = std::unordered_set<Client>;
 using Route = std::vector<Client>;
 using Routes = std::vector<Route>;
-
-namespace
-{
-void removeClients(Routes &routes, ClientSet const &clients)
-{
-    std::vector<Client> orderedClients;
-    std::vector<std::reference_wrapper<Route>> clientRoutes;
-
-    for (auto &route : routes)
-        for (Client client : route)
-            if (clients.contains(client))
-            {
-                orderedClients.push_back(client);
-                clientRoutes.push_back(std::ref(route));
-            }
-
-    for (size_t idx = 0; idx < orderedClients.size(); idx++)
-    {
-        auto client = orderedClients[idx];
-        auto &route = clientRoutes[idx].get();
-        auto const position = std::find(route.begin(), route.end(), client);
-        route.erase(position);
-    }
-}
-}  // namespace
 
 Individual brokenPairsExchange(
     std::pair<Individual const *, Individual const *> const &parents,
     Params const &params,
     XorShift128 &rng)
 {
-    auto const &routesA = parents.first->getRoutes();
-    auto const &routesB = parents.second->getRoutes();
+    auto const &neighboursA = parents.first->getNeighbours();
+    auto const &neighboursB = parents.second->getNeighbours();
 
-    // Find all broken pairs between the two parents
-    Clients succA(params.nbClients + 1, 0);
-    for (auto const &route : routesA)
-        for (size_t idx = 1; idx < route.size(); idx++)
-            succA[route[idx - 1]] = route[idx];
-
-    Clients succB(params.nbClients + 1, 0);
-    for (auto const &route : routesB)
-        for (size_t idx = 1; idx < route.size(); idx++)
-            succB[route[idx - 1]] = route[idx];
-
-    ClientSet brokenPairs;
+    Clients brokenPairs;
     for (Client client = 1; client <= params.nbClients; client++)
-        if (succA[client] != succB[client])
-            brokenPairs.insert(client);
+        // Test if client has a different successor in each individual
+        if (neighboursA[client].second != neighboursB[client].second)
+            brokenPairs.push_back(client);
 
-    size_t const maxNumRemovals
-        = params.config.destroyPct * params.nbClients / 100;
+    // Only destroy-and-repair the parent's routes whose cost is greatest
+    // TODO why worst? Why not best? Why not both?
+    Routes worst = std::max(parents.first, parents.second)->getRoutes();
+    std::vector<Route *> client2route(params.nbClients + 1, nullptr);
 
-    // Only destroy-and-repair the worst parent routes
-    auto worst = parents.first > parents.second ? routesA : routesB;
-    auto const numRoutes = parents.first > parents.second
-                               ? parents.first->numRoutes()
-                               : parents.second->numRoutes();
+    for (auto &route : worst)
+        for (Client client : route)
+            client2route[client] = &route;
 
-    // Go through the non-empty routes in random order
-    std::shuffle(worst.begin(), worst.begin() + numRoutes, rng);
+    // Shuffle the broken pairs, and then truncate to limit destruction
+    std::shuffle(brokenPairs.begin(), brokenPairs.end(), rng);
+    size_t const nRemovals = params.config.destroyPct * params.nbClients / 100;
+    brokenPairs.resize(std::min(nRemovals, brokenPairs.size()));
 
-    // Remove consecutive broken pairs
-    ClientSet removed;
-    removed.reserve(maxNumRemovals);
-
-    for (auto const &route : worst)
+    // Remove and repair
+    for (Client client : brokenPairs)
     {
-        if (route.empty())
-            break;
-
-        for (auto const client : route)
-        {
-            if (removed.size() >= maxNumRemovals)
-                break;
-
-            if (brokenPairs.contains(client))
-                removed.insert(client);
-        }
+        auto *route = client2route[client];
+        auto const position = std::find(route->begin(), route->end(), client);
+        route->erase(position);
     }
 
-    removeClients(worst, removed);
-    crossover::greedyRepair(worst, removed, params);
+    crossover::greedyRepair(worst, brokenPairs, params);
+
     return {&params, worst};
 }

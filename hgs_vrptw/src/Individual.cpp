@@ -277,9 +277,8 @@ void Individual::exportCVRPLibFormat(std::string const &path, double time) const
     out << "Time " << time << '\n';
 }
 
-std::vector<std::pair<int, int>> Individual::getNeighbours() const
+void Individual::makeNeighbours()
 {
-    std::vector<std::pair<int, int>> neighbours(params->nbClients + 1);
     neighbours[0] = {0, 0};  // note that depot neighbours have no meaning
 
     for (auto const &route : routes_)
@@ -287,33 +286,39 @@ std::vector<std::pair<int, int>> Individual::getNeighbours() const
             neighbours[route[idx]]
                 = {idx == 0 ? 0 : route[idx - 1],                  // pred
                    idx == route.size() - 1 ? 0 : route[idx + 1]};  // succ
-
-    return neighbours;
 }
 
 Individual::Individual(Params const *params, XorShift128 *rng)
-    : params(params), tour_(params->nbClients), routes_(params->nbVehicles)
+    : params(params),
+      tour_(params->nbClients),
+      routes_(params->nbVehicles),
+      neighbours(params->nbClients + 1)
 {
     std::iota(tour_.begin(), tour_.end(), 1);
     std::shuffle(tour_.begin(), tour_.end(), *rng);
 
     makeRoutes();
-    neighbours = getNeighbours();
+    makeNeighbours();
 }
 
 Individual::Individual(Params const *params, Tour tour)
-    : params(params), tour_(std::move(tour)), routes_(params->nbVehicles)
+    : params(params),
+      tour_(std::move(tour)),
+      routes_(params->nbVehicles),
+      neighbours(params->nbClients + 1)
 {
     makeRoutes();
-    neighbours = getNeighbours();
+    makeNeighbours();
 }
 
 Individual::Individual(Params const *params, Routes routes)
     : params(params),
       tour_(),
       routes_(std::move(routes)),
-      neighbours(getNeighbours())
+      neighbours(params->nbClients + 1)
 {
+    makeNeighbours();
+
     // a precedes b only when a is not empty and b is. Combined with a stable
     // sort, this ensures we keep the original sorting as much as possible, but
     // also make sure all empty routes are at the end of routes_.

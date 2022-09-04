@@ -43,13 +43,11 @@ class Individual
     // Splits the tour chromosome into routes using the linear split algorithm
     void makeRoutes();
 
+    // Determines (pred, succ) pairs for each client in the routes
+    void makeNeighbours();
+
     // Evaluates this solution's objective value.
     void evaluateCompleteCost();
-
-    /**
-     * Returns a vector of [pred, succ] clients for each client (index).
-     */
-    [[nodiscard]] std::vector<std::pair<Client, Client>> getNeighbours() const;
 
 public:
     /**
@@ -80,6 +78,16 @@ public:
      * Returns this individual's giant tour chromosome.
      */
     [[nodiscard]] Tour const &getTour() const { return tour_; }
+
+    /**
+     * Returns a vector of [pred, succ] clients for each client (index) in this
+     * individual's routes.
+     */
+    [[nodiscard]] std::vector<std::pair<Client, Client>> const &
+    getNeighbours() const
+    {
+        return neighbours;
+    }
 
     /**
      * Returns true when this solution is feasible; false otherwise.

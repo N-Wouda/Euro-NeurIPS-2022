@@ -5,7 +5,6 @@
 #include "Params.h"
 #include "XorShift128.h"
 
-#include <unordered_set>
 #include <vector>
 
 namespace crossover
@@ -14,7 +13,7 @@ namespace crossover
  * Greedily inserts the unplanned clients into non-empty routes.
  */
 void greedyRepair(std::vector<std::vector<int>> &routes,
-                  std::unordered_set<int> const &unplanned,
+                  std::vector<int> const &unplanned,
                   Params const &params);
 }  // namespace crossover
 

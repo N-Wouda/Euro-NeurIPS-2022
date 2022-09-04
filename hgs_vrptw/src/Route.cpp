@@ -124,22 +124,23 @@ void Route::setupSector()
     int cumulatedX = 0;
     int cumulatedY = 0;
 
-    for (auto *node : nodes)
+    for (auto it = nodes.begin(); it != nodes.end() - 1; ++it)
     {
-        if (!node->isDepot())
-        {
-            cumulatedX += params->clients[node->client].x;
-            cumulatedY += params->clients[node->client].y;
+        auto const *node = *it;
+        assert(!node->isDepot());
 
-            sector.extend(params->clients[node->client].angle);
-        }
+        cumulatedX += params->clients[node->client].x;
+        cumulatedY += params->clients[node->client].y;
+
+        sector.extend(params->clients[node->client].angle);
     }
 
     // This computes a pseudo-angle that sorts roughly equivalently to the atan2
     // angle, but is much faster to compute. See the following post for details:
     // https://stackoverflow.com/a/16561333/4316405.
-    auto dy = cumulatedY / static_cast<double>(size()) - params->clients[0].y;
-    auto dx = cumulatedX / static_cast<double>(size()) - params->clients[0].x;
+    auto const routeSize = static_cast<double>(size());
+    auto const dy = cumulatedY / routeSize - params->clients[0].y;
+    auto const dx = cumulatedX / routeSize - params->clients[0].x;
     angleCenter = std::copysign(1. - dx / (std::fabs(dx) + std::fabs(dy)), dy);
 
     // Enforce minimum size of circle sector

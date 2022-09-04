@@ -1,8 +1,6 @@
 #include "crossover.h"
 
-using Parents = std::pair<Individual const *, Individual const *>;
 using Client = int;
-using ClientSet = std::unordered_set<Client>;
 using Route = std::vector<Client>;
 using Routes = std::vector<Route>;
 
@@ -37,7 +35,7 @@ int deltaCost(Client client, Client prev, Client next, Params const &params)
 }  // namespace
 
 void crossover::greedyRepair(Routes &routes,
-                             ClientSet const &unplanned,
+                             std::vector<Client> const &unplanned,
                              Params const &params)
 {
     size_t numRoutes = 0;  // points just after the last non-empty route
