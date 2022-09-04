@@ -242,16 +242,19 @@ void Individual::brokenPairsDistance(Individual *other)
         diffs += tPred == 0 && oPred != 0 && oSucc != 0;
     }
 
-    other->indivsPerProximity.insert({diffs, this});
-    indivsPerProximity.insert({diffs, other});
+    other->indivsByProximity.insert({diffs, this});
+    indivsByProximity.insert({diffs, other});
 }
 
 double Individual::avgBrokenPairsDistanceClosest() const
 {
-    auto maxSize = std::min(params->config.nbClose, indivsPerProximity.size());
+    if (indivsByProximity.empty())
+        return 0.;
+
+    auto maxSize = std::min(params->config.nbClose, indivsByProximity.size());
 
     int result = 0;
-    auto it = indivsPerProximity.begin();
+    auto it = indivsByProximity.begin();
 
     for (size_t itemCount = 0; itemCount != maxSize; ++itemCount)
     {
@@ -333,8 +336,8 @@ Individual::Individual(Params const *params, Routes routes)
 
 Individual::~Individual()
 {
-    for (auto [diffs, other] : indivsPerProximity)
-        other->indivsPerProximity.erase({diffs, this});
+    for (auto [diffs, other] : indivsByProximity)
+        other->indivsByProximity.erase({diffs, this});
 }
 
 std::ostream &operator<<(std::ostream &out, Individual const &indiv)
