@@ -12,16 +12,14 @@ def x_axis(stats, step, plot_runtimes):
 
 def plot_instance(ax, instance, routes=()):
     """
-    Plot an instance and optionally a solution.
-    This plot contains the depot location (yellow star) and customer locations.
-    A customer is represented with a blue dot, with a size relative to when it's time window opens.
-    Around this dot, the relative size of the blue circle represents when a time windows closes.
-    Required parameters are the instance name and dictionary.
-    Optionally, a list of routes can be provided to be plotted.
-    When a save_in location is specified, the plot is saved there,
-    otherwise the plot will be shown during execution.
-    """
+    Plot an instance and optionally a solution. This plot contains the depot
+    location (yellow star) and customer locations. A client is represented by a
+    blue dot, with a size relative to when its time window opens. Around this
+    dot, the relative size of the blue circle represents when a time windows
+    closes.
 
+    A given list of routes can also be plotted, if provided.
+    """
     is_client = ~instance['is_depot']
     coords = instance['coords'][is_client].T
     tws_open = instance["time_windows"][is_client, 0]
@@ -31,9 +29,6 @@ def plot_instance(ax, instance, routes=()):
     ax.scatter(*coords, c="blue", s=(0.0005 * tws_close) ** 2, alpha=0.1)
     ax.scatter(*coords, c="blue", s=(0.0001 * tws_open) ** 2)
     ax.scatter(*depot_coords, c="orange", s=500, marker="*")
-
-    ax.set_xticks((0, np.max(instance['coords'])))
-    ax.set_yticks((0, np.max(instance['coords'])))
 
     ax.set_xlim(0, np.max(instance['coords']))
     ax.set_ylim(0, np.max(instance['coords']))
@@ -45,7 +40,6 @@ def plot_instance(ax, instance, routes=()):
 
 
 def plot_population(ax, stats, step=None, plot_runtimes=False):
-
     if step is None:
         step = max(1, stats.num_iters() // _N_POINTS)
 
@@ -100,7 +94,6 @@ def plot_population(ax, stats, step=None, plot_runtimes=False):
 
 
 def plot_objectives(ax, stats, step=None, plot_runtimes=False):
-
     if step is None:
         step = stats.num_iters() // _N_POINTS
 
