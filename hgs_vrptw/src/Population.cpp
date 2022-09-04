@@ -18,7 +18,7 @@ void Population::generatePopulation(size_t numToGenerate)
 void Population::addIndividual(Individual const &indiv)
 {
     auto &subPop = indiv.isFeasible() ? feasible : infeasible;
-    auto indivPtr = std::make_unique<Individual>(indiv);  // copy to store
+    auto indivPtr = std::make_unique<Individual>(indiv);
 
     for (auto const &other : subPop)  // update distance to other individuals
         indivPtr->brokenPairsDistance(other.indiv.get());

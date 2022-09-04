@@ -38,14 +38,10 @@ def plot_instance(ax, instance, routes=()):
     for route in routes:
         ax.plot(*instance['coords'][[0] + route + [0]].T)
 
-    margin = .025
-    extent = np.max(instance['coords'])
-    ax.set_xlim(-margin * extent, (1 + margin) * extent)
-    ax.set_ylim(-margin * extent, (1 + margin) * extent)
-
     ax.grid(color='grey', linestyle='--', linewidth=0.25)
 
     ax.set_title("Solution" if routes else "Instance")
+    ax.set_aspect('equal', 'datalim')
     ax.legend(frameon=False, ncol=3)
 
 
