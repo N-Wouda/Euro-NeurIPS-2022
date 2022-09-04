@@ -1,7 +1,5 @@
 #include "crossover.h"
 
-#include <algorithm>
-
 using Client = int;
 using Clients = std::vector<Client>;
 using Route = std::vector<Client>;
@@ -35,15 +33,14 @@ Individual brokenPairsExchange(
     size_t const nRemovals = params.config.destroyPct * params.nbClients / 100;
     brokenPairs.resize(std::min(nRemovals, brokenPairs.size()));
 
-    // Remove and repair
-    for (Client client : brokenPairs)
+    for (Client client : brokenPairs)  // remove
     {
         auto *route = client2route[client];
         auto const position = std::find(route->begin(), route->end(), client);
         route->erase(position);
     }
 
-    crossover::greedyRepair(worst, brokenPairs, params);
+    crossover::greedyRepair(worst, brokenPairs, params);  // repair
 
     return {&params, worst};
 }
