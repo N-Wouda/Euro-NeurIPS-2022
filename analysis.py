@@ -77,9 +77,16 @@ def solve(loc: str, seed: int, **kwargs):
         ls.add_route_operator(op)
 
     algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
-    algo.add_crossover_operator(hgspy.crossover.alternating_exchange)
-    algo.add_crossover_operator(hgspy.crossover.ordered_exchange)
-    algo.add_crossover_operator(hgspy.crossover.selective_route_exchange)
+
+    crossover_ops = [
+        hgspy.crossover.alternating_exchange,
+        hgspy.crossover.broken_pairs_exchange,
+        hgspy.crossover.ordered_exchange,
+        hgspy.crossover.selective_route_exchange,
+    ]
+
+    for op in crossover_ops:
+        algo.add_crossover_operator(op)
 
     if "phase" in kwargs and kwargs["phase"]:
         t_lim = tools.static_time_limit(tools.name2size(loc), kwargs["phase"])
@@ -138,7 +145,7 @@ def save_results(res, results_dir, inst_name):
     sol_path = make_path(_SOLS_DIR, "txt")
     best = res.get_best_found()
     stats = res.get_statistics()
-    best.export_cvrplib_format(sol_path, sum(stats.run_times()))
+    best.export_cvrplib_format(sol_path, res.get_run_time())
 
     # Save statistics
     stats_path = make_path(_STATS_DIR, "csv")

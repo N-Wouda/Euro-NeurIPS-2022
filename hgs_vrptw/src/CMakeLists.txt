@@ -4,6 +4,7 @@ set(geneticSources
         GeneticAlgorithm.cpp
         crossover/crossover.cpp
         crossover/alternatingExchange.cpp
+        crossover/brokenPairsExchange.cpp
         crossover/orderedExchange.cpp
         crossover/selectiveRouteExchange.cpp)
 

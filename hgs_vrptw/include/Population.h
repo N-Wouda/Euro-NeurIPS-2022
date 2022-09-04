@@ -6,6 +6,7 @@
 #include "Statistics.h"
 #include "XorShift128.h"
 
+#include <memory>
 #include <vector>
 
 // Class representing the population of a genetic algorithm with do binary
@@ -14,25 +15,33 @@ class Population
 {
     friend class Statistics;  // used to collect population statistics
 
+    struct IndividualWrapper
+    {
+        std::unique_ptr<Individual> indiv;
+        size_t fitness;
+    };
+
+    using SubPopulation = std::vector<IndividualWrapper>;
     using Parents = std::pair<Individual const *, Individual const *>;
 
     Params &params;    // Problem parameters
     XorShift128 &rng;  // Random number generator
 
-    std::vector<Individual *> population;  // Population ordered asc. by cost
-    std::vector<double> fitness;           // Population fitness
-    Individual bestSol;                    // best observed solution
+    SubPopulation feasible;    // Sub-population ordered asc. by cost
+    SubPopulation infeasible;  // Sub-population ordered asc. by cost
 
-    // Evaluates the biased fitness of all individuals in the population
-    void updateBiasedFitness();
+    Individual bestSol;
 
-    // Removes a duplicate individual from the population if there exists one.
-    // If there are multiple duplicate individuals, then the one with the lowest
-    // index in `population` is removed first.
-    bool removeDuplicate();
+    // Evaluates the biased fitness of all individuals in the sub-population
+    void updateBiasedFitness(SubPopulation &subPop);
+
+    // Removes a duplicate individual from the sub-population if there exists
+    // one. If there are multiple duplicate individuals, then the one with the
+    // lowest index in the sub-population is removed first.
+    bool removeDuplicate(SubPopulation &subPop);
 
     // Removes the worst individual in terms of biased fitness
-    void removeWorstBiasedFitness();
+    void removeWorstBiasedFitness(SubPopulation &subPop);
 
     // Generates a population of passed-in size
     void generatePopulation(size_t popSize);
@@ -55,11 +64,11 @@ public:
      */
     void reorder()
     {
-        std::sort(population.begin(),
-                  population.end(),
-                  [](auto const &indiv1, auto const &indiv2) {
-                      return indiv1->cost() < indiv2->cost();
-                  });
+        auto const op = [](auto const &wrapper1, auto const &wrapper2) {
+            return wrapper1.indiv->cost() < wrapper2.indiv->cost();
+        };
+        std::sort(feasible.begin(), feasible.end(), op);
+        std::sort(infeasible.begin(), infeasible.end(), op);
     }
 
     // Selects two (if possible non-identical) parents by binary tournament
@@ -70,9 +79,16 @@ public:
      */
     [[nodiscard]] Individual const &getBestFound() const { return bestSol; }
 
-    Population(Params &params, XorShift128 &rng);
+    /**
+     * Returns the current best objective value in the feasible sub-population
+     * or ``INT_MAX`` if no feasible solution exists.
+     */
+    [[nodiscard]] size_t getCurrentBestFeasibleCost() const
+    {
+        return !feasible.empty() ? feasible[0].indiv->cost() : INT_MAX;
+    }
 
-    ~Population();
+    Population(Params &params, XorShift128 &rng);
 };
 
 #endif

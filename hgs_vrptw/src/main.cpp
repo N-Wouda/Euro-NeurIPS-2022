@@ -58,6 +58,8 @@ try
     ls.addRouteOperator(swapStar);
 
     GeneticAlgorithm solver(params, rng, pop, ls);
+    solver.addCrossoverOperator(alternatingExchange);
+    solver.addCrossoverOperator(brokenPairsExchange);
     solver.addCrossoverOperator(orderedExchange);
     solver.addCrossoverOperator(selectiveRouteExchange);
 
