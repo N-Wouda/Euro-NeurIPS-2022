@@ -181,7 +181,10 @@ PYBIND11_MODULE(hgspy, m)
         .def("penalties_capacity", &Statistics::penaltiesCapacity)
         .def("penalties_time_warp", &Statistics::penaltiesTimeWarp)
         .def("incumbents", &Statistics::incumbents)
-        .def("to_csv", &Statistics::toCsv);
+        .def("to_csv",
+             &Statistics::toCsv,
+             py::arg("path"),
+             py::arg("sep") = ',');
 
     py::class_<Result>(m, "Result")
         .def("get_best_found",
