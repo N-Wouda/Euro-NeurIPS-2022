@@ -17,8 +17,8 @@ class LocalSearch
     using NodeOp = LocalSearchOperator<Node>;
     using RouteOp = LocalSearchOperator<Route>;
 
-    Params &params;       // Problem parameters
-    XorShift128 &rng;     // Random number generator
+    Params &params;    // Problem parameters
+    XorShift128 &rng;  // Random number generator
 
     std::vector<int> orderNodes;   // random node order used in RI operators
     std::vector<int> orderRoutes;  // random route order used in SWAP* operators
