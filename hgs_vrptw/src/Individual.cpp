@@ -5,6 +5,7 @@
 #include <deque>
 #include <fstream>
 #include <numeric>
+#include <span>
 #include <vector>
 
 namespace
@@ -226,7 +227,7 @@ void Individual::evaluateCompleteCost()
 
 void Individual::brokenPairsDistance(Individual *other)
 {
-    int diffs = 0;
+    int dist = 0;
 
     for (int j = 1; j <= params->nbClients; j++)
     {
@@ -235,15 +236,22 @@ void Individual::brokenPairsDistance(Individual *other)
 
         // Increase the difference if the successor of j in this individual is
         // not directly linked to j in other
-        diffs += tSucc != oSucc && tSucc != oPred;
+        dist += tSucc != oSucc && tSucc != oPred;
 
         // Increase the difference if the predecessor of j in this individual is
         // not directly linked to j in other
-        diffs += tPred == 0 && oPred != 0 && oSucc != 0;
+        dist += tPred == 0 && oPred != 0 && oSucc != 0;
     }
 
-    other->indivsByProximity.insert({diffs, this});
-    indivsByProximity.insert({diffs, other});
+    auto cmp = [](auto &elem, auto &value) { return elem.first < value; };
+
+    auto &oProx = other->indivsByProximity;
+    auto place = std::lower_bound(oProx.begin(), oProx.end(), dist, cmp);
+    oProx.emplace(place, dist, this);
+
+    auto &tProx = this->indivsByProximity;
+    place = std::lower_bound(tProx.begin(), tProx.end(), dist, cmp);
+    tProx.emplace(place, dist, other);
 }
 
 double Individual::avgBrokenPairsDistanceClosest() const
@@ -252,18 +260,14 @@ double Individual::avgBrokenPairsDistanceClosest() const
         return 0.;
 
     auto maxSize = std::min(params->config.nbClose, indivsByProximity.size());
-
     int result = 0;
-    auto it = indivsByProximity.begin();
 
-    for (size_t itemCount = 0; itemCount != maxSize; ++itemCount)
-    {
-        result += it->first;
-        ++it;
-    }
+    for (auto [dist, _] : std::span(indivsByProximity.begin(), maxSize))
+        result += dist;
 
     // Normalise broken pairs distance by # of clients and close neighbours
-    return result / (params->nbClients * static_cast<double>(maxSize));
+    auto const numClose = static_cast<double>(maxSize);
+    return result / (params->nbClients * numClose);
 }
 
 void Individual::exportCVRPLibFormat(std::string const &path, double time) const
@@ -336,8 +340,15 @@ Individual::Individual(Params const *params, Routes routes)
 
 Individual::~Individual()
 {
-    for (auto [diffs, other] : indivsByProximity)
-        other->indivsByProximity.erase({diffs, this});
+    for (auto [dist, other] : indivsByProximity)
+    {
+        auto place = std::find(other->indivsByProximity.begin(),
+                               other->indivsByProximity.end(),
+                               std::make_pair(dist, this));
+
+        if (place != other->indivsByProximity.end())
+            other->indivsByProximity.erase(place);
+    }
 }
 
 std::ostream &operator<<(std::ostream &out, Individual const &indiv)

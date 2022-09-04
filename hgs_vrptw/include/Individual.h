@@ -5,7 +5,6 @@
 #include "XorShift128.h"
 
 #include <cfloat>
-#include <set>
 #include <string>
 #include <vector>
 
@@ -22,9 +21,8 @@ class Individual
     size_t timeWarp = 0;        // All route time warp of late arrivals
 
     // The other individuals in the population (cannot be the depot 0), ordered
-    // by increasing proximity (the set container follows a natural ordering
-    // based on the value of the first pair).
-    std::multiset<std::pair<int, Individual *>> indivsByProximity;
+    // by increasing proximity.
+    std::vector<std::pair<int, Individual *>> indivsByProximity;
 
     Params const *params;  // Problem parameters
 
