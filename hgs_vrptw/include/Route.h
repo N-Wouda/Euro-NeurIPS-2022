@@ -3,7 +3,6 @@
 
 #include "CircleSector.h"
 #include "Node.h"
-#include "Penalties.h"
 #include "TimeWindowSegment.h"
 
 #include <array>

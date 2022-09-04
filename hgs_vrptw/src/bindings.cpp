@@ -60,11 +60,7 @@ PYBIND11_MODULE(hgspy, m)
              static_cast<void (LocalSearch::*)(LocalSearchOperator<Route> &)>(
                  &LocalSearch::addRouteOperator),
              py::arg("op"))
-        .def("__call__",
-             &LocalSearch::operator(),
-             py::arg("indiv"),
-             py::arg("excessCapacityPenalty"),
-             py::arg("timeWarpPenalty"));
+        .def("__call__", &LocalSearch::operator(), py::arg("indiv"));
 
     py::class_<Config>(m, "Config")
         .def(py::init<int,

@@ -7,12 +7,8 @@
 #include <stdexcept>
 #include <vector>
 
-void LocalSearch::operator()(Individual &indiv,
-                             int loadPenalty,
-                             int timeWarpPenalty)
+void LocalSearch::operator()(Individual &indiv)
 {
-    penalties = {params.vehicleCapacity, loadPenalty, timeWarpPenalty};
-
     // Shuffling the node order beforehand adds diversity to the search
     std::shuffle(orderNodes.begin(), orderNodes.end(), rng);
     std::shuffle(orderRoutes.begin(), orderRoutes.end(), rng);
@@ -234,10 +230,10 @@ void LocalSearch::loadIndividual(Individual const &indiv)
     }
 
     for (auto op : nodeOps)
-        op->init(indiv, &penalties);
+        op->init(indiv);
 
     for (auto op : routeOps)
-        op->init(indiv, &penalties);
+        op->init(indiv);
 }
 
 Individual LocalSearch::exportIndividual()
@@ -268,10 +264,7 @@ Individual LocalSearch::exportIndividual()
 }
 
 LocalSearch::LocalSearch(Params &params, XorShift128 &rng)
-    : penalties{params.vehicleCapacity,
-                params.penaltyCapacity,
-                params.penaltyTimeWarp},
-      params(params),
+    : params(params),
       rng(rng),
       orderNodes(params.nbClients),
       orderRoutes(params.nbVehicles),

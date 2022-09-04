@@ -21,8 +21,7 @@ struct ClientSplit
 
 struct ClientSplits
 {
-    int vehicleCap;
-    int capPenalty;
+    Params const &params;
 
     std::vector<ClientSplit> splits;
     std::vector<int> predecessors;
@@ -33,8 +32,7 @@ struct ClientSplits
     std::vector<int> cumServ;
 
     ClientSplits(Params const &params, std::vector<int> const &tour)
-        : vehicleCap(params.vehicleCapacity),
-          capPenalty(params.penaltyCapacity),
+        : params(params),
           splits(params.nbClients + 1),
           predecessors(params.nbClients + 1, 0),
           pathCosts(params.nbClients + 1, INT_MAX),
@@ -67,10 +65,9 @@ struct ClientSplits
     [[nodiscard]] int propagate(int i, int j) const
     {
         assert(i < j);
-        auto const excessCapacity = cumLoad[j] - cumLoad[i] - vehicleCap;
         auto const deltaDist = cumDist[j] - cumDist[i + 1];
         return pathCosts[i] + deltaDist + splits[i + 1].d0_x + splits[j].dx_0
-               + capPenalty * std::max(excessCapacity, 0);
+               + params.loadPenalty(cumLoad[j] - cumLoad[i]);
     }
 
     // Tests if i dominates j as a predecessor for all nodes x >= j + 1
@@ -80,7 +77,7 @@ struct ClientSplits
         auto const lhs = pathCosts[j] + splits[j + 1].d0_x;
         auto const deltaDist = cumDist[j] - cumDist[i + 1];
         auto const rhs = pathCosts[i] + splits[i + 1].d0_x + deltaDist
-                         + capPenalty * (cumLoad[j] - cumLoad[i]);
+                         + params.penaltyCapacity * (cumLoad[j] - cumLoad[i]);
 
         return lhs >= rhs;
     }

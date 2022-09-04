@@ -12,9 +12,6 @@
 // data of the instance needed by the algorithm
 class Params
 {
-    // TODO get rid of this object; turn it into ProblemData (and then have
-    //  Config as a separate object)
-
     // Structure of a Client, including its index, position, and all other
     // variables and parameters
     struct Client
@@ -32,6 +29,25 @@ class Params
         // Polar angle of the client around the depot (starting at east, moving
         // counter-clockwise), measured in degrees and truncated for convenience
         int angle;
+    };
+
+    // Penalty booster that increases the penalty on  capacity and time window
+    // violations during the object's lifetime.
+    struct PenaltyBooster
+    {
+        Params *d_params;
+
+        explicit PenaltyBooster(Params *params) : d_params(params)
+        {
+            d_params->penaltyCapacity *= d_params->config.repairBooster;
+            d_params->penaltyTimeWarp *= d_params->config.repairBooster;
+        }
+
+        ~PenaltyBooster()
+        {
+            d_params->penaltyCapacity /= d_params->config.repairBooster;
+            d_params->penaltyTimeWarp /= d_params->config.repairBooster;
+        }
     };
 
     // Neighborhood restrictions: For each client, list of nearby clients (size
@@ -60,6 +76,31 @@ public:
     int vehicleCapacity;  // Capacity limit
 
     std::vector<Client> clients;  // Client (+depot) information
+
+    /**
+     * Computes the total excess capacity penalty for the given load.
+     */
+    [[nodiscard]] int loadPenalty(int load) const
+    {
+        return std::max(load - vehicleCapacity, 0) * penaltyCapacity;
+    }
+
+    /**
+     * Computes the total time warp penalty for the give time warp.
+     */
+    [[nodiscard]] int twPenalty(int timeWarp) const
+    {
+        return timeWarp * penaltyTimeWarp;
+    }
+
+    /**
+     * Returns a penalty booster that temporarily increases infeasibility
+     * penalties (while the booster lives).
+     */
+    [[nodiscard]] PenaltyBooster getPenaltyBooster()
+    {
+        return PenaltyBooster(this);
+    }
 
     /**
      * Returns the nbGranular clients nearest/closest to the passed-in client.

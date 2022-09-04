@@ -4,7 +4,7 @@ using TWS = TimeWindowSegment;
 
 void SwapStar::updateRemovalCosts(Route *R1)
 {
-    auto const currTimeWarp = d_penalties->timeWarp(R1->timeWarp());
+    auto const currTimeWarp = d_params.twPenalty(R1->timeWarp());
 
     for (Node *U = n(R1->depot); !U->isDepot(); U = n(U))
     {
@@ -12,7 +12,7 @@ void SwapStar::updateRemovalCosts(Route *R1)
         removalCosts(R1->idx, U->client)
             = d_params.dist(p(U)->client, n(U)->client)
               - d_params.dist(p(U)->client, U->client, n(U)->client)
-              + d_penalties->timeWarp(twData.totalTimeWarp()) - currTimeWarp;
+              + d_params.twPenalty(twData.totalTimeWarp()) - currTimeWarp;
     }
 }
 
@@ -27,8 +27,8 @@ void SwapStar::updateInsertionCost(Route *R, Node *U)
     auto twData = TWS::merge(R->depot->twBefore, U->tw, n(R->depot)->twAfter);
     int cost = d_params.dist(0, U->client, n(R->depot)->client)
                - d_params.dist(0, n(R->depot)->client)
-               + d_penalties->timeWarp(twData.totalTimeWarp())
-               - d_penalties->timeWarp(R->timeWarp());
+               + d_params.twPenalty(twData.totalTimeWarp())
+               - d_params.twPenalty(R->timeWarp());
 
     insertPositions.maybeAdd(cost, R->depot);
 
@@ -38,8 +38,8 @@ void SwapStar::updateInsertionCost(Route *R, Node *U)
         twData = TWS::merge(V->twBefore, U->tw, n(V)->twAfter);
         int deltaCost = d_params.dist(V->client, U->client, n(V)->client)
                         - d_params.dist(V->client, n(V)->client)
-                        + d_penalties->timeWarp(twData.totalTimeWarp())
-                        - d_penalties->timeWarp(R->timeWarp());
+                        + d_params.twPenalty(twData.totalTimeWarp())
+                        - d_params.twPenalty(R->timeWarp());
 
         insertPositions.maybeAdd(deltaCost, V);
     }
@@ -60,15 +60,15 @@ std::pair<int, Node *> SwapStar::getBestInsertPoint(Node *U, Node *V)
     auto const twData = TWS::merge(p(V)->twBefore, U->tw, n(V)->twAfter);
     int deltaCost = d_params.dist(p(V)->client, U->client, n(V)->client)
                     - d_params.dist(p(V)->client, n(V)->client)
-                    + d_penalties->timeWarp(twData.totalTimeWarp())
-                    - d_penalties->timeWarp(V->route->timeWarp());
+                    + d_params.twPenalty(twData.totalTimeWarp())
+                    - d_params.twPenalty(V->route->timeWarp());
 
     return std::make_pair(deltaCost, p(V));
 }
 
-void SwapStar::init(Individual const &indiv, Penalties const *penalties)
+void SwapStar::init(Individual const &indiv)
 {
-    LocalSearchOperator<Route>::init(indiv, penalties);
+    LocalSearchOperator<Route>::init(indiv);
     std::fill(updated.begin(), updated.end(), true);
 }
 
@@ -103,11 +103,11 @@ int SwapStar::evaluate(Route *routeU, Route *routeV)
             int const vDemand = d_params.clients[V->client].demand;
             int const loadDiff = uDemand - vDemand;
 
-            deltaCost += d_penalties->load(routeU->load() - loadDiff);
-            deltaCost -= d_penalties->load(routeU->load());
+            deltaCost += d_params.loadPenalty(routeU->load() - loadDiff);
+            deltaCost -= d_params.loadPenalty(routeU->load());
 
-            deltaCost += d_penalties->load(routeV->load() + loadDiff);
-            deltaCost -= d_penalties->load(routeV->load());
+            deltaCost += d_params.loadPenalty(routeV->load() + loadDiff);
+            deltaCost -= d_params.loadPenalty(routeV->load());
 
             deltaCost += removalCosts(routeU->idx, U->client);
             deltaCost += removalCosts(routeV->idx, V->client);
@@ -187,7 +187,7 @@ int SwapStar::evaluate(Route *routeU, Route *routeV)
         auto uTWS
             = TWS::merge(best.VAfter->twBefore, best.V->tw, n(best.U)->twAfter);
 
-        deltaCost += d_penalties->timeWarp(uTWS.totalTimeWarp());
+        deltaCost += d_params.twPenalty(uTWS.totalTimeWarp());
     }
     else if (best.VAfter->position < best.U->position)
     {
@@ -197,7 +197,7 @@ int SwapStar::evaluate(Route *routeU, Route *routeV)
             routeU->twBetween(best.VAfter->position + 1, best.U->position - 1),
             n(best.U)->twAfter);
 
-        deltaCost += d_penalties->timeWarp(uTWS.totalTimeWarp());
+        deltaCost += d_params.twPenalty(uTWS.totalTimeWarp());
     }
     else
     {
@@ -207,7 +207,7 @@ int SwapStar::evaluate(Route *routeU, Route *routeV)
             best.V->tw,
             n(best.VAfter)->twAfter);
 
-        deltaCost += d_penalties->timeWarp(uTWS.totalTimeWarp());
+        deltaCost += d_params.twPenalty(uTWS.totalTimeWarp());
     }
 
     if (best.UAfter->position + 1 == best.V->position)
@@ -216,7 +216,7 @@ int SwapStar::evaluate(Route *routeU, Route *routeV)
         auto vTWS
             = TWS::merge(best.UAfter->twBefore, best.U->tw, n(best.V)->twAfter);
 
-        deltaCost += d_penalties->timeWarp(vTWS.totalTimeWarp());
+        deltaCost += d_params.twPenalty(vTWS.totalTimeWarp());
     }
     else if (best.UAfter->position < best.V->position)
     {
@@ -226,7 +226,7 @@ int SwapStar::evaluate(Route *routeU, Route *routeV)
             routeV->twBetween(best.UAfter->position + 1, best.V->position - 1),
             n(best.V)->twAfter);
 
-        deltaCost += d_penalties->timeWarp(vTWS.totalTimeWarp());
+        deltaCost += d_params.twPenalty(vTWS.totalTimeWarp());
     }
     else
     {
@@ -236,20 +236,20 @@ int SwapStar::evaluate(Route *routeU, Route *routeV)
             best.U->tw,
             n(best.UAfter)->twAfter);
 
-        deltaCost += d_penalties->timeWarp(vTWS.totalTimeWarp());
+        deltaCost += d_params.twPenalty(vTWS.totalTimeWarp());
     }
 
-    deltaCost -= d_penalties->timeWarp(routeU->timeWarp());
-    deltaCost -= d_penalties->timeWarp(routeV->timeWarp());
+    deltaCost -= d_params.twPenalty(routeU->timeWarp());
+    deltaCost -= d_params.twPenalty(routeV->timeWarp());
 
     auto const uDemand = d_params.clients[best.U->client].demand;
     auto const vDemand = d_params.clients[best.V->client].demand;
 
-    deltaCost += d_penalties->load(routeU->load() - uDemand + vDemand);
-    deltaCost -= d_penalties->load(routeU->load());
+    deltaCost += d_params.loadPenalty(routeU->load() - uDemand + vDemand);
+    deltaCost -= d_params.loadPenalty(routeU->load());
 
-    deltaCost += d_penalties->load(routeV->load() + uDemand - vDemand);
-    deltaCost -= d_penalties->load(routeV->load());
+    deltaCost += d_params.loadPenalty(routeV->load() + uDemand - vDemand);
+    deltaCost -= d_params.loadPenalty(routeV->load());
 
     return deltaCost;
 }
