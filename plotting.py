@@ -10,8 +10,36 @@ def x_axis(stats, step, plot_runtimes):
         return np.arange(0, stats.num_iters(), step), "Iteration (#)"
 
 
-def plot_population(stats, ax, step=None, plot_runtimes=False):
+def plot_instance(ax, instance, routes=()):
+    """
+    Plot an instance and optionally a solution. This plot contains the depot
+    location (yellow star) and customer locations. A client is represented by a
+    blue dot, with a size relative to when its time window opens. Around this
+    dot, the relative size of the blue circle represents when a time windows
+    closes.
 
+    A given list of routes can also be plotted, if provided.
+    """
+    is_client = ~instance['is_depot']
+    coords = instance['coords'][is_client].T
+    tws_open = instance["time_windows"][is_client, 0]
+    tws_close = instance["time_windows"][is_client, 1]
+    depot_coords = instance['coords'][~is_client].T
+
+    ax.scatter(*coords, c="blue", s=(0.0005 * tws_close) ** 2, alpha=0.1)
+    ax.scatter(*coords, c="blue", s=(0.0001 * tws_open) ** 2)
+    ax.scatter(*depot_coords, c="orange", s=500, marker="*")
+
+    ax.set_xlim(0, np.max(instance['coords']))
+    ax.set_ylim(0, np.max(instance['coords']))
+
+    ax.set_aspect('equal', 'box')
+
+    for route in routes:
+        ax.plot(*instance['coords'][[0] + route + [0]].T, linewidth=0.1)
+
+
+def plot_population(ax, stats, step=None, plot_runtimes=False):
     if step is None:
         step = max(1, stats.num_iters() // _N_POINTS)
 
@@ -65,8 +93,7 @@ def plot_population(stats, ax, step=None, plot_runtimes=False):
     ax.legend(lines, labels, frameon=False)
 
 
-def plot_objectives(stats, ax, step=None, plot_runtimes=False):
-
+def plot_objectives(ax, stats, step=None, plot_runtimes=False):
     if step is None:
         step = stats.num_iters() // _N_POINTS
 
@@ -111,7 +138,7 @@ def plot_objectives(stats, ax, step=None, plot_runtimes=False):
     ax.legend(frameon=False)
 
 
-def plot_incumbents(stats, ax):
+def plot_incumbents(ax, stats):
     times, objs = list(zip(*stats.incumbents()))
     ax.plot(times, objs)
 
