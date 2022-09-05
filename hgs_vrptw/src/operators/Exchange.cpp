@@ -8,10 +8,13 @@ using TWS = TimeWindowSegment;
 template <size_t N, size_t M>
 bool Exchange<N, M>::containsDepot(Node *node, size_t segLength) const
 {
-    // clang-format off
-    return node->isDepot()
-        || node->position + segLength - 1 >= node->route->size();
-    // clang-format on
+    if (node->isDepot())
+        return true;
+
+    // size() is the position of the last node in the route. So the segment
+    // must include the depot if position + move length - 1 (-1 since we're
+    // also moving the node *at* position) is larger than size().
+    return node->position + segLength - 1 > node->route->size();
 }
 
 template <size_t N, size_t M>

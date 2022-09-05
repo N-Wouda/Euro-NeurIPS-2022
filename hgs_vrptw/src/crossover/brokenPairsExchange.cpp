@@ -20,7 +20,6 @@ Individual brokenPairsExchange(
             brokenPairs.push_back(client);
 
     // Only destroy-and-repair the parent's routes whose cost is greatest
-    // TODO why worst? Why not best? Why not both?
     Routes worst = std::max(parents.first, parents.second)->getRoutes();
     std::vector<Route *> client2route(params.nbClients + 1, nullptr);
 

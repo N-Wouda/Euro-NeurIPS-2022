@@ -405,7 +405,8 @@ def static_time_limit(n_clients: int, phase: str) -> int:
     else:
         return 480 if phase == "quali" else 900
 
-def name2size(name:str)->int:
+
+def name2size(name: str) -> int:
     """
     Extracts the instance size (i.e., num clients) from the instance name.
     """

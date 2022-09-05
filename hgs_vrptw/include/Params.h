@@ -31,7 +31,7 @@ class Params
         int angle;
     };
 
-    // Penalty booster that increases the penalty on  capacity and time window
+    // Penalty booster that increases the penalty on capacity and time window
     // violations during the object's lifetime.
     struct PenaltyBooster
     {
