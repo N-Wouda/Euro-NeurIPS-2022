@@ -5,7 +5,6 @@
 #include <deque>
 #include <fstream>
 #include <numeric>
-#include <span>
 #include <vector>
 
 namespace
@@ -260,10 +259,11 @@ double Individual::avgBrokenPairsDistanceClosest() const
         return 0.;
 
     auto maxSize = std::min(params->config.nbClose, indivsByProximity.size());
+    auto start = indivsByProximity.begin();
     int result = 0;
 
-    for (auto [dist, _] : std::span(indivsByProximity.begin(), maxSize))
-        result += dist;
+    for (auto it = start; it != start + maxSize; ++it)
+        result += it->first;
 
     // Normalise broken pairs distance by # of clients and close neighbours
     auto const numClose = static_cast<double>(maxSize);
