@@ -139,7 +139,6 @@ int Exchange<N, M>::evalSwapMove(Node *U, Node *V) const
 
     if (U->route != V->route)
     {
-
         if (U->route->isFeasible() && V->route->isFeasible() && deltaCost >= 0)
             return deltaCost;
 
