@@ -39,7 +39,7 @@ bool Exchange<N, M>::adjacent(Node *U, Node *V) const
 template <size_t N, size_t M>
 int Exchange<N, M>::evalRelocateMove(Node *U, Node *V) const
 {
-    auto *endU = (*U->route)[U->position + N - 1];
+    auto *endU = N == 1 ? U : (*U->route)[U->position + N - 1];
     auto const posU = U->position;
     auto const posV = V->position;
 
@@ -116,8 +116,8 @@ int Exchange<N, M>::evalRelocateMove(Node *U, Node *V) const
 template <size_t N, size_t M>
 int Exchange<N, M>::evalSwapMove(Node *U, Node *V) const
 {
-    auto *endU = (*U->route)[U->position + N - 1];
-    auto *endV = (*V->route)[V->position + M - 1];
+    auto *endU = N == 1 ? U : (*U->route)[U->position + N - 1];
+    auto *endV = M == 1 ? V : (*V->route)[V->position + M - 1];
 
     auto const posU = U->position;
     auto const posV = V->position;
@@ -232,7 +232,7 @@ template <size_t N, size_t M> int Exchange<N, M>::evaluate(Node *U, Node *V)
 
 template <size_t N, size_t M> void Exchange<N, M>::apply(Node *U, Node *V)
 {
-    auto *uToInsert = (*U->route)[U->position + N - 1];
+    auto *uToInsert = N == 1 ? U : (*U->route)[U->position + N - 1];
     auto *insertUAfter = M == 0 ? V : (*V->route)[V->position + M - 1];
 
     // Insert these 'extra' nodes of U after the end of V...
