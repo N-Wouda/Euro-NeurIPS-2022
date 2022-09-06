@@ -74,10 +74,10 @@ void Population::updateBiasedFitness(SubPopulation &subPop) const
 
 bool Population::removeDuplicate(SubPopulation &subPop)
 {
-    for (size_t idx = subPop.size(); idx != 0; --idx)
-        if (subPop[idx - 1].indiv->hasClone())
+    for (auto it = subPop.begin(); it != subPop.end(); ++it)
+        if (it->indiv->hasClone())
         {
-            subPop.erase(subPop.begin() + idx);
+            subPop.erase(it);
             return true;
         }
 
