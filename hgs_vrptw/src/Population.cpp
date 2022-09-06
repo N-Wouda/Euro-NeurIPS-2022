@@ -17,37 +17,27 @@ void Population::generatePopulation(size_t numToGenerate)
 
 void Population::addIndividual(Individual const &indiv)
 {
-    // Create a copy of the individual and update the proximity structures
-    // calculating inter-individual distances within its subpopulation
-    IndividualWrapper myIndividual = {std::make_unique<Individual>(indiv), 0};
+    auto &subPop = indiv.isFeasible() ? feasible : infeasible;
+    auto indivPtr = std::make_unique<Individual>(indiv);
 
-    // Find the individual's subpopulation
-    auto &subPop = myIndividual.indiv->isFeasible() ? feasible : infeasible;
+    for (auto const &other : subPop)  // update distance to other individuals
+        indivPtr->brokenPairsDistance(other.indiv.get());
 
-    for (auto const &other : subPop)
-        myIndividual.indiv->brokenPairsDistance(other.indiv.get());
+    IndividualWrapper wrapper = {std::move(indivPtr), 0};
 
-    // Identify the correct location in the population and insert the individual
-    // TODO binsearch?
-    int place = static_cast<int>(subPop.size());
-    while (place > 0 && subPop[place - 1].indiv->cost() > indiv.cost())
-        place--;
-
-    subPop.emplace(subPop.begin() + place, std::move(myIndividual));
+    // Insert individual into the population, leaving the cost ordering intact
+    auto const place = std::lower_bound(subPop.begin(), subPop.end(), wrapper);
+    subPop.emplace(place, std::move(wrapper));
     updateBiasedFitness(subPop);
 
     // Trigger a survivor selection if the maximum population size is exceeded
-    size_t maxPopSize
-        = params.config.minimumPopulationSize + params.config.generationSize;
-
-    if (subPop.size() > maxPopSize)
+    if (subPop.size() > params.config.minPopSize + params.config.generationSize)
     {
-        // Remove duplicates before removing low fitness individuals
-        while (subPop.size() > params.config.minimumPopulationSize)
-            if (!removeDuplicate(subPop))
+        while (subPop.size() > params.config.minPopSize)  // remove duplicates,
+            if (!removeDuplicate(subPop))                 // if any exist
                 break;
 
-        while (subPop.size() > params.config.minimumPopulationSize)
+        while (subPop.size() > params.config.minPopSize)
         {
             updateBiasedFitness(subPop);
             removeWorstBiasedFitness(subPop);
@@ -58,7 +48,7 @@ void Population::addIndividual(Individual const &indiv)
         bestSol = indiv;
 }
 
-void Population::updateBiasedFitness(SubPopulation &subPop)
+void Population::updateBiasedFitness(SubPopulation &subPop) const
 {
     // Ranking the individuals based on their diversity contribution (decreasing
     // order of broken pairs distance)
@@ -84,14 +74,12 @@ void Population::updateBiasedFitness(SubPopulation &subPop)
 
 bool Population::removeDuplicate(SubPopulation &subPop)
 {
-    for (size_t idx = 0; idx != subPop.size(); idx++)
-    {
-        if (subPop[idx].indiv->hasClone())
+    for (auto it = subPop.begin(); it != subPop.end(); ++it)
+        if (it->indiv->hasClone())
         {
-            subPop.erase(subPop.begin() + idx);
+            subPop.erase(it);
             return true;
         }
-    }
 
     return false;
 }
@@ -102,6 +90,7 @@ void Population::removeWorstBiasedFitness(SubPopulation &subPop)
         subPop.begin(), subPop.end(), [](auto const &a, auto const &b) {
             return a.fitness < b.fitness;
         });
+
     auto const worstIdx = std::distance(subPop.begin(), worstFitness);
     subPop.erase(subPop.begin() + worstIdx);
 }
@@ -111,24 +100,21 @@ void Population::restart()
     feasible.clear();
     infeasible.clear();
 
-    generatePopulation(params.config.minimumPopulationSize);
+    generatePopulation(params.config.minPopSize);
 }
 
 Individual const *Population::getBinaryTournament()
 {
-    auto const feasSize = feasible.size();
-    auto const popSize = feasSize + infeasible.size();
+    auto const fSize = feasible.size();
+    auto const popSize = fSize + infeasible.size();
 
-    auto const getIndividual = [&](auto const idx) -> auto &
-    {
-        return idx < feasSize ? feasible[idx] : infeasible[idx - feasSize];
-    };
+    auto const idx1 = rng.randint(popSize);
+    auto &wrap1 = idx1 < fSize ? feasible[idx1] : infeasible[idx1 - fSize];
 
-    auto const &wrapper1 = getIndividual(rng.randint(popSize));
-    auto const &wrapper2 = getIndividual(rng.randint(popSize));
+    auto const idx2 = rng.randint(popSize);
+    auto &wrap2 = idx2 < fSize ? feasible[idx2] : infeasible[idx2 - fSize];
 
-    return wrapper1.fitness < wrapper2.fitness ? wrapper1.indiv.get()
-                                               : wrapper2.indiv.get();
+    return (wrap1.fitness < wrap2.fitness ? wrap1.indiv : wrap2.indiv).get();
 }
 
 std::pair<Individual const *, Individual const *> Population::selectParents()
@@ -149,5 +135,5 @@ Population::Population(Params &params, XorShift128 &rng)
       rng(rng),
       bestSol(&params, &rng)  // random initial best solution
 {
-    generatePopulation(params.config.minimumPopulationSize);
+    generatePopulation(params.config.minPopSize);
 }

@@ -26,17 +26,23 @@ def plot_instance(ax, instance, routes=()):
     tws_close = instance["time_windows"][is_client, 1]
     depot_coords = instance['coords'][~is_client].T
 
-    ax.scatter(*coords, c="blue", s=(0.0005 * tws_close) ** 2, alpha=0.1)
-    ax.scatter(*coords, c="blue", s=(0.0001 * tws_open) ** 2)
-    ax.scatter(*depot_coords, c="orange", s=500, marker="*")
+    kwargs = dict(s=(0.0003 * tws_open) ** 2, zorder=3)
+    ax.scatter(*coords, c="tab:blue", label="TW open", **kwargs)
 
-    ax.set_xlim(0, np.max(instance['coords']))
-    ax.set_ylim(0, np.max(instance['coords']))
+    kwargs = dict(s=(0.0008 * tws_close) ** 2, alpha=0.1, zorder=3)
+    ax.scatter(*coords, c="tab:blue", label="TW close", **kwargs)
 
-    ax.set_aspect('equal', 'box')
+    kwargs = dict(marker="*", zorder=3, s=750)
+    ax.scatter(*depot_coords, c="tab:red", label="Depot", **kwargs)
 
     for route in routes:
-        ax.plot(*instance['coords'][[0] + route + [0]].T, linewidth=0.1)
+        ax.plot(*instance['coords'][[0] + route + [0]].T)
+
+    ax.grid(color='grey', linestyle='--', linewidth=0.25)
+
+    ax.set_title("Solution" if routes else "Instance")
+    ax.set_aspect('equal', 'datalim')
+    ax.legend(frameon=False, ncol=3)
 
 
 def plot_population(ax, stats, step=None, plot_runtimes=False):

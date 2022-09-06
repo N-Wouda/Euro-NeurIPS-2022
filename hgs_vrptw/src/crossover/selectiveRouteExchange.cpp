@@ -3,6 +3,7 @@
 #include <unordered_set>
 
 using Client = int;
+using Clients = std::vector<Client>;
 using ClientSet = std::unordered_set<Client>;
 using Route = std::vector<Client>;
 using Routes = std::vector<Route>;
@@ -161,10 +162,10 @@ Individual selectiveRouteExchange(
 
     // Insert unplanned clients (those that were in the removed routes of A, but
     // not the inserted routes of B).
-    ClientSet unplanned;
+    Clients unplanned;
     for (Client c : selectedA)
         if (!selectedB.contains(c))
-            unplanned.insert(c);
+            unplanned.push_back(c);
 
     crossover::greedyRepair(routes1, unplanned, params);
     crossover::greedyRepair(routes2, unplanned, params);

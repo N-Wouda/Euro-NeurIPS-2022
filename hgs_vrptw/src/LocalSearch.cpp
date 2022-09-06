@@ -7,12 +7,8 @@
 #include <stdexcept>
 #include <vector>
 
-void LocalSearch::operator()(Individual &indiv,
-                             int loadPenalty,
-                             int timeWarpPenalty)
+void LocalSearch::operator()(Individual &indiv)
 {
-    penalties = {params.vehicleCapacity, loadPenalty, timeWarpPenalty};
-
     // Shuffling the node order beforehand adds diversity to the search
     std::shuffle(orderNodes.begin(), orderNodes.end(), rng);
     std::shuffle(orderRoutes.begin(), orderRoutes.end(), rng);
@@ -55,6 +51,7 @@ void LocalSearch::search()
             for (auto const vClient : params.getNeighboursOf(U->client))
             {
                 Node *V = &clients[vClient];
+
                 auto const lastModifiedRoute = std::max(
                     lastModified[U->route->idx], lastModified[V->route->idx]);
 
@@ -121,10 +118,10 @@ void LocalSearch::search()
 
 bool LocalSearch::applyNodeOperators(Node *U, Node *V)
 {
-    for (auto &op : nodeOps)
+    for (auto op : nodeOps)
         if (op->evaluate(U, V) < 0)
         {
-            auto *routeU = U->route;  // copy these because the operator could
+            auto *routeU = U->route;  // copy pointers because the operator can
             auto *routeV = V->route;  // modify the node's route membership
 
             op->apply(U, V);
@@ -138,7 +135,7 @@ bool LocalSearch::applyNodeOperators(Node *U, Node *V)
 
 bool LocalSearch::applyRouteOperators(Route *U, Route *V)
 {
-    for (auto &op : routeOps)
+    for (auto op : routeOps)
         if (op->evaluate(U, V) < 0)
         {
             op->apply(U, V);
@@ -158,15 +155,15 @@ void LocalSearch::update(Route *U, Route *V)
     U->update();
     lastModified[U->idx] = nbMoves;
 
-    for (auto &op : routeOps)  // TODO only route operators use this (SWAP*).
-        op->update(U);         //  Maybe later also expand to node ops?
+    for (auto op : routeOps)  // TODO only route operators use this (SWAP*).
+        op->update(U);        //  Maybe later also expand to node ops?
 
     if (U != V)
     {
         V->update();
         lastModified[V->idx] = nbMoves;
 
-        for (auto &op : routeOps)
+        for (auto op : routeOps)
             op->update(V);
     }
 }
@@ -232,11 +229,11 @@ void LocalSearch::loadIndividual(Individual const &indiv)
         route->update();
     }
 
-    for (auto &op : nodeOps)
-        op->init(indiv, &penalties);
+    for (auto op : nodeOps)
+        op->init(indiv);
 
-    for (auto &op : routeOps)
-        op->init(indiv, &penalties);
+    for (auto op : routeOps)
+        op->init(indiv);
 }
 
 Individual LocalSearch::exportIndividual()
@@ -267,10 +264,7 @@ Individual LocalSearch::exportIndividual()
 }
 
 LocalSearch::LocalSearch(Params &params, XorShift128 &rng)
-    : penalties{params.vehicleCapacity,
-                params.penaltyCapacity,
-                params.penaltyTimeWarp},
-      params(params),
+    : params(params),
       rng(rng),
       orderNodes(params.nbClients),
       orderRoutes(params.nbVehicles),

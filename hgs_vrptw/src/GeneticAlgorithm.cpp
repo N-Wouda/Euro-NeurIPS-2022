@@ -88,7 +88,7 @@ Individual GeneticAlgorithm::crossover() const
 
 void GeneticAlgorithm::educate(Individual &indiv)
 {
-    localSearch(indiv, params.penaltyCapacity, params.penaltyTimeWarp);
+    localSearch(indiv);
     population.addIndividual(indiv);
 
     loadFeas.push_back(!indiv.hasExcessCapacity());
@@ -100,9 +100,9 @@ void GeneticAlgorithm::educate(Individual &indiv)
     if (!indiv.isFeasible()  // possibly repair if currently infeasible
         && rng.randint(100) < params.config.repairProbability)
     {
-        localSearch(indiv,  // re-run, but penalise infeasibility more
-                    params.config.repairBooster * params.penaltyCapacity,
-                    params.config.repairBooster * params.penaltyTimeWarp);
+        // Re-run, but penalise infeasibility more using a penalty booster.
+        auto const booster = params.getPenaltyBooster();
+        localSearch(indiv);
 
         if (indiv.isFeasible())
             // TODO should we also register this individual in the load/time

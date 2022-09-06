@@ -5,7 +5,6 @@
 #include "XorShift128.h"
 
 #include <cfloat>
-#include <set>
 #include <string>
 #include <vector>
 
@@ -22,9 +21,8 @@ class Individual
     size_t timeWarp = 0;        // All route time warp of late arrivals
 
     // The other individuals in the population (cannot be the depot 0), ordered
-    // by increasing proximity (the set container follows a natural ordering
-    // based on the value of the first pair)
-    std::multiset<std::pair<double, Individual *>> indivsPerProximity;
+    // by increasing proximity.
+    std::vector<std::pair<int, Individual *>> indivsByProximity;
 
     Params const *params;  // Problem parameters
 
@@ -43,13 +41,11 @@ class Individual
     // Splits the tour chromosome into routes using the linear split algorithm
     void makeRoutes();
 
+    // Determines (pred, succ) pairs for each client in the routes
+    void makeNeighbours();
+
     // Evaluates this solution's objective value.
     void evaluateCompleteCost();
-
-    /**
-     * Returns a vector of [pred, succ] clients for each client (index).
-     */
-    [[nodiscard]] std::vector<std::pair<Client, Client>> getNeighbours() const;
 
 public:
     /**
@@ -59,8 +55,8 @@ public:
     {
         // clang-format off
         return distance
-               + capacityExcess * params->penaltyCapacity
-               + timeWarp * params->penaltyTimeWarp;
+             + params->loadPenalty(capacityExcess)
+             + params->twPenalty(timeWarp);
         // clang-format on
     }
 
@@ -80,6 +76,16 @@ public:
      * Returns this individual's giant tour chromosome.
      */
     [[nodiscard]] Tour const &getTour() const { return tour_; }
+
+    /**
+     * Returns a vector of [pred, succ] clients for each client (index) in this
+     * individual's routes.
+     */
+    [[nodiscard]] std::vector<std::pair<Client, Client>> const &
+    getNeighbours() const
+    {
+        return neighbours;
+    }
 
     /**
      * Returns true when this solution is feasible; false otherwise.
@@ -104,9 +110,8 @@ public:
      */
     [[nodiscard]] bool hasClone() const
     {
-        return !indivsPerProximity.empty()
-               // Another individual with zero proximity indicates duplicity
-               && indivsPerProximity.begin()->first < FLT_EPSILON;
+        return !indivsByProximity.empty()
+               && indivsByProximity.begin()->first == 0;
     }
 
     // Computes and stores a distance measure with another individual, based on

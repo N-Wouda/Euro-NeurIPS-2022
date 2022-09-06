@@ -23,16 +23,6 @@ def parse_args():
 
 
 def solve_static_vrptw(instance, time_limit=3600, seed=1):
-    # Instance is a dict that has the following entries:
-    # - 'is_depot': boolean np.array. True for depot; False otherwise.
-    # - 'coords': np.array of locations (incl. depot)
-    # - 'demands': np.array of location demands (incl. depot with demand zero)
-    # - 'capacity': int of vehicle capacity
-    # - 'time_windows': np.array of [l, u] time windows per client (incl. depot)
-    # - 'service_times': np.array of service times at each client (incl. depot)
-    # - 'duration_matrix': distance matrix between clients (incl. depot)
-    start = datetime.now()
-
     # Prevent passing empty instances to the static solver, e.g. when
     # strategy decides to not dispatch any requests for the current epoch
     if instance["coords"].shape[0] <= 1:

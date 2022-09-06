@@ -24,7 +24,7 @@ struct Config
     double penaltyIncrease = 1.2;      // regular increase if below target feas
     double penaltyDecrease = 0.85;     // regular decrease if above target feas
 
-    size_t minimumPopulationSize = 25;
+    size_t minPopSize = 25;
     size_t generationSize = 40;   // max size before culling a generation
     size_t nbElite = 4;           // number of elite individuals in pop
     size_t nbClose = 5;           // # individuals when calculating diversity
@@ -68,7 +68,7 @@ struct Config
                     double feasBooster = 2.,
                     double penaltyIncrease = 1.2,
                     double penaltyDecrease = 0.85,
-                    size_t minimumPopulationSize = 25,
+                    size_t minPopSize = 25,
                     size_t generationSize = 40,
                     size_t nbElite = 4,
                     size_t nbClose = 5,
@@ -93,7 +93,7 @@ struct Config
           feasBooster(feasBooster),
           penaltyIncrease(penaltyIncrease),
           penaltyDecrease(penaltyDecrease),
-          minimumPopulationSize(minimumPopulationSize),
+          minPopSize(minPopSize),
           generationSize(generationSize),
           nbElite(nbElite),
           nbClose(nbClose),

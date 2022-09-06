@@ -4,7 +4,6 @@
 #include "Individual.h"
 #include "Node.h"
 #include "Params.h"
-#include "Penalties.h"
 #include "Route.h"
 #include "XorShift128.h"
 
@@ -18,9 +17,8 @@ class LocalSearch
     using NodeOp = LocalSearchOperator<Node>;
     using RouteOp = LocalSearchOperator<Route>;
 
-    Penalties penalties;  // Penalty data
-    Params &params;       // Problem parameters
-    XorShift128 &rng;     // Random number generator
+    Params &params;    // Problem parameters
+    XorShift128 &rng;  // Random number generator
 
     std::vector<int> orderNodes;   // random node order used in RI operators
     std::vector<int> orderRoutes;  // random route order used in SWAP* operators
@@ -67,14 +65,9 @@ public:
     void addRouteOperator(RouteOp &op) { routeOps.emplace_back(&op); }
 
     /**
-     * Performs the local search procedure around the given individual, using
-     * the passed-in penalty parameters.
-     *
-     * @param indiv           Individual to improve.
-     * @param loadPenalty     Excess load penalty.
-     * @param timeWarpPenalty Penalty for violated time windows.
+     * Performs the local search procedure around the given individual.
      */
-    void operator()(Individual &indiv, int loadPenalty, int timeWarpPenalty);
+    void operator()(Individual &indiv);
 
     LocalSearch(Params &params, XorShift128 &rng);
 };
