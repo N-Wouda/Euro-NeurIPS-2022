@@ -55,7 +55,7 @@ public:
     {
         // clang-format off
         return distance
-             + params->loadPenalty(capacityExcess)
+             + params->loadPenalty(params->vehicleCapacity + capacityExcess)
              + params->twPenalty(timeWarp);
         // clang-format on
     }
