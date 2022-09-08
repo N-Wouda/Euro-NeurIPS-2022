@@ -21,8 +21,7 @@ struct ClientSplit
 
 struct ClientSplits
 {
-    int vehicleCap;
-    int capPenalty;
+    Params const &params;
 
     std::vector<ClientSplit> splits;
     std::vector<int> predecessors;
@@ -32,9 +31,8 @@ struct ClientSplits
     std::vector<int> cumLoad;
     std::vector<int> cumServ;
 
-    explicit ClientSplits(Params const &params, std::vector<int> const &tour)
-        : vehicleCap(params.vehicleCapacity),
-          capPenalty(params.penaltyCapacity),
+    ClientSplits(Params const &params, std::vector<int> const &tour)
+        : params(params),
           splits(params.nbClients + 1),
           predecessors(params.nbClients + 1, 0),
           pathCosts(params.nbClients + 1, INT_MAX),
@@ -67,10 +65,9 @@ struct ClientSplits
     [[nodiscard]] int propagate(int i, int j) const
     {
         assert(i < j);
-        auto const excessCapacity = cumLoad[j] - cumLoad[i] - vehicleCap;
         auto const deltaDist = cumDist[j] - cumDist[i + 1];
         return pathCosts[i] + deltaDist + splits[i + 1].d0_x + splits[j].dx_0
-               + capPenalty * std::max(excessCapacity, 0);
+               + params.loadPenalty(cumLoad[j] - cumLoad[i]);
     }
 
     // Tests if i dominates j as a predecessor for all nodes x >= j + 1
@@ -80,7 +77,7 @@ struct ClientSplits
         auto const lhs = pathCosts[j] + splits[j + 1].d0_x;
         auto const deltaDist = cumDist[j] - cumDist[i + 1];
         auto const rhs = pathCosts[i] + splits[i + 1].d0_x + deltaDist
-                         + capPenalty * (cumLoad[j] - cumLoad[i]);
+                         + params.penaltyCapacity * (cumLoad[j] - cumLoad[i]);
 
         return lhs >= rhs;
     }
@@ -229,43 +226,48 @@ void Individual::evaluateCompleteCost()
 
 void Individual::brokenPairsDistance(Individual *other)
 {
-    int diffs = 0;
+    int dist = 0;
 
     for (int j = 1; j <= params->nbClients; j++)
     {
-        auto const &[tPred, tSucc] = this->neighbours[j];
-        auto const &[oPred, oSucc] = other->neighbours[j];
+        auto const [tPred, tSucc] = this->neighbours[j];
+        auto const [oPred, oSucc] = other->neighbours[j];
 
         // Increase the difference if the successor of j in this individual is
         // not directly linked to j in other
-        diffs += tSucc != oSucc && tSucc != oPred;
+        dist += tSucc != oSucc && tSucc != oPred;
 
         // Increase the difference if the predecessor of j in this individual is
         // not directly linked to j in other
-        diffs += tPred == 0 && oPred != 0 && oSucc != 0;
+        dist += tPred == 0 && oPred != 0 && oSucc != 0;
     }
 
-    double const dist = static_cast<double>(diffs) / params->nbClients;
+    auto cmp = [](auto &elem, auto &value) { return elem.first < value; };
 
-    other->indivsPerProximity.insert({dist, this});
-    indivsPerProximity.insert({dist, other});
+    auto &oProx = other->indivsByProximity;
+    auto place = std::lower_bound(oProx.begin(), oProx.end(), dist, cmp);
+    oProx.emplace(place, dist, this);
+
+    auto &tProx = this->indivsByProximity;
+    place = std::lower_bound(tProx.begin(), tProx.end(), dist, cmp);
+    tProx.emplace(place, dist, other);
 }
 
 double Individual::avgBrokenPairsDistanceClosest() const
 {
-    size_t maxSize
-        = std::min(params->config.nbClose, indivsPerProximity.size());
+    if (indivsByProximity.empty())
+        return 0.;
 
-    double result = 0;
-    auto it = indivsPerProximity.begin();
+    auto maxSize = std::min(params->config.nbClose, indivsByProximity.size());
+    auto start = indivsByProximity.begin();
+    int result = 0;
 
-    for (size_t itemCount = 0; itemCount != maxSize; ++itemCount)
-    {
+    for (auto it = start; it != start + maxSize; ++it)
         result += it->first;
-        ++it;
-    }
 
-    return result / static_cast<double>(maxSize);
+    // Normalise broken pairs distance by # of clients and close neighbours
+    auto const numClose = static_cast<double>(maxSize);
+    return result / (params->nbClients * numClose);
 }
 
 void Individual::exportCVRPLibFormat(std::string const &path, double time) const
@@ -279,9 +281,8 @@ void Individual::exportCVRPLibFormat(std::string const &path, double time) const
     out << "Time " << time << '\n';
 }
 
-std::vector<std::pair<int, int>> Individual::getNeighbours() const
+void Individual::makeNeighbours()
 {
-    std::vector<std::pair<int, int>> neighbours(params->nbClients + 1);
     neighbours[0] = {0, 0};  // note that depot neighbours have no meaning
 
     for (auto const &route : routes_)
@@ -289,33 +290,39 @@ std::vector<std::pair<int, int>> Individual::getNeighbours() const
             neighbours[route[idx]]
                 = {idx == 0 ? 0 : route[idx - 1],                  // pred
                    idx == route.size() - 1 ? 0 : route[idx + 1]};  // succ
-
-    return neighbours;
 }
 
 Individual::Individual(Params const *params, XorShift128 *rng)
-    : params(params), tour_(params->nbClients), routes_(params->nbVehicles)
+    : params(params),
+      tour_(params->nbClients),
+      routes_(params->nbVehicles),
+      neighbours(params->nbClients + 1)
 {
     std::iota(tour_.begin(), tour_.end(), 1);
     std::shuffle(tour_.begin(), tour_.end(), *rng);
 
     makeRoutes();
-    neighbours = getNeighbours();
+    makeNeighbours();
 }
 
 Individual::Individual(Params const *params, Tour tour)
-    : params(params), tour_(std::move(tour)), routes_(params->nbVehicles)
+    : params(params),
+      tour_(std::move(tour)),
+      routes_(params->nbVehicles),
+      neighbours(params->nbClients + 1)
 {
     makeRoutes();
-    neighbours = getNeighbours();
+    makeNeighbours();
 }
 
 Individual::Individual(Params const *params, Routes routes)
     : params(params),
       tour_(),
       routes_(std::move(routes)),
-      neighbours(getNeighbours())
+      neighbours(params->nbClients + 1)
 {
+    makeNeighbours();
+
     // a precedes b only when a is not empty and b is. Combined with a stable
     // sort, this ensures we keep the original sorting as much as possible, but
     // also make sure all empty routes are at the end of routes_.
@@ -333,13 +340,14 @@ Individual::Individual(Params const *params, Routes routes)
 
 Individual::~Individual()
 {
-    for (auto &[_, other] : indivsPerProximity)  // remove ourselves from
-    {                                            // other's proximity list
-        auto it = other->indivsPerProximity.begin();
-        while (it->second != this)
-            ++it;
+    for (auto [dist, other] : indivsByProximity)
+    {
+        auto place = std::find(other->indivsByProximity.begin(),
+                               other->indivsByProximity.end(),
+                               std::make_pair(dist, this));
 
-        other->indivsPerProximity.erase(it);
+        if (place != other->indivsByProximity.end())
+            other->indivsByProximity.erase(place);
     }
 }
 

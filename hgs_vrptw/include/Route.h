@@ -3,7 +3,6 @@
 
 #include "CircleSector.h"
 #include "Node.h"
-#include "Penalties.h"
 #include "TimeWindowSegment.h"
 
 #include <array>
@@ -19,7 +18,7 @@ class Route
     // between the indexed node and the node jumpDistance ahead in the route.
     // This lets us jump to the next node in the route a given jump distance
     // away. Very useful for speeding up time window calculations.
-    std::vector<TimeWindowSegment> jumps = {};
+    std::vector<TimeWindowSegment> jumps;
 
     CircleSector sector;        // Circle sector of the route's clients
     std::vector<Node *> nodes;  // List of nodes (in order) in this solution.
@@ -30,16 +29,24 @@ class Route
     // Sets the angle and sector data.
     void setupSector();
 
-    // Sets time window member and forward node time windows
+    // Sets forward node time windows.
     void setupRouteTimeWindows();
 
 public:  // TODO make fields private
     Params const *params;
 
-    int idx;               // Route index
-    Node *depot;           // Pointer to the associated depot
-    TimeWindowSegment tw;  // Time window data of the route
-    double angleCenter;    // Angle of the barycenter of the route
+    int idx;             // Route index
+    Node *depot;         // Pointer to the associated depot
+    double angleCenter;  // Angle of the barycenter of the route
+
+    /**
+     * Returns the client or depot node at the given position.
+     */
+    [[nodiscard]] Node *operator[](size_t position) const
+    {
+        assert(position > 0);
+        return nodes[position - 1];
+    }
 
     /**
      * Tests if this route is feasible.
@@ -60,12 +67,21 @@ public:  // TODO make fields private
     /**
      * Determines whether this route is time-feasible.
      */
-    [[nodiscard]] bool hasTimeWarp() const { return tw.totalTimeWarp() > 0; }
+    [[nodiscard]] bool hasTimeWarp() const { return timeWarp() > 0; }
 
     /**
      * Returns total load on this route.
      */
     [[nodiscard]] int load() const { return nodes.back()->cumulatedLoad; }
+
+    /**
+     * Returns total time warp on this route.
+     */
+    [[nodiscard]] int timeWarp() const
+    {
+        auto const &tw = nodes.back()->twBefore;
+        return tw.totalTimeWarp();
+    }
 
     /**
      * Tests if this route overlaps the other route, that is, whether their

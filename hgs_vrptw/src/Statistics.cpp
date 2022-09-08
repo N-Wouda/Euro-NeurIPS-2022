@@ -4,7 +4,7 @@
 #include <fstream>
 #include <numeric>
 
-void Statistics::collectFrom(Population const &population)
+void Statistics::collectFrom(Population const &pop)
 {
     numIters_++;
 
@@ -18,84 +18,63 @@ void Statistics::collectFrom(Population const &population)
 
     lastIter = clock::now();  // update for next call
 
+    // TODO Use numFeas and numInfeas instead of total popsize?
     // Population statistics
-    auto const nPops = population.population.size();
-    popSizes_.push_back(nPops);
-
-    auto const numFeas = std::count_if(
-        population.population.begin(),
-        population.population.end(),
-        [](Individual const *indiv) { return indiv->isFeasible(); });
-
+    auto const numFeas = pop.feasible.size();
+    auto const numInfeas = pop.infeasible.size();
+    popSizes_.push_back(numFeas + numInfeas);
     numFeasiblePop_.push_back(numFeas);
 
-    double const totalDiversity = std::accumulate(
-        population.population.begin(),
-        population.population.end(),
-        0.,
-        [](double val, Individual const *indiv) {
-            return val + indiv->avgBrokenPairsDistanceClosest();
-        });
+    auto const opDiversity = [](double val, auto const &subs) {
+        return val + subs.indiv->avgBrokenPairsDistanceClosest();
+    };
 
-    popDiversity_.push_back(totalDiversity / static_cast<double>(nPops));
+    auto const opCost
+        = [](size_t sum, auto const &subs) { return sum + subs.indiv->cost(); };
 
-    // Penalty statistics
-    penaltiesCapacity_.push_back(population.params.penaltyCapacity);
-    penaltiesTimeWarp_.push_back(population.params.penaltyTimeWarp);
-
-    // Objectives statistics
-    auto itrFeas = std::find_if(
-        population.population.begin(),
-        population.population.end(),
-        [](Individual const *indiv) { return indiv->isFeasible(); });
-
-    if (itrFeas != population.population.end())
+    if (!pop.feasible.empty())
     {
-        feasBest_.push_back((*itrFeas)->cost());
+        double const feasDiv = std::accumulate(
+            pop.feasible.begin(), pop.feasible.end(), 0., opDiversity);
+        feasDiversity_.push_back(feasDiv / static_cast<double>(numFeas));
+        feasBest_.push_back(pop.feasible[0].indiv->cost());
 
-        auto const costFeas = accumulate(
-            population.population.begin(),
-            population.population.end(),
-            0,
-            [&](size_t sum, Individual const *indiv) {
-                return indiv->isFeasible() ? sum + indiv->cost() : sum;
-            });
-
-        feasAverage_.push_back(costFeas / numFeas);
+        auto const feasCost
+            = accumulate(pop.feasible.begin(), pop.feasible.end(), 0, opCost);
+        feasAverage_.push_back(feasCost / numFeas);
     }
     else
     {
+        feasDiversity_.push_back(0);   // 0 as substitute for no diversity
         feasBest_.push_back(INT_MAX);  // INT_MAX as substitute for inf
         feasAverage_.push_back(INT_MAX);
     }
 
-    auto itrInfeas = std::find_if(
-        population.population.begin(),
-        population.population.end(),
-        [](Individual const *indiv) { return !indiv->isFeasible(); });
-
-    if (itrInfeas != population.population.end())
+    if (!pop.infeasible.empty())
     {
-        infeasBest_.push_back((*itrInfeas)->cost());
+        double const infeasDiv = std::accumulate(
+            pop.infeasible.begin(), pop.infeasible.end(), 0., opDiversity);
+        infeasDiversity_.push_back(infeasDiv / static_cast<double>(numInfeas));
 
-        auto const numInfeas = nPops - numFeas;
-        auto const costInfeas = accumulate(
-            population.population.begin(),
-            population.population.end(),
-            0,
-            [&](size_t sum, Individual const *indiv) {
-                return !indiv->isFeasible() ? sum + indiv->cost() : sum;
-            });
+        infeasBest_.push_back(pop.infeasible[0].indiv->cost());
 
-        infeasAverage_.push_back(costInfeas / numInfeas);
+        auto const infeasCost = accumulate(
+            pop.infeasible.begin(), pop.infeasible.end(), 0, opCost);
+        infeasAverage_.push_back(infeasCost / numInfeas);
     }
     else
     {
+        infeasDiversity_.push_back(0);   // 0 as substitute for no diversity
         infeasBest_.push_back(INT_MAX);  // INT_MAX as substitute for inf
         infeasAverage_.push_back(INT_MAX);
     }
 
-    auto const &best = population.bestSol;
+    // Penalty statistics
+    penaltiesCapacity_.push_back(pop.params.penaltyCapacity);
+    penaltiesTimeWarp_.push_back(pop.params.penaltyTimeWarp);
+
+    // Incumbents
+    auto const &best = pop.bestSol;
 
     if (!best.isFeasible())
         return;
@@ -119,13 +98,14 @@ void Statistics::toCsv(std::string const &path, char const sep) const
         << "iteration run-time (s)" << sep
         << "population size" << sep
         << "# feasible" << sep
-        << "diversity" << sep
-        << "penalty capacity" << sep
-        << "penalty time warp" << sep
+        << "feasible diversity" << sep
         << "feasible best objective" << sep
         << "feasible avg. objective" << sep
+        << "infeasible diversity" << sep
         << "infeasible best. objective" << sep
-        << "infeasible avg. objective" << '\n';
+        << "infeasible avg. objective" << sep
+        << "penalty capacity" << sep
+        << "penalty time warp" << '\n';
 
     for (size_t it = 0; it != numIters_; it++)
     {
@@ -133,13 +113,14 @@ void Statistics::toCsv(std::string const &path, char const sep) const
             << iterTimes_[it] << sep
             << popSizes_[it] << sep
             << numFeasiblePop_[it] << sep
-            << popDiversity_[it] << sep
-            << penaltiesCapacity_[it] << sep
-            << penaltiesTimeWarp_[it] << sep
+            << feasDiversity_[it] << sep
             << feasBest_[it] << sep
             << feasAverage_[it] << sep
+            << infeasDiversity_[it] << sep
             << infeasBest_[it] << sep
-            << infeasAverage_[it] << '\n';
+            << infeasAverage_[it] << sep
+            << penaltiesCapacity_[it] << sep
+            << penaltiesTimeWarp_[it] << '\n';
     }
     // clang-format on
 }

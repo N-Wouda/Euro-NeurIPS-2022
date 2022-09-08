@@ -1,6 +1,5 @@
 import argparse
 import sys
-from datetime import datetime
 
 import numpy as np
 
@@ -22,14 +21,14 @@ def parse_args():
     return parser.parse_args()
 
 
-def solve(instance, time_limit=3600, seed=1):
+def solve_static(instance, time_limit=3600, seed=1):
     # Return an empty solution if the instance contains no requests
     if instance["coords"].shape[0] <= 1:
         return [], 0
 
     hgspy = tools.get_hgspy_module()
 
-    config = hgspy.Config(seed=seed, nbVeh=-1, collectStatistics=True)
+    config = hgspy.Config(seed=seed, nbVeh=tools.n_vehicles_bin_pack(instance))
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=seed)
@@ -59,9 +58,16 @@ def solve(instance, time_limit=3600, seed=1):
         ls.add_route_operator(op)
 
     algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
-    algo.add_crossover_operator(hgspy.crossover.alternating_exchange)
-    algo.add_crossover_operator(hgspy.crossover.ordered_exchange)
-    algo.add_crossover_operator(hgspy.crossover.selective_route_exchange)
+
+    crossover_ops = [
+        hgspy.crossover.alternating_exchange,
+        hgspy.crossover.broken_pairs_exchange,
+        hgspy.crossover.ordered_exchange,
+        hgspy.crossover.selective_route_exchange,
+    ]
+
+    for op in crossover_ops:
+        algo.add_crossover_operator(op)
 
     stop = hgspy.stop.MaxRuntime(time_limit)
     res = algo.run(stop)
@@ -94,7 +100,7 @@ def run_oracle(args, env):
         observation, _, done, _ = env.step(ep_sol)
 
     hindsight_problem = env.get_hindsight_problem()
-    solution, _ = solve(hindsight_problem, time_limit=epoch_tlim)
+    solution, _ = solve_static(hindsight_problem, time_limit=epoch_tlim)
 
     observation, _ = env.reset()
     total_reward = 0
@@ -139,7 +145,7 @@ def run_baseline(args, env):
         dispatch_strategy = STRATEGIES[args.strategy]
         dispatch_ep_inst = dispatch_strategy(ep_inst, rng)
 
-        sol, cost = solve(
+        sol, cost = solve_static(
             dispatch_ep_inst,
             time_limit=ep_tlim - 1,  # Margin for grace period
             seed=args.solver_seed,

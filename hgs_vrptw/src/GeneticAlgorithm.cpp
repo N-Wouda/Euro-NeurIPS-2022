@@ -25,28 +25,30 @@ Result GeneticAlgorithm::run(StoppingCriterion &stop)
     Statistics stats;
 
     size_t iter = 0;
-    size_t nbIterNonProd = 1;
+    size_t nbIterNoImprove = 1;
 
     auto start = clock::now();
     while (not stop())
     {
         iter++;
 
-        if (nbIterNonProd == params.config.nbIter)  // restart population after
-        {                                           // this number of useless
-            population.restart();                   // iterations
-            nbIterNonProd = 1;
+        if (nbIterNoImprove == params.config.nbIter)  // restart population
+        {                                             // after this number of
+            population.restart();                     // non-improving iters
+            nbIterNoImprove = 1;
         }
 
-        auto const currBest = population.getBestFound().cost();
+        auto const currBest = population.getCurrentBestFeasibleCost();
 
         auto offspring = crossover();
         educate(offspring);
 
-        if (currBest > population.getBestFound().cost())  // has new best!
-            nbIterNonProd = 1;
+        auto const newBest = population.getCurrentBestFeasibleCost();
+
+        if (currBest > newBest)  // has new best!
+            nbIterNoImprove = 1;
         else
-            nbIterNonProd++;
+            nbIterNoImprove++;
 
         // Diversification and penalty management
         if (iter % params.config.nbPenaltyManagement == 0)
@@ -86,7 +88,7 @@ Individual GeneticAlgorithm::crossover() const
 
 void GeneticAlgorithm::educate(Individual &indiv)
 {
-    localSearch(indiv, params.penaltyCapacity, params.penaltyTimeWarp);
+    localSearch(indiv);
     population.addIndividual(indiv);
 
     loadFeas.push_back(!indiv.hasExcessCapacity());
@@ -98,9 +100,9 @@ void GeneticAlgorithm::educate(Individual &indiv)
     if (!indiv.isFeasible()  // possibly repair if currently infeasible
         && rng.randint(100) < params.config.repairProbability)
     {
-        localSearch(indiv,  // re-run, but penalise infeasibility more
-                    params.config.repairBooster * params.penaltyCapacity,
-                    params.config.repairBooster * params.penaltyTimeWarp);
+        // Re-run, but penalise infeasibility more using a penalty booster.
+        auto const booster = params.getPenaltyBooster();
+        localSearch(indiv);
 
         if (indiv.isFeasible())
             // TODO should we also register this individual in the load/time

@@ -61,9 +61,8 @@ public:
                     = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-feasBooster")
                 config.feasBooster = atof(argv[i + 1]);
-            else if (std::string(argv[i]) == "-minimumPopulationSize")
-                config.minimumPopulationSize
-                    = static_cast<size_t>(atoi(argv[i + 1]));
+            else if (std::string(argv[i]) == "-minPopSize")
+                config.minPopSize = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-generationSize")
                 config.generationSize = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-nbElite")
@@ -80,8 +79,6 @@ public:
             else if (std::string(argv[i]) == "-intensificationProbability")
                 config.intensificationProbability
                     = static_cast<size_t>(atoi(argv[i + 1]));
-            else if (std::string(argv[i]) == "-diversityWeight")
-                config.diversityWeight = atof(argv[i + 1]);
             else if (std::string(argv[i])
                      == "-circleSectorOverlapToleranceDegrees")
             {
