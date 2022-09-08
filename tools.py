@@ -413,7 +413,7 @@ def name2size(name: str) -> int:
     return int(re.search(r'-n(\d\d\d)-', name).group(1))
 
 
-def n_vehicles_bin_pack(instance, margin=1.3):
+def n_vehicles_bin_pack(instance, margin=1.5):
     """
     Computes the number of vehicles for the given instance using a bin packing
     heuristic.
