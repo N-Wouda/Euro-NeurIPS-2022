@@ -10,7 +10,7 @@
 struct Config
 {
     int seed = 0;                    // Random seed
-    size_t nbIter = 20'000;          // iters without improvement
+    size_t nbIter = 10'000;          // iters without improvement
     int timeLimit = INT_MAX;         // time limit in seconds
     bool collectStatistics = false;  // collect runtime statistics?
 
@@ -60,7 +60,7 @@ struct Config
     size_t destroyPct = 20;
 
     explicit Config(int seed = 0,
-                    size_t nbIter = 20'000,
+                    size_t nbIter = 10'000,
                     int timeLimit = INT_MAX,
                     bool collectStatistics = false,
                     size_t initialTimeWarpPenalty = 1,

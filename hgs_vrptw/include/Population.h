@@ -18,7 +18,7 @@ class Population
     struct IndividualWrapper
     {
         std::unique_ptr<Individual> indiv;
-        size_t fitness;
+        double fitness;
 
         bool operator<(IndividualWrapper const &other) const
         {
