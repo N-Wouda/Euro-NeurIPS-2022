@@ -3,10 +3,6 @@ import tools
 
 
 def solve_static(instance, time_limit=3600, seed=1):
-    # Return an empty solution if the instance contains no requests
-    if instance["coords"].shape[0] <= 1:
-        return [], 0
-
     hgspy = tools.get_hgspy_module()
 
     # TODO Determine a better strategy for selecting nbVeh

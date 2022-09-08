@@ -6,11 +6,11 @@ def run_oracle(env, **kwargs):
     """
     Solve the dynamic VRPTW problem using the oracle strategy, i.e., the
     problem is solved as static VRPTW with release dates using the information
-    that is known in hindsight. The found solution is then fed back into the
+    that is known in hindsight. The found solution is then submitted to the
     environment.
     """
     observation, info = env.reset()
-    epoch_tlim = info["epoch_tlim"]
+    ep_tlim = info["ep_tlim"]
     done = False
 
     # Submit dummy solutions to obtain the hindsight problem
@@ -20,7 +20,7 @@ def run_oracle(env, **kwargs):
         observation, _, done, _ = env.step(ep_sol)
 
     hindsight_problem = env.get_hindsight_problem()
-    solution, _ = solve_static(hindsight_problem, time_limit=epoch_tlim)
+    solution, _ = solve_static(hindsight_problem, time_limit=ep_tlim)
 
     observation, _ = env.reset()
     total_reward = 0

@@ -46,7 +46,7 @@ if __name__ == "__main__":
         for line in p.stdout:
             line = line.strip()
             request = json.loads(line)
-            print(request)
+
             if request['action'] == 'step':
                 solution = [np.array(route) for route in request['data']]
                 observation, reward, done, info = env.step(solution)

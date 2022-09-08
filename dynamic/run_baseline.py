@@ -10,7 +10,8 @@ def run_baseline(env, **kwargs):
     Solve the dynamic VRPTW problem using baseline strategies, filtering
     requests using a greedy, lazy or random strategy.
     """
-    rng = np.random.default_rng(kwargs["solver_seed"])
+    seed = kwargs["solver_seed"]
+    rng = np.random.default_rng(seed)
 
     observation, static_info = env.reset()
     ep_tlim = static_info["epoch_tlim"]
@@ -24,13 +25,16 @@ def run_baseline(env, **kwargs):
         dispatch_strategy = STRATEGIES[kwargs["strategy"]]
         dispatch_ep_inst = dispatch_strategy(ep_inst, rng)
 
-        sol, cost = solve_static(
-            dispatch_ep_inst,
-            time_limit=ep_tlim - 1,  # Margin for grace period
-            seed=kwargs["solver_seed"],
-        )
-
-        ep_sol = sol2ep(sol, dispatch_ep_inst)
+        # Return an empty solution if the instance contains no requests
+        if dispatch_ep_inst["coords"].shape[0] <= 1:
+            ep_sol, cost = [], 0
+        else:
+            sol, cost = solve_static(
+                dispatch_ep_inst,
+                time_limit=ep_tlim - 1,  # Margin for grace period
+                seed=seed,
+            )
+            ep_sol = sol2ep(sol, dispatch_ep_inst)
 
         # Submit solution to environment
         observation, reward, done, info = env.step(ep_sol)
