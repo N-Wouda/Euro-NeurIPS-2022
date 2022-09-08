@@ -45,9 +45,9 @@ def main():
     args.epoch_tlim = None
 
     if args.strategy == "oracle":
-        reward = run_oracle(env, **vars(args))
+        run_oracle(env, **vars(args))
     else:
-        reward = run_baseline(env, **vars(args))
+        run_baseline(env, **vars(args))
 
 
 if __name__ == "__main__":
