@@ -9,7 +9,10 @@ def solve_static(instance, time_limit=3600, seed=1):
 
     hgspy = tools.get_hgspy_module()
 
-    config = hgspy.Config(seed=seed, nbVeh=tools.n_vehicles_bin_pack(instance))
+    # TODO Determine a better strategy for selecting nbVeh
+    config = hgspy.Config(
+        seed=seed, nbVeh=tools.n_vehicles_bin_pack(instance, margin=2) + 30
+    )
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=seed)

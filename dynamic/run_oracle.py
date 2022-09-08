@@ -2,7 +2,7 @@ from .solve_static import solve_static
 import tools
 
 
-def run_oracle(args, env):
+def run_oracle(env, **kwargs):
     """
     Solve the dynamic VRPTW problem using the oracle strategy, i.e., the
     problem is solved as static VRPTW with release dates using the information

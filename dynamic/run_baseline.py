@@ -5,12 +5,12 @@ from .solve_static import solve_static
 from .utils import sol2ep
 
 
-def run_baseline(args, env):
+def run_baseline(env, **kwargs):
     """
     Solve the dynamic VRPTW problem using baseline strategies, filtering
     requests using a greedy, lazy or random strategy.
     """
-    rng = np.random.default_rng(args.solver_seed)
+    rng = np.random.default_rng(kwargs["solver_seed"])
 
     observation, static_info = env.reset()
     ep_tlim = static_info["epoch_tlim"]
@@ -21,13 +21,13 @@ def run_baseline(args, env):
 
     while not done:
         ep_inst = observation["epoch_instance"]
-        dispatch_strategy = STRATEGIES[args.strategy]
+        dispatch_strategy = STRATEGIES[kwargs["strategy"]]
         dispatch_ep_inst = dispatch_strategy(ep_inst, rng)
 
         sol, cost = solve_static(
             dispatch_ep_inst,
             time_limit=ep_tlim - 1,  # Margin for grace period
-            seed=args.solver_seed,
+            seed=kwargs["solver_seed"],
         )
 
         ep_sol = sol2ep(sol, dispatch_ep_inst)

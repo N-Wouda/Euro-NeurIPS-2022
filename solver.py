@@ -4,8 +4,7 @@ import sys
 import tools
 from environment import ControllerEnvironment, VRPEnvironment
 
-from dynamic.run_baseline import run_baseline
-from dynamic.run_oracle import run_oracle
+from dynamic import run_baseline, run_oracle
 
 
 def parse_args():
@@ -46,9 +45,9 @@ def main():
     args.epoch_tlim = None
 
     if args.strategy == "oracle":
-        print(run_oracle(args, env))
+        reward = run_oracle(env, **vars(args))
     else:
-        print(run_baseline(args, env))
+        reward = run_baseline(env, **vars(args))
 
 
 if __name__ == "__main__":
