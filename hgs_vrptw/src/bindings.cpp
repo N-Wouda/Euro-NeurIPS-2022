@@ -89,7 +89,7 @@ PYBIND11_MODULE(hgspy, m)
                       int,
                       size_t>(),
              py::arg("seed") = 0,
-             py::arg("nbIter") = 20'000,
+             py::arg("nbIter") = 10'000,
              py::arg("timeLimit") = INT_MAX,
              py::arg("collectStatistics") = false,
              py::arg("initialTimeWarpPenalty") = 1,
