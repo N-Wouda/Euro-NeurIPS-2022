@@ -19,11 +19,10 @@ def parse_args():
     parser.add_argument("--num_seeds", type=int, default=1)
     parser.add_argument("--solver_seed", type=int, default=1)
     parser.add_argument("--num_procs", type=int, default=4)
+    parser.add_argument("--strategy", type=str, default="greedy")
     parser.add_argument(
         "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
     )
-
-    parser.add_argument("--strategy", type=str, default="greedy")
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--epoch_tlim", type=int)
@@ -34,10 +33,14 @@ def parse_args():
 
 def solve(loc: str, instance_seed: int, **kwargs):
     path = Path(loc)
+
+    if "phase" in kwargs and kwargs["phase"]:
+        tlim = 60 if kwargs["phase"] == "quali" else 120
+    else:
+        tlim = kwargs["epoch_tlim"]
+
     env = VRPEnvironment(
-        seed=instance_seed,
-        instance=tools.read_vrplib(path),
-        epoch_tlim=kwargs["epoch_tlim"],
+        seed=instance_seed, instance=tools.read_vrplib(path), epoch_tlim=tlim
     )
 
     start = perf_counter()
