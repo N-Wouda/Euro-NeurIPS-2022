@@ -155,7 +155,7 @@ Individual::Individual(Params const *params, XorShift128 *rng)
       neighbours(params->nbClients + 1)
 {
     // Sort clients randomly
-    auto clients = std::vector<int>(params->nbCleints);
+    auto clients = std::vector<int>(params->nbClients);
     std::iota(clients.begin(), clients.end(), 1);
     std::shuffle(clients.begin(), clients.end(), *rng);
 
