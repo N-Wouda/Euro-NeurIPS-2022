@@ -159,18 +159,14 @@ Individual::Individual(Params const *params, XorShift128 *rng)
     std::iota(clients.begin(), clients.end(), 1);
     std::shuffle(clients.begin(), clients.end(), *rng);
 
-    // Append each client to a randomly selected route
-    for (auto const client : clients)
-    {
-        auto const rIdx = rng->randint(routes_.size());
-        auto &route = routes_[rIdx];
-        route.push_back(client);
-    }
+    // Distribute clients evenly over the routes
+    auto const clientsPerRoute = params->nbClients / params->nbVehicles + 1;
 
-    // Sort routes in non-increasing order of size, ensuring that all empty
-    // routes are at the end of routes_.
-    auto comp = [](auto &a, auto &b) { return a.size() < b.size(); };
-    std::sort(routes_.begin(), routes_.end(), comp);
+    for (auto idx = 0; idx != params->nbClients; ++idx)
+    {
+        auto const client = clients[idx];
+        routes_[idx / clientsPerRoute].push_back(client);
+    }
 
     makeNeighbours();
     evaluateCompleteCost();
