@@ -49,11 +49,9 @@ void LocalSearch::search()
             {
                 Node *V = &clients[vClient];
 
-                auto const lastModifiedRoute = std::max(
-                    lastModified[U->route->idx], lastModified[V->route->idx]);
-
-                // Evaluate operators only if routes have changed recently.
-                if (step == 0 || lastModifiedRoute > lastTestedNode)
+                if (step == 0  // evaluate only if routes have changed recently
+                    || lastModified[U->route->idx] > lastTestedNode
+                    || lastModified[V->route->idx] > lastTestedNode)
                 {
                     if (applyNodeOperators(U, V))
                         continue;
@@ -78,10 +76,8 @@ void LocalSearch::search()
             }
         }
 
-        // Route operators are evaluated only after node operators get stuck,
-        // and only sometimes when we want to intensify the search.
-        if (searchCompleted)
-            for (int const rU : orderRoutes)
+        if (searchCompleted)                  // Route operators are evaluated
+            for (int const rU : orderRoutes)  // after node operators get stuck
             {
                 auto &U = routes[rU];
 
@@ -132,6 +128,8 @@ bool LocalSearch::applyNodeOperators(Node *U, Node *V)
 
 bool LocalSearch::applyRouteOperators(Route *U, Route *V)
 {
+    // TODO decide on numbers/features, move this somewhere else
+
     auto score = -0.24;
     score += 0.14 * U->hasTimeWarp();
     score += 0.12 * V->hasTimeWarp();
