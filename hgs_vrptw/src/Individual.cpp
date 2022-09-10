@@ -154,10 +154,12 @@ Individual::Individual(Params const *params, XorShift128 *rng)
       routes_(params->nbVehicles),
       neighbours(params->nbClients + 1)
 {
+    // Sort clients randomly
     auto clients = std::vector<int>(params->nbCleints);
     std::iota(clients.begin(), clients.end(), 1);
     std::shuffle(clients.begin(), clients.end(), *rng);
 
+    // Append each client to a randomly selected route
     for (auto const client : clients)
     {
         auto const rIdx = rng->randint(routes_.size());
@@ -165,14 +167,12 @@ Individual::Individual(Params const *params, XorShift128 *rng)
         route.push_back(client);
     }
 
-    // a precedes b only when a is not empty and b is. Combined with a stable
-    // sort, this ensures we keep the original sorting as much as possible, but
-    // also make sure all empty routes are at the end of routes_.
-    auto comp = [](auto &a, auto &b) { return !a.empty() && b.empty(); };
-    std::stable_sort(routes_.begin(), routes_.end(), comp);
+    // Sort clients in non-increasing size, ensuring that all empty routes
+    // are at the end of routes_.
+    auto comp = [](auto &a, auto &b) { return a.size() < b.size(); };
+    std::sort(routes_.begin(), routes_.end(), comp);
 
     evaluateCompleteCost();
-
     makeNeighbours();
 }
 
@@ -181,8 +181,6 @@ Individual::Individual(Params const *params, Routes routes)
       routes_(std::move(routes)),
       neighbours(params->nbClients + 1)
 {
-    makeNeighbours();
-
     // a precedes b only when a is not empty and b is. Combined with a stable
     // sort, this ensures we keep the original sorting as much as possible, but
     // also make sure all empty routes are at the end of routes_.
@@ -190,6 +188,7 @@ Individual::Individual(Params const *params, Routes routes)
     std::stable_sort(routes_.begin(), routes_.end(), comp);
 
     evaluateCompleteCost();
+    makeNeighbours();
 }
 
 Individual::~Individual()
