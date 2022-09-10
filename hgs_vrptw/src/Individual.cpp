@@ -95,61 +95,6 @@ struct ClientSplits
 };
 }  // namespace
 
-void Individual::makeRoutes()
-{
-    ClientSplits splits(*params, getTour());
-
-    auto deq = std::deque<int>(params->nbClients + 1);
-    deq.push_front(0);  // depot
-
-    for (int idx = 1; idx <= params->nbClients; idx++)  // exclude depot
-    {
-        splits.pathCosts[idx] = splits.propagate(deq.front(), idx);
-        splits.predecessors[idx] = deq.front();  // best predecessor for idx
-
-        if (idx == params->nbClients)
-            break;
-
-        // idx will be inserted if idx is not dominated by the last client: we
-        // need to remove whoever is dominated by idx.
-        if (!splits.leftDominates(deq.back(), idx))
-        {
-            while (!deq.empty() && splits.rightDominates(deq.back(), idx))
-                deq.pop_back();
-
-            deq.push_back(idx);
-        }
-
-        while (deq.size() >= 2)  // Check if the current front is dominated by
-        {                        // the follow-up client. If so, remove.
-            auto const firstProp = splits.propagate(deq[0], idx + 1);
-            auto const secondProp = splits.propagate(deq[1], idx + 1);
-
-            if (firstProp >= secondProp)
-                deq.pop_front();
-            else
-                break;
-        }
-    }
-
-    if (splits.pathCosts[params->nbClients] == INT_MAX)  // has not been updated
-        throw std::runtime_error("No split solution reached the last client");
-
-    int end = params->nbClients;
-    for (auto &route : routes_)
-    {
-        if (end == 0)
-            break;
-
-        int begin = splits.predecessors[end];
-        route = {tour_.begin() + begin, tour_.begin() + end};
-        end = begin;
-    }
-
-    assert(end == 0);
-    evaluateCompleteCost();
-}
-
 void Individual::evaluateCompleteCost()
 {
     // Reset fields before evaluating them again below.
@@ -160,8 +105,8 @@ void Individual::evaluateCompleteCost()
 
     for (auto const &route : routes_)
     {
-        if (route.empty())  // First empty route. Due to makeRoutes() all
-            break;          // subsequent routes are empty as well
+        if (route.empty())  // First empty route. All subsequent routes are
+            break;          // empty as well
 
         nbRoutes++;
 
@@ -295,13 +240,28 @@ void Individual::makeNeighbours()
 Individual::Individual(Params const *params, XorShift128 *rng)
     : params(params),
       tour_(params->nbClients),
+
       routes_(params->nbVehicles),
       neighbours(params->nbClients + 1)
 {
     std::iota(tour_.begin(), tour_.end(), 1);
     std::shuffle(tour_.begin(), tour_.end(), *rng);
 
-    makeRoutes();
+    for (auto const client : tour_)
+    {
+        auto const rIdx = rng->randint(routes_.size());
+        auto &route = routes_[rIdx];
+        route.push_back(client);
+    }
+
+    // a precedes b only when a is not empty and b is. Combined with a stable
+    // sort, this ensures we keep the original sorting as much as possible, but
+    // also make sure all empty routes are at the end of routes_.
+    auto comp = [](auto &a, auto &b) { return !a.empty() && b.empty(); };
+    std::stable_sort(routes_.begin(), routes_.end(), comp);
+
+    evaluateCompleteCost();
+
     makeNeighbours();
 }
 
