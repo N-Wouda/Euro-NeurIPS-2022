@@ -305,16 +305,6 @@ Individual::Individual(Params const *params, XorShift128 *rng)
     makeNeighbours();
 }
 
-Individual::Individual(Params const *params, Tour tour)
-    : params(params),
-      tour_(std::move(tour)),
-      routes_(params->nbVehicles),
-      neighbours(params->nbClients + 1)
-{
-    makeRoutes();
-    makeNeighbours();
-}
-
 Individual::Individual(Params const *params, Routes routes)
     : params(params),
       tour_(),

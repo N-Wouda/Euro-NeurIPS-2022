@@ -138,8 +138,6 @@ public:
 
     Individual(Params const *params, XorShift128 *rng);  // random individual
 
-    Individual(Params const *params, Tour tour);
-
     Individual(Params const *params, Routes routes);
 
     ~Individual();

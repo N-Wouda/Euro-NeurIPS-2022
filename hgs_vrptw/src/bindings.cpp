@@ -33,9 +33,6 @@ PYBIND11_MODULE(hgspy, m)
         .def(py::init<Params *, XorShift128 *>(),
              py::arg("params"),
              py::arg("rng"))
-        .def(py::init<Params *, std::vector<int>>(),
-             py::arg("params"),
-             py::arg("tour"))
         .def(py::init<Params *, std::vector<std::vector<int>>>(),
              py::arg("params"),
              py::arg("routes"))
