@@ -167,13 +167,13 @@ Individual::Individual(Params const *params, XorShift128 *rng)
         route.push_back(client);
     }
 
-    // Sort clients in non-increasing size, ensuring that all empty routes
-    // are at the end of routes_.
+    // Sort routes in non-increasing order of size, ensuring that all empty
+    // routes are at the end of routes_.
     auto comp = [](auto &a, auto &b) { return a.size() < b.size(); };
     std::sort(routes_.begin(), routes_.end(), comp);
 
-    evaluateCompleteCost();
     makeNeighbours();
+    evaluateCompleteCost();
 }
 
 Individual::Individual(Params const *params, Routes routes)
@@ -187,8 +187,8 @@ Individual::Individual(Params const *params, Routes routes)
     auto comp = [](auto &a, auto &b) { return !a.empty() && b.empty(); };
     std::stable_sort(routes_.begin(), routes_.end(), comp);
 
-    evaluateCompleteCost();
     makeNeighbours();
+    evaluateCompleteCost();
 }
 
 Individual::~Individual()
