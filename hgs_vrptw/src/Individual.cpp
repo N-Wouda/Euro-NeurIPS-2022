@@ -1,8 +1,6 @@
 #include "Individual.h"
 #include "Params.h"
 
-#include <cassert>
-#include <deque>
 #include <fstream>
 #include <numeric>
 #include <vector>

@@ -4,7 +4,6 @@
 #include "Params.h"
 #include "XorShift128.h"
 
-#include <cfloat>
 #include <string>
 #include <vector>
 
@@ -31,10 +30,10 @@ class Individual
     // - the numRoutes() member indicates the number of nonempty routes.
     Routes routes_;
 
-    // Pairs of [predecessor, successor] for each client (index) in the routes
+    // Pairs of [predecessor, successor] for each client (index)
     std::vector<std::pair<Client, Client>> neighbours;
 
-    // Determines (pred, succ) pairs for each client in the routes
+    // Determines (pred, succ) pairs for each client
     void makeNeighbours();
 
     // Evaluates this solution's objective value.
