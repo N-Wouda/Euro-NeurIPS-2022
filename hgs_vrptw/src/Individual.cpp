@@ -7,94 +7,6 @@
 #include <numeric>
 #include <vector>
 
-namespace
-{
-// Structure representing a client when making routes
-struct ClientSplit
-{
-    int demand = 0;       // The demand of the client
-    int serviceTime = 0;  // The service duration of the client
-    int d0_x = 0;         // The distance from the depot to the client
-    int dx_0 = 0;         // The distance from the client to the depot
-    int dnext = 0;        // The distance from the client to the next client
-};
-
-struct ClientSplits
-{
-    Params const &params;
-
-    std::vector<ClientSplit> splits;
-    std::vector<int> predecessors;
-    std::vector<int> pathCosts;
-
-    std::vector<int> cumDist;
-    std::vector<int> cumLoad;
-    std::vector<int> cumServ;
-
-    ClientSplits(Params const &params, std::vector<int> const &tour)
-        : params(params),
-          splits(params.nbClients + 1),
-          predecessors(params.nbClients + 1, 0),
-          pathCosts(params.nbClients + 1, INT_MAX),
-          cumDist(params.nbClients + 1, 0),
-          cumLoad(params.nbClients + 1, 0),
-          cumServ(params.nbClients + 1, 0)
-    {
-        pathCosts[0] = 0;
-
-        for (int idx = 1; idx <= params.nbClients; idx++)  // exclude depot
-        {
-            auto const curr = tour[idx - 1];
-            auto const dist = idx < params.nbClients  // INT_MIN for last client
-                                  ? params.dist(curr, tour[idx])
-                                  : INT_MIN;
-
-            splits[idx] = {params.clients[curr].demand,
-                           params.clients[curr].servDur,
-                           params.dist(0, curr),
-                           params.dist(curr, 0),
-                           dist};
-
-            cumLoad[idx] = cumLoad[idx - 1] + splits[idx].demand;
-            cumServ[idx] = cumServ[idx - 1] + splits[idx].serviceTime;
-            cumDist[idx] = cumDist[idx - 1] + splits[idx - 1].dnext;
-        }
-    }
-
-    // Computes the cost of propagating label i to j
-    [[nodiscard]] int propagate(int i, int j) const
-    {
-        assert(i < j);
-        auto const deltaDist = cumDist[j] - cumDist[i + 1];
-        return pathCosts[i] + deltaDist + splits[i + 1].d0_x + splits[j].dx_0
-               + params.loadPenalty(cumLoad[j] - cumLoad[i]);
-    }
-
-    // Tests if i dominates j as a predecessor for all nodes x >= j + 1
-    [[nodiscard]] bool leftDominates(int i, int j) const
-    {
-        assert(i < j);
-        auto const lhs = pathCosts[j] + splits[j + 1].d0_x;
-        auto const deltaDist = cumDist[j] - cumDist[i + 1];
-        auto const rhs = pathCosts[i] + splits[i + 1].d0_x + deltaDist
-                         + params.penaltyCapacity * (cumLoad[j] - cumLoad[i]);
-
-        return lhs >= rhs;
-    }
-
-    // Tests if j dominates i as a predecessor for all nodes x >= j + 1
-    [[nodiscard]] bool rightDominates(int i, int j) const
-    {
-        assert(i < j);
-        auto const lhs = pathCosts[j] + splits[j + 1].d0_x;
-        auto const rhs = pathCosts[i] + splits[i + 1].d0_x + cumDist[j + 1]
-                         - cumDist[i + 1];
-
-        return lhs <= rhs;
-    };
-};
-}  // namespace
-
 void Individual::evaluateCompleteCost()
 {
     // Reset fields before evaluating them again below.
@@ -239,15 +151,14 @@ void Individual::makeNeighbours()
 
 Individual::Individual(Params const *params, XorShift128 *rng)
     : params(params),
-      tour_(params->nbClients),
-
       routes_(params->nbVehicles),
       neighbours(params->nbClients + 1)
 {
-    std::iota(tour_.begin(), tour_.end(), 1);
-    std::shuffle(tour_.begin(), tour_.end(), *rng);
+    auto clients = std::vector<int>(params->nbCleints);
+    std::iota(clients.begin(), clients.end(), 1);
+    std::shuffle(clients.begin(), clients.end(), *rng);
 
-    for (auto const client : tour_)
+    for (auto const client : clients)
     {
         auto const rIdx = rng->randint(routes_.size());
         auto &route = routes_[rIdx];
@@ -267,7 +178,6 @@ Individual::Individual(Params const *params, XorShift128 *rng)
 
 Individual::Individual(Params const *params, Routes routes)
     : params(params),
-      tour_(),
       routes_(std::move(routes)),
       neighbours(params->nbClients + 1)
 {
@@ -278,12 +188,6 @@ Individual::Individual(Params const *params, Routes routes)
     // also make sure all empty routes are at the end of routes_.
     auto comp = [](auto &a, auto &b) { return !a.empty() && b.empty(); };
     std::stable_sort(routes_.begin(), routes_.end(), comp);
-
-    tour_.reserve(params->nbClients);
-
-    for (auto const &route : routes_)
-        for (Client c : route)
-            tour_.push_back(c);
 
     evaluateCompleteCost();
 }
