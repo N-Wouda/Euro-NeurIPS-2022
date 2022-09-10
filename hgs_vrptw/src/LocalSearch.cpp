@@ -23,9 +23,6 @@ void LocalSearch::search()
     if (nodeOps.empty() && routeOps.empty())
         throw std::runtime_error("No known node or route operators.");
 
-    bool const intensify
-        = rng.randint(100) < params.config.intensificationProbability;
-
     // Caches the last time node or routes were tested for modification (uses
     // nbMoves to track this). The lastModified field, in contrast, track when
     // a route was last *actually* modified.
@@ -83,7 +80,7 @@ void LocalSearch::search()
 
         // Route operators are evaluated only after node operators get stuck,
         // and only sometimes when we want to intensify the search.
-        if (searchCompleted && intensify)
+        if (searchCompleted)
             for (int const rU : orderRoutes)
             {
                 auto &U = routes[rU];
@@ -135,6 +132,46 @@ bool LocalSearch::applyNodeOperators(Node *U, Node *V)
 
 bool LocalSearch::applyRouteOperators(Route *U, Route *V)
 {
+    //    TW_U_INFEAS = 0
+    //    TW_V_INFEAS = 1
+    //    LD_U_INFEAS = 2
+    //    LD_V_INFEAS = 3
+    //    U_SIZE = 4
+    //    V_SIZE = 5
+    //    UV_ANGLE_DIFF = 6
+    //    MIN_NODE_DIST = 7
+
+    // -0.24   0.14   0.12   0.19   0.12  -0.01  -0.03   0.24  -0.85
+
+    auto score = -0.24;
+    score += 0.14 * U->hasTimeWarp();
+    score += 0.12 * V->hasTimeWarp();
+    score += 0.19 * U->hasExcessCapacity();
+    score += 0.12 * V->hasExcessCapacity();
+    score += -0.01 * U->size() / static_cast<double>(params.nbClients + 1);
+    score += -0.03 * V->size() / static_cast<double>(params.nbClients + 1);
+    score += 0.24 * (V->angleCenter - U->angleCenter);
+
+    auto dist = INT_MAX;
+
+    for (size_t uIdx = 0; uIdx != U->size(); ++uIdx)
+        for (size_t vIdx = 0; vIdx != V->size(); ++vIdx)
+        {
+            auto *nodeU = (*U)[uIdx + 1];
+            auto *nodeV = (*V)[vIdx + 1];
+
+            if (params.dist(nodeU->client, nodeV->client) < dist)
+                dist = params.dist(nodeU->client, nodeV->client);
+
+            if (params.dist(nodeV->client, nodeU->client) < dist)
+                dist = params.dist(nodeV->client, nodeU->client);
+        }
+
+    score += -0.85 * dist / static_cast<double>(params.maxDist());
+
+    if (score < 0)
+        return false;
+
     for (auto op : routeOps)
         if (op->evaluate(U, V) < 0)
         {
