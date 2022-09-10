@@ -132,17 +132,6 @@ bool LocalSearch::applyNodeOperators(Node *U, Node *V)
 
 bool LocalSearch::applyRouteOperators(Route *U, Route *V)
 {
-    //    TW_U_INFEAS = 0
-    //    TW_V_INFEAS = 1
-    //    LD_U_INFEAS = 2
-    //    LD_V_INFEAS = 3
-    //    U_SIZE = 4
-    //    V_SIZE = 5
-    //    UV_ANGLE_DIFF = 6
-    //    MIN_NODE_DIST = 7
-
-    // -0.24   0.14   0.12   0.19   0.12  -0.01  -0.03   0.24  -0.85
-
     auto score = -0.24;
     score += 0.14 * U->hasTimeWarp();
     score += 0.12 * V->hasTimeWarp();

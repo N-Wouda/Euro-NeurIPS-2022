@@ -84,7 +84,6 @@ PYBIND11_MODULE(hgspy, m)
                       size_t,
                       int,
                       int,
-                      size_t,
                       int,
                       int,
                       size_t>(),
@@ -109,7 +108,6 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("nbGranular") = 40,
              py::arg("weightWaitTime") = 2,
              py::arg("weightTimeWarp") = 10,
-             py::arg("intensificationProbability") = 25,
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
              py::arg("minCircleSectorSizeDegrees") = 15,
              py::arg("destroyPct") = 20)
