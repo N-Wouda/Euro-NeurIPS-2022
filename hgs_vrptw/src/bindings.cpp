@@ -33,15 +33,11 @@ PYBIND11_MODULE(hgspy, m)
         .def(py::init<Params *, XorShift128 *>(),
              py::arg("params"),
              py::arg("rng"))
-        .def(py::init<Params *, std::vector<int>>(),
-             py::arg("params"),
-             py::arg("tour"))
         .def(py::init<Params *, std::vector<std::vector<int>>>(),
              py::arg("params"),
              py::arg("routes"))
         .def("cost", &Individual::cost)
         .def("get_routes", &Individual::getRoutes)
-        .def("get_tour", &Individual::getTour)
         .def("get_neighbours", &Individual::getNeighbours)
         .def("is_feasible", &Individual::isFeasible)
         .def("has_excess_capacity", &Individual::hasExcessCapacity)
@@ -219,9 +215,7 @@ PYBIND11_MODULE(hgspy, m)
     // Crossover operators (as a submodule)
     py::module xOps = m.def_submodule("crossover");
 
-    xOps.def("alternating_exchange", &alternatingExchange);
     xOps.def("broken_pairs_exchange", &brokenPairsExchange);
-    xOps.def("ordered_exchange", &orderedExchange);
     xOps.def("selective_route_exchange", &selectiveRouteExchange);
 
     // Local search operators (as a submodule)

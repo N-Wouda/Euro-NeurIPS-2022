@@ -4,7 +4,6 @@
 #include "Params.h"
 #include "XorShift128.h"
 
-#include <cfloat>
 #include <string>
 #include <vector>
 
@@ -12,8 +11,8 @@
 class Individual
 {
     using Client = int;
-    using Tour = std::vector<Client>;
-    using Routes = std::vector<Tour>;
+    using Route = std::vector<Client>;
+    using Routes = std::vector<Route>;
 
     size_t nbRoutes = 0;        // Number of routes
     size_t distance = 0;        // Total distance
@@ -26,22 +25,15 @@ class Individual
 
     Params const *params;  // Problem parameters
 
-    // Giant tour representing the individual: list of integers representing
-    // clients (can not be the depot 0). Size is nbClients.
-    Tour tour_;
-
     // For each vehicle, the associated sequence of deliveries (complete
     // solution). Size is nbVehicles, but quite a few routes are likely empty
     // - the numRoutes() member indicates the number of nonempty routes.
     Routes routes_;
 
-    // Pairs of [predecessor, successor] for each client (index) in the tour
+    // Pairs of [predecessor, successor] for each client (index)
     std::vector<std::pair<Client, Client>> neighbours;
 
-    // Splits the tour chromosome into routes using the linear split algorithm
-    void makeRoutes();
-
-    // Determines (pred, succ) pairs for each client in the routes
+    // Determines (pred, succ) pairs for each client
     void makeNeighbours();
 
     // Evaluates this solution's objective value.
@@ -71,11 +63,6 @@ public:
      * Returns this individual's routing decisions.
      */
     [[nodiscard]] Routes const &getRoutes() const { return routes_; }
-
-    /**
-     * Returns this individual's giant tour chromosome.
-     */
-    [[nodiscard]] Tour const &getTour() const { return tour_; }
 
     /**
      * Returns a vector of [pred, succ] clients for each client (index) in this
@@ -137,8 +124,6 @@ public:
     }
 
     Individual(Params const *params, XorShift128 *rng);  // random individual
-
-    Individual(Params const *params, Tour tour);
 
     Individual(Params const *params, Routes routes);
 
