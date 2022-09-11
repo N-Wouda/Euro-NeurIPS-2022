@@ -12,9 +12,7 @@ TODO
 ## Contributors
 
 ### Team
-- Charaf, Sara <s.charaf@tue.nl>
 - Doorn, Jasper van <j.m.h.van.doorn@vu.nl>
-- Heide, Lieke van der <l.m.van.der.heide@rug.nl>
 - Jansen, Yde <yde_jansen@hotmail.com>
 - Lan, Leon <l.lan@vu.nl>
 - Pentinga, Luuk <l.pentinga@rug.nl>
