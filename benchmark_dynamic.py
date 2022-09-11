@@ -1,4 +1,6 @@
 import argparse
+from collections import defaultdict
+from itertools import product
 from functools import partial
 from glob import glob
 from environment import VRPEnvironment
@@ -7,7 +9,6 @@ from time import perf_counter
 
 import numpy as np
 from tqdm.contrib.concurrent import process_map
-from itertools import product
 
 import tools
 from dynamic import run_baseline
@@ -49,6 +50,27 @@ def solve(loc: str, instance_seed: int, **kwargs):
     return (path.stem, instance_seed, reward, round(perf_counter() - start, 3))
 
 
+def groupby_mean(data):
+    rewards, runtimes = defaultdict(list), defaultdict(list)
+
+    for (inst, _, reward, runtime) in data:
+        rewards[inst].append(reward)
+        runtimes[inst].append(runtime)
+
+    averaged = [
+        (inst, np.mean(rewards[inst]), np.mean(runtimes[inst]).round(3))
+        for inst in rewards.keys()
+    ]
+
+    dtypes = [
+        ("inst", "U37"),
+        ("reward", int),
+        ("time", float),
+    ]
+
+    return np.array(averaged, dtype=dtypes)
+
+
 def main():
     args = parse_args()
 
@@ -57,28 +79,17 @@ def main():
 
     tqdm_kwargs = dict(max_workers=args.num_procs, unit="instance")
     data = process_map(func, *zip(*func_args), **tqdm_kwargs)
-
-    dtypes = [
-        ("inst", "U37"),
-        ("seed", int),
-        ("rew", int),
-        ("time", float),
-    ]
-    data = np.array(data, dtype=dtypes)
+    data = groupby_mean(data)
 
     headers = [
         "Instance",
-        "Seed",
         "Avg. reward",
         "Time (s)",
     ]
     table = tools.tabulate(headers, data)
 
     print("\n", table, "\n", sep="")
-
-    obj_all = data["rew"]
-
-    print(f"      Avg. objective: {obj_all.mean():.0f}")
+    print(f"      Avg. objective: {data['reward'].mean():.0f}")
     print(f"   Avg. run-time (s): {data['time'].mean():.2f}")
 
 
