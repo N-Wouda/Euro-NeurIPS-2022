@@ -1,12 +1,11 @@
 import argparse
 import sys
-from datetime import datetime
 
 import numpy as np
 
 import tools
-from baselines.strategies import STRATEGIES
 from environment import ControllerEnvironment, VRPEnvironment
+from strategies import STRATEGIES
 
 
 def parse_args():
