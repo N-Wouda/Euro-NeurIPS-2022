@@ -4,7 +4,7 @@ import sys
 import tools
 from environment import ControllerEnvironment, VRPEnvironment
 
-from dynamic import run_baseline, run_oracle
+from dynamic import run_baseline, run_oracle, run_supervised, run_dqn
 
 
 def parse_args():
@@ -46,8 +46,14 @@ def main():
 
     if args.strategy == "oracle":
         run_oracle(env, **vars(args))
-    else:
+    elif args.strategy in ["greedy", "random", "lazy"]:
         run_baseline(env, **vars(args))
+    elif args.strategy == "supervised":
+        run_supervised(env, **vars(args))
+    elif args.strategy == "dqn":
+        run_dqn(env, **vars(args))
+    else:
+        raise (f"Strategy {strategy} unknown.")
 
 
 if __name__ == "__main__":
