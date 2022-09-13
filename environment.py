@@ -102,7 +102,7 @@ class VRPEnvironment(Environment):
         self.seed = seed if seed is not None else self.default_seed
         self.epoch_tlim = epoch_tlim if epoch_tlim is not None else self.default_epoch_tlim
         self.is_static = is_static if is_static is not None else self.default_is_static
-        
+
         assert self.instance is not None
 
         if self.is_static:
@@ -129,7 +129,7 @@ class VRPEnvironment(Environment):
 
         self.is_done = False
         obs = self._next_observation()
-        
+
         self.final_solutions = {}
         self.final_costs = {}
         self.start_time_epoch = time.time()
@@ -177,7 +177,7 @@ class VRPEnvironment(Environment):
 
         observation = self._next_observation() if not self.is_done else None
         reward = -driving_duration
-        
+
         self.start_time_epoch = time.time()
         return (observation, reward, self.is_done, {'error': None})
 
@@ -236,11 +236,13 @@ class VRPEnvironment(Environment):
         service_t_idx = sample_from_customers()
 
         new_request_timewi = self.instance['time_windows'][timewi_idx]
-
         # Filter data that can no longer be delivered
         # Time + margin for dispatch + drive time from depot should not exceed latest arrival
-        is_feasible = planning_starttime + duration_matrix[0, cust_idx] <= new_request_timewi[:, 1]
-
+        earliest_arrival = np.maximum(planning_starttime + duration_matrix[0, cust_idx], new_request_timewi[:, 0])
+        # Also, return at depot in time must be feasible
+        earliest_return_at_depot = earliest_arrival + self.instance['service_times'][service_t_idx] + duration_matrix[cust_idx, 0]
+        is_feasible = (earliest_arrival <= new_request_timewi[:, 1]) & (earliest_return_at_depot <= self.instance['time_windows'][0, 1])
+        
         if is_feasible.any():
             num_new_requests = is_feasible.sum()
             self.request_id = np.concatenate((self.request_id, np.arange(num_new_requests) + len(self.request_id)))
@@ -253,9 +255,14 @@ class VRPEnvironment(Environment):
 
         # Customers must dispatch this epoch if next epoch they will be too late
         if self.current_epoch < self.end_epoch:
+            earliest_arrival = np.maximum(
+                planning_starttime + self.EPOCH_DURATION + duration_matrix[0, self.request_customer_index],
+                self.request_timewi[:, 0]
+            )
+            earliest_return_at_depot = earliest_arrival + self.request_service_t + duration_matrix[self.request_customer_index, 0]
             self.request_must_dispatch = (
-                planning_starttime + self.EPOCH_DURATION +
-                duration_matrix[0, self.request_customer_index] > self.request_timewi[:, 1]
+                (earliest_arrival > self.request_timewi[:, 1]) |
+                (earliest_return_at_depot > self.instance['time_windows'][0, 1])
             )
         else:
             self.request_must_dispatch = self.request_id > 0
@@ -264,7 +271,7 @@ class VRPEnvironment(Environment):
         customer_idx = self.request_customer_index[idx_undispatched]
         # Return a VRPTW instance with undispatched requests with two additional properties: customer_idx and request_idx
         time_windows = self.request_timewi[idx_undispatched]
-        
+
         # Renormalize time to start at planning_starttime, and clip time windows in the past (so depot will start at 0)
         time_windows = np.clip(time_windows - planning_starttime, a_min=0, a_max=None)
         self.epoch_instance = {
