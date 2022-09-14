@@ -31,8 +31,7 @@ def run_random(env, **kwargs):
         else:
             sol, cost = solve_static(
                 dispatch_ep_inst,
-                time_limit=ep_tlim - 1,  # Margin for grace period
-                seed=seed,
+                stop={"max_runtime": ep_tlim - 1},  # Margin for grace period
             )
             ep_sol = utils.sol2ep(sol, dispatch_ep_inst)
 
