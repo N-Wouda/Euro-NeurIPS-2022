@@ -22,7 +22,7 @@ def run_random(env, **kwargs):
         ep_inst = observation["epoch_instance"]
 
         dispatch_prob = kwargs["dispatch_prob"]
-        dispatch_idcs = utils.dispatch_decision(ep_inst, dispatch_prob)
+        dispatch_idcs = utils.dispatch_decision(ep_inst, dispatch_prob, rng)
         dispatch_ep_inst = utils.filter_instance(ep_inst, dispatch_idcs)
 
         # Return an empty solution if the instance contains no requests

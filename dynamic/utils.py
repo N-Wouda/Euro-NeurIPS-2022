@@ -34,10 +34,10 @@ def filter_instance(instance: dict, mask: np.ndarray):
     }
 
 
-def dispatch_decision(instance, prob) -> np.array:
+def dispatch_decision(instance, prob, rng: np.random.Generator) -> np.array:
     """
     Decide which nodes are dispatched in the current epoch. Non-must dispatch
     nodes are dispatched with probability prob.
     """
-    dispatch_now = np.random.random(instance["must_dispatch"].shape) < prob
+    dispatch_now = rng.random(instance["must_dispatch"].shape) < prob
     return instance["is_depot"] | instance["must_dispatch"] | dispatch_now
