@@ -29,10 +29,7 @@ def run_random(env, **kwargs):
         if dispatch_ep_inst["coords"].shape[0] <= 1:
             ep_sol, cost = [], 0
         else:
-            sol, cost = solve_static(
-                dispatch_ep_inst,
-                stop={"max_runtime": ep_tlim - 1},  # Margin for grace period
-            )
+            sol, cost = solve_static(dispatch_ep_inst, time_limit=ep_tlim - 1)
             ep_sol = utils.sol2ep(sol, dispatch_ep_inst)
 
         # Submit solution to environment

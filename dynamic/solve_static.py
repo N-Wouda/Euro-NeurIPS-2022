@@ -2,7 +2,7 @@ import numpy as np
 import tools
 
 
-def solve_static(instance, config=None, stop=None):
+def solve_static(instance, time_limit=60, config=None):
     hgspy = tools.get_hgspy_module()
 
     if config is None:
@@ -48,14 +48,9 @@ def solve_static(instance, config=None, stop=None):
     for op in crossover_ops:
         algo.add_crossover_operator(op)
 
-    if stop is None:
-        stop_ = hgspy.stop.MaxRuntime(60)
-    elif "max_runtime" in stop:
-        stop_ = hgspy.stop.MaxRuntime(stop["max_runtime"])
-    elif "max_iterations" in stop:
-        stop_ = hgspy.stop.MaxIterations(stop["max_iterations"])
+    stop = hgspy.stop.MaxRuntime(time_limit)
 
-    res = algo.run(stop_)
+    res = algo.run(stop)
 
     best = res.get_best_found()
     routes = [route for route in best.get_routes() if route]

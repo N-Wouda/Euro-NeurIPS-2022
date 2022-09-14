@@ -36,4 +36,6 @@ hgs_vrptw
 | controller\.py
 | environment\.py
 | tools\.py
+dynamic/dqn
+dynamic/supervised
 '''

@@ -5,7 +5,7 @@ import numpy as np
 
 
 def load_model(path, device='cpu'):
-    from baselines.dqn.net import Network
+    from .net import Network
     with open(os.path.join(path, 'config.json')) as f:
         config = json.load(f)
     net = Network(**config)
