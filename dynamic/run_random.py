@@ -1,14 +1,12 @@
-from .strategies import STRATEGIES
 import numpy as np
 
 from .solve_static import solve_static
-from .utils import sol2ep
+import dynamic.utils as utils
 
 
-def run_baseline(env, **kwargs):
+def run_random(env, **kwargs):
     """
-    Solve the dynamic VRPTW problem using baseline strategies, filtering
-    requests using a greedy, lazy or random strategy.
+    Randomly dispatch customers with a given probability.
     """
     seed = kwargs["solver_seed"]
     rng = np.random.default_rng(seed)
@@ -22,8 +20,10 @@ def run_baseline(env, **kwargs):
 
     while not done:
         ep_inst = observation["epoch_instance"]
-        dispatch_strategy = STRATEGIES[kwargs["strategy"]]
-        dispatch_ep_inst = dispatch_strategy(ep_inst, rng)
+
+        dispatch_prob = kwargs["dispatch_prob"]
+        dispatch_idcs = utils.dispatch_decision(ep_inst, dispatch_prob)
+        dispatch_ep_inst = utils.filter_instance(ep_inst, dispatch_idcs)
 
         # Return an empty solution if the instance contains no requests
         if dispatch_ep_inst["coords"].shape[0] <= 1:
@@ -34,7 +34,7 @@ def run_baseline(env, **kwargs):
                 time_limit=ep_tlim - 1,  # Margin for grace period
                 seed=seed,
             )
-            ep_sol = sol2ep(sol, dispatch_ep_inst)
+            ep_sol = utils.sol2ep(sol, dispatch_ep_inst)
 
         # Submit solution to environment
         observation, reward, done, info = env.step(ep_sol)
