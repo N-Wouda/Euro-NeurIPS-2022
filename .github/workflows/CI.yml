@@ -43,7 +43,7 @@ jobs:
         run: |
           cmake -Brelease -Shgs_vrptw
           make --directory=release
-      - name: Test controller
+      - name: Test solver
         run: |
           poetry run python benchmark.py --max_runtime 1 --num_procs 2
       - uses: DoozyX/clang-format-lint-action@v0.13
