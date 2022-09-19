@@ -1,8 +1,9 @@
 from .strategies import STRATEGIES
 import numpy as np
 
+import dynamic_tools
+
 from .solve_static import solve_static
-from .utils import sol2ep
 
 
 def run_baseline(env, **kwargs):
@@ -34,7 +35,7 @@ def run_baseline(env, **kwargs):
                 time_limit=ep_tlim - 1,  # Margin for grace period
                 seed=seed,
             )
-            ep_sol = sol2ep(sol, dispatch_ep_inst)
+            ep_sol = dynamic_tools.idx2request(sol, dispatch_ep_inst, kwargs["postpone_routes"])
 
         # Submit solution to environment
         observation, reward, done, info = env.step(ep_sol)

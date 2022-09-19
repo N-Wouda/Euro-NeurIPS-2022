@@ -132,3 +132,8 @@ def describe_nodes(nodes: dict, instance: dict = None, n_clusters: int = 0):
 def dispatch_decision(instance, p):
     """ Decide which nodes are dispatched in the current epoch. Each optional node is picked with probability p """
     return instance["is_depot"] | instance["must_dispatch"] | (np.random.random(instance["must_dispatch"].shape) < p)
+
+
+def idx2request(solution, instance, postpone_routes=True):
+    """Map solution indices to request indices of the epoch instance."""
+    return [instance["request_idx"][route] for route in solution if not postpone_routes or np.any(instance['must_dispatch'][route])]

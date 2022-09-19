@@ -64,7 +64,7 @@ class DynamicVRPEnvironment(gym.Env):
             epoch_instance = epoch_info["epoch_instance"]
 
             *_, (idx_routes, _) = solve_static(epoch_instance, self.solver_tlim)
-            routes = [epoch_instance['request_idx'][idx] for idx in idx_routes if np.any(epoch_instance['must_dispatch'][idx])]
+            routes = dynamic_tools.idx2request(idx_routes, epoch_instance, postpone_routes=True)
 
             self.greedy_node_costs.update(tools.get_node_costs(idx_routes, epoch_instance['duration_matrix']))
 
@@ -100,7 +100,7 @@ class DynamicVRPEnvironment(gym.Env):
             instance = dynamic_tools.filter_instance(self.epoch_instance, mask)
 
             *_, (idx_routes, epoch_cost) = solve_static(instance, self.solver_tlim)
-            routes = [instance['request_idx'][idx] for idx in idx_routes if np.any(instance['must_dispatch'][idx])]
+            routes = dynamic_tools.idx2request(idx_routes, instance, postpone_routes=True)
 
             self.epoch_info, self.epoch_reward, self.is_done, self.solver_info = self.env.step(routes)
 
