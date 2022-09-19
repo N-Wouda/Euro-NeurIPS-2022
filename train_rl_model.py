@@ -1,11 +1,10 @@
-import os
 import argparse
 import stable_baselines3
 
 from pathlib import Path
 from datetime import datetime
 
-from dynamic_environment import DynamicVRPEnvironment
+from dynamic.dynamic_environment import DynamicVRPEnvironment
 
 
 def parse_args():
