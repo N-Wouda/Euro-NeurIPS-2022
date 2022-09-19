@@ -43,11 +43,11 @@ class DynamicVRPEnvironment(gym.Env):
 
     def reset(self):
         seed = np.random.randint(1e3) if self.seed is None else self.seed
-        instance_file = np.random.choice(os.listdir("../instances")) if self.instance is None else self.instance
+        instance_file = np.random.choice(os.listdir("instances")) if self.instance is None else self.instance
 
         self.instance_name = "%s-%03d" % (instance_file.rstrip('.txt'), seed)
 
-        instance = tools.read_vrplib("../instances/" + instance_file)
+        instance = tools.read_vrplib("instances/" + instance_file)
 
         self.env = VRPEnvironment(
             seed,

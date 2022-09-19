@@ -15,7 +15,7 @@ def solve_static(instance, time_limit=3600, seed=1):
         yield solution, cost
         return
 
-    hgspy = tools.get_hgspy_module(where='../release/lib/hgspy*.so')
+    hgspy = tools.get_hgspy_module()
 
     # TODO Determine a better strategy for selecting nbVeh
     config = hgspy.Config(seed=seed, nbVeh=tools.n_vehicles_bin_pack(instance) + 60)
