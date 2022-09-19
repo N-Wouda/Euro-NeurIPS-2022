@@ -1,4 +1,5 @@
 import os
+import sys
 import gym
 import warnings
 import numpy as np
@@ -57,7 +58,7 @@ class DynamicVRPEnvironment(gym.Env):
         )
 
         # ////// Get greedy & hindsight solutions & costs
-        if self.verbose: print("Solving greedy", end="\n" if self.verbose > 1 else "\r")
+        if self.verbose: print("Solving greedy", end="\n" if self.verbose > 1 else "\r", file=sys.stderr)
 
         self.greedy_node_costs = {}
 
@@ -75,7 +76,7 @@ class DynamicVRPEnvironment(gym.Env):
             if solver_info["error"] is not None:
                 warnings.warn(solver_info["error"])
 
-        if self.verbose: print("Solving hindsight", end="\n" if self.verbose > 1 else "\r")
+        if self.verbose: print("Solving hindsight", end="\n" if self.verbose > 1 else "\r", file=sys.stderr)
 
         hindsight_instance = self.env.get_hindsight_problem()
         *_, (hindsight_routes, _) = solve_static(hindsight_instance, self.solver_tlim)
@@ -92,7 +93,7 @@ class DynamicVRPEnvironment(gym.Env):
 
     def step(self, action):
         if self.verbose:
-            print(self.info, end="\n" if self.verbose > 1 else "\r")
+            print(self.info, end="\n" if self.verbose > 1 else "\r", file=sys.stderr)
         self.actions[self.node] = action
 
         if self.node < self.n_nodes - 1:
