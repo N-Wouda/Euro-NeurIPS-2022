@@ -430,3 +430,11 @@ def n_vehicles_bin_pack(instance, margin=1.5):
     """
     total_demand = instance['demands'].sum()
     return math.ceil(margin * total_demand / instance['capacity']) + 3
+
+
+def get_node_costs(routes, duration_matrix):
+    node_costs = {}
+    for route in routes:
+        node_costs.update(zip(route, duration_matrix[np.append(0, route)] + duration_matrix[np.append(route, 0)]))
+
+    return node_costs
