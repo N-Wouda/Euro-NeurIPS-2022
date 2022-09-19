@@ -58,30 +58,31 @@ class DynamicVRPEnvironment(gym.Env):
         )
 
         # ////// Get greedy & hindsight solutions & costs
-        if self.verbose: print("Solving greedy", end="\n" if self.verbose > 1 else "\r", file=sys.stderr)
+        if self.reward_type > 0:
+            if self.verbose: print("Solving greedy", end="\n" if self.verbose > 1 else "\r", file=sys.stderr)
 
-        self.greedy_node_costs = {}
+            self.greedy_node_costs = {}
 
-        epoch_info, static_info = self.env.reset()
-        while not self.env.is_done:
-            epoch_instance = epoch_info["epoch_instance"]
+            epoch_info, static_info = self.env.reset()
+            while not self.env.is_done:
+                epoch_instance = epoch_info["epoch_instance"]
 
-            *_, (idx_routes, _) = solve_static(epoch_instance, self.solver_tlim)
-            routes = dynamic_tools.idx2request(idx_routes, epoch_instance, postpone_routes=True)
+                *_, (idx_routes, _) = solve_static(epoch_instance, self.solver_tlim)
+                routes = dynamic_tools.idx2request(idx_routes, epoch_instance, postpone_routes=True)
 
-            self.greedy_node_costs.update(tools.get_node_costs(idx_routes, epoch_instance['duration_matrix']))
+                self.greedy_node_costs.update(tools.get_node_costs(idx_routes, epoch_instance['duration_matrix']))
 
-            epoch_info, epoch_reward, is_done, solver_info = self.env.step(routes)
+                epoch_info, epoch_reward, is_done, solver_info = self.env.step(routes)
 
-            if solver_info["error"] is not None:
-                warnings.warn(solver_info["error"])
+                if solver_info["error"] is not None:
+                    warnings.warn(solver_info["error"])
 
-        if self.verbose: print("Solving hindsight", end="\n" if self.verbose > 1 else "\r", file=sys.stderr)
+            if self.verbose: print("Solving hindsight", end="\n" if self.verbose > 1 else "\r", file=sys.stderr)
 
-        hindsight_instance = self.env.get_hindsight_problem()
-        *_, (hindsight_routes, _) = solve_static(hindsight_instance, self.solver_tlim)
+            hindsight_instance = self.env.get_hindsight_problem()
+            *_, (hindsight_routes, _) = solve_static(hindsight_instance, self.solver_tlim)
 
-        self.hindsight_node_costs = tools.get_node_costs(hindsight_routes, hindsight_instance['duration_matrix'])
+            self.hindsight_node_costs = tools.get_node_costs(hindsight_routes, hindsight_instance['duration_matrix'])
         # //////
 
         self.epoch_info, self.static_info = self.env.reset()
