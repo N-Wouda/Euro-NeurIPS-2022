@@ -98,7 +98,7 @@ class DynamicVRPEnvironment(gym.Env):
         if self.node < self.n_nodes - 1:
             return self._step_node(), 0, False, self.info
         else:
-            mask = np.append(1, self.actions).astype(bool)
+            mask = dynamic_tools.dispatch_decision(self.epoch_instance, np.append(1, self.actions).astype(bool))
             instance = dynamic_tools.filter_instance(self.epoch_instance, mask)
 
             *_, (idx_routes, epoch_cost) = solve_static(instance, self.solver_tlim)
