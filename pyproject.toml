@@ -19,6 +19,7 @@ python = "^3.9, <4.0"
 numpy = "1.22.2"
 matplotlib = "3.5.1"
 tqdm = "^4.64.0"
+stable-baselines3 = "^1.6.0"
 
 
 [tool.poetry.dev-dependencies]

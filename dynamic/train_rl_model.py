@@ -11,7 +11,6 @@ from dynamic_environment import DynamicVRPEnvironment
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--num_procs", type=int, default=os.cpu_count())
     parser.add_argument("--model", choices=["DQN", "A2C", "PPO"], default="DQN")
     parser.add_argument("--policy", choices=["MlpPolicy", "CnnPolicy"], default="MlpPolicy")
     parser.add_argument("--reward_type", type=int, choices=range(4), default=0)
