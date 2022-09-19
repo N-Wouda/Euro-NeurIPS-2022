@@ -3,12 +3,22 @@ import tools
 
 
 def solve_static(instance, time_limit=3600, seed=1):
+    # Prevent passing empty instances to the static solver, e.g. when
+    # strategy decides to not dispatch any requests for the current epoch
+    if instance["coords"].shape[0] <= 1:
+        yield [], 0
+        return
+
+    if instance["coords"].shape[0] <= 2:
+        solution = [[1]]
+        cost = tools.validate_static_solution(instance, solution)
+        yield solution, cost
+        return
+
     hgspy = tools.get_hgspy_module()
 
     # TODO Determine a better strategy for selecting nbVeh
-    config = hgspy.Config(
-        seed=seed, nbVeh=tools.n_vehicles_bin_pack(instance, margin=2) + 30
-    )
+    config = hgspy.Config(seed=seed, nbVeh=tools.n_vehicles_bin_pack(instance) + 60)
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=seed)
@@ -56,4 +66,4 @@ def solve_static(instance, time_limit=3600, seed=1):
 
     assert np.isclose(tools.validate_static_solution(instance, routes), cost)
 
-    return routes, cost
+    yield routes, cost
