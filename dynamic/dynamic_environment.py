@@ -4,7 +4,7 @@ import warnings
 import numpy as np
 
 import tools
-import dynamic_tools
+from dynamic import dynamic_tools
 
 from environment import VRPEnvironment
 from solve_static import solve_static
