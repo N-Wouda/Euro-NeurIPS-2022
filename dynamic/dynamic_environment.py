@@ -7,7 +7,7 @@ import tools
 from . import dynamic_tools
 
 from environment import VRPEnvironment
-from solve_static import solve_static
+from .solve_static import solve_static
 
 
 warnings.filterwarnings("ignore", append=True, message="Repeatedly resetting the environment without providing a seed will use the same default seed again")
