@@ -109,7 +109,7 @@ class DynamicVRPEnvironment(gym.Env):
             if self.solver_info["error"] is not None:
                 warnings.warn(self.solver_info["error"])
 
-            node_costs = tools.get_node_costs(routes, instance['duration_matrix'])
+            node_costs = tools.get_node_costs(idx_routes, instance['duration_matrix'], instance['request_idx'])
 
             if self.reward_type == 1:
                 self.epoch_reward = -sum(node_costs[node] - self.hindsight_node_costs[node] for node in node_costs)
