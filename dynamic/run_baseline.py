@@ -1,7 +1,7 @@
 from .strategies import STRATEGIES
 import numpy as np
 
-import dynamic_tools
+from . import dynamic_tools
 
 from .solve_static import solve_static
 
