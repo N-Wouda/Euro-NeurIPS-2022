@@ -28,7 +28,7 @@ if __name__ == "__main__":
     model_name = "%s-%s-r%d-%d" % (args.model, args.policy, args.reward_type, datetime.timestamp(datetime.now()))
 
     env = DynamicVRPEnvironment(args.epoch_tlim, args.solver_tlim, args.reward_type, verbose=args.verbose)
-    model = getattr(stable_baselines3, args.model)(args.policy, env, tensorboard_log=f"/tensorboards/{model_name}/", verbose=args.verbose)
+    model = getattr(stable_baselines3, args.model)(args.policy, env, tensorboard_log=f"models/tensorboards/{model_name}/", verbose=args.verbose)
 
     model.learn(total_timesteps=args.total_timesteps)
     model.save(Path(args.output_dir) / (model_name + ".model"))
