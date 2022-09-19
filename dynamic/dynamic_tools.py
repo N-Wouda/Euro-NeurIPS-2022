@@ -29,6 +29,15 @@ def filter_instance(instance: dict, mask: np.ndarray):
     return {key: _filter_instance_value(value, mask) for key, value in instance.items()}
 
 
+def describe_current_nodes(instance: dict):
+    return np.stack((instance['must_dispatch'],
+                     instance["demands"],
+                     instance['service_times'],
+                     *instance['coords'].T,
+                     *instance['time_windows'].T,
+                     )).T[1:]
+
+
 def _describe_item(values, axis: int = None):
     """ Get statistic features of the input data """
     size = np.size(values)

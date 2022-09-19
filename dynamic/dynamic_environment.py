@@ -7,13 +7,15 @@ import tools
 import dynamic_tools
 
 from environment import VRPEnvironment
-from .solve_static import solve_static
+from solve_static import solve_static
 
 
 warnings.filterwarnings("ignore", append=True, message="Repeatedly resetting the environment without providing a seed will use the same default seed again")
 
 
 class DynamicVRPEnvironment(gym.Env):
+    N_CLUSTERS = 10
+
     def __init__(self, epoch_tlim, solver_tlim, reward_type=0, instance=None, seed=None, verbose=0):
         self.epoch_tlim = epoch_tlim
         self.solver_tlim = solver_tlim
@@ -30,7 +32,7 @@ class DynamicVRPEnvironment(gym.Env):
 
         self.action_space = gym.spaces.Discrete(2)
 
-        self.observation_space = gym.spaces.Box(-np.inf, np.inf, (156,))
+        self.observation_space = gym.spaces.Box(-np.inf, np.inf, (107 + 56 * (self.N_CLUSTERS + 1),))
 
     @property
     def info(self):
@@ -41,11 +43,11 @@ class DynamicVRPEnvironment(gym.Env):
 
     def reset(self):
         seed = np.random.randint(1e3) if self.seed is None else self.seed
-        instance_file = np.random.choice(os.listdir("instances")) if self.instance is None else self.instance
+        instance_file = np.random.choice(os.listdir("../instances")) if self.instance is None else self.instance
 
         self.instance_name = "%s-%03d" % (instance_file.rstrip('.txt'), seed)
 
-        instance = tools.read_vrplib("instances/" + instance_file)
+        instance = tools.read_vrplib("../instances/" + instance_file)
 
         self.env = VRPEnvironment(
             seed,
@@ -120,6 +122,7 @@ class DynamicVRPEnvironment(gym.Env):
 
     def _state(self):
         return np.concatenate((
+            self.current_node_descriptions[self.node],
             self.static_instance_description,
             self.epoch_instance_description,
             self.static_node_descriptions[self.node],
@@ -134,8 +137,9 @@ class DynamicVRPEnvironment(gym.Env):
         self.epoch_instance = self.epoch_info["epoch_instance"]
         self.epoch_instance_description = dynamic_tools.describe_instance(self.epoch_instance)
 
-        self.epoch_node_descriptions = dynamic_tools.describe_nodes(self.epoch_instance)
-        self.static_node_descriptions = dynamic_tools.describe_nodes(self.epoch_instance, self.static_instance)
+        self.current_node_descriptions = dynamic_tools.describe_current_nodes(self.epoch_instance)
+        self.epoch_node_descriptions = dynamic_tools.describe_nodes(self.epoch_instance, n_clusters=self.N_CLUSTERS)
+        self.static_node_descriptions = dynamic_tools.describe_nodes(self.epoch_instance, self.static_instance, n_clusters=self.N_CLUSTERS)
 
         self.node = -1
         self.n_nodes = np.sum(~self.epoch_instance["is_depot"])
