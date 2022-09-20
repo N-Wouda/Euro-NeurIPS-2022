@@ -436,6 +436,6 @@ def get_node_costs(routes, duration_matrix, request_idx=None):
     node_costs = {}
     for route in routes:
         node_costs.update(zip(route if request_idx is None else request_idx[route],
-                              duration_matrix[np.append(0, route)] + duration_matrix[np.append(route, 0)]))
-
+                              duration_matrix[np.append(0, route[:-1]).astype(int), route] +
+                              duration_matrix[route, np.append(route[1:], 0).astype(int)]))
     return node_costs
