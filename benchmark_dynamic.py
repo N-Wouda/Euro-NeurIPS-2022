@@ -11,7 +11,6 @@ import numpy as np
 from tqdm.contrib.concurrent import process_map
 
 import tools
-from dynamic import run_baseline
 
 
 def parse_args():
@@ -45,7 +44,27 @@ def solve(loc: str, instance_seed: int, **kwargs):
     )
 
     start = perf_counter()
-    reward = -run_baseline(env, **kwargs)
+
+    if kwargs["strategy"] == "oracle":
+        from dynamic.run_oracle import run_oracle
+
+        reward = -run_oracle(env, **kwargs)
+
+    elif kwargs["strategy"] in ["greedy", "random", "lazy"]:
+        from dynamic.run_random import run_random
+
+        probs = {"greedy": 100, "random": 50, "lazy": 0}
+        reward = -run_random(
+            env, **kwargs, dispatch_prob=probs[kwargs["strategy"]]
+        )
+
+    elif kwargs["strategy"] == "dqn":
+        from dynamic.dqn.run_dqn import run_dqn
+
+        reward = -run_dqn(env, **kwargs)
+
+    else:
+        raise ValueError(f"Invalid strategy: {kwargs['strategy']}")
 
     return (path.stem, instance_seed, reward, round(perf_counter() - start, 3))
 
