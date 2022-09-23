@@ -50,12 +50,12 @@ def run_dqn(env, **kwargs):
         data = {"observation": observation, "static_info": static_info}
         dispatch_inst = policy({**ep_inst, **data}, rng)
 
-        sol, cost = solve_static(dispatch_inst, ep_tlim - 1)
+        sol, _ = solve_static(dispatch_inst, ep_tlim - 1)
         ep_sol = dynamic_utils.sol2ep(sol, ep_inst)
 
         # Submit solution to environment
         observation, reward, done, info = env.step(ep_sol)
-        assert cost is None or reward == -cost, f"{info['error']}"
+        assert info["error"] is None, f"{info['error']}"
 
         total_reward += reward
 

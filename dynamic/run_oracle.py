@@ -10,7 +10,7 @@ def run_oracle(env, **kwargs):
     environment.
     """
     observation, info = env.reset()
-    ep_tlim = info["ep_tlim"]
+    ep_tlim = info["epoch_tlim"]
     done = False
 
     # Submit dummy solutions to obtain the hindsight problem
@@ -34,12 +34,10 @@ def run_oracle(env, **kwargs):
         # NOTE This is a proxy to extract the routes from the hindsight solution
         # that are dispatched in the current epoch.
         is_ep_route = lambda r: len(request_idcs.intersection(r)) == len(r)
-
         ep_sol = [route for route in solution if is_ep_route(route)]
-        ep_cost = tools.validate_dynamic_epoch_solution(ep_inst, ep_sol)
 
         observation, reward, done, info = env.step(ep_sol)
-        assert reward == -ep_cost, f"{info['error']}"
+        assert info["error"] is None, f"{info['error']}"
 
         total_reward += reward
 

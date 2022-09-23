@@ -25,16 +25,11 @@ def run_random(env, **kwargs):
         dispatch_idcs = utils.dispatch_decision(ep_inst, dispatch_prob, rng)
         dispatch_ep_inst = utils.filter_instance(ep_inst, dispatch_idcs)
 
-        # Return an empty solution if the instance contains no requests
-        if dispatch_ep_inst["coords"].shape[0] <= 1:
-            ep_sol, cost = [], 0
-        else:
-            sol, cost = solve_static(dispatch_ep_inst, time_limit=ep_tlim - 1)
-            ep_sol = utils.sol2ep(sol, dispatch_ep_inst)
+        sol, _ = solve_static(dispatch_ep_inst, time_limit=ep_tlim - 1)
+        ep_sol = utils.sol2ep(sol, dispatch_ep_inst)
 
-        # Submit solution to environment
         observation, reward, done, info = env.step(ep_sol)
-        assert cost is None or reward == -cost, f"{info['error']}"
+        assert info["error"] is None, f"{info['error']}"
 
         total_reward += reward
 
