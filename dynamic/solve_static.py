@@ -2,17 +2,20 @@ import numpy as np
 import tools
 
 
-def solve_static(instance, time_limit=60, config=None):
+def solve_static(instance, time_limit=60, **kwargs):
     hgspy = tools.get_hgspy_module()
 
-    if config is None:
-        config = {"seed": 1, "nbVeh": tools.n_vehicles_bin_pack(instance) + 30}
+    if "seed" not in kwargs:
+        kwargs["seed"] = 1
 
-    config_ = hgspy.Config(**config)
+    if "nbVeh" not in kwargs:
+        kwargs["nbVeh"] = tools.n_vehicles_bin_pack(instance) + 30
 
-    params = hgspy.Params(config_, **tools.inst_to_vars(instance))
+    config = hgspy.Config(**kwargs)
 
-    rng = hgspy.XorShift128(seed=config.get("seed", 1))
+    params = hgspy.Params(config, **tools.inst_to_vars(instance))
+
+    rng = hgspy.XorShift128(seed=kwargs["seed"])
     pop = hgspy.Population(params, rng)
 
     ls = hgspy.LocalSearch(params, rng)
