@@ -45,3 +45,28 @@ def dispatch_decision(instance, prob, rng: np.random.Generator) -> np.array:
     """
     dispatch_now = rng.random(instance["must_dispatch"].shape) < prob
     return instance["is_depot"] | instance["must_dispatch"] | dispatch_now
+
+
+def delta_cost(route, distances):
+    """
+    Return the delta cost for each client on the route.
+    """
+    deltas = []
+
+    for idx, client in enumerate(route):
+        if len(route) == 1:
+            pred, succ = 0, 0
+        elif idx == 0:
+            pred, succ = 0, route[idx + 1]
+        elif idx == len(route) - 1:
+            pred, succ = route[idx - 1], 0
+        else:
+            pred, succ = route[idx - 1], route[idx + 1]
+
+        deltas.append(
+            distances[pred, client]
+            + distances[client, succ]
+            - distances[pred, succ]
+        )
+
+    return deltas

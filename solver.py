@@ -58,6 +58,11 @@ def main():
 
         run_dqn(env, **vars(args))
 
+    if args.strategy == "rollout":
+        from dynamic.run_rollout import run_rollout
+
+        run_rollout(env, **vars(args))
+
 
 if __name__ == "__main__":
     main()

@@ -62,6 +62,10 @@ def solve(loc: str, instance_seed: int, **kwargs):
         from dynamic.dqn.run_dqn import run_dqn
 
         reward = -run_dqn(env, **kwargs)
+    elif kwargs["strategy"] == "rollout":
+        from dynamic.run_rollout import run_rollout
+
+        reward = -run_rollout(env, **kwargs)
 
     else:
         raise ValueError(f"Invalid strategy: {kwargs['strategy']}")
