@@ -19,7 +19,10 @@ def solve_static(instance, time_limit=60, **kwargs):
         kwargs["seed"] = 1
 
     if "nbVeh" not in kwargs:
-        kwargs["nbVeh"] = tools.n_vehicles_bin_pack(instance) + 30
+        kwargs["nbVeh"] = len(instance["coords"]) // 2 + 20
+
+    if "repairBooster" not in kwargs:
+        kwargs["repairBooster"] = 500
 
     config = hgspy.Config(**kwargs)
 

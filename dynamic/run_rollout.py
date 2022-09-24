@@ -12,7 +12,9 @@ START_IDX = 1000  # Dynamic instances have less than 1000 requests total
 SIM_CONFIG = {
     "generationSize": 20,
     "minPopSize": 5,
-    "repairBooster": 100,
+    "repairProbability": 100,
+    "repairBooster": 1000,
+    "nbGranular": 50,
     "intensificationProbability": 0,
 }
 
@@ -26,62 +28,60 @@ def rollout(ep_inst, static_inst, start_time, sim_tlim, rng):
     dispatch_costs = np.zeros(n_ep_requests, dtype=int)
     postpone_costs = np.zeros(n_ep_requests, dtype=int)
 
-    sim_static_tlim = 1  # TODO make param
-    n_simulations = sim_tlim // sim_static_tlim
+    sim_static_tlim = 250  # TODO make param, milliseconds
+    n_simulations = sim_tlim / sim_static_tlim
+    # print(n_simulations)
 
-    for _ in range(n_simulations):
+    for _ in range(int(n_simulations)):
         sim_inst = simulate_instance(static_inst, ep_inst, 1, start_time, rng)
 
-        # Sim_sol is has indices 1, ..., N
-        sim_sol, cost = solve_static(sim_inst, sim_static_tlim, **SIM_CONFIG)
-
-        # req_sol has requests indices
-        req_sol = utils.sol2ep(sim_sol, sim_inst, postpone_routes=False)
-
-        for sim_route, req_route in zip(sim_sol, req_sol):
-            # Routes with req. idcs >= START_IDX are postponed
-            action = 0 if (req_route >= START_IDX).any() else 1
-
-            delta_costs = utils.delta_cost(
-                sim_route, sim_inst["duration_matrix"]
+        try:
+            # Sim_sol is has indices 1, ..., N
+            sim_sol, cost = solve_static(
+                sim_inst, sim_static_tlim, **SIM_CONFIG
             )
 
-            for idx, request, delta in zip(sim_route, req_route, delta_costs):
-                if request >= START_IDX:
-                    continue
+            # req_sol has requests indices
+            req_sol = utils.sol2ep(sim_sol, sim_inst, postpone_routes=False)
 
-                dispatch_actions[idx] += action
+            for sim_route, req_route in zip(sim_sol, req_sol):
+                # Routes with req. idcs >= START_IDX are postponed
+                action = 0 if (req_route >= START_IDX).any() else 1
 
-                if action:
-                    dispatch_costs[idx] += delta
-                else:
-                    postpone_costs[idx] += delta
+                delta_costs = utils.delta_cost(
+                    sim_route, sim_inst["duration_matrix"]
+                )
+
+                for idx, request, delta in zip(
+                    sim_route, req_route, delta_costs
+                ):
+                    if request >= START_IDX:
+                        continue
+
+                    dispatch_actions[idx] += action
+
+                    if action:
+                        dispatch_costs[idx] += delta
+                    else:
+                        postpone_costs[idx] += delta
+
+        except AssertionError as e:
+            # print(e)
+            pass
 
     # Take averages
-    dispatch_costs //= np.maximum(1, dispatch_actions)
-    postpone_costs //= np.maximum(1, n_simulations - dispatch_actions)
+    dispatch_costs = dispatch_costs / np.maximum(1, dispatch_actions)
+    postpone_costs = postpone_costs / np.maximum(
+        1, n_simulations - dispatch_actions
+    )
     dispatch_fraction = dispatch_actions / np.maximum(1, n_simulations)
 
-    # Determine which customers to dispatch based on simulation data
-    threshold_prob = 0.5  # TODO make parameter
-    mask = ep_inst["must_dispatch"].copy()
-    mask |= dispatch_fraction >= threshold_prob
+    mask = np.full(True, n_ep_requests)
 
-    # mask |= (dispatch_fraction >= 0.5) & (
-    #     dispatch_costs <= 1.2 * postpone_costs
-    # )
-    # mask |= (dispatch_fraction >= 0.4) & (
-    #     dispatch_costs <= 1.1 * postpone_costs
-    # )
-    # mask |= (dispatch_fraction >= 0.3) & (dispatch_costs <= 1 * postpone_costs)
-    # mask |= (dispatch_fraction >= 0.2) & (
-    #     dispatch_costs <= 0.9 * postpone_costs
-    # )
-    # mask |= (dispatch_fraction >= 0.1) & (
-    #     dispatch_costs <= 0.8 * postpone_costs
-    # )
-    mask[0] = 1  # always "dispatch" depot
-    # breakpoint()
+    # Postpone clients that are often postponed and not must-dipatch
+    threshold = 0.15  # TODO make parameter
+    postpone = (dispatch_fraction <= threshold) & ~ep_inst["must_dispatch"]
+    mask = np.where(postpone, False, mask)
 
     return utils.filter_instance(ep_inst, mask)
 
@@ -98,22 +98,21 @@ def run_rollout(env, **kwargs):
     done = False
 
     while not done:
-        print(observation["current_time"], observation["planning_starttime"])
         ep_inst = observation["epoch_instance"]
 
         # REVIEW include the number of future epochs in the rollout
-        if observation["current_epoch"] >= static_info["num_epochs"] - 1:
+        if observation["current_epoch"] >= static_info["num_epochs"]:
             dispatch_inst = ep_inst
         else:
             dispatch_inst = rollout(
                 ep_inst,
                 static_inst,
                 observation["planning_starttime"],
-                sim_tlim=ep_tlim // 2,
+                sim_tlim=ep_tlim // 2 - 1,
                 rng=rng,
             )
 
-        sol, _ = solve_static(dispatch_inst, ep_tlim // 3)
+        sol, _ = solve_static(dispatch_inst, ep_tlim // 2)
         ep_sol = utils.sol2ep(sol, dispatch_inst)
 
         n_dispatch = len(dispatch_inst["coords"]) - 1
