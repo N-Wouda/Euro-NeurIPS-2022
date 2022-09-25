@@ -9,8 +9,9 @@ find hgs_vrptw \
   -o \( -name "*.cpp" -o -name "*.h" -o -name "CMakeLists.txt" -o -name "*.cmake" \) \
   -exec zip -o -r "tmp/submissions/$DATE.zip" {} +
 
-# Python code
-zip -o -r "tmp/submissions/$DATE.zip" solver.py tools.py strategies.py environment.py
+# Python code (solver, utilities, and code for the dynamic problem)
+zip -o -r "tmp/submissions/$DATE.zip" dynamic/*
+zip -o -r "tmp/submissions/$DATE.zip" solver.py tools.py environment.py
 
 # Required CodaLab file
 cat > metadata <<- META
