@@ -13,7 +13,6 @@ def run_random(env, **kwargs):
 
     observation, static_info = env.reset()
     ep_tlim = static_info["epoch_tlim"]
-    static_inst = static_info["dynamic_context"]
 
     total_reward = 0
     done = False
