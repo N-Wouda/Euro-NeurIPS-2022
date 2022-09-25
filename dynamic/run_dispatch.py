@@ -29,10 +29,15 @@ def run_dispatch(env, dispatch_strategy, **kwargs):
         start = time.perf_counter()
 
         dispatch_inst = dispatch_strategy(static_info, observation, rng)
-        solve_tlim = ep_tlim - (time.perf_counter() - start)
+        solve_tlim = round(ep_tlim - (time.perf_counter() - start))
 
+        # HACK singleton is always added as init to guarantee feasibility
+        singleton = [[idx] for idx in range(1, len(dispatch_inst["coords"]))]
         sol, _ = solve_static(
-            dispatch_inst, time_limit=int(solve_tlim) * 1000, **dispatch_config
+            dispatch_inst,
+            time_limit=solve_tlim,
+            initial_solutions=[singleton],
+            **dispatch_config,
         )
         ep_sol = utils.sol2ep(sol, dispatch_inst)
 

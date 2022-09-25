@@ -156,7 +156,10 @@ PYBIND11_MODULE(hgspy, m)
     py::class_<Population>(m, "Population")
         .def(py::init<Params &, XorShift128 &>(),
              py::arg("params"),
-             py::arg("rng"));
+             py::arg("rng"))
+        .def("add_individual",
+             &Population::addIndividual,
+             py::arg("individual"));
 
     py::class_<Statistics>(m, "Statistics")
         .def("num_iters", &Statistics::numIters)
