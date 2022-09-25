@@ -4,6 +4,8 @@ import sys
 import tools
 from environment import ControllerEnvironment, VRPEnvironment
 
+from dynamic.run_dispatch import run_dispatch
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -46,22 +48,20 @@ def main():
         from dynamic.run_oracle import run_oracle
 
         run_oracle(env, **vars(args))
+    else:
+        if args.strategy in ["greedy", "random", "lazy"]:
+            from dynamic.random import random_dispatch
 
-    if args.strategy in ["greedy", "random", "lazy"]:
-        from dynamic.run_random import run_random
+            probs = {"greedy": 100, "random": 50, "lazy": 0}
+            strategy = random_dispatch(probs[args.strategy])
+        elif args.strategy == "dqn":
+            from dynamic.dqn import dqn as strategy
+        elif args.strategy == "rollout":
+            from dynamic.rollout import rollout as strategy
+        else:
+            raise ValueError(f"Invalid strategy: {args.strategy}")
 
-        probs = {"greedy": 100, "random": 50, "lazy": 0}
-        run_random(env, **vars(args), dispatch_prob=probs[args.strategy])
-
-    if args.strategy == "dqn":
-        from dynamic.dqn.run_dqn import run_dqn
-
-        run_dqn(env, **vars(args))
-
-    if args.strategy == "rollout":
-        from dynamic.run_rollout import run_rollout
-
-        run_rollout(env, **vars(args))
+        run_dispatch(env, dispatch_strategy=strategy, **vars(args))
 
 
 if __name__ == "__main__":

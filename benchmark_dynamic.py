@@ -11,6 +11,7 @@ import numpy as np
 from tqdm.contrib.concurrent import process_map
 
 import tools
+from dynamic.run_dispatch import run_dispatch
 
 
 def parse_args():
@@ -49,26 +50,20 @@ def solve(loc: str, instance_seed: int, **kwargs):
         from dynamic.run_oracle import run_oracle
 
         reward = -run_oracle(env, **kwargs)
-
-    elif kwargs["strategy"] in ["greedy", "random", "lazy"]:
-        from dynamic.run_random import run_random
-
-        probs = {"greedy": 100, "random": 50, "lazy": 0}
-        reward = -run_random(
-            env, **kwargs, dispatch_prob=probs[kwargs["strategy"]]
-        )
-
-    elif kwargs["strategy"] == "dqn":
-        from dynamic.dqn.run_dqn import run_dqn
-
-        reward = -run_dqn(env, **kwargs)
-    elif kwargs["strategy"] == "rollout":
-        from dynamic.run_rollout import run_rollout
-
-        reward = -run_rollout(env, **kwargs)
-
     else:
-        raise ValueError(f"Invalid strategy: {kwargs['strategy']}")
+        if kwargs["strategy"] in ["greedy", "random", "lazy"]:
+            from dynamic.random import random_dispatch
+
+            probs = {"greedy": 100, "random": 50, "lazy": 0}
+            strategy = random_dispatch(probs[kwargs["strategy"]])
+        elif kwargs["strategy"] == "dqn":
+            from dynamic.dqn import dqn as strategy
+        elif kwargs["strategy"] == "rollout":
+            from dynamic.rollout import rollout as strategy
+        else:
+            raise ValueError(f"Invalid strategy: {kwargs['strategy']}")
+
+        reward = -run_dispatch(env, dispatch_strategy=strategy, **kwargs)
 
     return (path.stem, instance_seed, reward, round(perf_counter() - start, 3))
 
