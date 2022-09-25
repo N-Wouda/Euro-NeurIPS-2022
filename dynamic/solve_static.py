@@ -31,10 +31,6 @@ def solve_static(
     rng = hgspy.XorShift128(seed=kwargs["seed"])
     pop = hgspy.Population(params, rng)
 
-    if initial_solutions is not None:
-        for sol in initial_solutions:
-            pop.add_individual(hgspy.Individual(params, sol))
-
     ls = hgspy.LocalSearch(params, rng)
 
     node_ops = [
@@ -72,17 +68,19 @@ def solve_static(
     else:
         stop = hgspy.stop.MaxIterations(max_iterations)
 
+    # HACK perform LS on the indiv operator before moving on
+    if initial_solutions is not None:
+        for sol in initial_solutions:
+            indiv = hgspy.Individual(params, sol)
+            ls(indiv)
+            pop.add_individual(indiv)
+
     res = algo.run(stop)
 
     best = res.get_best_found()
     routes = [route for route in best.get_routes() if route]
     cost = best.cost()
 
-    try:
-        assert np.isclose(
-            tools.validate_static_solution(instance, routes), cost
-        )
-    except:
-        breakpoint()
+    assert np.isclose(tools.validate_static_solution(instance, routes), cost)
 
     return routes, cost

@@ -5,7 +5,7 @@ import numpy as np
 from ..solve_static import solve_static
 from .sim_config import sim_config
 from .constants import (
-    SIM_STATIC_TLIM,
+    SIM_SOLVE_ITERS,
     SIM_TLIM_FACTOR,
     START_IDX,
     N_LOOKAHEAD,
@@ -29,9 +29,8 @@ def rollout(info, obs, rng):
     ep_inst = obs["epoch_instance"]
     start_time = obs["planning_starttime"]
 
-    sim_tlim = info["epoch_tlim"] * SIM_TLIM_FACTOR * 1000
+    sim_tlim = info["epoch_tlim"] * SIM_TLIM_FACTOR
     start = time.perf_counter()
-    until = (sim_tlim - SIM_STATIC_TLIM) / 1000
 
     # REVIEW maybe we need to include something about the route cost
     # alongside the delta cost. the delta cost is probably not a good
@@ -43,14 +42,17 @@ def rollout(info, obs, rng):
     postpone_costs = np.zeros(n_ep_requests, dtype=int)
 
     n_simulations = 0
-    while time.perf_counter() - start < until:
+
+    while time.perf_counter() - start < sim_tlim:
         sim_inst = simulate_instance(
             static_inst, ep_inst, N_LOOKAHEAD, start_time, rng
         )
 
         try:  # Simulations may be infeasible within TLIM
             # Sim_sol is has indices 1, ..., N
-            sim_sol, _ = solve_static(sim_inst, SIM_STATIC_TLIM, **sim_config)
+            sim_sol, _ = solve_static(
+                sim_inst, max_iterations=SIM_SOLVE_ITERS, **sim_config
+            )
 
             # req_sol has requests indices
             req_sol = utils.sol2ep(sim_sol, sim_inst, postpone_routes=False)
@@ -78,7 +80,6 @@ def rollout(info, obs, rng):
 
             n_simulations += 1
         except AssertionError as e:
-            # print(e)
             pass
 
     dispatch_fraction = dispatch_actions / np.maximum(1, n_simulations)
