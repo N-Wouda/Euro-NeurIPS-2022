@@ -97,7 +97,7 @@ def solve(loc: str, seed: int, **kwargs):
     return (
         path.stem,
         is_ok,
-        int(best.cost()),
+        int(cost),
         res.get_iterations(),
         round((datetime.now() - start).total_seconds(), 3),
     )

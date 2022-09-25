@@ -8,6 +8,7 @@ import re
 
 import numpy as np
 
+
 # https://stackoverflow.com/questions/26646362/numpy-array-is-not-json-serializable
 class NumpyJSONEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -162,6 +163,16 @@ def read_vrptw_solution(filename, return_extra=False):
 
 
 def read_vrplib(filename, rounded=True):
+    """
+    Read a VRPLIB instance from file and return an `instance` dict, containing
+    - 'is_depot': boolean np.array. True for depot; False otherwise.
+    - 'coords': np.array of locations (incl. depot)
+    - 'demands': np.array of location demands (incl. depot with demand zero)
+    - 'capacity': int of vehicle capacity
+    - 'time_windows': np.array of [l, u] time windows per client (incl. depot)
+    - 'service_times': np.array of service times at each client (incl. depot)
+    - 'duration_matrix': distance matrix between clients (incl. depot)
+    """
     loc = []
     demand = []
     mode = ''
@@ -240,6 +251,7 @@ def read_vrplib(filename, rounded=True):
         'service_times': np.array(service_t),
         'duration_matrix': np.array(duration_matrix) if len(duration_matrix) > 0 else None
     }
+
 
 def write_vrplib(filename, instance, name="problem", euclidean=False, is_vrptw=True):
     # LKH/VRP does not take floats (HGS seems to do)
