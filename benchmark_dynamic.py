@@ -1,9 +1,8 @@
 import argparse
 from collections import defaultdict
-from itertools import product
 from functools import partial
 from glob import glob
-from environment import VRPEnvironment
+from itertools import product
 from pathlib import Path
 from time import perf_counter
 
@@ -11,6 +10,7 @@ import numpy as np
 from tqdm.contrib.concurrent import process_map
 
 import tools
+from environment import VRPEnvironment
 
 
 def parse_args():
@@ -66,7 +66,7 @@ def solve(loc: str, instance_seed: int, **kwargs):
     else:
         raise ValueError(f"Invalid strategy: {kwargs['strategy']}")
 
-    return (path.stem, instance_seed, reward, round(perf_counter() - start, 3))
+    return path.stem, instance_seed, reward, round(perf_counter() - start, 3)
 
 
 def groupby_mean(data):

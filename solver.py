@@ -3,7 +3,6 @@ import sys
 
 import tools
 from environment import ControllerEnvironment, VRPEnvironment
-from strategies import STRATEGIES
 
 
 def parse_args():

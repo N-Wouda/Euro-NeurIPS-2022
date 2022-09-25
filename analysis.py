@@ -4,8 +4,8 @@ from functools import partial
 from glob import glob
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
 from tqdm.contrib.concurrent import process_map
 
@@ -119,7 +119,7 @@ def solve(loc: str, seed: int, **kwargs):
     return (
         path.stem,
         is_ok,
-        int(best.cost()),
+        int(cost),
         res.get_iterations(),
         finish,
         len(stats.incumbents()),

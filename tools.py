@@ -8,6 +8,7 @@ import re
 
 import numpy as np
 
+
 # https://stackoverflow.com/questions/26646362/numpy-array-is-not-json-serializable
 class NumpyJSONEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -250,6 +251,7 @@ def read_vrplib(filename, rounded=True):
         'service_times': np.array(service_t),
         'duration_matrix': np.array(duration_matrix) if len(duration_matrix) > 0 else None
     }
+
 
 def write_vrplib(filename, instance, name="problem", euclidean=False, is_vrptw=True):
     # LKH/VRP does not take floats (HGS seems to do)
