@@ -15,14 +15,9 @@ def solve_static(instance, time_limit=60, **kwargs):
 
     hgspy = tools.get_hgspy_module()
 
-    if "seed" not in kwargs:
-        kwargs["seed"] = 1
-
+    # TODO configs should be functions that take instance
     if "nbVeh" not in kwargs:
         kwargs["nbVeh"] = len(instance["coords"]) // 2 + 20
-
-    if "repairBooster" not in kwargs:
-        kwargs["repairBooster"] = 500
 
     config = hgspy.Config(**kwargs)
 

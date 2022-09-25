@@ -4,21 +4,12 @@ import numpy as np
 from numpy import concatenate as concat
 
 from .solve_static import solve_static
+from .configs import sim_config, dispatch_config
 import dynamic.utils as utils
 
 EPOCH_DURATION = 3600
 EPOCH_N_REQUESTS = 100
 START_IDX = 1000  # Dynamic instances have less than 1000 requests total
-
-# STATIC SOLVE CONFIG
-SIM_CONFIG = {
-    "generationSize": 20,
-    "minPopSize": 5,
-    "repairProbability": 100,
-    "repairBooster": 1000,
-    "nbGranular": 80,
-    "intensificationProbability": 0,
-}
 
 
 def rollout(ep_inst, static_inst, start_time, sim_tlim, rng):
@@ -45,9 +36,7 @@ def rollout(ep_inst, static_inst, start_time, sim_tlim, rng):
 
         try:
             # Sim_sol is has indices 1, ..., N
-            sim_sol, cost = solve_static(
-                sim_inst, sim_static_tlim, **SIM_CONFIG
-            )
+            sim_sol, _ = solve_static(sim_inst, sim_static_tlim, **sim_config)
 
             # req_sol has requests indices
             req_sol = utils.sol2ep(sim_sol, sim_inst, postpone_routes=False)
@@ -115,7 +104,7 @@ def run_rollout(env, **kwargs):
             static_info["end_epoch"],
         ]:
             dispatch_inst = ep_inst
-            sol, _ = solve_static(ep_inst, ep_tlim)
+            sol, _ = solve_static(ep_inst, ep_tlim, **dispatch_config)
             ep_sol = utils.sol2ep(sol, ep_inst)
         else:
             dispatch_inst = rollout(
@@ -126,7 +115,9 @@ def run_rollout(env, **kwargs):
                 rng=rng,
             )
 
-            sol, _ = solve_static(dispatch_inst, ep_tlim // 2)
+            sol, _ = solve_static(
+                dispatch_inst, ep_tlim // 2, **dispatch_config
+            )
             ep_sol = utils.sol2ep(sol, dispatch_inst)
 
         n_dispatch = len(dispatch_inst["coords"]) - 1
