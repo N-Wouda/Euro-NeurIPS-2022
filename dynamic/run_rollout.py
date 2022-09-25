@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 from numpy import concatenate as concat
 
@@ -14,7 +16,7 @@ SIM_CONFIG = {
     "minPopSize": 5,
     "repairProbability": 100,
     "repairBooster": 1000,
-    "nbGranular": 50,
+    "nbGranular": 80,
     "intensificationProbability": 0,
 }
 
@@ -28,11 +30,17 @@ def rollout(ep_inst, static_inst, start_time, sim_tlim, rng):
     dispatch_costs = np.zeros(n_ep_requests, dtype=int)
     postpone_costs = np.zeros(n_ep_requests, dtype=int)
 
-    sim_static_tlim = 250  # TODO make param, milliseconds
-    n_simulations = sim_tlim / sim_static_tlim
-    # print(n_simulations)
+    # REVIEW maybe we need to include something about the route cost
+    # alongside the delta cost. the delta cost is probably not a good
+    # enough indicator of how expensive a client is. We also need
+    # track something about how effective a route is used.
 
-    for _ in range(int(n_simulations)):
+    sim_static_tlim = 250  # TODO make param, milliseconds
+    start = time.perf_counter()
+    until = (sim_tlim - sim_static_tlim) / 1000
+
+    n_simulations = 0
+    while time.perf_counter() - start < until:
         sim_inst = simulate_instance(static_inst, ep_inst, 1, start_time, rng)
 
         try:
@@ -65,23 +73,24 @@ def rollout(ep_inst, static_inst, start_time, sim_tlim, rng):
                     else:
                         postpone_costs[idx] += delta
 
+            n_simulations += 1
         except AssertionError as e:
             # print(e)
             pass
 
-    # Take averages
-    dispatch_costs = dispatch_costs / np.maximum(1, dispatch_actions)
-    postpone_costs = postpone_costs / np.maximum(
+    mean_dispatch_costs = dispatch_costs / np.maximum(1, dispatch_actions)
+    mean_postpone_costs = postpone_costs / np.maximum(
         1, n_simulations - dispatch_actions
     )
     dispatch_fraction = dispatch_actions / np.maximum(1, n_simulations)
 
-    mask = np.full(True, n_ep_requests)
+    mask = np.full(n_ep_requests, True)
 
-    # Postpone clients that are often postponed and not must-dipatch
+    # Postpone clients that are often postponed and not must-dispatch
     threshold = 0.15  # TODO make parameter
     postpone = (dispatch_fraction <= threshold) & ~ep_inst["must_dispatch"]
     mask = np.where(postpone, False, mask)
+    mask[0] = True
 
     return utils.filter_instance(ep_inst, mask)
 
@@ -100,9 +109,14 @@ def run_rollout(env, **kwargs):
     while not done:
         ep_inst = observation["epoch_instance"]
 
-        # REVIEW include the number of future epochs in the rollout
-        if observation["current_epoch"] >= static_info["num_epochs"]:
+        # First and last epoch should be solved completely
+        if observation["current_epoch"] in [
+            static_info["start_epoch"],
+            static_info["end_epoch"],
+        ]:
             dispatch_inst = ep_inst
+            sol, _ = solve_static(ep_inst, ep_tlim)
+            ep_sol = utils.sol2ep(sol, ep_inst)
         else:
             dispatch_inst = rollout(
                 ep_inst,
@@ -112,13 +126,17 @@ def run_rollout(env, **kwargs):
                 rng=rng,
             )
 
-        sol, _ = solve_static(dispatch_inst, ep_tlim // 2)
-        ep_sol = utils.sol2ep(sol, dispatch_inst)
+            sol, _ = solve_static(dispatch_inst, ep_tlim // 2)
+            ep_sol = utils.sol2ep(sol, dispatch_inst)
 
         n_dispatch = len(dispatch_inst["coords"]) - 1
         n_requests = len(ep_inst["coords"]) - 1
         n_must_dispatch = sum(ep_inst["must_dispatch"])
         n_sol = len([x for route in ep_sol for x in route])
+        print(
+            f"Epoch: {observation['current_epoch']} / {static_info['end_epoch']}",
+            end=" - ",
+        )
         print(
             f"Dispatch: {n_dispatch} / {n_requests}, {n_must_dispatch=}, {n_sol=}"
         )

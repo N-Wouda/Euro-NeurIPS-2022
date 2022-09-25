@@ -57,7 +57,6 @@ def solve_static(instance, time_limit=60, **kwargs):
     algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
 
     crossover_ops = [
-        hgspy.crossover.broken_pairs_exchange,
         hgspy.crossover.selective_route_exchange,
     ]
 
