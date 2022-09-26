@@ -20,6 +20,11 @@ def solve_static(instance, time_limit=None, initial_solutions=None, **kwargs):
 
     rng = hgspy.XorShift128(seed=kwargs["seed"])
     pop = hgspy.Population(params, rng)
+
+    if initial_solutions is not None:
+        for sol in initial_solutions:
+            pop.add_individual(hgspy.Individual(params, sol))
+
     ls = hgspy.LocalSearch(params, rng)
 
     node_ops = [
@@ -53,14 +58,6 @@ def solve_static(instance, time_limit=None, initial_solutions=None, **kwargs):
         algo.add_crossover_operator(op)
 
     stop = hgspy.stop.MaxRuntime(time_limit)
-
-    # HACK perform LS on the indiv operator before moving on
-    if initial_solutions is not None:
-        for sol in initial_solutions:
-            indiv = hgspy.Individual(params, sol)
-            ls(indiv)
-            pop.add_individual(indiv)
-            print(indiv.cost(), indiv.is_feasible())
 
     res = algo.run(stop)
 
