@@ -2,7 +2,6 @@ import time
 
 import numpy as np
 
-from .configs import dispatch_config
 from .solve_static import solve_static
 import dynamic.utils as utils
 
@@ -11,7 +10,7 @@ def run_dispatch(env, dispatch_strategy, **kwargs):
     """
     Solve the dynamic VRPTW problem using the passed-in dispatching strategy.
 
-    ``strategy`` is a function that should take as inputs
+    ``dispatch_strategy`` is a function that should take as inputs
     - ``static_info``: static information, including base instance and number of epochs.
     - ``observation``: the observation of the current epoch.
     - ``rng``: a random number generator (same seed as static solver).
@@ -31,11 +30,7 @@ def run_dispatch(env, dispatch_strategy, **kwargs):
         dispatch_inst = dispatch_strategy(static_info, observation, rng)
         solve_tlim = round(ep_tlim - (time.perf_counter() - start))
 
-        sol, _ = solve_static(
-            dispatch_inst,
-            time_limit=solve_tlim,
-            **dispatch_config,
-        )
+        sol, _ = solve_static(dispatch_inst, time_limit=solve_tlim)
         ep_sol = utils.sol2ep(sol, dispatch_inst)
 
         ep_inst = observation["epoch_instance"]
