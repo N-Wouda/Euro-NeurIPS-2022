@@ -1,5 +1,4 @@
 from .solve_static import solve_static
-import tools
 
 
 def run_oracle(env, **kwargs):
