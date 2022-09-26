@@ -25,8 +25,8 @@ class GeneticAlgorithm
 
     Params &params;            // Problem parameters
     XorShift128 &rng;          // Random number generator
-    Population &population;    // Population
-    LocalSearch &localSearch;  // Local search structure
+    Population &population;
+    LocalSearch &localSearch;
 
     std::list<bool> loadFeas;  // load feasibility of recent individuals
     std::list<bool> timeFeas;  // time feasibility of recent individuals
@@ -46,6 +46,12 @@ class GeneticAlgorithm
      * add it if this succeeds.
      */
     void educate(Individual &indiv);
+
+    /**
+     * Registers the individual's load and time window feasibility. That data
+     * is later used to update the penalties.
+     */
+    void registerFeasibility(Individual const &indiv);
 
     /**
      * Updates the infeasibility penalties, based on the feasibility status of
