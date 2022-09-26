@@ -50,14 +50,18 @@ def solve(loc: str, instance_seed: int, **kwargs):
         from dynamic.run_oracle import run_oracle
 
         reward = -run_oracle(env, **kwargs)
+
+    elif kwargs["strategy"] == "dqn":
+        from dynamic.dqn.run_dqn import run_dqn
+
+        reward = -run_dqn(env, **kwargs)
+
     else:
         if kwargs["strategy"] in ["greedy", "random", "lazy"]:
             from dynamic.random import random_dispatch
 
             probs = {"greedy": 100, "random": 50, "lazy": 0}
             strategy = random_dispatch(probs[kwargs["strategy"]])
-        elif kwargs["strategy"] == "dqn":
-            from dynamic.dqn import dqn as strategy
         elif kwargs["strategy"] == "rollout":
             from dynamic.rollout import rollout as strategy
         else:
