@@ -65,7 +65,7 @@ def main():
         else:
             raise ValueError(f"Invalid strategy: {args.strategy}")
 
-        run_dispatch(env, dispatch_strategy=strategy, **vars(args))
+        print(run_dispatch(env, dispatch_strategy=strategy, **vars(args)))
 
 
 if __name__ == "__main__":

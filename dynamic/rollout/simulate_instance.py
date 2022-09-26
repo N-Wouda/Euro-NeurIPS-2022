@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import concatenate as concat
 
-from .constants import EPOCH_DURATION, EPOCH_N_REQUESTS, START_IDX
+from .constants import EPOCH_DURATION, EPOCH_N_REQUESTS, SIM_IDX
 
 
 def simulate_instance(info, obs, rng, n_lookahead=1):
@@ -18,7 +18,7 @@ def simulate_instance(info, obs, rng, n_lookahead=1):
     duration_matrix = static_inst["duration_matrix"]
     num_customers = len(static_inst["coords"]) - 1  # Exclude depot
 
-    # Put the epoch instance at the beginning, with epoch 0.
+    # Put the epoch instance at the beginning, with release time 0.
     req_idx = ep_instance["request_idx"]
     req_customer_idx = ep_instance["customer_idx"]
     req_tw = ep_instance["time_windows"]
@@ -64,8 +64,8 @@ def simulate_instance(info, obs, rng, n_lookahead=1):
         num_new_requests = is_feasible.sum()
 
         # Concatenate the new feasible requests to the current instance
-        # NOTE START_IDX is used to distinguish between known and simulated requests
-        new_req_idx = np.arange(num_new_requests) + len(req_idx) + START_IDX
+        # NOTE SIM_IDX is used to distinguish between known and simulated requests
+        new_req_idx = np.arange(num_new_requests) + len(req_idx) + SIM_IDX
         req_idx = concat((req_idx, new_req_idx))
 
         new_cust_idx = cust_idx[is_feasible]

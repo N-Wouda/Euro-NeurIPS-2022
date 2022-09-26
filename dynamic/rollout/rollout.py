@@ -6,7 +6,7 @@ from .constants import (
     SIM_SOLVE_ITERS,
     SIM_TLIM_FACTOR,
     SIM_CONFIG,
-    START_IDX,
+    SIM_IDX,
     N_LOOKAHEAD,
     POSTPONE_THRESHOLD,
 )
@@ -33,17 +33,17 @@ def rollout(info, obs, rng):
 
     # Statistics
     n_simulations = 0
-    dispatch_actions = np.zeros(n_requests, dtype=int)
+    dispatch_count = np.zeros(n_requests, dtype=int)
 
     while time.perf_counter() - start < sim_tlim:
         sim_inst = simulate_instance(info, obs, rng, N_LOOKAHEAD)
 
         # sim_sol is has indices 1, ..., N
-        sim_sol, _, is_feasible = solve_simulation(
+        sim_sol, _, is_feas = solve_simulation(
             sim_inst, SIM_SOLVE_ITERS, **SIM_CONFIG
         )
 
-        if not is_feasible:
+        if not is_feas:
             continue
 
         # req_sol has requests indices
@@ -51,20 +51,20 @@ def rollout(info, obs, rng):
 
         for route_idx, sim_route in enumerate(sim_sol):
             # Routes that contain simulated requests are postponed
-            if any(req_sol[route_idx] >= START_IDX):
+            if any(req_sol[route_idx] >= SIM_IDX):
                 continue
 
-            dispatch_actions[sim_route] += 1
+            dispatch_count[sim_route] += 1
 
         n_simulations += 1
 
     # Postpone requests that are often postponed in simulations
-    dispatch_fraction = dispatch_actions / np.maximum(1, n_simulations)
+    dispatch_fraction = dispatch_count / np.maximum(1, n_simulations)
     postpone = dispatch_fraction <= 1 - POSTPONE_THRESHOLD
     non_urgent = ~ep_inst["must_dispatch"]
-    non_depot = ~ep_inst["is_depot"]
 
     dispatch = np.full(n_requests, True)
-    dispatch = np.where(postpone & non_urgent & non_depot, False, dispatch)
+    dispatch = np.where(postpone & non_urgent, False, dispatch)
+    dispatch[0] = True  # depot
 
     return utils.filter_instance(ep_inst, dispatch)
