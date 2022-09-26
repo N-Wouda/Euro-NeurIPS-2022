@@ -2,7 +2,7 @@ import numpy as np
 import tools
 
 
-def solve_static(instance, time_limit=None, initial_solutions=None, **kwargs):
+def solve_static(instance, time_limit=60, initial_solutions=None, **kwargs):
     # Return empty solution if the instance contains no clients
     if instance["coords"].shape[0] <= 1:
         return [], 0
