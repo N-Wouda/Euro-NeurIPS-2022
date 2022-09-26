@@ -27,10 +27,7 @@ def rollout(info, obs, rng):
     start = time.perf_counter()
 
     # Parameters
-    static_inst = info["dynamic_context"]
     ep_inst = obs["epoch_instance"]
-
-    planning_start_time = obs["planning_starttime"]
     n_requests = len(ep_inst["coords"])
     sim_tlim = info["epoch_tlim"] * SIM_TLIM_FACTOR
 
@@ -39,9 +36,7 @@ def rollout(info, obs, rng):
     dispatch_actions = np.zeros(n_requests, dtype=int)
 
     while time.perf_counter() - start < sim_tlim:
-        sim_inst = simulate_instance(
-            static_inst, ep_inst, N_LOOKAHEAD, planning_start_time, rng
-        )
+        sim_inst = simulate_instance(info, obs, rng, N_LOOKAHEAD)
 
         # sim_sol is has indices 1, ..., N
         sim_sol, _, is_feasible = solve_simulation(
