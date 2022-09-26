@@ -33,19 +33,6 @@ def run_dispatch(env, dispatch_strategy, **kwargs):
         sol, _ = solve_static(dispatch_inst, time_limit=solve_tlim)
         ep_sol = utils.sol2ep(sol, dispatch_inst)
 
-        ep_inst = observation["epoch_instance"]
-        n_dispatch = len(dispatch_inst["coords"]) - 1
-        n_requests = len(ep_inst["coords"]) - 1
-        n_must_dispatch = sum(ep_inst["must_dispatch"])
-        n_sol = len([x for route in ep_sol for x in route])
-        print(
-            f"Epoch: {observation['current_epoch']} / {static_info['end_epoch']}",
-            end=" - ",
-        )
-        print(
-            f"Dispatch: {n_dispatch} / {n_requests}, {n_must_dispatch=}, {n_sol=}"
-        )
-
         observation, reward, done, info = env.step(ep_sol)
         assert info["error"] is None, f"{info['error']}"
 
