@@ -64,13 +64,7 @@ def solve(loc: str, seed: int, **kwargs):
 
     algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
 
-    crossover_ops = [
-        hgspy.crossover.broken_pairs_exchange,
-        hgspy.crossover.selective_route_exchange,
-    ]
-
-    for op in crossover_ops:
-        algo.add_crossover_operator(op)
+    algo.add_crossover_operator(hgspy.crossover.selective_route_exchange)
 
     if "phase" in kwargs and kwargs["phase"]:
         t_lim = tools.static_time_limit(tools.name2size(loc), kwargs["phase"])

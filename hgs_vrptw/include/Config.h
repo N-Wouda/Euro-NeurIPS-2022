@@ -56,9 +56,6 @@ struct Config
     // that even small circle sectors have 'overlap'
     int minCircleSectorSize = static_cast<int>(15 / 360. * 65536);
 
-    // Percentage of customers to remove in brokenPairsExchange
-    size_t destroyPct = 20;
-
     explicit Config(int seed = 0,
                     size_t nbIter = 10'000,
                     int timeLimit = INT_MAX,
@@ -82,8 +79,7 @@ struct Config
                     int weightTimeWarp = 10,
                     size_t intensificationProbability = 25,
                     int circleSectorOverlapToleranceDegrees = 0,
-                    int minCircleSectorSizeDegrees = 15,
-                    size_t destroyPct = 20)
+                    int minCircleSectorSizeDegrees = 15)
         : seed(seed),
           nbIter(nbIter),
           timeLimit(timeLimit),
@@ -105,8 +101,7 @@ struct Config
           nbGranular(nbGranular),
           weightWaitTime(weightWaitTime),
           weightTimeWarp(weightTimeWarp),
-          intensificationProbability(intensificationProbability),
-          destroyPct(destroyPct)
+          intensificationProbability(intensificationProbability)
     {
         auto const overlap = circleSectorOverlapToleranceDegrees / 360. * 65536;
         circleSectorOverlapTolerance = static_cast<int>(overlap);

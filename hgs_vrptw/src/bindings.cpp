@@ -217,7 +217,6 @@ PYBIND11_MODULE(hgspy, m)
     // Crossover operators (as a submodule)
     py::module xOps = m.def_submodule("crossover");
 
-    xOps.def("broken_pairs_exchange", &brokenPairsExchange);
     xOps.def("selective_route_exchange", &selectiveRouteExchange);
 
     // Local search operators (as a submodule)
