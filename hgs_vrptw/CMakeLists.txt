@@ -5,6 +5,7 @@ project(hgs_vrptw
         LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_OSX_ARCHITECTURES "x86_64")
 
 # Ignore unused parameters, because the LS operators depend on this (sometimes
 # the parameters are used, but not by every operator)
