@@ -50,7 +50,7 @@ def run_dqn(env, **kwargs):
         data = {"observation": observation, "static_info": static_info}
         dispatch_inst = policy({**ep_inst, **data}, rng)
 
-        sol, _ = solve_static(dispatch_inst, ep_tlim - 1)
+        sol, _ = solve_static(dispatch_inst, ep_tlim + 1)
         ep_sol = dynamic_utils.sol2ep(sol, ep_inst)
 
         # Submit solution to environment
