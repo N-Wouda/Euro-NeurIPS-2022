@@ -9,10 +9,9 @@
 #include "StoppingCriterion.h"
 #include "XorShift128.h"
 
-#include <array>
 #include <functional>
-#include <list>
 #include <unordered_set>
+#include <vector>
 
 // Class to run the genetic algorithm, which incorporates functionality of
 // population management, doing crossovers and updating parameters.
@@ -23,13 +22,13 @@ class GeneticAlgorithm
         Params const &,
         XorShift128 &)>;
 
-    Params &params;            // Problem parameters
-    XorShift128 &rng;          // Random number generator
+    Params &params;    // Problem parameters
+    XorShift128 &rng;  // Random number generator
     Population &population;
     LocalSearch &localSearch;
 
-    std::list<bool> loadFeas;  // load feasibility of recent individuals
-    std::list<bool> timeFeas;  // time feasibility of recent individuals
+    std::vector<bool> loadFeas;  // load feasibility of recent individuals
+    std::vector<bool> timeFeas;  // time feasibility of recent individuals
 
     std::vector<xOp> operators;  // crossover operators
 
@@ -46,12 +45,6 @@ class GeneticAlgorithm
      * add it if this succeeds.
      */
     void educate(Individual &indiv);
-
-    /**
-     * Registers the individual's load and time window feasibility. That data
-     * is later used to update the penalties.
-     */
-    void registerFeasibility(Individual const &indiv);
 
     /**
      * Updates the infeasibility penalties, based on the feasibility status of
