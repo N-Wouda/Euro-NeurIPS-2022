@@ -34,6 +34,9 @@ void LocalSearch::search()
     lastModified = std::vector<int>(params.nbVehicles, 0);
     nbMoves = 0;
 
+    std::shuffle(nodeOps.begin(), nodeOps.end(), rng);
+    std::shuffle(routeOps.begin(), routeOps.end(), rng);
+
     // At least two iterations as empty routes are not evaluated in the first
     for (int step = 0; step <= 1 || !searchCompleted; ++step)
     {
