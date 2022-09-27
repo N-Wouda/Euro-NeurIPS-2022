@@ -128,28 +128,7 @@ bool LocalSearch::applyNodeOperators(Node *U, Node *V)
 
 bool LocalSearch::applyRouteOperators(Route *U, Route *V)
 {
-    auto score = -0.45;
-    score += 0.5 * U->hasTimeWarp();
-    score += 0.37 * V->hasTimeWarp();
-    score += 0.78 * U->hasExcessCapacity();
-    score += 0.66 * V->hasExcessCapacity();
-    score += 0.59 * U->size() / static_cast<double>(params.nbClients + 1);
-    score += -1.74 * V->size() / static_cast<double>(params.nbClients + 1);
-    score += 0.24 * (V->angleCenter - U->angleCenter);
-
-    auto maxUDist = 0;
-    for (auto *node = n(U->depot); node != U->depot; node = n(node))
-        maxUDist = std::max(maxUDist, params.dist(0, node->client));
-
-    score += (-.3 * maxUDist) / params.maxDist();
-
-    auto maxVDist = 0;
-    for (auto *node = n(V->depot); node != V->depot; node = n(node))
-        maxVDist = std::max(maxVDist, params.dist(0, node->client));
-
-    score += (1.04 * maxVDist) / params.maxDist();
-
-    if (score < 0)
+    if (!shouldApplyRouteOperators(U, V))
         return false;
 
     for (auto op : routeOps)
@@ -162,6 +141,32 @@ bool LocalSearch::applyRouteOperators(Route *U, Route *V)
         }
 
     return false;
+}
+
+bool LocalSearch::shouldApplyRouteOperators(Route *U, Route *V) const
+{
+    auto score = -0.45;
+    score += 0.50 * U->hasTimeWarp();
+    score += 0.37 * V->hasTimeWarp();
+    score += 0.78 * U->hasExcessCapacity();
+    score += 0.66 * V->hasExcessCapacity();
+    score += (0.59 * U->size()) / (params.nbClients + 1);
+    score += (-1.74 * V->size()) / (params.nbClients + 1);
+    score += 0.25 * (V->angleCenter - U->angleCenter);
+
+    auto maxUDist = 0;
+    for (auto *node = n(U->depot); node != U->depot; node = n(node))
+        maxUDist = std::max(maxUDist, params.dist(0, node->client));
+
+    score += (-.30 * maxUDist) / params.maxDist();
+
+    auto maxVDist = 0;
+    for (auto *node = n(V->depot); node != V->depot; node = n(node))
+        maxVDist = std::max(maxVDist, params.dist(0, node->client));
+
+    score += (1.04 * maxVDist) / params.maxDist();
+
+    return score >= 0;
 }
 
 void LocalSearch::update(Route *U, Route *V)
