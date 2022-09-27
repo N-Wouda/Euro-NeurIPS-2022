@@ -107,8 +107,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("weightTimeWarp") = 10,
              py::arg("intensificationProbability") = 25,
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
-             py::arg("minCircleSectorSizeDegrees") = 15,
-             py::arg("destroyPct") = 20)
+             py::arg("minCircleSectorSizeDegrees") = 15)
         .def_readonly("seed", &Config::seed)
         .def_readonly("nbIter", &Config::nbIter)
         .def_readonly("timeLimit", &Config::timeLimit)
@@ -132,8 +131,7 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("weightTimeWarp", &Config::weightTimeWarp)
         .def_readonly("circleSectorOverlapTolerance",
                       &Config::circleSectorOverlapTolerance)
-        .def_readonly("minCircleSectorSize", &Config::minCircleSectorSize)
-        .def_readonly("destroyPct", &Config::destroyPct);
+        .def_readonly("minCircleSectorSize", &Config::minCircleSectorSize);
 
     py::class_<Params>(m, "Params")
         .def(py::init<Config const &,
