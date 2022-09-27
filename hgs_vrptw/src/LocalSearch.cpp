@@ -128,33 +128,26 @@ bool LocalSearch::applyNodeOperators(Node *U, Node *V)
 
 bool LocalSearch::applyRouteOperators(Route *U, Route *V)
 {
-    // TODO decide on numbers/features, move this somewhere else
-
-    auto score = -0.24;
-    score += 0.14 * U->hasTimeWarp();
-    score += 0.12 * V->hasTimeWarp();
-    score += 0.19 * U->hasExcessCapacity();
-    score += 0.12 * V->hasExcessCapacity();
-    score += -0.01 * U->size() / static_cast<double>(params.nbClients + 1);
-    score += -0.03 * V->size() / static_cast<double>(params.nbClients + 1);
+    auto score = -0.45;
+    score += 0.5 * U->hasTimeWarp();
+    score += 0.37 * V->hasTimeWarp();
+    score += 0.78 * U->hasExcessCapacity();
+    score += 0.66 * V->hasExcessCapacity();
+    score += 0.59 * U->size() / static_cast<double>(params.nbClients + 1);
+    score += -1.74 * V->size() / static_cast<double>(params.nbClients + 1);
     score += 0.24 * (V->angleCenter - U->angleCenter);
 
-    auto dist = INT_MAX;
+    auto maxUDist = 0;
+    for (auto *node = n(U->depot); node != U->depot; node = n(node))
+        maxUDist = std::max(maxUDist, params.dist(0, node->client));
 
-    for (size_t uIdx = 0; uIdx != U->size(); ++uIdx)
-        for (size_t vIdx = 0; vIdx != V->size(); ++vIdx)
-        {
-            auto *nodeU = (*U)[uIdx + 1];
-            auto *nodeV = (*V)[vIdx + 1];
+    score += (-.3 * maxUDist) / params.maxDist();
 
-            if (params.dist(nodeU->client, nodeV->client) < dist)
-                dist = params.dist(nodeU->client, nodeV->client);
+    auto maxVDist = 0;
+    for (auto *node = n(V->depot); node != V->depot; node = n(node))
+        maxVDist = std::max(maxVDist, params.dist(0, node->client));
 
-            if (params.dist(nodeV->client, nodeU->client) < dist)
-                dist = params.dist(nodeV->client, nodeU->client);
-        }
-
-    score += -0.85 * dist / static_cast<double>(params.maxDist());
+    score += (1.04 * maxVDist) / params.maxDist();
 
     if (score < 0)
         return false;
