@@ -31,44 +31,43 @@ def simulate_instance(info, obs, rng, n_lookahead=1):
 
     # These are unnormalized time windows and release times, which are used to
     # determine request feasibility. Will be clipped later.
-    new_tw = static_inst["time_windows"][tw_idx]
-    new_epochs = np.repeat(np.arange(1, max_lookahead + 1), EPOCH_N_REQUESTS)
-    new_release = start_time + new_epochs * EPOCH_DURATION
-    new_demand = static_inst["demands"][demand_idx]
-    new_service = static_inst["service_times"][service_idx]
+    sim_tw = static_inst["time_windows"][tw_idx]
+    sim_epochs = np.repeat(np.arange(1, max_lookahead + 1), EPOCH_N_REQUESTS)
+    sim_release = start_time + sim_epochs * EPOCH_DURATION
+    sim_demand = static_inst["demands"][demand_idx]
+    sim_service = static_inst["service_times"][service_idx]
 
     # Earliest arrival is release time + drive time or earliest time window.
     earliest_arrival = np.maximum(
-        new_release + duration_matrix[0, cust_idx],
-        new_tw[:, 0],
+        sim_release + duration_matrix[0, cust_idx],
+        sim_tw[:, 0],
     )
 
     earliest_return_at_depot = (
-        earliest_arrival + new_service + duration_matrix[cust_idx, 0]
+        earliest_arrival + sim_service + duration_matrix[cust_idx, 0]
     )
 
-    is_feasible = (earliest_arrival <= new_tw[:, 1]) & (
+    is_feasible = (earliest_arrival <= sim_tw[:, 1]) & (
         earliest_return_at_depot <= static_inst["time_windows"][0, 1]
     )
 
     # Concatenate the new feasible requests to the epoch instance
-    # NOTE SIM_IDX is used to distinguish between known and simulated requests
-    new_req_idx = np.arange(is_feasible.sum()) + SIM_IDX
-    req_idx = concat((ep_inst["request_idx"], new_req_idx))
+    req_customer_idx = concat((ep_inst["customer_idx"], cust_idx[is_feasible]))
 
-    new_cust_idx = cust_idx[is_feasible]
-    req_customer_idx = concat((ep_inst["customer_idx"], new_cust_idx))
+    # NOTE Simulated request indices start from SIM_IDX
+    sim_req_idx = np.arange(is_feasible.sum()) + SIM_IDX
+    req_idx = concat((ep_inst["request_idx"], sim_req_idx))
 
     # Renormalize TW and release to start_time, and clip the past
-    new_tw = np.clip(new_tw - start_time, a_min=0, a_max=None)
-    req_tw = concat((ep_inst["time_windows"], new_tw[is_feasible]))
+    sim_tw = np.clip(sim_tw - start_time, a_min=0, a_max=None)
+    req_tw = concat((ep_inst["time_windows"], sim_tw[is_feasible]))
 
     ep_release = np.zeros(len(ep_inst["coords"]), dtype=int)
-    new_release = np.clip(new_release - start_time, a_min=0, a_max=None)
-    req_release = concat((ep_release, new_release[is_feasible]))
+    sim_release = np.clip(sim_release - start_time, a_min=0, a_max=None)
+    req_release = concat((ep_release, sim_release[is_feasible]))
 
-    req_demand = concat((ep_inst["demands"], new_demand[is_feasible]))
-    req_service = concat((ep_inst["service_times"], new_service[is_feasible]))
+    req_demand = concat((ep_inst["demands"], sim_demand[is_feasible]))
+    req_service = concat((ep_inst["service_times"], sim_service[is_feasible]))
 
     sim_instance = {
         "is_depot": static_inst["is_depot"][req_customer_idx],
