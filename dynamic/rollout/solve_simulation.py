@@ -46,10 +46,10 @@ def solve_simulation(instance, max_iterations=None, **kwargs):
 
     try:
         actual_cost = tools.validate_static_solution(instance, routes)
-        is_feasible = "Y"
+        is_feasible = True
 
         assert np.isclose(actual_cost, cost), "Could not validate objective."
     except AssertionError:
-        is_feasible = "N"
+        is_feasible = False
 
     return routes, cost, is_feasible
