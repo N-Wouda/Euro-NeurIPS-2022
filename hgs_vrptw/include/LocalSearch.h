@@ -42,9 +42,9 @@ class LocalSearch
     // Export the LS solution back into an individual
     Individual exportIndividual();
 
-    [[nodiscard]] bool applyNodeOperators(Node *U, Node *V);
+    [[nodiscard]] bool applyNodeOps(Node *U, Node *V);
 
-    [[nodiscard]] bool applyRouteOperators(Route *U, Route *V);
+    [[nodiscard]] bool applyRouteOps(Route *U, Route *V);
 
     // Updates solution state after an improving local search move
     void update(Route *U, Route *V);
@@ -53,7 +53,7 @@ class LocalSearch
     void search();
 
     // Determines whether we should apply the route operators to routes U and V
-    bool shouldApplyRouteOperators(Route *U, Route *V) const;
+    bool shouldApplyRouteOps(Route *U, Route *V) const;
 
 public:
     /**
