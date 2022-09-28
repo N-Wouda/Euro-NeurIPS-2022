@@ -102,6 +102,9 @@ void LocalSearch::search()
                     if (step > 0 && lastModifiedRoute <= lastTested)
                         continue;
 
+                    if (!shouldApplyRouteOperators(U, V))
+                        continue;
+
                     if (applyRouteOperators(&U, &V))
                         continue;
                 }
@@ -128,9 +131,6 @@ bool LocalSearch::applyNodeOperators(Node *U, Node *V)
 
 bool LocalSearch::applyRouteOperators(Route *U, Route *V)
 {
-    if (!shouldApplyRouteOperators(U, V))
-        return false;
-
     for (auto op : routeOps)
         if (op->evaluate(U, V) < 0)
         {
