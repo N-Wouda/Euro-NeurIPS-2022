@@ -71,6 +71,6 @@ def solve_static(instance, time_limit=60, initial_solutions=(), **kwargs):
     routes = [route for route in best.get_routes() if route]
     cost = best.cost()
 
-    assert np.isclose(tools.validate_static_solution(instance, routes), cost)
+    assert best.is_feasible()
 
     return routes, cost
