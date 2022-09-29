@@ -52,9 +52,6 @@ class LocalSearch
     // Performs the actual local search procedure
     void search();
 
-    // Determines whether we should apply the route operators to routes U and V
-    bool shouldApplyRouteOps(Route *U, Route *V) const;
-
 public:
     /**
      * Adds a local search operator that works on node/client pairs U and V.
