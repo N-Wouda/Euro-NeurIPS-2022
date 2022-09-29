@@ -1,15 +1,16 @@
 import argparse
+import numpy as np
+
+import tools
+
 from collections import defaultdict
 from functools import partial
 from glob import glob
 from itertools import product
 from pathlib import Path
 from time import perf_counter
-
-import numpy as np
 from tqdm.contrib.concurrent import process_map
 
-import tools
 from dynamic.run_dispatch import run_dispatch
 from environment import VRPEnvironment
 
@@ -21,9 +22,7 @@ def parse_args():
     parser.add_argument("--solver_seed", type=int, default=1)
     parser.add_argument("--num_procs", type=int, default=4)
     parser.add_argument("--strategy", type=str, default="greedy")
-    parser.add_argument(
-        "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
-    )
+    parser.add_argument("--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt")
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--epoch_tlim", type=int)
@@ -35,53 +34,60 @@ def parse_args():
 def solve(loc: str, instance_seed: int, **kwargs):
     path = Path(loc)
 
-    if "phase" in kwargs and kwargs["phase"]:
-        tlim = 60 if kwargs["phase"] == "quali" else 120
+    if kwargs.get("phase") is not None:
+        if kwargs["phase"] == "quali":
+            tlim = 60
+        elif kwargs["phase"] == "final":
+            tlim = 120
+        else:
+            raise NotImplementedError(f"Invalid phase: {kwargs['phase']}")
     else:
         tlim = kwargs["epoch_tlim"]
 
-    env = VRPEnvironment(
-        seed=instance_seed, instance=tools.read_vrplib(path), epoch_tlim=tlim
-    )
+    env = VRPEnvironment(seed=instance_seed, instance=tools.read_vrplib(path), epoch_tlim=tlim)
 
     start = perf_counter()
 
     if kwargs["strategy"] == "oracle":
         from dynamic.run_oracle import run_oracle
-
-        reward = -run_oracle(env, **kwargs)
+        costs = run_oracle(env, **kwargs)
 
     elif kwargs["strategy"] == "dqn":
         from dynamic.dqn.run_dqn import run_dqn
-
-        reward = -run_dqn(env, **kwargs)
+        costs = run_dqn(env, **kwargs)
 
     else:
         if kwargs["strategy"] in ["greedy", "random", "lazy"]:
             from dynamic.random import random_dispatch
-
             probs = {"greedy": 100, "random": 50, "lazy": 0}
             strategy = random_dispatch(probs[kwargs["strategy"]])
+
         elif kwargs["strategy"] == "rollout":
             from dynamic.rollout import rollout as strategy
+
         else:
-            raise ValueError(f"Invalid strategy: {kwargs['strategy']}")
+            raise NotImplementedError(f"Invalid strategy: {kwargs['strategy']}")
 
-        reward = -run_dispatch(env, dispatch_strategy=strategy, **kwargs)
+        costs = run_dispatch(env, dispatch_strategy=strategy, **kwargs)
 
-    return path.stem, instance_seed, reward, round(perf_counter() - start, 3)
+    dtime = round(perf_counter() - start, 3)
+
+    return path.stem, instance_seed, -costs, dtime
 
 
 def groupby_mean(data):
-    rewards, runtimes = defaultdict(list), defaultdict(list)
+    n_items = defaultdict(int)
+    rewards = defaultdict(int)
+    runtimes = defaultdict(int)
 
-    for (inst, _, reward, runtime) in data:
-        rewards[inst].append(reward)
-        runtimes[inst].append(runtime)
+    for inst, _, reward, runtime in data:
+        n_items[inst] += 1
+        rewards[inst] += reward
+        runtimes[inst] += runtime
 
     averaged = [
-        (inst, np.mean(rewards[inst]), np.mean(runtimes[inst]).round(3))
-        for inst in rewards.keys()
+        (inst, round(rewards[inst] / n), round(runtimes[inst] / n, 3))
+        for inst, n in n_items.items()
     ]
 
     dtypes = [
@@ -90,7 +96,7 @@ def groupby_mean(data):
         ("time", float),
     ]
 
-    return np.array(averaged, dtype=dtypes)
+    return np.asarray(averaged, dtype=dtypes)
 
 
 def main():
@@ -108,6 +114,7 @@ def main():
         "Avg. reward",
         "Time (s)",
     ]
+
     table = tools.tabulate(headers, data)
 
     print("\n", table, "\n", sep="")

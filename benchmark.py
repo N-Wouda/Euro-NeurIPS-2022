@@ -1,13 +1,13 @@
 import argparse
-from datetime import datetime
+import numpy as np
+
+import tools
+
 from functools import partial
 from glob import glob
 from pathlib import Path
-
-import numpy as np
+from time import perf_counter
 from tqdm.contrib.concurrent import process_map
-
-import tools
 
 hgspy = tools.get_hgspy_module()
 
@@ -17,9 +17,7 @@ def parse_args():
 
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--num_procs", type=int, default=4)
-    parser.add_argument(
-        "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
-    )
+    parser.add_argument("--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt")
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--max_runtime", type=int)
@@ -33,7 +31,7 @@ def solve(loc: str, seed: int, **kwargs):
     path = Path(loc)
 
     instance = tools.read_vrplib(path)
-    start = datetime.now()
+    start = perf_counter()
 
     config = hgspy.Config(seed=seed, nbVeh=tools.n_vehicles_bin_pack(instance))
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
@@ -73,10 +71,10 @@ def solve(loc: str, seed: int, **kwargs):
     for op in crossover_ops:
         algo.add_crossover_operator(op)
 
-    if "phase" in kwargs and kwargs["phase"]:
+    if kwargs.get("phase") is not None:
         t_lim = tools.static_time_limit(tools.name2size(loc), kwargs["phase"])
         stop = hgspy.stop.MaxRuntime(t_lim)
-    elif "max_runtime" in kwargs and kwargs["max_runtime"]:
+    elif kwargs.get("max_runtime") is not None:
         stop = hgspy.stop.MaxRuntime(kwargs["max_runtime"])
     else:
         stop = hgspy.stop.MaxIterations(kwargs["max_iterations"])
@@ -100,7 +98,7 @@ def solve(loc: str, seed: int, **kwargs):
         is_ok,
         int(cost),
         res.get_iterations(),
-        round((datetime.now() - start).total_seconds(), 3),
+        round(perf_counter() - start, 3),
     )
 
 
@@ -120,7 +118,8 @@ def main():
         ("iters", int),
         ("time", float),
     ]
-    data = np.array(data, dtype=dtypes)
+
+    data = np.asarray(data, dtype=dtypes)
 
     headers = [
         "Instance",
@@ -129,6 +128,7 @@ def main():
         "Iters. (#)",
         "Time (s)",
     ]
+
     table = tools.tabulate(headers, data)
 
     print("\n", table, "\n", sep="")
