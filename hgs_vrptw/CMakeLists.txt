@@ -23,6 +23,4 @@ include_directories(include/operators)
 include_directories(include/stop)
 
 add_subdirectory(extern)
-
 add_subdirectory(src)
-add_subdirectory(test)

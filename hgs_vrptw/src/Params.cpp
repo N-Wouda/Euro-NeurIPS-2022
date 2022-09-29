@@ -318,8 +318,8 @@ Params::Params(Config const &config, std::string const &instPath)
             throw std::runtime_error("Vehicle capacity is undefined");
     }
 
-    int maxDist = dist_.max();
-    nbVehicles = (config.nbVeh >= nbClients ? nbClients : config.nbVeh);
+    nbVehicles = config.nbVeh >= nbClients ? nbClients : config.nbVeh;
+    maxDist_ = dist_.max();
 
     // Calculate, for all vertices, the correlation for the nbGranular closest
     // vertices
@@ -327,7 +327,7 @@ Params::Params(Config const &config, std::string const &instPath)
 
     // Safeguards to avoid possible numerical instability in case of instances
     // containing arbitrarily small or large numerical values
-    if (maxDist < 0.1 || maxDist > 100000)
+    if (maxDist_ < 0.1 || maxDist_ > 100000)
     {
         throw std::runtime_error(
             "The distances are of very small or large scale. This could impact "
@@ -347,7 +347,7 @@ Params::Params(Config const &config, std::string const &instPath)
     }
 
     // A reasonable scale for the initial values of the penalties
-    penaltyCapacity = std::max(1, std::min(1000, maxDist / maxDemand));
+    penaltyCapacity = std::max(1, std::min(1000, maxDist_ / maxDemand));
 
     // Initial parameter values of this parameter is not argued
     penaltyTimeWarp = static_cast<int>(config.initialTimeWarpPenalty);
@@ -372,9 +372,11 @@ Params::Params(Config const &config,
         for (size_t j = 0; j != distMat[i].size(); ++j)
             dist(i, j) = distMat[i][j];
 
+    maxDist_ = dist_.max();
+
     // A reasonable scale for the initial values of the penalties
     int maxDemand = *std::max_element(demands.begin(), demands.end());
-    penaltyCapacity = std::max(1, std::min(1000, dist_.max() / maxDemand));
+    penaltyCapacity = std::max(1, std::min(1000, maxDist_ / maxDemand));
 
     // Initial parameter values of this parameter is not argued
     penaltyTimeWarp = static_cast<int>(config.initialTimeWarpPenalty);
