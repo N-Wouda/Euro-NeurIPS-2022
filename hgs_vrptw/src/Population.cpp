@@ -111,7 +111,7 @@ void Population::restart()
      feasible.resize(std::min(params.config.nbKeepOnRestart, feasible.size())); 
      infeasible.clear(); 
     
-     generatePopulation(params.config.minimumPopulationSize);
+     generatePopulation(params.config.minPopSize);
  } 
 
 Individual const *Population::getBinaryTournament()
