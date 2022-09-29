@@ -62,7 +62,7 @@ def rollout(info, obs, rng):
     dispatch = (
         ep_inst["is_depot"]
         | ep_inst["must_dispatch"]
-        | (dispatch_fraction > DISPATCH_THRESHOLD)
+        | (dispatch_fraction >= DISPATCH_THRESHOLD)
     )
 
     return utils.filter_instance(ep_inst, dispatch)
