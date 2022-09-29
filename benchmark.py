@@ -9,6 +9,8 @@ from tqdm.contrib.concurrent import process_map
 
 import tools
 
+hgspy = tools.get_hgspy_module()
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -30,7 +32,6 @@ def parse_args():
 def solve(loc: str, seed: int, **kwargs):
     path = Path(loc)
 
-    hgspy = tools.get_hgspy_module()
     instance = tools.read_vrplib(path)
     start = datetime.now()
 
