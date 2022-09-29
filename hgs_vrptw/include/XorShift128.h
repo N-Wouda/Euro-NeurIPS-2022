@@ -2,6 +2,8 @@
 #define XORSHIFT128_H
 
 #include <climits>
+#include <iosfwd>
+#include <type_traits>
 
 // This is a Xorshift random number generators, also called shift-register
 // generators, which is a pseudorandom number generators. It generates the next
@@ -57,7 +59,11 @@ public:
     /**
      * Returns a random integer in the range [0, high).
      */
-    inline result_type randint(int high) { return operator()() % high; }
+    template <typename T> result_type randint(T high)
+    {
+        static_assert(std::is_integral<T>::value);
+        return operator()() % high;
+    }
 };
 
 #endif
