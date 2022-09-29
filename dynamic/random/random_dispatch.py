@@ -18,5 +18,5 @@ def _dispatch_decision(info, observation, rng, prob):
     """
     instance = observation["epoch_instance"]
     disp_now = rng.random(instance["must_dispatch"].shape) < prob
-    disp_idcs = instance["is_depot"] | instance["must_dispatch"] | disp_now
-    return utils.filter_instance(instance, disp_idcs)
+    disp_idx = instance["is_depot"] | instance["must_dispatch"] | disp_now
+    return utils.filter_instance(instance, disp_idx)

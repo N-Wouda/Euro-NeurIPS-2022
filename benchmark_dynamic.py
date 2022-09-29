@@ -51,7 +51,7 @@ def solve(loc: str, instance_seed: int, **kwargs):
     else:
         if kwargs["strategy"] in ["greedy", "random", "lazy"]:
             from dynamic.random import random_dispatch
-            probs = {"greedy": 100, "random": 50, "lazy": 0}
+            probs = {"greedy": 1, "random": .5, "lazy": 0}
             strategy = random_dispatch(probs[kwargs["strategy"]])
 
         elif kwargs["strategy"] == "rollout":
