@@ -13,6 +13,10 @@ void LocalSearch::operator()(Individual &indiv)
     std::shuffle(orderNodes.begin(), orderNodes.end(), rng);
     std::shuffle(orderRoutes.begin(), orderRoutes.end(), rng);
 
+    // Shuffling the operators beforehand also adds diversity to the search
+    std::shuffle(nodeOps.begin(), nodeOps.end(), rng);
+    std::shuffle(routeOps.begin(), routeOps.end(), rng);
+
     loadIndividual(indiv);       // load individual...
     search();                    // ...perform local search...
     indiv = exportIndividual();  // ...export result back into the individual
@@ -33,9 +37,6 @@ void LocalSearch::search()
     std::vector<int> lastTestedRoutes(params.nbVehicles, -1);
     lastModified = std::vector<int>(params.nbVehicles, 0);
     nbMoves = 0;
-
-    std::shuffle(nodeOps.begin(), nodeOps.end(), rng);
-    std::shuffle(routeOps.begin(), routeOps.end(), rng);
 
     // At least two iterations as empty routes are not evaluated in the first
     for (int step = 0; step <= 1 || !searchCompleted; ++step)
