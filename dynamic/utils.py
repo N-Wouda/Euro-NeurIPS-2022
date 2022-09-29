@@ -38,26 +38,13 @@ def filter_instance(instance: dict, mask: np.ndarray):
     }
 
 
-def delta_cost(route, distances):
+def delta_cost(route, dist):
     """
     Return the delta cost for each client on the route.
     """
-    deltas = []
+    if len(route) == 0:
+        return []
 
-    for idx, client in enumerate(route):
-        if len(route) == 1:
-            pred, succ = 0, 0
-        elif idx == 0:
-            pred, succ = 0, route[idx + 1]
-        elif idx == len(route) - 1:
-            pred, succ = route[idx - 1], 0
-        else:
-            pred, succ = route[idx - 1], route[idx + 1]
-
-        deltas.append(
-            distances[pred, client]
-            + distances[client, succ]
-            - distances[pred, succ]
-        )
-
-    return deltas
+    pred = np.array([0] + route[:-1], dtype=int)
+    succ = np.array(route[1:] + [0], dtype=int)
+    return (dist[pred, route] + dist[route, succ] - dist[pred, succ]).tolist()
