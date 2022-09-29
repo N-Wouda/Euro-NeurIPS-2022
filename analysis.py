@@ -49,6 +49,7 @@ def solve(loc: str, seed: int, **kwargs):
         nbVeh=tools.n_vehicles_bin_pack(instance),
         collectStatistics=True,
     )
+
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=seed)

@@ -60,7 +60,7 @@ def solve(loc: str, instance_seed: int, **kwargs):
         else:
             raise NotImplementedError(f"Invalid strategy: {kwargs['strategy']}")
 
-        costs = run_dispatch(env, dispatch_strategy=strategy, **kwargs)
+        costs, routes = run_dispatch(env, dispatch_strategy=strategy, **kwargs)
 
     dtime = round(perf_counter() - start, 3)
 
