@@ -6,7 +6,6 @@ from .constants import (
     SIM_SOLVE_ITERS,
     SIM_TLIM_FACTOR,
     SIM_CONFIG,
-    SIM_IDX,
     N_LOOKAHEAD,
     POSTPONE_THRESHOLD,
 )
@@ -50,8 +49,8 @@ def rollout(info, obs, rng):
         req_sol = utils.sol2ep(sim_sol, sim_inst, postpone_routes=False)
 
         for route_idx, sim_route in enumerate(sim_sol):
-            # Routes that contain simulated requests are postponed
-            if any(req_sol[route_idx] >= SIM_IDX):
+            # Routes that contain simulated requests (negative index) are postponed
+            if any(req_sol[route_idx] < 0):
                 continue
 
             dispatch_count[sim_route] += 1

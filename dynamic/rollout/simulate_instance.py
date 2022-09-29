@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import concatenate as concat
 
-from .constants import EPOCH_DURATION, EPOCH_N_REQUESTS, SIM_IDX
+from .constants import EPOCH_DURATION, EPOCH_N_REQUESTS
 
 
 def simulate_instance(info, obs, rng, n_lookahead=1):
@@ -52,8 +52,8 @@ def simulate_instance(info, obs, rng, n_lookahead=1):
     # Concatenate the new feasible requests to the epoch instance
     req_customer_idx = concat((ep_inst["customer_idx"], cust_idx[is_feasible]))
 
-    # NOTE Simulated request indices start from SIM_IDX
-    sim_req_idx = np.arange(is_feasible.sum()) + SIM_IDX
+    # NOTE Simulated request indices are always negative
+    sim_req_idx = -(np.arange(is_feasible.sum()) + 1)
     req_idx = concat((ep_inst["request_idx"], sim_req_idx))
 
     # Renormalize TW and release to start_time, and clip the past
