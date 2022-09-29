@@ -76,6 +76,7 @@ PYBIND11_MODULE(hgspy, m)
                       size_t,
                       size_t,
                       size_t,
+                      size_t,
                       int,
                       size_t,
                       int,
@@ -98,6 +99,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("nbElite") = 4,
              py::arg("nbClose") = 5,
              py::arg("targetFeasible") = 0.2,
+             py::arg("nbKeepOnRestart") = 1,
              py::arg("repairProbability") = 50,
              py::arg("repairBooster") = 10,
              py::arg("selectProbability") = 90,
@@ -123,6 +125,7 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("nbElite", &Config::nbElite)
         .def_readonly("nbClose", &Config::nbClose)
         .def_readonly("targetFeasible", &Config::targetFeasible)
+        .def_readonly("nbKeepOnRestart", &Config::nbKeepOnRestart)
         .def_readonly("repairProbability", &Config::repairProbability)
         .def_readonly("repairBooster", &Config::repairBooster)
         .def_readonly("selectProbability", &Config::selectProbability)
