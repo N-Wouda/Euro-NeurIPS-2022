@@ -2,24 +2,19 @@
 #define LOCALSEARCHOPERATOR_H
 
 #include "Individual.h"
-#include "Penalties.h"
 #include "Route.h"
 
 template <typename Arg> class LocalSearchOperator
 {
 protected:
     Params const &d_params;
-    Penalties const *d_penalties = nullptr;
 
 public:
     /**
-     * Called once after loading in the solution to improve. This can be used
+     * Called once after loading in the individual to improve. This can be used
      * to e.g. update local operator state.
      */
-    virtual void init(Individual const &indiv, Penalties const *penalties)
-    {
-        d_penalties = penalties;
-    };
+    virtual void init(Individual const &indiv){};
 
     /**
      * Determines the cost delta of applying this operator to the arguments.

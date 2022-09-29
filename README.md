@@ -12,10 +12,7 @@ TODO
 ## Contributors
 
 ### Team
-- Charaf, Sara <s.charaf@tue.nl>
 - Doorn, Jasper van <j.m.h.van.doorn@vu.nl>
-- Heide, Lieke van der <l.m.van.der.heide@rug.nl>
-- Jansen, Yde <yde_jansen@hotmail.com>
 - Lan, Leon <l.lan@vu.nl>
 - Pentinga, Luuk <l.pentinga@rug.nl>
 - Wouda, Niels <n.a.wouda@rug.nl>
@@ -23,5 +20,4 @@ TODO
 ### Supervision
 - Aerts-Veenstra, Marjolein <m.aerts-veenstra@rug.nl>
 - Bhulai, Sandjai <s.bhulai@vu.nl>
-- Rica-Alarcon, Elena <m.e.rica-alarcon@rug.nl>
 - Rijal, Arpan <a.rijal@rug.nl>

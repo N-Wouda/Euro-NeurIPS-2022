@@ -88,26 +88,26 @@ Individual GeneticAlgorithm::crossover() const
 
 void GeneticAlgorithm::educate(Individual &indiv)
 {
-    localSearch(indiv, params.penaltyCapacity, params.penaltyTimeWarp);
+    localSearch(indiv);
     population.addIndividual(indiv);
 
     loadFeas.push_back(!indiv.hasExcessCapacity());
-    loadFeas.pop_front();
-
     timeFeas.push_back(!indiv.hasTimeWarp());
-    timeFeas.pop_front();
 
     if (!indiv.isFeasible()  // possibly repair if currently infeasible
         && rng.randint(100) < params.config.repairProbability)
     {
-        localSearch(indiv,  // re-run, but penalise infeasibility more
-                    params.config.repairBooster * params.penaltyCapacity,
-                    params.config.repairBooster * params.penaltyTimeWarp);
+        // Re-run, but penalise infeasibility more using a penalty booster.
+        auto const booster = params.getPenaltyBooster();
+        localSearch(indiv);
 
         if (indiv.isFeasible())
-            // TODO should we also register this individual in the load/time
-            //  feasibility lists?
+        {
             population.addIndividual(indiv);
+
+            loadFeas.push_back(!indiv.hasExcessCapacity());
+            timeFeas.push_back(!indiv.hasTimeWarp());
+        }
     }
 }
 
@@ -134,17 +134,17 @@ void GeneticAlgorithm::updatePenalties()
 
     params.penaltyCapacity = compute(fracFeasLoad, params.penaltyCapacity);
     params.penaltyTimeWarp = compute(fracFeasTime, params.penaltyTimeWarp);
+
+    loadFeas.clear();
+    timeFeas.clear();
 }
 
 GeneticAlgorithm::GeneticAlgorithm(Params &params,
                                    XorShift128 &rng,
                                    Population &population,
                                    LocalSearch &localSearch)
-    : params(params),
-      rng(rng),
-      population(population),
-      localSearch(localSearch),
-      loadFeas(100, true),
-      timeFeas(100, true)
+    : params(params), rng(rng), population(population), localSearch(localSearch)
 {
+    loadFeas.reserve(params.config.nbPenaltyManagement);
+    timeFeas.reserve(params.config.nbPenaltyManagement);
 }

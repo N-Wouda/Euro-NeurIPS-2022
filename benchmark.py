@@ -65,9 +65,7 @@ def solve(loc: str, seed: int, **kwargs):
     algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
 
     crossover_ops = [
-        hgspy.crossover.alternating_exchange,
         hgspy.crossover.broken_pairs_exchange,
-        hgspy.crossover.ordered_exchange,
         hgspy.crossover.selective_route_exchange,
     ]
 
@@ -99,7 +97,7 @@ def solve(loc: str, seed: int, **kwargs):
     return (
         path.stem,
         is_ok,
-        int(best.cost()),
+        int(cost),
         res.get_iterations(),
         round((datetime.now() - start).total_seconds(), 3),
     )

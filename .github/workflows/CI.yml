@@ -12,8 +12,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ "ubuntu-latest"]
-        python-version: [ '3.9', '3.10' ]
+        os: [ 'ubuntu-latest' ]
+        python-version: [ '3.8', '3.10' ]
         compiler: [ 'gcc', 'clang' ]
     steps:
       - uses: actions/checkout@v3
@@ -26,7 +26,7 @@ jobs:
         name: Set up GCC
         uses: egor-tensin/setup-gcc@v1
         with:
-          version: 10
+          version: 9
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
         with:
@@ -41,12 +41,13 @@ jobs:
           poetry run black .
       - name: Make all
         run: |
-          cmake -Brelease -Shgs_vrptw && cd release && make
-      - name: Test controller
+          cmake -Brelease -Shgs_vrptw
+          make --directory=release
+      - name: Test solver
         run: |
-          poetry run python controller.py --instance instances/ORTEC-VRPTW-ASYM-0bdff870-d1-n458-k35.txt --epoch_tlim 30 --static -- python solver.py
+          poetry run python benchmark.py --max_runtime 1 --num_procs 2
       - uses: DoozyX/clang-format-lint-action@v0.13
         with:
-          source: 'hgs_vrptw/src hgs_vrptw/include hgs_vrptw/test'
+          source: 'hgs_vrptw/src hgs_vrptw/include'
           extensions: 'h,cpp'
           clangFormatVersion: 11

@@ -1,8 +1,6 @@
 #include "crossover.h"
 
-using Parents = std::pair<Individual const *, Individual const *>;
 using Client = int;
-using ClientSet = std::unordered_set<Client>;
 using Route = std::vector<Client>;
 using Routes = std::vector<Route>;
 
@@ -11,7 +9,7 @@ namespace
 struct InsertPos  // best insert position, used to plan unplanned clients
 {
     int deltaCost;
-    std::vector<int> *route;
+    Route *route;
     size_t offset;
 };
 
@@ -37,36 +35,42 @@ int deltaCost(Client client, Client prev, Client next, Params const &params)
 }  // namespace
 
 void crossover::greedyRepair(Routes &routes,
-                             ClientSet const &unplanned,
+                             std::vector<Client> const &unplanned,
                              Params const &params)
 {
+    size_t numRoutes = 0;  // points just after the last non-empty route
+    for (size_t rIdx = 0; rIdx != routes.size(); ++rIdx)
+        if (!routes[rIdx].empty())
+            numRoutes = rIdx + 1;
+
     for (Client client : unplanned)
     {
         InsertPos best = {INT_MAX, &routes.front(), 0};
 
-        for (auto &route : routes)
+        for (size_t rIdx = 0; rIdx != numRoutes; ++rIdx)
         {
-            if (route.empty())
-                continue;
+            auto &route = routes[rIdx];
 
-            for (size_t idx = 0; idx <= route.size(); ++idx)
+            for (size_t idx = 0; idx <= route.size() && !route.empty(); ++idx)
             {
                 Client prev, next;
-                if (idx == 0)  // Currently depot -> [0]. Try depot -> client
-                {              // -> [0].
+
+                if (idx == 0)  // try after depot
+                {
                     prev = 0;
                     next = route[0];
                 }
-                else if (idx == route.size())  // Currently [-1] -> depot. Try
-                {                              // [-1] -> client -> depot.
+                else if (idx == route.size())  // try before depot
+                {
                     prev = route.back();
                     next = 0;
                 }
-                else  // Currently [idx - 1] -> [idx]. Try [idx - 1] -> client
-                {     // -> [idx].
+                else  // try between [idx - 1] and [idx]
+                {
                     prev = route[idx - 1];
                     next = route[idx];
                 }
+
                 auto const cost = deltaCost(client, prev, next, params);
                 if (cost < best.deltaCost)
                     best = {cost, &route, idx};

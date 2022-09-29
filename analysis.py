@@ -4,8 +4,8 @@ from functools import partial
 from glob import glob
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
 from tqdm.contrib.concurrent import process_map
 
@@ -28,6 +28,7 @@ def parse_args():
         "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
     )
     parser.add_argument("--results_dir", type=str)
+    parser.add_argument("--overwrite", action="store_true")
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--max_runtime", type=int)
@@ -79,9 +80,7 @@ def solve(loc: str, seed: int, **kwargs):
     algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
 
     crossover_ops = [
-        hgspy.crossover.alternating_exchange,
         hgspy.crossover.broken_pairs_exchange,
-        hgspy.crossover.ordered_exchange,
         hgspy.crossover.selective_route_exchange,
     ]
 
@@ -114,20 +113,20 @@ def solve(loc: str, seed: int, **kwargs):
     # Only save results for runs with feasible solutions and if results_dir
     # is a non-empty string
     if is_ok == "Y" and "results_dir" in kwargs and kwargs["results_dir"]:
-        save_results(res, kwargs["results_dir"], path.stem)
+        save_results(instance, res, kwargs["results_dir"], path.stem)
 
     stats = res.get_statistics()
     return (
         path.stem,
         is_ok,
-        int(best.cost()),
+        int(cost),
         res.get_iterations(),
         finish,
         len(stats.incumbents()),
     )
 
 
-def save_results(res, results_dir, inst_name):
+def save_results(instance, res, results_dir, inst_name):
     """
     Save the best solution, statistics and figures of results.
     - Solutions are stored as ``<results_dir>/solutions/<inst_name>.txt``.
@@ -137,34 +136,32 @@ def save_results(res, results_dir, inst_name):
     res_dir = Path(results_dir)
 
     def make_path(subdir, extension):
-        dir_path = res_dir / subdir
-        fi_path = dir_path / (inst_name + "." + extension)
-        return str(fi_path)
+        return res_dir / subdir / (inst_name + "." + extension)
 
     # Save best solutions
-    sol_path = make_path(_SOLS_DIR, "txt")
     best = res.get_best_found()
-    stats = res.get_statistics()
+    sol_path = str(make_path(_SOLS_DIR, "txt"))
     best.export_cvrplib_format(sol_path, res.get_run_time())
 
     # Save statistics
-    stats_path = make_path(_STATS_DIR, "csv")
-    stats.to_csv(stats_path, ",")
+    stats = res.get_statistics()
+    stats_path = str(make_path(_STATS_DIR, "csv"))
+    stats.to_csv(stats_path)
 
     # Save plots
-    figs_path = make_path(_FIGS_DIR, "png")
-    plot_single_run(figs_path, stats)
+    fig = plt.figure(figsize=(20, 12))
+    gs = fig.add_gridspec(3, 2, width_ratios=(2 / 5, 3 / 5))
 
+    plotting.plot_population(fig.add_subplot(gs[0, 0]), stats)
+    plotting.plot_objectives(fig.add_subplot(gs[1, 0]), stats)
+    plotting.plot_incumbents(fig.add_subplot(gs[2, 0]), stats)
 
-def plot_single_run(path, stats):
-    _, (ax_pop, ax_objs, ax_inc) = plt.subplots(3, 1, figsize=(8, 12))
-
-    plotting.plot_population(stats, ax_pop)
-    plotting.plot_objectives(stats, ax_objs)
-    plotting.plot_incumbents(stats, ax_inc)
+    routes = best.get_routes()
+    plotting.plot_instance(fig.add_subplot(gs[:, 1]), instance, routes)
 
     plt.tight_layout()
-    plt.savefig(path)
+    plt.savefig(make_path(_FIGS_DIR, "png"))
+    plt.close(fig)
 
 
 def main():
@@ -173,10 +170,10 @@ def main():
     # Make directories to save results
     if args.results_dir is not None:
         res_dir = Path(args.results_dir)
-        res_dir.mkdir()
-        (res_dir / _SOLS_DIR).mkdir(exist_ok=True)
-        (res_dir / _STATS_DIR).mkdir(exist_ok=True)
-        (res_dir / _FIGS_DIR).mkdir(exist_ok=True)
+        res_dir.mkdir(exist_ok=args.overwrite)
+        (res_dir / _SOLS_DIR).mkdir(exist_ok=args.overwrite)
+        (res_dir / _STATS_DIR).mkdir(exist_ok=args.overwrite)
+        (res_dir / _FIGS_DIR).mkdir(exist_ok=args.overwrite)
 
     func = partial(solve, **vars(args))
     func_args = sorted(glob(args.instance_pattern), key=tools.name2size)

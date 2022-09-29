@@ -18,7 +18,12 @@ class Population
     struct IndividualWrapper
     {
         std::unique_ptr<Individual> indiv;
-        size_t fitness;
+        double fitness;
+
+        bool operator<(IndividualWrapper const &other) const
+        {
+            return indiv->cost() < other.indiv->cost();
+        }
     };
 
     using SubPopulation = std::vector<IndividualWrapper>;
@@ -33,15 +38,15 @@ class Population
     Individual bestSol;
 
     // Evaluates the biased fitness of all individuals in the sub-population
-    void updateBiasedFitness(SubPopulation &subPop);
+    void updateBiasedFitness(SubPopulation &subPop) const;
 
     // Removes a duplicate individual from the sub-population if there exists
     // one. If there are multiple duplicate individuals, then the one with the
     // lowest index in the sub-population is removed first.
-    bool removeDuplicate(SubPopulation &subPop);
+    static bool removeDuplicate(SubPopulation &subPop);
 
     // Removes the worst individual in terms of biased fitness
-    void removeWorstBiasedFitness(SubPopulation &subPop);
+    static void removeWorstBiasedFitness(SubPopulation &subPop);
 
     // Generates a population of passed-in size
     void generatePopulation(size_t popSize);
