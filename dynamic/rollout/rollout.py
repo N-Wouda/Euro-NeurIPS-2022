@@ -7,7 +7,7 @@ from .constants import (
     SIM_TLIM_FACTOR,
     SIM_CONFIG,
     N_LOOKAHEAD,
-    POSTPONE_THRESHOLD,
+    DISPATCH_THRESHOLD,
 )
 from .simulate_instance import simulate_instance
 from .solve_simulation import solve_simulation
@@ -59,7 +59,10 @@ def rollout(info, obs, rng):
 
     # Postpone requests that are often postponed in simulations
     dispatch_fraction = dispatch_count / max(1, n_simulations)
-    postpone = dispatch_fraction <= 1 - POSTPONE_THRESHOLD
-    dispatch = ep_inst["is_depot"] | ep_inst["must_dispatch"] | ~postpone
+    dispatch = (
+        ep_inst["is_depot"]
+        | ep_inst["must_dispatch"]
+        | (dispatch_fraction > DISPATCH_THRESHOLD)
+    )
 
     return utils.filter_instance(ep_inst, dispatch)
