@@ -58,12 +58,8 @@ def rollout(info, obs, rng):
         n_simulations += 1
 
     # Postpone requests that are often postponed in simulations
-    dispatch_fraction = dispatch_count / np.maximum(1, n_simulations)
+    dispatch_fraction = dispatch_count / max(1, n_simulations)
     postpone = dispatch_fraction <= 1 - POSTPONE_THRESHOLD
-    non_urgent = ~ep_inst["must_dispatch"]
-
-    dispatch = np.full(n_requests, True)
-    dispatch = np.where(postpone & non_urgent, False, dispatch)
-    dispatch[0] = True  # depot
+    dispatch = ep_inst["is_depot"] | ep_inst["must_dispatch"] | ~postpone
 
     return utils.filter_instance(ep_inst, dispatch)

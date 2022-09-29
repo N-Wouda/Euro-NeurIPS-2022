@@ -1,15 +1,14 @@
+import functools
+
 from .. import utils
 
 
 def random_dispatch(prob):
     """
-    Factory for a random dispatch strategy.
+    Return the random dispatch strategy where requests are dispatched with
+    probability ``prob``.
     """
-
-    def strategy(info, obs, rng):
-        return _dispatch_decision(info, obs, rng, prob)
-
-    return strategy
+    return functools.partial(_dispatch_decision, prob=prob)
 
 
 def _dispatch_decision(info, observation, rng, prob):
