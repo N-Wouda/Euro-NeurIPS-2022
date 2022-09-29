@@ -10,19 +10,18 @@ from dynamic.run_dispatch import run_dispatch
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--strategy", type=str, default="greedy")
+    parser.add_argument("--strategy", type=str, default="rollout")
     parser.add_argument("--instance")
     parser.add_argument("--instance_seed", type=int, default=1)
     parser.add_argument("--solver_seed", type=int, default=1)
     parser.add_argument("--static", action="store_true")
     parser.add_argument("--epoch_tlim", type=int, default=120)
+    parser.add_argument("--profile", action="store_true")
 
     return parser.parse_args()
 
 
-def main():
-    args = parse_args()
-
+def run(args):
     if args.instance is not None:
         env = VRPEnvironment(
             seed=args.instance_seed,
@@ -66,6 +65,25 @@ def main():
             raise ValueError(f"Invalid strategy: {args.strategy}")
 
         run_dispatch(env, dispatch_strategy=strategy, **vars(args))
+
+
+def main():
+    args = parse_args()
+
+    if args.profile:
+        import cProfile
+        import pstats
+
+        profiler = cProfile.Profile()
+        profiler.enable()
+        run(args)
+        profiler.disable()
+
+        stats = pstats.Stats(profiler)
+        stats.print_stats()
+        stats.dump_stats("profile.pstat")
+    else:
+        run(args)
 
 
 if __name__ == "__main__":
