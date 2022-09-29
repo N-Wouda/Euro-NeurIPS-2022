@@ -28,7 +28,7 @@ def rollout(info, obs, rng):
 
     # Parameters
     ep_inst = obs["epoch_instance"]
-    n_requests = len(ep_inst["coords"])
+    n_requests = ep_inst["is_depot"].size
     sim_tlim = info["epoch_tlim"] * SIM_TLIM_FACTOR
 
     # Statistics

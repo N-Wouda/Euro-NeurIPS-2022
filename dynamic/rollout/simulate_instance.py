@@ -16,18 +16,16 @@ def simulate_instance(info, obs, rng, n_lookahead=1):
     ep_inst = obs["epoch_instance"]
     start_time = obs["planning_starttime"]
     duration_matrix = static_inst["duration_matrix"]
-    num_customers = len(static_inst["coords"]) - 1  # Exclude depot
+    num_customers = static_inst["is_depot"].size - 1  # Exclude depot
 
-    # Simulate not more epochs than that are left
-    max_lookahead = min(n_lookahead, info["end_epoch"] - obs["current_epoch"])
+    epochs_left = info["end_epoch"] - obs["current_epoch"]
+    max_lookahead = min(n_lookahead, epochs_left)
+    n_samples = max_lookahead * EPOCH_N_REQUESTS
 
-    def sample_from_customers(k=max_lookahead * EPOCH_N_REQUESTS):
-        return rng.integers(num_customers, size=k) + 1
-
-    cust_idx = sample_from_customers()
-    tw_idx = sample_from_customers()
-    demand_idx = sample_from_customers()
-    service_idx = sample_from_customers()
+    cust_idx = rng.integers(num_customers, size=n_samples) + 1
+    tw_idx = rng.integers(num_customers, size=n_samples) + 1
+    demand_idx = rng.integers(num_customers, size=n_samples) + 1
+    service_idx = rng.integers(num_customers, size=n_samples) + 1
 
     # These are unnormalized time windows and release times, which are used to
     # determine request feasibility. Will be clipped later.
@@ -62,7 +60,7 @@ def simulate_instance(info, obs, rng, n_lookahead=1):
     sim_tw = np.clip(sim_tw - start_time, a_min=0, a_max=None)
     req_tw = concat((ep_inst["time_windows"], sim_tw[is_feasible]))
 
-    ep_release = np.zeros(len(ep_inst["coords"]), dtype=int)
+    ep_release = np.zeros(ep_inst["is_depot"].size, dtype=int)
     sim_release = np.clip(sim_release - start_time, a_min=0, a_max=None)
     req_release = concat((ep_release, sim_release[is_feasible]))
 
