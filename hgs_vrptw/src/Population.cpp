@@ -95,13 +95,13 @@ void Population::removeWorstBiasedFitness(SubPopulation &subPop)
     subPop.erase(subPop.begin() + worstIdx);
 }
 
-void Population::restart() 
- { 
-     feasible.resize(std::min(params.config.nbKeepOnRestart, feasible.size())); 
-     infeasible.clear(); 
-    
-     generatePopulation(params.config.minPopSize);
- } 
+void Population::restart()
+{
+    feasible.resize(std::min(params.config.nbKeepOnRestart, feasible.size()));
+    infeasible.clear();
+
+    generatePopulation(params.config.minPopSize);
+}
 
 Individual const *Population::getBinaryTournament()
 {
