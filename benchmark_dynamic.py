@@ -37,7 +37,7 @@ def parse_args():
 def solve(loc: str, instance_seed: int, **kwargs):
     path = Path(loc)
 
-    if kwargs.get("phase") is not None:
+    if kwargs["phase"] is not None:
         tlim = tools.dynamic_time_limit(kwargs["phase"])
     else:
         tlim = kwargs["epoch_tlim"]

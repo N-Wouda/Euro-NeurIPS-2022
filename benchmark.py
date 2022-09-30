@@ -74,10 +74,10 @@ def solve(loc: str, seed: int, **kwargs):
     for op in crossover_ops:
         algo.add_crossover_operator(op)
 
-    if kwargs.get("phase") is not None:
+    if kwargs["phase"] is not None:
         t_lim = tools.static_time_limit(tools.name2size(loc), kwargs["phase"])
         stop = hgspy.stop.MaxRuntime(t_lim)
-    elif kwargs.get("max_runtime") is not None:
+    elif kwargs["max_runtime"] is not None:
         stop = hgspy.stop.MaxRuntime(kwargs["max_runtime"])
     else:
         stop = hgspy.stop.MaxIterations(kwargs["max_iterations"])
