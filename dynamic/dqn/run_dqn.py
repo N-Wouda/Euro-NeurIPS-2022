@@ -55,4 +55,4 @@ def run_dqn(env, **kwargs):
         observation, reward, done, info = env.step(ep_sol)
         assert info["error"] is None, f"{info['error']}"
 
-    return -sum(env.final_costs.values()), env.final_solutions
+    return env.final_costs, env.final_solutions

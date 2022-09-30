@@ -64,7 +64,7 @@ def solve(loc: str, instance_seed: int, **kwargs):
 
     dtime = round(perf_counter() - start, 3)
 
-    return path.stem, instance_seed, -costs, dtime
+    return path.stem, instance_seed, sum(costs.values()), dtime
 
 
 def groupby_mean(data):
@@ -103,7 +103,7 @@ def main():
 
     headers = [
         "Instance",
-        "Avg. reward",
+        "Avg. costs",
         "Time (s)",
     ]
 
