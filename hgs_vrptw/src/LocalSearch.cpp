@@ -6,6 +6,7 @@
 #include <numeric>
 #include <stdexcept>
 #include <vector>
+#include <algorithm>
 
 void LocalSearch::operator()(Individual &indiv)
 {
@@ -118,6 +119,7 @@ void LocalSearch::search()
                 }
             }
     }
+    postProcess();
 }
 
 bool LocalSearch::applyNodeOperators(Node *U, Node *V)
@@ -302,4 +304,76 @@ LocalSearch::LocalSearch(Params &params, XorShift128 &rng)
         endDepots[i].client = 0;
         endDepots[i].route = &routes[i];
     }
+}
+
+void LocalSearch::postProcess()
+{
+    for (int r = 0; r < params.nbVehicles; r++)
+    {
+        Route *route = &routes[r];
+
+        if (!route->empty()){
+            for (size_t i = 1; i < route->size(); i++){
+                // if the rest of the route is of size postProcessArea or less we optimize the end and stop
+                // i.e. with short routes or at the end of a route
+                if(route->size() - i <= params.config.postProcessArea){
+                    optimizeSubpath(i, route->size() - i, route);
+                    break;
+                }
+                else{
+                    optimizeSubpath(i, params.config.postProcessArea, route);
+                }
+            }
+        }
+    }
+}
+
+void LocalSearch::optimizeSubpath(size_t start, size_t area, Route *route)
+{
+    std::vector<size_t> subpath(area);
+
+    for(size_t i = 0; i < area; i++){
+        subpath[i] = i + start;
+    }
+    double opt_cost = std::numeric_limits<double>::max();
+
+    Node *before = (*route)[start]->prev;
+    Node *after = (*route)[start + area]->next;
+
+    //iterate over permutations of route indices
+    do{
+        double subpath_cost = evaluateSubpath(subpath, before, after, route);
+
+        if (subpath_cost < opt_cost){
+            std::vector<size_t> best_subpath = subpath;
+            opt_cost = subpath_cost;
+        }
+    }while(std::next_permutation(subpath.begin(), subpath.end()));
+
+    //TODO: insert best permutation
+
+}
+
+double LocalSearch::evaluateSubpath(std::vector<size_t> &subpath, Node *before, Node *after, Route *route){
+    int distance = before->cumulatedDistance;
+    TimeWindowSegment tws_total = before->twBefore;
+
+    int client_from = before->client;
+
+    // calculates new distance up to node "after" and merges TWS
+    for(auto &node : subpath){
+        Node *node_to = (*route)[node];
+        int client_to = node_to->client;
+        distance += params.dist(client_from, client_to);
+        client_from = client_to;
+
+        tws_total = TimeWindowSegment::merge(tws_total, node_to->tw);
+    }
+    distance += params.dist(client_from, after->client);
+    tws_total = TimeWindowSegment::merge(tws_total, after->twAfter);
+    // TODO check if correct TW function
+    int timeWarp = tws_total.totalTimeWarp();
+    
+    return(distance + params.twPenalty(timeWarp));
+
 }

@@ -52,6 +52,15 @@ class LocalSearch
     // Performs the actual local search procedure
     void search();
 
+    // Postprocessing of individual at the end of local search
+    void postProcess();
+    // Iterates over all subroutes for a given area
+    void LocalSearch::optimizeSubpath(size_t start, size_t area, Route *route);
+    // Calculates cost of inserting new subroute
+    double LocalSearch::evaluateSubpath(std::vector<size_t> &subpath, Node *before, Node *after, Route *route);
+
+
+
 public:
     /**
      * Adds a local search operator that works on node/client pairs U and V.

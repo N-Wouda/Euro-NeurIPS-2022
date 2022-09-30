@@ -84,6 +84,7 @@ PYBIND11_MODULE(hgspy, m)
                       size_t,
                       int,
                       int,
+                      size_t,
                       size_t>(),
              py::arg("seed") = 0,
              py::arg("nbIter") = 10'000,
@@ -110,7 +111,8 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("intensificationProbability") = 25,
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
              py::arg("minCircleSectorSizeDegrees") = 15,
-             py::arg("destroyPct") = 20)
+             py::arg("destroyPct") = 20,
+             py::arg("postProcessArea") = 5)
         .def_readonly("seed", &Config::seed)
         .def_readonly("nbIter", &Config::nbIter)
         .def_readonly("timeLimit", &Config::timeLimit)
@@ -136,7 +138,8 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("circleSectorOverlapTolerance",
                       &Config::circleSectorOverlapTolerance)
         .def_readonly("minCircleSectorSize", &Config::minCircleSectorSize)
-        .def_readonly("destroyPct", &Config::destroyPct);
+        .def_readonly("destroyPct", &Config::destroyPct)
+        .def_readonly("postProcessArea", &Config::postProcessArea);
 
     py::class_<Params>(m, "Params")
         .def(py::init<Config const &,
