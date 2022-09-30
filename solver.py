@@ -1,10 +1,12 @@
 import argparse
+import cProfile
+import pstats
 import sys
+from datetime import datetime
 
 import tools
-from environment import ControllerEnvironment, VRPEnvironment
-
 from dynamic.run_dispatch import run_dispatch
+from environment import ControllerEnvironment, VRPEnvironment
 
 
 def parse_args():
@@ -71,17 +73,14 @@ def main():
     args = parse_args()
 
     if args.profile:
-        import cProfile
-        import pstats
+        with cProfile.Profile() as profiler:
+            run(args)
 
-        profiler = cProfile.Profile()
-        profiler.enable()
-        run(args)
-        profiler.disable()
-
-        stats = pstats.Stats(profiler)
+        stats = pstats.Stats(profiler).strip_dirs().sort_stats("time")
         stats.print_stats()
-        stats.dump_stats("profile.pstat")
+
+        now = datetime.now().isoformat()
+        stats.dump_stats(f"tmp/profile-{now}.pstat")
     else:
         run(args)
 
