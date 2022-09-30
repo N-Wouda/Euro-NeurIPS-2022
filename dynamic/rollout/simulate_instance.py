@@ -80,6 +80,6 @@ def simulate_instance(info, obs, rng, n_lookahead=1):
         "capacity": static_inst["capacity"],
         "time_windows": req_tw,
         "service_times": req_service,
-        "duration_matrix": dist[np.ix_(req_customer_idx, req_customer_idx)],
+        "duration_matrix": dist[req_customer_idx][:, req_customer_idx],
         "release_times": req_release,
     }
