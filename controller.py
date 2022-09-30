@@ -1,13 +1,11 @@
 # Controller has an environment and tests it against a dynamic solver program
-import argparse
-import json
 import subprocess
-import sys
-import threading
+import argparse
 import tools
-
+import json
+import sys
 import numpy as np
-
+import threading
 from environment import VRPEnvironment
 
 
