@@ -5,7 +5,7 @@ import numpy as np
 from .constants import (
     SIM_SOLVE_ITERS,
     SIM_TLIM_FACTOR,
-    SIM_CONFIG,
+    SIM_SOLVE_CONFIG,
     N_LOOKAHEAD,
     POSTPONE_THRESHOLD,
 )
@@ -39,7 +39,7 @@ def rollout(info, obs, rng):
 
         # sim_sol is has indices 1, ..., N
         sim_sol, _, is_feas = solve_simulation(
-            sim_inst, SIM_SOLVE_ITERS, **SIM_CONFIG
+            sim_inst, SIM_SOLVE_ITERS, **SIM_SOLVE_CONFIG
         )
 
         if not is_feas:

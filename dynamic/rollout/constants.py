@@ -8,7 +8,7 @@ SIM_SOLVE_ITERS = 25  # iterations to solve a simulation instance
 POSTPONE_THRESHOLD = 0.85
 
 # Configuration to solve simulation instances
-SIM_CONFIG = {
+SIM_SOLVE_CONFIG = {
     "seed": 1,
     "generationSize": 20,
     "minPopSize": 5,
