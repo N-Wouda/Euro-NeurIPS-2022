@@ -343,30 +343,41 @@ void LocalSearch::optimizeSubpath(const size_t start,
     {
         subpath[i] = i + start;
     }
-    double opt_cost = std::numeric_limits<double>::max();
+    int opt_cost = std::numeric_limits<int>::max();
 
-    const Node *before = (*route)[start]->prev;
+    Node *before = (*route)[start]->prev;
     const Node *after = (*route)[start + area]->next;
 
+    std::vector<size_t> best_subpath;
     // iterate over permutations of route indices
     do
     {
-        double subpath_cost = evaluateSubpath(subpath, before, after, route);
+        int subpath_cost = evaluateSubpath(subpath, before, after, route);
 
         if (subpath_cost < opt_cost)
         {
-            std::vector<size_t> best_subpath = subpath;
+            best_subpath = subpath;
             opt_cost = subpath_cost;
         }
     } while (std::next_permutation(subpath.begin(), subpath.end()));
 
-    // TODO: insert best permutation
-
+    // insert best permutation, we collect the node objects and insert front to
+    // back
+    std::vector<Node *> subpath_nodes = {};
+    for (auto &node_idx : best_subpath)
+    {
+        subpath_nodes.push_back((*route)[node_idx]);
+    }
+    for (auto &current_node : subpath_nodes)
+    {
+        current_node->insertAfter(before);
+        before = current_node;
+    }
     route->update();
 }
 
 int LocalSearch::evaluateSubpath(const std::vector<size_t> &subpath,
-                                 const Node *before,
+                                 Node *before,
                                  const Node *after,
                                  Route *route)
 {
@@ -380,14 +391,15 @@ int LocalSearch::evaluateSubpath(const std::vector<size_t> &subpath,
     {
         Node *node_to = (*route)[node_idx];
         int client_to = node_to->client;
-        distance += params.dist(client_from, client_to);
-        client_from = client_to;
 
+        distance += params.dist(client_from, client_to);
         tws_total = TimeWindowSegment::merge(tws_total, node_to->tw);
+
+        client_from = client_to;
     }
     distance += params.dist(client_from, after->client);
     tws_total = TimeWindowSegment::merge(tws_total, after->twAfter);
-    // TODO check if correct TW function
+
     int timeWarp = tws_total.totalTimeWarp();
 
     return (distance + params.twPenalty(timeWarp));

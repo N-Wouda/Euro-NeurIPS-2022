@@ -58,7 +58,7 @@ class LocalSearch
     void optimizeSubpath(const size_t start, const size_t area, Route *route);
     // Calculates cost of inserting new subroute
     int evaluateSubpath(const std::vector<size_t> &subpath,
-                        const Node *before,
+                        Node *before,
                         const Node *after,
                         Route *route);
 
