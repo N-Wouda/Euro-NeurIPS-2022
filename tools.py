@@ -360,7 +360,10 @@ def inst_to_vars(inst):
 
     # Notice that the dictionary key names are not entirely free-form: these
     # should match the argument names defined in the C++/Python bindings.
-    release_times = inst.get('release_times', np.zeros_like(inst['service_times']))
+    if 'release_times' in inst:
+        release_times = inst['release_times']
+    else:
+        release_times = np.zeros_like(inst['service_times'])
 
     return dict(
         coords=inst['coords'],
