@@ -77,9 +77,9 @@ def solve(loc: str, instance_seed: int, **kwargs):
 
         costs, routes = run_dispatch(env, dispatch_strategy=strategy, **kwargs)
 
-    dtime = round(perf_counter() - start, 3)
+    run_time = round(perf_counter() - start, 3)
 
-    return path.stem, instance_seed, sum(costs.values()), dtime
+    return path.stem, instance_seed, sum(costs.values()), run_time
 
 
 def groupby_mean(data):
