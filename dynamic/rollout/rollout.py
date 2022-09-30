@@ -3,11 +3,11 @@ import time
 import numpy as np
 
 from .constants import (
+    DISPATCH_THRESHOLD,
+    N_LOOKAHEAD,
+    SIM_CONFIG,
     SIM_SOLVE_ITERS,
     SIM_TLIM_FACTOR,
-    SIM_CONFIG,
-    N_LOOKAHEAD,
-    DISPATCH_THRESHOLD,
 )
 from .simulate_instance import simulate_instance
 from .solve_simulation import solve_simulation
@@ -49,8 +49,9 @@ def rollout(info, obs, rng):
         req_sol = utils.sol2ep(sim_sol, sim_inst, postpone_routes=False)
 
         for route_idx, sim_route in enumerate(sim_sol):
-            # Routes that contain simulated requests (negative index) are postponed
-            if any(req_sol[route_idx] < 0):
+            # If route contains simulated requests (identified by negative
+            # index), the clients in the route are postponed
+            if (req_sol[route_idx] < 0).any():
                 continue
 
             dispatch_count[sim_route] += 1

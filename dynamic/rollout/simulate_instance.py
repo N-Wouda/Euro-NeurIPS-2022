@@ -35,8 +35,9 @@ def simulate_instance(info, obs, rng, n_lookahead=1):
     sim_service = static_inst["service_times"][service_idx]
 
     # Earliest arrival is release time + drive time or earliest time window.
-    earliest_arrival = np.maximum(sim_release + dist[0, cust_idx],
-                                  sim_tw[:, 0])
+    earliest_arrival = np.maximum(
+        sim_release + dist[0, cust_idx], sim_tw[:, 0]
+    )
     earliest_return = earliest_arrival + sim_service + dist[cust_idx, 0]
     feas = (earliest_arrival <= sim_tw[:, 1]) & (earliest_return <= tws[0, 1])
 
@@ -52,7 +53,7 @@ def simulate_instance(info, obs, rng, n_lookahead=1):
 
     req_customer_idx = np.concatenate((ep_inst["customer_idx"], new_custs))
 
-    # NOTE Simulated request indices are always negative
+    # Simulated request indices are always negative (so we can identify them)
     sim_req_idx = -(np.arange(n_new_customers) + 1)
     req_idx = np.concatenate((ep_inst["request_idx"], sim_req_idx))
 
