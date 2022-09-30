@@ -39,6 +39,14 @@ jobs:
       - name: Run black
         run: |
           poetry run black .
+      - name: Run flake8
+        run: |
+          poetry run flake8 .
+      - uses: DoozyX/clang-format-lint-action@v0.13
+        with:
+          source: 'hgs_vrptw/src hgs_vrptw/include'
+          extensions: 'h,cpp'
+          clangFormatVersion: 11
       - name: Make all
         run: |
           cmake -Brelease -Shgs_vrptw
@@ -46,8 +54,3 @@ jobs:
       - name: Test solver
         run: |
           poetry run python benchmark.py --max_runtime 1 --num_procs 2
-      - uses: DoozyX/clang-format-lint-action@v0.13
-        with:
-          source: 'hgs_vrptw/src hgs_vrptw/include'
-          extensions: 'h,cpp'
-          clangFormatVersion: 11

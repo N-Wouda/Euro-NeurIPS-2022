@@ -97,7 +97,7 @@ void Population::removeWorstBiasedFitness(SubPopulation &subPop)
 
 void Population::restart()
 {
-    feasible.clear();
+    feasible.resize(std::min(params.config.nbKeepOnRestart, feasible.size()));
     infeasible.clear();
 
     generatePopulation(params.config.minPopSize);

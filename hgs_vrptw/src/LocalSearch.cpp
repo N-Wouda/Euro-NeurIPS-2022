@@ -13,6 +13,10 @@ void LocalSearch::operator()(Individual &indiv)
     std::shuffle(orderNodes.begin(), orderNodes.end(), rng);
     std::shuffle(orderRoutes.begin(), orderRoutes.end(), rng);
 
+    // Shuffling the operators beforehand also adds diversity to the search
+    std::shuffle(nodeOps.begin(), nodeOps.end(), rng);
+    std::shuffle(routeOps.begin(), routeOps.end(), rng);
+
     loadIndividual(indiv);       // load individual...
     search();                    // ...perform local search...
     indiv = exportIndividual();  // ...export result back into the individual
@@ -52,16 +56,14 @@ void LocalSearch::search()
             {
                 Node *V = &clients[vClient];
 
-                auto const lastModifiedRoute = std::max(
-                    lastModified[U->route->idx], lastModified[V->route->idx]);
-
-                // Evaluate operators only if routes have changed recently.
-                if (step == 0 || lastModifiedRoute > lastTestedNode)
+                if (step == 0  // evaluate only if routes have changed recently
+                    || lastModified[U->route->idx] > lastTestedNode
+                    || lastModified[V->route->idx] > lastTestedNode)
                 {
-                    if (applyNodeOperators(U, V))
+                    if (applyNodeOps(U, V))
                         continue;
 
-                    if (p(V)->isDepot() && applyNodeOperators(U, p(V)))
+                    if (p(V)->isDepot() && applyNodeOps(U, p(V)))
                         continue;
                 }
             }
@@ -76,7 +78,7 @@ void LocalSearch::search()
                 if (empty == routes.end())
                     continue;
 
-                if (applyNodeOperators(U, empty->depot))
+                if (applyNodeOps(U, empty->depot))
                     continue;
             }
         }
@@ -109,14 +111,14 @@ void LocalSearch::search()
                     if (step > 0 && lastModifiedRoute <= lastTested)
                         continue;
 
-                    if (applyRouteOperators(&U, &V))
+                    if (applyRouteOps(&U, &V))
                         continue;
                 }
             }
     }
 }
 
-bool LocalSearch::applyNodeOperators(Node *U, Node *V)
+bool LocalSearch::applyNodeOps(Node *U, Node *V)
 {
     for (auto op : nodeOps)
         if (op->evaluate(U, V) < 0)
@@ -133,7 +135,7 @@ bool LocalSearch::applyNodeOperators(Node *U, Node *V)
     return false;
 }
 
-bool LocalSearch::applyRouteOperators(Route *U, Route *V)
+bool LocalSearch::applyRouteOps(Route *U, Route *V)
 {
     for (auto op : routeOps)
         if (op->evaluate(U, V) < 0)

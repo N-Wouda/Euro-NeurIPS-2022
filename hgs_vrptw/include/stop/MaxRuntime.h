@@ -22,6 +22,8 @@ public:
     explicit MaxRuntime(size_t const maxRuntime)
         : until(clock::now() + seconds(maxRuntime))
     {
+        if (maxRuntime == 0)
+            throw std::runtime_error("Run-time of 0s is not understood.");
     }
 };
 
