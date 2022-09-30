@@ -405,23 +405,15 @@ def static_time_limit(n_clients: int, phase: str) -> int:
     - 3/5/8 minutes for the quali(fication) phase
     - 5/10/15 minutes for the final phase
     """
-
-    if phase == "quali":
-        if n_clients < 300:
-            return 180
-        if 300 <= n_clients <= 500:
-            return 300
-        else:
-            return 480
-    elif phase == "final":
-        if n_clients < 300:
-            return 300
-        if 300 <= n_clients <= 500:
-            return 600
-        else:
-            return 900
-    else:
+    if phase not in ["quali", "final"]:
         raise ValueError(f"Invalid phase: {phase}")
+
+    if n_clients < 300:
+        return 180 if phase == "quali" else 300
+    elif 300 <= n_clients <= 500:
+        return 300 if phase == "quali" else 600
+    else:
+        return 480 if phase == "quali" else 900
 
 
 def dynamic_time_limit(phase: str) -> int:
