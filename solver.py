@@ -65,7 +65,7 @@ def main():
             from dynamic.rollout import rollout as strategy
 
         else:
-            raise NotImplementedError(f"Invalid strategy: {args.strategy}")
+            raise ValueError(f"Invalid strategy: {args.strategy}")
 
         run_dispatch(env, dispatch_strategy=strategy, **vars(args))
 

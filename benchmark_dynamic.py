@@ -71,7 +71,7 @@ def solve(loc: str, instance_seed: int, **kwargs):
             from dynamic.rollout import rollout as strategy
 
         else:
-            raise NotImplementedError(
+            raise ValueError(
                 f"Invalid strategy: {kwargs['strategy']}"
             )
 

@@ -418,7 +418,7 @@ def static_time_limit(n_clients: int, phase: str) -> int:
         else:
             return 900
     else:
-        raise NotImplementedError(f"Invalid phase: {phase}")
+        raise ValueError(f"Invalid phase: {phase}")
 
 
 def dynamic_time_limit(phase: str) -> int:
@@ -434,7 +434,7 @@ def dynamic_time_limit(phase: str) -> int:
     elif phase == "final":
         return 120
     else:
-        raise NotImplementedError(f"Invalid phase: {phase}")
+        raise ValueError(f"Invalid phase: {phase}")
 
 
 def name2size(name: str) -> int:
