@@ -105,7 +105,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("nbGranular") = 40,
              py::arg("weightWaitTime") = 2,
              py::arg("weightTimeWarp") = 10,
-             py::arg("intensificationProbability") = 25,
+             py::arg("intensificationProbability") = 0,
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
              py::arg("minCircleSectorSizeDegrees") = 15,
              py::arg("destroyPct") = 20)
