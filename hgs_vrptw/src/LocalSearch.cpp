@@ -3,7 +3,6 @@
 #include "Individual.h"
 #include "Params.h"
 
-#include <algorithm>
 #include <numeric>
 #include <stdexcept>
 #include <vector>
@@ -119,6 +118,7 @@ void LocalSearch::search()
                 }
             }
     }
+
     postProcess();
 }
 
@@ -172,6 +172,84 @@ void LocalSearch::update(Route *U, Route *V)
         for (auto op : routeOps)
             op->update(V);
     }
+}
+
+void LocalSearch::postProcess()
+{
+    // This postprocessing step optimally recombines all node segments of a
+    // given length in each route. This recombination works by enumeration, so
+    // we cannot consider lengths that are too large.
+    for (auto &route : routes)
+    {
+        if (route.empty())
+            continue;
+
+        for (size_t start = 1; start < route.size(); start++)
+        {
+            auto const pathLength = std::min(
+                route.size() - start + 1, params.config.postProcessPathLength);
+
+            std::vector<size_t> path(pathLength);
+            std::iota(path.begin(), path.end(), start);
+
+            // We compare the range [start, start + pathLength). So the fixed
+            // endpoints are p(start) and the node at start + pathLength.
+            auto *prev = route[start]->prev;
+            auto *next = route[start + pathLength];
+
+            auto currCost = evaluateSubpath(path, prev, next, route);
+            auto bestCost = currCost;
+            std::vector<size_t> bestPath = path;
+
+            while (std::next_permutation(path.begin(), path.end()))
+            {
+                auto const cost = evaluateSubpath(path, prev, next, route);
+
+                if (cost < bestCost)
+                {
+                    bestPath = path;
+                    bestCost = cost;
+                }
+            }
+
+            if (bestCost < currCost)
+            {
+                for (auto pos : bestPath)
+                {
+                    auto *node = route[pos];
+                    node->insertAfter(prev);
+                    prev = node;
+                }
+
+                route.update();
+            }
+        }
+    }
+}
+
+int LocalSearch::evaluateSubpath(std::vector<size_t> const &subpath,
+                                 Node const *before,
+                                 Node const *after,
+                                 Route const &route) const
+{
+    auto totalDist = 0;
+    auto tws = before->twBefore;
+    auto from = before->client;
+
+    // Calculates travel distance and time warp of the subpath permutation.
+    for (auto &pos : subpath)
+    {
+        auto *to = route[pos];
+
+        totalDist += params.dist(from, to->client);
+        tws = TimeWindowSegment::merge(tws, to->tw);
+        from = to->client;
+    }
+
+    totalDist += params.dist(from, after->client);
+    tws = TimeWindowSegment::merge(tws, after->twAfter);
+
+    return totalDist + params.twPenalty(tws.totalTimeWarp());
 }
 
 void LocalSearch::loadIndividual(Individual const &indiv)
@@ -304,103 +382,4 @@ LocalSearch::LocalSearch(Params &params, XorShift128 &rng)
         endDepots[i].client = 0;
         endDepots[i].route = &routes[i];
     }
-}
-
-void LocalSearch::postProcess()
-{
-    for (int r = 0; r < params.nbVehicles; r++)
-    {
-        Route *route = &routes[r];
-
-        if (!route->empty())
-        {
-            for (size_t i = 1; i < route->size(); i++)
-            {
-                // if the rest of the route is of size postProcessArea or less
-                // we optimize the end and stop i.e. with short routes or at the
-                // end of a route
-                if (route->size() - i <= params.config.postProcessArea)
-                {
-                    optimizeSubpath(i, route->size() - i, route);
-                    break;
-                }
-                else
-                {
-                    optimizeSubpath(i, params.config.postProcessArea, route);
-                }
-            }
-        }
-    }
-}
-
-void LocalSearch::optimizeSubpath(const size_t start,
-                                  const size_t area,
-                                  Route *route)
-{
-    std::vector<size_t> subpath(area);
-
-    for (size_t i = 0; i < area; i++)
-    {
-        subpath[i] = i + start;
-    }
-    int opt_cost = std::numeric_limits<int>::max();
-
-    Node *before = (*route)[start]->prev;
-    const Node *after = (*route)[start + area]->next;
-
-    std::vector<size_t> best_subpath;
-    // iterate over permutations of route indices
-    do
-    {
-        int subpath_cost = evaluateSubpath(subpath, before, after, route);
-
-        if (subpath_cost < opt_cost)
-        {
-            best_subpath = subpath;
-            opt_cost = subpath_cost;
-        }
-    } while (std::next_permutation(subpath.begin(), subpath.end()));
-
-    // insert best permutation, we collect the node objects and insert front to
-    // back
-    std::vector<Node *> subpath_nodes = {};
-    for (auto &node_idx : best_subpath)
-    {
-        subpath_nodes.push_back((*route)[node_idx]);
-    }
-    for (auto &current_node : subpath_nodes)
-    {
-        current_node->insertAfter(before);
-        before = current_node;
-    }
-    route->update();
-}
-
-int LocalSearch::evaluateSubpath(const std::vector<size_t> &subpath,
-                                 Node *before,
-                                 const Node *after,
-                                 Route *route)
-{
-    int distance = before->cumulatedDistance;
-    TimeWindowSegment tws_total = before->twBefore;
-
-    int client_from = before->client;
-
-    // calculates new distance up to node "after" and merges TWS
-    for (auto &node_idx : subpath)
-    {
-        Node *node_to = (*route)[node_idx];
-        int client_to = node_to->client;
-
-        distance += params.dist(client_from, client_to);
-        tws_total = TimeWindowSegment::merge(tws_total, node_to->tw);
-
-        client_from = client_to;
-    }
-    distance += params.dist(client_from, after->client);
-    tws_total = TimeWindowSegment::merge(tws_total, after->twAfter);
-
-    int timeWarp = tws_total.totalTimeWarp();
-
-    return (distance + params.twPenalty(timeWarp));
 }

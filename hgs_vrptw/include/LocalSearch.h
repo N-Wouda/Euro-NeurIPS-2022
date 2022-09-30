@@ -52,15 +52,14 @@ class LocalSearch
     // Performs the actual local search procedure
     void search();
 
-    // Postprocessing of individual at the end of local search
+    // Final processing before exporting the individual
     void postProcess();
-    // Iterates over all subroutes for a given area
-    void optimizeSubpath(const size_t start, const size_t area, Route *route);
-    // Calculates cost of inserting new subroute
-    int evaluateSubpath(const std::vector<size_t> &subpath,
-                        Node *before,
-                        const Node *after,
-                        Route *route);
+
+    // Evaluates the path before -> <nodes in sub path> -> after
+    int evaluateSubpath(std::vector<size_t> const &subpath,
+                        Node const *before,
+                        Node const *after,
+                        Route const &route) const;
 
 public:
     /**
