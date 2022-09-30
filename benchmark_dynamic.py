@@ -37,11 +37,10 @@ def parse_args():
 def solve(loc: str, instance_seed: int, **kwargs):
     path = Path(loc)
 
-    tlim = (
-        tools.dynamic_time_limit(kwargs["phase"])
-        if kwargs.get("phase") is not None
-        else kwargs["epoch_tlim"]
-    )
+    if kwargs.get("phase") is not None:
+        tlim = tools.dynamic_time_limit(kwargs["phase"])
+    else:
+        tlim = kwargs["epoch_tlim"]
 
     env = VRPEnvironment(
         seed=instance_seed, instance=tools.read_vrplib(path), epoch_tlim=tlim
