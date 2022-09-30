@@ -98,7 +98,7 @@ def groupby_mean(data):
 
     dtypes = [
         ("inst", "U37"),
-        ("costs", int),
+        ("cost", int),
         ("time", float),
     ]
 
@@ -116,7 +116,7 @@ def main():
     if args.aggregate:
         headers = [
             "Instance",
-            "Avg. costs",
+            "Avg. cost",
             "Time (s)",
         ]
 
@@ -125,14 +125,14 @@ def main():
         headers = [
             "Instance",
             "Seed",
-            "Costs",
+            "Cost",
             "Time (s)",
         ]
 
         dtypes = [
             ("inst", "U37"),
             ("seed", int),
-            ("costs", int),
+            ("cost", int),
             ("time", float),
         ]
         data = np.asarray(data, dtype=dtypes)
@@ -153,7 +153,7 @@ def main():
             )
         )
     print("\n", table, "\n", sep="")
-    print(f"      Avg. objective: {data['costs'].mean():.0f}")
+    print(f"      Avg. objective: {data['cost'].mean():.0f}")
     print(f"   Avg. run-time (s): {data['time'].mean():.2f}")
 
 
