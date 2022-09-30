@@ -57,8 +57,8 @@ def rollout(info, obs, rng):
             if (req_sol[route_idx] >= 0).all():
                 dispatch_count[sim_route] += 1
 
-        sim_end = time.perf_counter() - sim_start
-        avg_duration = (n_sims * avg_duration + sim_end) / (n_sims + 1)
+        sim_duration = time.perf_counter() - sim_start
+        avg_duration = (n_sims * avg_duration + sim_duration) / (n_sims + 1)
         n_sims += 1
 
     dispatch = (

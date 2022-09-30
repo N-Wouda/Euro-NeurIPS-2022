@@ -44,7 +44,7 @@ def simulate_instance(info, obs, rng, n_lookahead=1):
     new_custs = cust_idx[feas]
     n_new_customers = len(new_custs)
 
-    if not new_custs:  # this should not happen a lot
+    if n_new_customers == 0:  # this should not happen a lot
         return simulate_instance(info, obs, rng, n_lookahead)
 
     sim_tw = sim_tw[feas]

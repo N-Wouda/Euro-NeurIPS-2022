@@ -53,4 +53,5 @@ jobs:
           make --directory=release
       - name: Test solver
         run: |
-          poetry run python benchmark.py --max_runtime 1 --num_procs 2
+          poetry run python controller.py --instance instances/ORTEC-VRPTW-ASYM-00c5356f-d1-n258-k12.txt --epoch_tlim 5 --static -- poetry run python solver.py
+          poetry run python controller.py --instance instances/ORTEC-VRPTW-ASYM-00c5356f-d1-n258-k12.txt --epoch_tlim 2 -- poetry run python solver.py
