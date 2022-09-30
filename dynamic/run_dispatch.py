@@ -31,6 +31,6 @@ def run_dispatch(env, dispatch_strategy, **kwargs):
         ep_sol = utils.sol2ep(sol, dispatch_inst)
 
         observation, reward, done, info = env.step(ep_sol)
-        assert info["error"] is None, info['error']
+        assert info["error"] is None, info["error"]
 
     return env.final_costs, env.final_solutions

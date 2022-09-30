@@ -11,7 +11,9 @@ def solve_static(instance, time_limit=60, initial_solutions=(), **kwargs):
 
     # Return singleton solution if the instance contains a single client
     if instance["is_depot"].size <= 2:
-        solution = [[instance["request_idx"][1] if "request_idx" in instance else 1]]
+        solution = [
+            [instance["request_idx"][1] if "request_idx" in instance else 1]
+        ]
         cost = tools.validate_static_solution(instance, solution)
         return solution, cost
 
@@ -20,7 +22,6 @@ def solve_static(instance, time_limit=60, initial_solutions=(), **kwargs):
 
     if "nbVeh" not in kwargs:
         kwargs["nbVeh"] = tools.n_vehicles_bin_pack(instance) + 50
-
 
     config = hgspy.Config(**kwargs)
     params = hgspy.Params(config, **tools.inst_to_vars(instance))

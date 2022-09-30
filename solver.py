@@ -46,16 +46,19 @@ def main():
 
     if args.strategy == "oracle":
         from dynamic.run_oracle import run_oracle
+
         run_oracle(env, **vars(args))
 
     elif args.strategy == "dqn":
         from dynamic.dqn.run_dqn import run_dqn
+
         run_dqn(env, **vars(args))
 
     else:
         if args.strategy in ["greedy", "random", "lazy"]:
             from dynamic.random import random_dispatch
-            probs = {"greedy": 1, "random": .5, "lazy": 0}
+
+            probs = {"greedy": 1, "random": 0.5, "lazy": 0}
             strategy = random_dispatch(probs[args.strategy])
 
         elif args.strategy == "rollout":

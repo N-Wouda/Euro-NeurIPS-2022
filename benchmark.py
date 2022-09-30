@@ -17,7 +17,9 @@ def parse_args():
 
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--num_procs", type=int, default=4)
-    parser.add_argument("--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt")
+    parser.add_argument(
+        "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
+    )
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--max_runtime", type=int)

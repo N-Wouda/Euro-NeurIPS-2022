@@ -22,7 +22,9 @@ def parse_args():
     parser.add_argument("--solver_seed", type=int, default=1)
     parser.add_argument("--num_procs", type=int, default=4)
     parser.add_argument("--strategy", type=str, default="greedy")
-    parser.add_argument("--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt")
+    parser.add_argument(
+        "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
+    )
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--epoch_tlim", type=int)
@@ -34,31 +36,42 @@ def parse_args():
 def solve(loc: str, instance_seed: int, **kwargs):
     path = Path(loc)
 
-    tlim = tools.dynamic_time_limit(kwargs["phase"]) if kwargs.get("phase") is not None else kwargs["epoch_tlim"]
+    tlim = (
+        tools.dynamic_time_limit(kwargs["phase"])
+        if kwargs.get("phase") is not None
+        else kwargs["epoch_tlim"]
+    )
 
-    env = VRPEnvironment(seed=instance_seed, instance=tools.read_vrplib(path), epoch_tlim=tlim)
+    env = VRPEnvironment(
+        seed=instance_seed, instance=tools.read_vrplib(path), epoch_tlim=tlim
+    )
 
     start = perf_counter()
 
     if kwargs["strategy"] == "oracle":
         from dynamic.run_oracle import run_oracle
+
         costs, routes = run_oracle(env, **kwargs)
 
     elif kwargs["strategy"] == "dqn":
         from dynamic.dqn.run_dqn import run_dqn
+
         costs, routes = run_dqn(env, **kwargs)
 
     else:
         if kwargs["strategy"] in ["greedy", "random", "lazy"]:
             from dynamic.random import random_dispatch
-            probs = {"greedy": 1, "random": .5, "lazy": 0}
+
+            probs = {"greedy": 1, "random": 0.5, "lazy": 0}
             strategy = random_dispatch(probs[kwargs["strategy"]])
 
         elif kwargs["strategy"] == "rollout":
             from dynamic.rollout import rollout as strategy
 
         else:
-            raise NotImplementedError(f"Invalid strategy: {kwargs['strategy']}")
+            raise NotImplementedError(
+                f"Invalid strategy: {kwargs['strategy']}"
+            )
 
         costs, routes = run_dispatch(env, dispatch_strategy=strategy, **kwargs)
 
@@ -108,10 +121,20 @@ def main():
     ]
 
     table = tools.tabulate(headers, data)
-    print(Path(__file__).name, " ".join(f"--{key} {value}" for key, value in vars(args).items()))
+    print(
+        Path(__file__).name,
+        " ".join(f"--{key} {value}" for key, value in vars(args).items()),
+    )
     if args.strategy == "rollout":
         from dynamic.rollout import constants
-        print(" ".join(f"--{key} {value}" for key, value in vars(constants).items() if not key.startswith("_")))
+
+        print(
+            " ".join(
+                f"--{key} {value}"
+                for key, value in vars(constants).items()
+                if not key.startswith("_")
+            )
+        )
     print("\n", table, "\n", sep="")
     print(f"      Avg. objective: {data['reward'].mean():.0f}")
     print(f"   Avg. run-time (s): {data['time'].mean():.2f}")

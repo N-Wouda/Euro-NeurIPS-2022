@@ -30,7 +30,11 @@ def run_oracle(env, **kwargs):
 
         # NOTE This is a proxy to extract the routes from the hindsight solution
         # that are dispatched in the current epoch.
-        ep_sol = [route for route in solution if len(request_idx.intersection(route)) == len(route)]
+        ep_sol = [
+            route
+            for route in solution
+            if len(request_idx.intersection(route)) == len(route)
+        ]
 
         observation, reward, done, info = env.step(ep_sol)
         assert info["error"] is None, f"{info['error']}"
