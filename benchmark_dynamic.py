@@ -30,6 +30,8 @@ def parse_args():
     group.add_argument("--epoch_tlim", type=int)
     group.add_argument("--phase", choices=["quali", "final"])
 
+    parser.add_argument("--aggregate", type=bool, default=True)
+
     return parser.parse_args()
 
 
@@ -97,7 +99,7 @@ def groupby_mean(data):
 
     dtypes = [
         ("inst", "U37"),
-        ("reward", int),
+        ("costs", int),
         ("time", float),
     ]
 
@@ -112,13 +114,29 @@ def main():
 
     tqdm_kwargs = dict(max_workers=args.num_procs, unit="instance")
     data = process_map(func, *zip(*func_args), **tqdm_kwargs)
-    data = groupby_mean(data)
+    if args.aggregate:
+        headers = [
+            "Instance",
+            "Avg. costs",
+            "Time (s)",
+        ]
 
-    headers = [
-        "Instance",
-        "Avg. costs",
-        "Time (s)",
-    ]
+        data = groupby_mean(data)
+    else:
+        headers = [
+            "Instance",
+            "Seed",
+            "Costs",
+            "Time (s)",
+        ]
+
+        dtypes = [
+            ("inst", "U37"),
+            ("seed", int),
+            ("costs", int),
+            ("time", float),
+        ]
+        data = np.asarray(data, dtype=dtypes)
 
     table = tools.tabulate(headers, data)
     print(
@@ -136,7 +154,7 @@ def main():
             )
         )
     print("\n", table, "\n", sep="")
-    print(f"      Avg. objective: {data['reward'].mean():.0f}")
+    print(f"      Avg. objective: {data['costs'].mean():.0f}")
     print(f"   Avg. run-time (s): {data['time'].mean():.2f}")
 
 
