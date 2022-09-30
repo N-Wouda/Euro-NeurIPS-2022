@@ -69,9 +69,7 @@ def solve(loc: str, instance_seed: int, **kwargs):
             from dynamic.rollout import rollout as strategy
 
         else:
-            raise ValueError(
-                f"Invalid strategy: {kwargs['strategy']}"
-            )
+            raise ValueError(f"Invalid strategy: {kwargs['strategy']}")
 
         costs, routes = run_dispatch(env, dispatch_strategy=strategy, **kwargs)
 

@@ -32,7 +32,7 @@ def rollout(info, obs, rng):
 
     # Statistics
     n_sims = 0
-    avg_duration = 0.
+    avg_duration = 0.0
     dispatch_count = np.zeros(n_requests, dtype=int)
 
     # Only do another simulation if there's (on average) enough time for it to
@@ -62,10 +62,10 @@ def rollout(info, obs, rng):
         n_sims += 1
 
     dispatch = (
-            ep_inst["is_depot"]
-            | ep_inst["must_dispatch"]
-            # Only dispatch requests that are dispatched in enough simulations
-            | (dispatch_count >= max(1, n_sims) * DISPATCH_THRESHOLD)
+        ep_inst["is_depot"]
+        | ep_inst["must_dispatch"]
+        # Only dispatch requests that are dispatched in enough simulations
+        | (dispatch_count >= max(1, n_sims) * DISPATCH_THRESHOLD)
     )
 
     return utils.filter_instance(ep_inst, dispatch)
