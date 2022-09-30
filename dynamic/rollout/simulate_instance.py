@@ -27,8 +27,8 @@ def simulate_instance(info, obs, rng, n_lookahead=1):
     tw_idx = rng.integers(n_customers, size=n_samples) + 1
     service_idx = rng.integers(n_customers, size=n_samples) + 1
 
-    # These are unnormalized time windows and release times, which are used to
-    # determine request feasibility. Will be clipped later.
+    # These are static time windows and release times, which are used to
+    # determine request feasibility. Will be clipped later to fit the epoch.
     sim_tw = tws[tw_idx]
     sim_epochs = np.repeat(np.arange(1, max_lookahead + 1), EPOCH_N_REQUESTS)
     sim_release = start_time + sim_epochs * EPOCH_DURATION
@@ -44,7 +44,7 @@ def simulate_instance(info, obs, rng, n_lookahead=1):
     new_custs = cust_idx[feas]
     n_new_customers = len(new_custs)
 
-    if n_new_customers == 0:  # this should not happen a lot
+    if not new_custs:  # this should not happen a lot
         return simulate_instance(info, obs, rng, n_lookahead)
 
     sim_tw = sim_tw[feas]
@@ -57,12 +57,12 @@ def simulate_instance(info, obs, rng, n_lookahead=1):
     sim_req_idx = -(np.arange(n_new_customers) + 1)
     req_idx = np.concatenate((ep_inst["request_idx"], sim_req_idx))
 
-    # Renormalize TW and release to start_time, and clip the past
-    sim_tw = np.clip(sim_tw - start_time, a_min=0, a_max=None)
+    # Normalize TW and release to start_time, and clip the past
+    sim_tw = np.maximum(sim_tw - start_time, 0)
     req_tw = np.concatenate((ep_inst["time_windows"], sim_tw))
 
     ep_release = np.zeros(ep_inst["is_depot"].size, dtype=int)
-    sim_release = np.clip(sim_release - start_time, a_min=0, a_max=None)
+    sim_release = np.maximum(sim_release - start_time, 0)
     req_release = np.concatenate((ep_release, sim_release))
 
     demand_idx = rng.integers(n_customers, size=n_new_customers) + 1
