@@ -28,9 +28,7 @@ def run_oracle(env, **kwargs):
         ep_inst = observation["epoch_instance"]
         requests = set(ep_inst["request_idx"])
 
-        # NOTE This is a proxy to extract the routes from the hindsight
-        # solution that are dispatched in the current epoch.
-        # NOTE This is a proxy to extract the routes from the hindsight
+        # This is a proxy to extract the routes from the hindsight
         # solution that are dispatched in the current epoch.
         ep_sol = [
             route
