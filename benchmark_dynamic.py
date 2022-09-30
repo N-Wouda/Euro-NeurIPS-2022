@@ -1,16 +1,15 @@
 import argparse
-import numpy as np
-
-import tools
-
 from collections import defaultdict
 from functools import partial
 from glob import glob
 from itertools import product
 from pathlib import Path
 from time import perf_counter
+
+import numpy as np
 from tqdm.contrib.concurrent import process_map
 
+import tools
 from dynamic.run_dispatch import run_dispatch
 from environment import VRPEnvironment
 

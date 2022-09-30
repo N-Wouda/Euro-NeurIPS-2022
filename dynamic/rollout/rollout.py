@@ -2,6 +2,7 @@ import time
 
 import numpy as np
 
+from .. import utils
 from .constants import (
     SIM_SOLVE_ITERS,
     SIM_TLIM_FACTOR,
@@ -11,7 +12,6 @@ from .constants import (
 )
 from .simulate_instance import simulate_instance
 from .solve_simulation import solve_simulation
-from .. import utils
 
 
 def rollout(info, obs, rng):

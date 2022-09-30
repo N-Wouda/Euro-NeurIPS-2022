@@ -2,9 +2,8 @@ import argparse
 import sys
 
 import tools
-from environment import ControllerEnvironment, VRPEnvironment
-
 from dynamic.run_dispatch import run_dispatch
+from environment import ControllerEnvironment, VRPEnvironment
 
 
 def parse_args():

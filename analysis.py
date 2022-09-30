@@ -1,16 +1,17 @@
 import argparse
-import matplotlib
-import matplotlib.pyplot as plt
-import numpy as np
-
-import plotting
-import tools
-
 from functools import partial
 from glob import glob
 from pathlib import Path
 from time import perf_counter
+
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
 from tqdm.contrib.concurrent import process_map
+
+import plotting
+import tools
+
 
 hgspy = tools.get_hgspy_module()
 

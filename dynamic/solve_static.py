@@ -1,4 +1,3 @@
-import numpy as np
 import tools
 
 hgspy = tools.get_hgspy_module()
