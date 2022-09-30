@@ -1,3 +1,5 @@
+benchmark_dynamic.py --num_seeds 8 --solver_seed 1 --num_procs 16 --strategy rollout --instance_pattern instances/ORTEC-VRPTW-ASYM-*.txt --epoch_tlim 60 --phase None --aggregate False
+--EPOCH_N_REQUESTS 100 --EPOCH_DURATION 3600 --N_LOOKAHEAD 3 --SIM_TLIM_FACTOR 0.5 --SIM_SOLVE_ITERS 25 --POSTPONE_THRESHOLD 0.85 --SIM_SOLVE_CONFIG {'seed': 1, 'generationSize': 20, 'minPopSize': 5, 'nbGranular': 80, 'initialTimeWarpPenalty': 250, 'penaltyDecrease': 0.5}
 
 Instance                               Avg. reward  Seed    Time (s)
 -------------------------------------  -----------  ------  --------

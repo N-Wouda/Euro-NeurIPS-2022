@@ -1,3 +1,4 @@
+benchmark_dynamic.py --num_seeds 8 --solver_seed 1 --num_procs 16 --strategy oracle --instance_pattern instances/ORTEC-VRPTW-ASYM-*.txt --epoch_tlim 600 --phase None --aggregate False
 
 Instance                               Avg. reward  Seed    Time (s)
 -------------------------------------  -----------  ------  --------
