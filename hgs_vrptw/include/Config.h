@@ -61,6 +61,9 @@ struct Config
     // Percentage of customers to remove in brokenPairsExchange
     size_t destroyPct = 20;
 
+    // Number of nodes we improve by enumeration in LS postprocessing
+    size_t postProcessPathLength = 4;
+
     explicit Config(int seed = 0,
                     size_t nbIter = 10'000,
                     int timeLimit = INT_MAX,
@@ -86,7 +89,8 @@ struct Config
                     size_t intensificationProbability = 0,
                     int circleSectorOverlapToleranceDegrees = 0,
                     int minCircleSectorSizeDegrees = 15,
-                    size_t destroyPct = 20)
+                    size_t destroyPct = 20,
+                    size_t postProcessPathLength = 4)
         : seed(seed),
           nbIter(nbIter),
           timeLimit(timeLimit),
@@ -110,7 +114,8 @@ struct Config
           weightWaitTime(weightWaitTime),
           weightTimeWarp(weightTimeWarp),
           intensificationProbability(intensificationProbability),
-          destroyPct(destroyPct)
+          destroyPct(destroyPct),
+          postProcessPathLength(postProcessPathLength)
     {
         auto const overlap = circleSectorOverlapToleranceDegrees / 360. * 65536;
         circleSectorOverlapTolerance = static_cast<int>(overlap);

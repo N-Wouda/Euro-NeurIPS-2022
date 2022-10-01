@@ -52,6 +52,15 @@ class LocalSearch
     // Performs the actual local search procedure
     void search();
 
+    // Final processing before exporting the individual
+    void postProcess();
+
+    // Evaluates the path before -> <nodes in sub path> -> after
+    inline int evaluateSubpath(std::vector<size_t> const &subpath,
+                               Node const *before,
+                               Node const *after,
+                               Route const &route) const;
+
 public:
     /**
      * Adds a local search operator that works on node/client pairs U and V.
