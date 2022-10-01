@@ -186,7 +186,7 @@ void LocalSearch::postProcess()
         {
             // We process the range [start, start + k). So the fixed endpoints
             // are p(start) and the node at start + k.
-            auto *prev = route[start]->prev;
+            auto *prev = p(route[start]);
             auto *next = route[start + k];
 
             std::iota(path.begin(), path.end(), start);
