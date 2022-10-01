@@ -56,10 +56,10 @@ class LocalSearch
     void postProcess();
 
     // Evaluates the path before -> <nodes in sub path> -> after
-    int evaluateSubpath(std::vector<size_t> const &subpath,
-                        Node const *before,
-                        Node const *after,
-                        Route const &route) const;
+    inline int evaluateSubpath(std::vector<size_t> const &subpath,
+                               Node const *before,
+                               Node const *after,
+                               Route const &route) const;
 
 public:
     /**

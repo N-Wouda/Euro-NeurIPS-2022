@@ -174,52 +174,41 @@ void LocalSearch::update(Route *U, Route *V)
 
 void LocalSearch::postProcess()
 {
+    auto const k = params.config.postProcessPathLength;
+    std::vector<size_t> bestPath(k);
+    std::vector<size_t> path(k);
+
     // This postprocessing step optimally recombines all node segments of a
-    // given length in each route. This recombination works by enumeration, so
-    // we cannot consider lengths that are too large.
+    // given length in each route. This recombination works by enumeration; see
+    // issue #98 for details.
     for (auto &route : routes)
     {
-        if (route.empty())
-            continue;
-
-        for (size_t start = 1; start < route.size(); start++)
+        for (size_t start = 1; start + k <= route.size(); ++start)
         {
-            auto const pathLength = std::min(
-                route.size() - start + 1, params.config.postProcessPathLength);
-
-            std::vector<size_t> path(pathLength);
-            std::iota(path.begin(), path.end(), start);
-
-            // We compare the range [start, start + pathLength). So the fixed
-            // endpoints are p(start) and the node at start + pathLength.
+            // We process the range [start, start + k). So the fixed endpoints
+            // are p(start) and the node at start + k.
             auto *prev = route[start]->prev;
-            auto *next = route[start + pathLength];
+            auto *next = route[start + k];
 
+            std::iota(path.begin(), path.end(), start);
             auto currCost = evaluateSubpath(path, prev, next, route);
-            auto bestCost = currCost;
-            std::vector<size_t> bestPath = path;
 
             while (std::next_permutation(path.begin(), path.end()))
             {
                 auto const cost = evaluateSubpath(path, prev, next, route);
 
-                if (cost < bestCost)
-                {
-                    bestPath = path;
-                    bestCost = cost;
-                }
-            }
+                if (cost < currCost)  // it is rare to find more improving
+                {                     // moves, so we break after the first
+                    for (auto pos : path)
+                    {
+                        auto *node = route[pos];
+                        node->insertAfter(prev);
+                        prev = node;
+                    }
 
-            if (bestCost < currCost)
-            {
-                for (auto pos : bestPath)
-                {
-                    auto *node = route[pos];
-                    node->insertAfter(prev);
-                    prev = node;
+                    route.update();
+                    break;
                 }
-
-                route.update();
             }
         }
     }
