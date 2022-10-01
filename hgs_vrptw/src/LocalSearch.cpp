@@ -175,7 +175,6 @@ void LocalSearch::update(Route *U, Route *V)
 void LocalSearch::postProcess()
 {
     auto const k = params.config.postProcessPathLength;
-    std::vector<size_t> bestPath(k);
     std::vector<size_t> path(k);
 
     // This postprocessing step optimally recombines all node segments of a
