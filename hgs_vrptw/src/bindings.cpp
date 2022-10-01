@@ -108,7 +108,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("nbGranular") = 40,
              py::arg("weightWaitTime") = 2,
              py::arg("weightTimeWarp") = 10,
-             py::arg("intensificationProbability") = 25,
+             py::arg("intensificationProbability") = 0,
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
              py::arg("minCircleSectorSizeDegrees") = 15,
              py::arg("destroyPct") = 20,
@@ -162,7 +162,10 @@ PYBIND11_MODULE(hgspy, m)
     py::class_<Population>(m, "Population")
         .def(py::init<Params &, XorShift128 &>(),
              py::arg("params"),
-             py::arg("rng"));
+             py::arg("rng"))
+        .def("add_individual",
+             &Population::addIndividual,
+             py::arg("individual"));
 
     py::class_<Statistics>(m, "Statistics")
         .def("num_iters", &Statistics::numIters)

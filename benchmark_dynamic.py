@@ -10,6 +10,7 @@ import numpy as np
 from tqdm.contrib.concurrent import process_map
 
 import tools
+from dynamic.run_dispatch import run_dispatch
 from environment import VRPEnvironment
 
 
@@ -19,7 +20,7 @@ def parse_args():
     parser.add_argument("--num_seeds", type=int, default=1)
     parser.add_argument("--solver_seed", type=int, default=1)
     parser.add_argument("--num_procs", type=int, default=4)
-    parser.add_argument("--strategy", type=str, default="greedy")
+    parser.add_argument("--strategy", type=str, default="rollout")
     parser.add_argument(
         "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
     )
@@ -50,21 +51,23 @@ def solve(loc: str, instance_seed: int, **kwargs):
 
         reward = -run_oracle(env, **kwargs)
 
-    elif kwargs["strategy"] in ["greedy", "random", "lazy"]:
-        from dynamic.run_random import run_random
-
-        probs = {"greedy": 100, "random": 50, "lazy": 0}
-        reward = -run_random(
-            env, **kwargs, dispatch_prob=probs[kwargs["strategy"]]
-        )
-
     elif kwargs["strategy"] == "dqn":
         from dynamic.dqn.run_dqn import run_dqn
 
         reward = -run_dqn(env, **kwargs)
 
     else:
-        raise ValueError(f"Invalid strategy: {kwargs['strategy']}")
+        if kwargs["strategy"] in ["greedy", "random", "lazy"]:
+            from dynamic.random import random_dispatch
+
+            probs = {"greedy": 100, "random": 50, "lazy": 0}
+            strategy = random_dispatch(probs[kwargs["strategy"]])
+        elif kwargs["strategy"] == "rollout":
+            from dynamic.rollout import rollout as strategy
+        else:
+            raise ValueError(f"Invalid strategy: {kwargs['strategy']}")
+
+        reward = -run_dispatch(env, dispatch_strategy=strategy, **kwargs)
 
     return path.stem, instance_seed, reward, round(perf_counter() - start, 3)
 

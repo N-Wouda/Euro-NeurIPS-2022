@@ -38,10 +38,13 @@ def filter_instance(instance: dict, mask: np.ndarray):
     }
 
 
-def dispatch_decision(instance, prob, rng: np.random.Generator) -> np.array:
+def delta_cost(route, dist):
     """
-    Decide which nodes are dispatched in the current epoch. Non-must dispatch
-    nodes are dispatched with probability prob.
+    Return the delta cost for each client on the route.
     """
-    dispatch_now = rng.random(instance["must_dispatch"].shape) < prob
-    return instance["is_depot"] | instance["must_dispatch"] | dispatch_now
+    if len(route) == 0:
+        return []
+
+    pred = np.array([0] + route[:-1], dtype=int)
+    succ = np.array(route[1:] + [0], dtype=int)
+    return (dist[pred, route] + dist[route, succ] - dist[pred, succ]).tolist()
