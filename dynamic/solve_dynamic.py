@@ -18,7 +18,12 @@ def solve_epoch(instance, time_limit, initial_solutions=(), **kwargs):
         cost = tools.validate_static_solution(instance, solution)
         return solution, cost
 
-    res = static.solve_static(instance, initial_solutions=initial_solutions, max_runtime=time_limit, **kwargs)
+    res = static.solve_static(
+        instance,
+        initial_solutions=initial_solutions,
+        max_runtime=time_limit,
+        **kwargs
+    )
 
     best = res.get_best_found()
     routes = [route for route in best.get_routes() if route]

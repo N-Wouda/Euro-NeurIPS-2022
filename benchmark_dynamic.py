@@ -29,7 +29,7 @@ def parse_args():
     group.add_argument("--epoch_tlim", type=int)
     group.add_argument("--phase", choices=["quali", "final"])
 
-    parser.add_argument("--aggregate", action='store_true')
+    parser.add_argument("--aggregate", action="store_true")
 
     return parser.parse_args()
 
@@ -56,7 +56,9 @@ def solve(loc: str, instance_seed: int, **kwargs):
         except AttributeError:
             raise ValueError(f"Invalid strategy: {kwargs['strategy']}")
 
-        costs, routes = dynamic.solve_dynamic(env, dispatch_strategy=strategy, **kwargs)
+        costs, routes = dynamic.solve_dynamic(
+            env, dispatch_strategy=strategy, **kwargs
+        )
 
     run_time = round(perf_counter() - start, 3)
 

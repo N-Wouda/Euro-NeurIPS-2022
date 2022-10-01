@@ -35,7 +35,9 @@ def solve(loc: str, seed: int, **kwargs):
     start = perf_counter()
 
     if kwargs["phase"] is not None:
-        kwargs["max_runtime"] = tools.static_time_limit(tools.name2size(loc), kwargs["phase"])
+        kwargs["max_runtime"] = tools.static_time_limit(
+            tools.name2size(loc), kwargs["phase"]
+        )
 
     res = static.solve_static(instance, seed=seed, **kwargs)
 

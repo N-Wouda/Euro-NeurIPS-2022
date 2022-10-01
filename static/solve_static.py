@@ -2,8 +2,20 @@ import tools
 from . import hgspy
 
 
-def solve_static(instance, *, seed=1, max_runtime=None, max_iterations=None, initial_solutions=(), excl_ops=(), solver_config=None, **kwargs):
-    config = hgspy.Config(seed=seed, **solver_config if solver_config is not None else {})
+def solve_static(
+    instance,
+    *,
+    seed=1,
+    max_runtime=None,
+    max_iterations=None,
+    initial_solutions=(),
+    excl_ops=(),
+    solver_config=None,
+    **kwargs
+):
+    config = hgspy.Config(
+        seed=seed, **solver_config if solver_config is not None else {}
+    )
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=seed)

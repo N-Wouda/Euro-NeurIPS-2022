@@ -47,9 +47,16 @@ def solve(loc: str, seed: int, **kwargs):
     start = perf_counter()
 
     if kwargs["phase"] is not None:
-        kwargs["max_runtime"] = tools.static_time_limit(tools.name2size(loc), kwargs["phase"])
+        kwargs["max_runtime"] = tools.static_time_limit(
+            tools.name2size(loc), kwargs["phase"]
+        )
 
-    res = static.solve_static(instance, seed=seed, solver_config={"collectStatistics": True}, **kwargs)
+    res = static.solve_static(
+        instance,
+        seed=seed,
+        solver_config={"collectStatistics": True},
+        **kwargs,
+    )
 
     best = res.get_best_found()
     routes = [route for route in best.get_routes() if route]

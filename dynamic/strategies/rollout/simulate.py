@@ -34,7 +34,9 @@ def make_instance(info, obs, rng, n_lookahead=1):
     # These are static time windows and release times, which are used to
     # determine request feasibility. Will be clipped later to fit the epoch.
     sim_tw = tws[tw_idx]
-    sim_epochs = np.repeat(np.arange(1, max_lookahead + 1), config.EPOCH_N_REQUESTS)
+    sim_epochs = np.repeat(
+        np.arange(1, max_lookahead + 1), config.EPOCH_N_REQUESTS
+    )
     sim_release = start_time + sim_epochs * config.EPOCH_DURATION
     sim_service = static_inst["service_times"][service_idx]
 
@@ -91,7 +93,12 @@ def make_instance(info, obs, rng, n_lookahead=1):
 
 
 def solve_instance(instance, max_iterations=None, **kwargs):
-    res = static.solve_static(instance, max_iterations=max_iterations, excl_ops=(static.hgspy.crossover.broken_pairs_exchange,), **kwargs)
+    res = static.solve_static(
+        instance,
+        max_iterations=max_iterations,
+        excl_ops=(static.hgspy.crossover.broken_pairs_exchange,),
+        **kwargs
+    )
 
     best = res.get_best_found()
     routes = [route for route in best.get_routes() if route]
