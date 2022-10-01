@@ -34,7 +34,7 @@ def rollout_count(info, obs, rng):
 
         # sim_sol has indices 1, ..., N
         sim_sol, _, is_feas = simulate.solve_instance(
-            sim_inst, config.SIM_SOLVE_ITERS, **config.SIM_SOLVE_CONFIG
+            sim_inst, config.SIM_SOLVE_ITERS, solver_config=config.SIM_SOLVE_CONFIG
         )
 
         if not is_feas:

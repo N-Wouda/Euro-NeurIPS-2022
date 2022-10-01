@@ -1,4 +1,4 @@
-from dynamic import solve_static
+import dynamic
 
 
 def run_oracle(env, **kwargs):
@@ -19,7 +19,7 @@ def run_oracle(env, **kwargs):
         observation, _, done, _ = env.step(ep_sol)
 
     hindsight_inst = env.get_hindsight_problem()
-    solution, _ = solve_static(hindsight_inst, time_limit=ep_tlim)
+    solution, _ = dynamic.solve_epoch(hindsight_inst, time_limit=ep_tlim)
 
     observation, _ = env.reset()
 

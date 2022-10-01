@@ -1,6 +1,5 @@
 from . import strategies
 from . import utils
 
-from .solve_dynamic import solve_dynamic
-from .solve_static import solve_static
+from .solve_dynamic import solve_dynamic, solve_epoch
 from .run_oracle import run_oracle
