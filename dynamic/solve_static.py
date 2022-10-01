@@ -15,9 +15,6 @@ def solve_static(instance, time_limit=60, initial_solutions=(), **kwargs):
     if "seed" not in kwargs:
         kwargs["seed"] = 1
 
-    if "nbVeh" not in kwargs:
-        kwargs["nbVeh"] = tools.n_vehicles_bin_pack(instance) + 50
-
     hgspy = tools.get_hgspy_module()
 
     config = hgspy.Config(**kwargs)
