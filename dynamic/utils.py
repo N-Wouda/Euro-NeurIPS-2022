@@ -47,4 +47,4 @@ def delta_cost(route, dist):
 
     pred = np.array([0] + route[:-1], dtype=int)
     succ = np.array(route[1:] + [0], dtype=int)
-    return (dist[pred, route] + dist[route, succ] - dist[pred, succ]).tolist()
+    return dist[pred, route] + dist[route, succ] - dist[pred, succ]

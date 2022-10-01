@@ -2,16 +2,16 @@ import time
 
 import numpy as np
 
+from .. import utils
 from .constants import (
     DISPATCH_THRESHOLD,
     N_LOOKAHEAD,
-    SIM_CONFIG,
+    SIM_SOLVE_CONFIG,
     SIM_SOLVE_ITERS,
     SIM_TLIM_FACTOR,
 )
 from .simulate_instance import simulate_instance
 from .solve_simulation import solve_simulation
-from .. import utils
 
 
 def rollout(info, obs, rng):
@@ -32,7 +32,7 @@ def rollout(info, obs, rng):
 
     # Statistics
     n_sims = 0
-    avg_duration = 0.
+    avg_duration = 0.0
     dispatch_count = np.zeros(n_requests, dtype=int)
 
     # Only do another simulation if there's (on average) enough time for it to
@@ -42,7 +42,7 @@ def rollout(info, obs, rng):
 
         # sim_sol has indices 1, ..., N
         sim_sol, _, is_feas = solve_simulation(
-            sim_inst, SIM_SOLVE_ITERS, **SIM_CONFIG
+            sim_inst, SIM_SOLVE_ITERS, **SIM_SOLVE_CONFIG
         )
 
         if not is_feas:

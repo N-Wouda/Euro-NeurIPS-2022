@@ -40,10 +40,8 @@ def run_dqn(env, **kwargs):
 
     observation, static_info = env.reset()
     ep_tlim = static_info["epoch_tlim"]
-    total_reward = 0
 
-    done = False
-    while not done:
+    while not env.is_done:
         ep_inst = observation["epoch_instance"]
 
         # DQN strategy requires more data than just the epoch instance
@@ -57,6 +55,4 @@ def run_dqn(env, **kwargs):
         observation, reward, done, info = env.step(ep_sol)
         assert info["error"] is None, f"{info['error']}"
 
-        total_reward += reward
-
-    return total_reward
+    return env.final_costs, env.final_solutions

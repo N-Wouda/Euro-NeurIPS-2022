@@ -1,9 +1,10 @@
 import time
-import numpy as np
 import tools
 import warnings
-
 from typing import Dict, List, Tuple
+
+import numpy as np
+
 
 _BIG_NUMBER = int(1e9)
 

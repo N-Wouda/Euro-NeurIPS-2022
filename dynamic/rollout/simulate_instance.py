@@ -51,6 +51,7 @@ def simulate_instance(info, obs, rng, n_lookahead=1):
     sim_release = sim_release[feas]
     sim_service = sim_service[feas]
 
+    # Concatenate the new feasible requests to the epoch instance
     req_customer_idx = np.concatenate((ep_inst["customer_idx"], new_custs))
 
     # Simulated request indices are always negative (so we can identify them)

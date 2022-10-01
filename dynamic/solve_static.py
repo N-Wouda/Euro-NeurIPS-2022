@@ -1,13 +1,15 @@
 import tools
 
+hgspy = tools.get_hgspy_module()
+
 
 def solve_static(instance, time_limit=60, initial_solutions=(), **kwargs):
     # Return empty solution if the instance contains no clients
-    if instance["coords"].shape[0] <= 1:
+    if instance["is_depot"].size <= 1:
         return [], 0
 
     # Return singleton solution if the instance contains a single client
-    if instance["coords"].shape[0] <= 2:
+    if instance["is_depot"].size <= 2:
         solution = [[1]]
         cost = tools.validate_static_solution(instance, solution)
         return solution, cost
@@ -15,17 +17,14 @@ def solve_static(instance, time_limit=60, initial_solutions=(), **kwargs):
     if "seed" not in kwargs:
         kwargs["seed"] = 1
 
-    hgspy = tools.get_hgspy_module()
-
     config = hgspy.Config(**kwargs)
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=kwargs["seed"])
     pop = hgspy.Population(params, rng)
 
-    if initial_solutions is not None:
-        for sol in initial_solutions:
-            pop.add_individual(hgspy.Individual(params, sol))
+    for sol in initial_solutions:
+        pop.add_individual(hgspy.Individual(params, sol))
 
     ls = hgspy.LocalSearch(params, rng)
 

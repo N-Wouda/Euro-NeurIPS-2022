@@ -29,14 +29,16 @@ def parse_args():
     group.add_argument("--epoch_tlim", type=int)
     group.add_argument("--phase", choices=["quali", "final"])
 
+    parser.add_argument("--aggregate", action='store_true')
+
     return parser.parse_args()
 
 
 def solve(loc: str, instance_seed: int, **kwargs):
     path = Path(loc)
 
-    if "phase" in kwargs and kwargs["phase"]:
-        tlim = 60 if kwargs["phase"] == "quali" else 120
+    if kwargs["phase"] is not None:
+        tlim = tools.dynamic_time_limit(kwargs["phase"])
     else:
         tlim = kwargs["epoch_tlim"]
 
@@ -49,48 +51,55 @@ def solve(loc: str, instance_seed: int, **kwargs):
     if kwargs["strategy"] == "oracle":
         from dynamic.run_oracle import run_oracle
 
-        reward = -run_oracle(env, **kwargs)
+        costs, routes = run_oracle(env, **kwargs)
 
     elif kwargs["strategy"] == "dqn":
         from dynamic.dqn.run_dqn import run_dqn
 
-        reward = -run_dqn(env, **kwargs)
+        costs, routes = run_dqn(env, **kwargs)
 
     else:
         if kwargs["strategy"] in ["greedy", "random", "lazy"]:
             from dynamic.random import random_dispatch
 
-            probs = {"greedy": 100, "random": 50, "lazy": 0}
+            probs = {"greedy": 1, "random": 0.5, "lazy": 0}
             strategy = random_dispatch(probs[kwargs["strategy"]])
+
         elif kwargs["strategy"] == "rollout":
             from dynamic.rollout import rollout as strategy
+
         else:
             raise ValueError(f"Invalid strategy: {kwargs['strategy']}")
 
-        reward = -run_dispatch(env, dispatch_strategy=strategy, **kwargs)
+        costs, routes = run_dispatch(env, dispatch_strategy=strategy, **kwargs)
 
-    return path.stem, instance_seed, reward, round(perf_counter() - start, 3)
+    run_time = round(perf_counter() - start, 3)
+
+    return path.stem, instance_seed, sum(costs.values()), run_time
 
 
 def groupby_mean(data):
-    rewards, runtimes = defaultdict(list), defaultdict(list)
+    n_items = defaultdict(int)
+    rewards = defaultdict(int)
+    runtimes = defaultdict(int)
 
-    for (inst, _, reward, runtime) in data:
-        rewards[inst].append(reward)
-        runtimes[inst].append(runtime)
+    for inst, _, reward, runtime in data:
+        n_items[inst] += 1
+        rewards[inst] += reward
+        runtimes[inst] += runtime
 
     averaged = [
-        (inst, np.mean(rewards[inst]), np.mean(runtimes[inst]).round(3))
-        for inst in rewards.keys()
+        (inst, round(rewards[inst] / n), round(runtimes[inst] / n, 3))
+        for inst, n in n_items.items()
     ]
 
     dtypes = [
         ("inst", "U37"),
-        ("reward", int),
+        ("cost", int),
         ("time", float),
     ]
 
-    return np.array(averaged, dtype=dtypes)
+    return np.asarray(averaged, dtype=dtypes)
 
 
 def main():
@@ -101,17 +110,47 @@ def main():
 
     tqdm_kwargs = dict(max_workers=args.num_procs, unit="instance")
     data = process_map(func, *zip(*func_args), **tqdm_kwargs)
-    data = groupby_mean(data)
+    if args.aggregate:
+        headers = [
+            "Instance",
+            "Avg. cost",
+            "Time (s)",
+        ]
 
-    headers = [
-        "Instance",
-        "Avg. reward",
-        "Time (s)",
-    ]
+        data = groupby_mean(data)
+    else:
+        headers = [
+            "Instance",
+            "Seed",
+            "Cost",
+            "Time (s)",
+        ]
+
+        dtypes = [
+            ("inst", "U37"),
+            ("seed", int),
+            ("cost", int),
+            ("time", float),
+        ]
+        data = np.asarray(data, dtype=dtypes)
+
     table = tools.tabulate(headers, data)
+    print(
+        Path(__file__).name,
+        " ".join(f"--{key} {value}" for key, value in vars(args).items()),
+    )
+    if args.strategy == "rollout":
+        from dynamic.rollout import constants
 
+        print(
+            " ".join(
+                f"--{key} {value}"
+                for key, value in vars(constants).items()
+                if not key.startswith("_")
+            )
+        )
     print("\n", table, "\n", sep="")
-    print(f"      Avg. objective: {data['reward'].mean():.0f}")
+    print(f"      Avg. objective: {data['cost'].mean():.0f}")
     print(f"   Avg. run-time (s): {data['time'].mean():.2f}")
 
 

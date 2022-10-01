@@ -17,6 +17,9 @@ def _dispatch_decision(info, observation, rng, prob):
     requests are dispatched with probability ``prob``.
     """
     instance = observation["epoch_instance"]
-    disp_now = rng.random(instance["must_dispatch"].shape) < prob
-    disp_idcs = instance["is_depot"] | instance["must_dispatch"] | disp_now
-    return utils.filter_instance(instance, disp_idcs)
+    to_dispatch = (
+        instance["is_depot"]
+        | instance["must_dispatch"]
+        | (rng.random(instance["must_dispatch"].shape) < prob)
+    )
+    return utils.filter_instance(instance, to_dispatch)

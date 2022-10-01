@@ -361,19 +361,18 @@ def inst_to_vars(inst):
     # Notice that the dictionary key names are not entirely free-form: these
     # should match the argument names defined in the C++/Python bindings.
     if 'release_times' in inst:
-        releases = inst['release_times'].tolist()
+        release_times = inst['release_times']
     else:
-        releases = [0] * (len(inst['coords']) + 1)
+        release_times = np.zeros_like(inst['service_times'])
 
-    # TODO obsolete this by allowing numpy arguments to the bindings.
     return dict(
-        coords=[(x, y) for x, y in inst['coords'].tolist()],
-        demands=inst['demands'].tolist(),
+        coords=inst['coords'],
+        demands=inst['demands'],
         vehicle_cap=inst['capacity'],
-        time_windows=[(l, u) for l, u in inst['time_windows'].tolist()],
-        service_durations=inst['service_times'].tolist(),
-        duration_matrix=inst['duration_matrix'].tolist(),
-        release_times=releases,
+        time_windows=inst['time_windows'],
+        service_durations=inst['service_times'],
+        duration_matrix=inst['duration_matrix'],
+        release_times=release_times,
     )
 
 
@@ -385,17 +384,16 @@ def tabulate(headers, rows) -> str:
         for idx, cell in enumerate(row):
             lengths[idx] = max(lengths[idx], len(str(cell)))
 
-    lines = [
+    header = [
         "  ".join(f"{h:<{l}s}" for l, h in zip(lengths, headers)),
         "  ".join("-" * l for l in lengths),
     ]
 
-    for row in rows:
-        lines.append(
-            "  ".join(f"{str(c):>{l}s}" for l, c in zip(lengths, row))
-        )
+    content = ["  ".join(f"{str(c):>{l}s}"
+                         for l, c in zip(lengths, row))
+               for row in rows]
 
-    return "\n".join(lines)
+    return "\n".join(header + content)
 
 
 def static_time_limit(n_clients: int, phase: str) -> int:
@@ -408,7 +406,7 @@ def static_time_limit(n_clients: int, phase: str) -> int:
     - 5/10/15 minutes for the final phase
     """
     if phase not in ["quali", "final"]:
-        raise ValueError("Phase must be one of ['quali', 'final'].")
+        raise ValueError(f"Invalid phase: {phase}")
 
     if n_clients < 300:
         return 180 if phase == "quali" else 300
@@ -416,6 +414,22 @@ def static_time_limit(n_clients: int, phase: str) -> int:
         return 300 if phase == "quali" else 600
     else:
         return 480 if phase == "quali" else 900
+
+
+def dynamic_time_limit(phase: str) -> int:
+    """
+    Returns the time limit (in seconds) for solving a single
+    epoch of the dynamic problem for and competition phase.
+
+    - 1 minute for the quali(fication) phase
+    - 2 minutes for the final phase
+    """
+    if phase == "quali":
+        return 60
+    elif phase == "final":
+        return 120
+    else:
+        raise ValueError(f"Invalid phase: {phase}")
 
 
 def name2size(name: str) -> int:
