@@ -2,7 +2,7 @@ import time
 
 import numpy as np
 
-from .. import utils
+from . import simulate
 from .constants import (
     DISPATCH_THRESHOLD,
     N_LOOKAHEAD,
@@ -10,11 +10,10 @@ from .constants import (
     SIM_SOLVE_ITERS,
     SIM_TLIM_FACTOR,
 )
-from .simulate_instance import simulate_instance
-from .solve_simulation import solve_simulation
+from dynamic import utils
 
 
-def rollout(info, obs, rng):
+def rollout_count(info, obs, rng):
     """
     Determine the dispatch instance by simulating the next epochs and analyzing
     those simulations.
@@ -38,10 +37,10 @@ def rollout(info, obs, rng):
     # Only do another simulation if there's (on average) enough time for it to
     # complete before the time limit.
     while (sim_start := time.perf_counter()) + avg_duration < start + sim_tlim:
-        sim_inst = simulate_instance(info, obs, rng, N_LOOKAHEAD)
+        sim_inst = simulate.make_instance(info, obs, rng, N_LOOKAHEAD)
 
         # sim_sol has indices 1, ..., N
-        sim_sol, _, is_feas = solve_simulation(
+        sim_sol, _, is_feas = simulate.solve_instance(
             sim_inst, SIM_SOLVE_ITERS, **SIM_SOLVE_CONFIG
         )
 
@@ -52,7 +51,7 @@ def rollout(info, obs, rng):
         req_sol = utils.sol2ep(sim_sol, sim_inst, postpone_routes=False)
 
         for route_idx, sim_route in enumerate(sim_sol):
-            # The requests in the route are postponed oOnly if the route
+            # The requests in the route are postponed only if the route
             # contains simulated requests (identified by negative index).
             if (req_sol[route_idx] >= 0).all():
                 dispatch_count[sim_route] += 1

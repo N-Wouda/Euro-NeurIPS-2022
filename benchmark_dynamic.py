@@ -20,7 +20,7 @@ def parse_args():
     parser.add_argument("--num_seeds", type=int, default=1)
     parser.add_argument("--solver_seed", type=int, default=1)
     parser.add_argument("--num_procs", type=int, default=4)
-    parser.add_argument("--strategy", type=str, default="rollout")
+    parser.add_argument("--strategy", type=str, default="rollout_count")
     parser.add_argument(
         "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
     )

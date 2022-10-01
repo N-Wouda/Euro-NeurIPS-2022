@@ -12,7 +12,7 @@ from environment import ControllerEnvironment, VRPEnvironment
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--strategy", type=str, default="rollout")
+    parser.add_argument("--strategy", type=str, default="rollout_count")
     parser.add_argument("--instance")
     parser.add_argument("--instance_seed", type=int, default=1)
     parser.add_argument("--solver_seed", type=int, default=1)

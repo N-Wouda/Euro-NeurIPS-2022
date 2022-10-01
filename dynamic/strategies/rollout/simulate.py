@@ -1,9 +1,12 @@
 import numpy as np
 
+import tools
 from .constants import EPOCH_DURATION, EPOCH_N_REQUESTS
 
+hgspy = tools.get_hgspy_module()
 
-def simulate_instance(info, obs, rng, n_lookahead=1):
+
+def make_instance(info, obs, rng, n_lookahead=1):
     """
     Simulate a VRPTW instance with n_lookahead epochs.
     - Sample ``EPOCH_N_REQUESTS`` requests per future epoch
@@ -45,7 +48,7 @@ def simulate_instance(info, obs, rng, n_lookahead=1):
     n_new_customers = len(new_custs)
 
     if n_new_customers == 0:  # this should not happen a lot
-        return simulate_instance(info, obs, rng, n_lookahead)
+        return make_instance(info, obs, rng, n_lookahead)
 
     sim_tw = sim_tw[feas]
     sim_release = sim_release[feas]
@@ -84,3 +87,46 @@ def simulate_instance(info, obs, rng, n_lookahead=1):
         "duration_matrix": dist[req_customer_idx][:, req_customer_idx],
         "release_times": req_release,
     }
+
+
+def solve_instance(instance, max_iterations=None, **kwargs):
+    config = hgspy.Config(**kwargs)
+    params = hgspy.Params(config, **tools.inst_to_vars(instance))
+
+    rng = hgspy.XorShift128(seed=kwargs["seed"])
+    pop = hgspy.Population(params, rng)
+    ls = hgspy.LocalSearch(params, rng)
+
+    node_ops = [
+        hgspy.operators.Exchange10(params),
+        hgspy.operators.Exchange11(params),
+        hgspy.operators.Exchange20(params),
+        hgspy.operators.MoveTwoClientsReversed(params),
+        hgspy.operators.Exchange21(params),
+        hgspy.operators.Exchange22(params),
+        hgspy.operators.TwoOpt(params),
+    ]
+
+    for op in node_ops:
+        ls.add_node_operator(op)
+
+    route_ops = [
+        hgspy.operators.RelocateStar(params),
+        hgspy.operators.SwapStar(params),
+    ]
+
+    for op in route_ops:
+        ls.add_route_operator(op)
+
+    algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
+
+    algo.add_crossover_operator(hgspy.crossover.selective_route_exchange)
+
+    stop = hgspy.stop.MaxIterations(max_iterations)
+    res = algo.run(stop)
+
+    best = res.get_best_found()
+    routes = [route for route in best.get_routes() if route]
+    cost = best.cost()
+
+    return routes, cost

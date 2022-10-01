@@ -48,7 +48,6 @@ def solve(loc: str, seed: int, **kwargs):
     start = perf_counter()
 
     config = hgspy.Config(seed=seed, collectStatistics=True)
-
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=seed)
