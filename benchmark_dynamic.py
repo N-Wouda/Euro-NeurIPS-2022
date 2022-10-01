@@ -9,8 +9,8 @@ from time import perf_counter
 import numpy as np
 from tqdm.contrib.concurrent import process_map
 
+import dynamic
 import tools
-from dynamic.run_dispatch import run_dispatch
 from environment import VRPEnvironment
 
 
@@ -49,29 +49,14 @@ def solve(loc: str, instance_seed: int, **kwargs):
     start = perf_counter()
 
     if kwargs["strategy"] == "oracle":
-        from dynamic.run_oracle import run_oracle
-
-        costs, routes = run_oracle(env, **kwargs)
-
-    elif kwargs["strategy"] == "dqn":
-        from dynamic.dqn.run_dqn import run_dqn
-
-        costs, routes = run_dqn(env, **kwargs)
-
+        costs, routes = dynamic.run_oracle(env, **kwargs)
     else:
-        if kwargs["strategy"] in ["greedy", "random", "lazy"]:
-            from dynamic.random import random_dispatch
-
-            probs = {"greedy": 1, "random": 0.5, "lazy": 0}
-            strategy = random_dispatch(probs[kwargs["strategy"]])
-
-        elif kwargs["strategy"] == "rollout":
-            from dynamic.rollout import rollout as strategy
-
-        else:
+        try:
+            strategy = getattr(dynamic.strategies, kwargs["strategy"])
+        except AttributeError:
             raise ValueError(f"Invalid strategy: {kwargs['strategy']}")
 
-        costs, routes = run_dispatch(env, dispatch_strategy=strategy, **kwargs)
+        costs, routes = dynamic.solve_dynamic(env, dispatch_strategy=strategy, **kwargs)
 
     run_time = round(perf_counter() - start, 3)
 
@@ -139,8 +124,8 @@ def main():
         Path(__file__).name,
         " ".join(f"--{key} {value}" for key, value in vars(args).items()),
     )
-    if args.strategy == "rollout":
-        from dynamic.rollout import constants
+    if args.strategy.startswith("rollout"):
+        from dynamic.strategies.rollout import constants
 
         print(
             " ".join(

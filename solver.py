@@ -4,8 +4,8 @@ import pstats
 import sys
 from datetime import datetime
 
+import dynamic
 import tools
-from dynamic.run_dispatch import run_dispatch
 from environment import ControllerEnvironment, VRPEnvironment
 
 
@@ -46,29 +46,14 @@ def run(args):
     args.epoch_tlim = None
 
     if args.strategy == "oracle":
-        from dynamic.run_oracle import run_oracle
-
-        run_oracle(env, **vars(args))
-
-    elif args.strategy == "dqn":
-        from dynamic.dqn.run_dqn import run_dqn
-
-        run_dqn(env, **vars(args))
-
+        dynamic.run_oracle(env, **vars(args))
     else:
-        if args.strategy in ["greedy", "random", "lazy"]:
-            from dynamic.random import random_dispatch
-
-            probs = {"greedy": 1, "random": 0.5, "lazy": 0}
-            strategy = random_dispatch(probs[args.strategy])
-
-        elif args.strategy == "rollout":
-            from dynamic.rollout import rollout as strategy
-
-        else:
+        try:
+            strategy = getattr(dynamic.strategies, args.strategy)
+        except AttributeError:
             raise ValueError(f"Invalid strategy: {args.strategy}")
 
-        run_dispatch(env, dispatch_strategy=strategy, **vars(args))
+        dynamic.solve_dynamic(env, dispatch_strategy=strategy, **vars(args))
 
 
 def main():

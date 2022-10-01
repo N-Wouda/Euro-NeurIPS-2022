@@ -1,4 +1,4 @@
-from .solve_static import solve_static
+from dynamic import solve_static
 
 
 def run_oracle(env, **kwargs):
