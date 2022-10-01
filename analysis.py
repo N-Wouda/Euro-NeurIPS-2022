@@ -47,11 +47,7 @@ def solve(loc: str, seed: int, **kwargs):
     instance = tools.read_vrplib(path)
     start = perf_counter()
 
-    config = hgspy.Config(
-        seed=seed,
-        nbVeh=tools.n_vehicles_bin_pack(instance),
-        collectStatistics=True,
-    )
+    config = hgspy.Config(seed=seed, collectStatistics=True)
 
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 

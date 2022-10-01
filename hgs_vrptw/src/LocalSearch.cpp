@@ -116,6 +116,8 @@ void LocalSearch::search()
                 }
             }
     }
+
+    postProcess();
 }
 
 bool LocalSearch::applyNodeOps(Node *U, Node *V)
@@ -168,6 +170,72 @@ void LocalSearch::update(Route *U, Route *V)
         for (auto op : routeOps)
             op->update(V);
     }
+}
+
+void LocalSearch::postProcess()
+{
+    auto const k = params.config.postProcessPathLength;
+    std::vector<size_t> path(k);
+
+    // This postprocessing step optimally recombines all node segments of a
+    // given length in each route. This recombination works by enumeration; see
+    // issue #98 for details.
+    for (auto &route : routes)
+    {
+        for (size_t start = 1; start + k <= route.size() + 1; ++start)
+        {
+            // We process the range [start, start + k). So the fixed endpoints
+            // are p(start) and the node at start + k.
+            auto *prev = p(route[start]);
+            auto *next = route[start + k];
+
+            std::iota(path.begin(), path.end(), start);
+            auto currCost = evaluateSubpath(path, prev, next, route);
+
+            while (std::next_permutation(path.begin(), path.end()))
+            {
+                auto const cost = evaluateSubpath(path, prev, next, route);
+
+                if (cost < currCost)  // it is rare to find more improving
+                {                     // moves, so we break after the first
+                    for (auto pos : path)
+                    {
+                        auto *node = route[pos];
+                        node->insertAfter(prev);
+                        prev = node;
+                    }
+
+                    route.update();
+                    break;
+                }
+            }
+        }
+    }
+}
+
+int LocalSearch::evaluateSubpath(std::vector<size_t> const &subpath,
+                                 Node const *before,
+                                 Node const *after,
+                                 Route const &route) const
+{
+    auto totalDist = 0;
+    auto tws = before->twBefore;
+    auto from = before->client;
+
+    // Calculates travel distance and time warp of the subpath permutation.
+    for (auto &pos : subpath)
+    {
+        auto *to = route[pos];
+
+        totalDist += params.dist(from, to->client);
+        tws = TimeWindowSegment::merge(tws, to->tw);
+        from = to->client;
+    }
+
+    totalDist += params.dist(from, after->client);
+    tws = TimeWindowSegment::merge(tws, after->twAfter);
+
+    return totalDist + params.twPenalty(tws.totalTimeWarp());
 }
 
 void LocalSearch::loadIndividual(Individual const &indiv)

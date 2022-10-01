@@ -36,7 +36,7 @@ def solve(loc: str, seed: int, **kwargs):
     instance = tools.read_vrplib(path)
     start = perf_counter()
 
-    config = hgspy.Config(seed=seed, nbVeh=tools.n_vehicles_bin_pack(instance))
+    config = hgspy.Config(seed=seed)
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=seed)
