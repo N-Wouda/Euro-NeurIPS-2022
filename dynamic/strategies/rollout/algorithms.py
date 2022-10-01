@@ -2,14 +2,7 @@ import time
 
 import numpy as np
 
-from . import simulate
-from .constants import (
-    DISPATCH_THRESHOLD,
-    N_LOOKAHEAD,
-    SIM_SOLVE_CONFIG,
-    SIM_SOLVE_ITERS,
-    SIM_TLIM_FACTOR,
-)
+from . import config, simulate
 from dynamic import utils
 
 
@@ -27,7 +20,7 @@ def rollout_count(info, obs, rng):
     # Parameters
     ep_inst = obs["epoch_instance"]
     n_requests = ep_inst["is_depot"].size
-    sim_tlim = info["epoch_tlim"] * SIM_TLIM_FACTOR
+    sim_tlim = info["epoch_tlim"] * config.SIM_TLIM_FACTOR
 
     # Statistics
     n_sims = 0
@@ -37,11 +30,11 @@ def rollout_count(info, obs, rng):
     # Only do another simulation if there's (on average) enough time for it to
     # complete before the time limit.
     while (sim_start := time.perf_counter()) + avg_duration < start + sim_tlim:
-        sim_inst = simulate.make_instance(info, obs, rng, N_LOOKAHEAD)
+        sim_inst = simulate.make_instance(info, obs, rng, config.N_LOOKAHEAD)
 
         # sim_sol has indices 1, ..., N
         sim_sol, _, is_feas = simulate.solve_instance(
-            sim_inst, SIM_SOLVE_ITERS, **SIM_SOLVE_CONFIG
+            sim_inst, config.SIM_SOLVE_ITERS, **config.SIM_SOLVE_CONFIG
         )
 
         if not is_feas:
@@ -64,7 +57,7 @@ def rollout_count(info, obs, rng):
         ep_inst["is_depot"]
         | ep_inst["must_dispatch"]
         # Only dispatch requests that are dispatched in enough simulations
-        | (dispatch_count >= max(1, n_sims) * DISPATCH_THRESHOLD)
+        | (dispatch_count >= max(1, n_sims) * config.DISPATCH_THRESHOLD)
     )
 
     return utils.filter_instance(ep_inst, dispatch)

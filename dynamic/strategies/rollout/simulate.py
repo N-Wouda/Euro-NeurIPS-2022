@@ -1,7 +1,7 @@
 import numpy as np
 
 import tools
-from .constants import EPOCH_DURATION, EPOCH_N_REQUESTS
+from . import config
 
 hgspy = tools.get_hgspy_module()
 
@@ -22,7 +22,7 @@ def make_instance(info, obs, rng, n_lookahead=1):
 
     epochs_left = info["end_epoch"] - obs["current_epoch"]
     max_lookahead = min(n_lookahead, epochs_left)
-    n_samples = max_lookahead * EPOCH_N_REQUESTS
+    n_samples = max_lookahead * config.EPOCH_N_REQUESTS
 
     n_customers = static_inst["is_depot"].size - 1  # Exclude depot
 
@@ -33,8 +33,8 @@ def make_instance(info, obs, rng, n_lookahead=1):
     # These are static time windows and release times, which are used to
     # determine request feasibility. Will be clipped later to fit the epoch.
     sim_tw = tws[tw_idx]
-    sim_epochs = np.repeat(np.arange(1, max_lookahead + 1), EPOCH_N_REQUESTS)
-    sim_release = start_time + sim_epochs * EPOCH_DURATION
+    sim_epochs = np.repeat(np.arange(1, max_lookahead + 1), config.EPOCH_N_REQUESTS)
+    sim_release = start_time + sim_epochs * config.EPOCH_DURATION
     sim_service = static_inst["service_times"][service_idx]
 
     # Earliest arrival is release time + drive time or earliest time window.
@@ -128,5 +128,6 @@ def solve_instance(instance, max_iterations=None, **kwargs):
     best = res.get_best_found()
     routes = [route for route in best.get_routes() if route]
     cost = best.cost()
+    feasible = best.is_feasible()
 
-    return routes, cost
+    return routes, cost, feasible
