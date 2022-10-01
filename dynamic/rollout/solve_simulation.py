@@ -42,5 +42,6 @@ def solve_simulation(instance, max_iterations=None, **kwargs):
     best = res.get_best_found()
     routes = [route for route in best.get_routes() if route]
     cost = best.cost()
+    is_feasible = best.is_feasible()
 
-    return routes, cost
+    return routes, cost, is_feasible
