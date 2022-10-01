@@ -42,12 +42,9 @@ def rollout(info, obs, rng):
         sim_inst = simulate_instance(info, obs, rng, N_LOOKAHEAD)
 
         # sim_sol has indices 1, ..., N
-        sim_sol, _, is_feas = solve_simulation(
+        sim_sol, _ = solve_simulation(
             sim_inst, SIM_SOLVE_ITERS, **SIM_SOLVE_CONFIG
         )
-
-        if not is_feas:
-            continue
 
         for sim_route in sim_sol:
             # Routes that do not contain must dispatch requests are postponed
