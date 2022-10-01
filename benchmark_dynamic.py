@@ -29,7 +29,7 @@ def parse_args():
     group.add_argument("--epoch_tlim", type=int)
     group.add_argument("--phase", choices=["quali", "final"])
 
-    parser.add_argument("--aggregate", type=bool, default=True)
+    parser.add_argument("--aggregate", action='store_true')
 
     return parser.parse_args()
 
