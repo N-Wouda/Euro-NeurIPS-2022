@@ -182,7 +182,7 @@ void LocalSearch::postProcess()
     // issue #98 for details.
     for (auto &route : routes)
     {
-        for (size_t start = 1; start + k <= route.size(); ++start)
+        for (size_t start = 1; start + k <= route.size() + 1; ++start)
         {
             // We process the range [start, start + k). So the fixed endpoints
             // are p(start) and the node at start + k.
