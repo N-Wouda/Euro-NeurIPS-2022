@@ -1,17 +1,7 @@
-import functools
-
-from .. import utils
+from dynamic import utils
 
 
-def random_dispatch(prob):
-    """
-    Return the random dispatch strategy where requests are dispatched with
-    probability ``prob``.
-    """
-    return functools.partial(_dispatch_decision, prob=prob)
-
-
-def _dispatch_decision(info, observation, rng, prob):
+def _dispatch_random(info, observation, rng, prob):
     """
     Decide which requests to dispach in the current epoch. Non-must dispatch
     requests are dispatched with probability ``prob``.
@@ -23,3 +13,15 @@ def _dispatch_decision(info, observation, rng, prob):
         | (rng.random(instance["must_dispatch"].shape) < prob)
     )
     return utils.filter_instance(instance, to_dispatch)
+
+
+def greedy(info, observation, rng):
+    return _dispatch_random(info, observation, rng, prob=1)
+
+
+def random(info, observation, rng):
+    return _dispatch_random(info, observation, rng, prob=0.5)
+
+
+def lazy(info, observation, rng):
+    return _dispatch_random(info, observation, rng, prob=0)
