@@ -41,13 +41,14 @@ def rollout(info, obs, rng):
     while (sim_start := time.perf_counter()) + avg_duration < start + sim_tlim:
         sim_inst = simulate_instance(info, obs, rng, N_LOOKAHEAD)
 
-        # sim_sol has indices 1, ..., N
+        # Epoch requests are those with 1 <= idx <= n_request in sim_sol,
+        # simulated requests have idx > n_request.
         sim_sol, _ = solve_simulation(
             sim_inst, SIM_SOLVE_ITERS, **SIM_SOLVE_CONFIG
         )
 
         for sim_route in sim_sol:
-            # Routes that do not contain must dispatch requests are postponed
+            # Only dispatch routes that contain must dispatch requests
             if any(idx in must_dispatch for idx in sim_route):
                 dispatch_count[sim_route] += 1
 
