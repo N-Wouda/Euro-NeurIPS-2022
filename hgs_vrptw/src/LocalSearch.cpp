@@ -171,6 +171,10 @@ void LocalSearch::update(Route *U, Route *V)
 void LocalSearch::postProcess()
 {
     auto const k = params.config.postProcessPathLength;
+
+    if (k <= 1)  // 0 or 1 means we are either not doing anything at all (0),
+        return;  // or recombining a single node (1). Neither helps.
+
     std::vector<size_t> path(k);
 
     // This postprocessing step optimally recombines all node segments of a
