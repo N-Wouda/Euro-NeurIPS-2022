@@ -152,14 +152,17 @@ Individual::Individual(Params const *params, XorShift128 *rng)
       routes_(params->nbVehicles),
       neighbours(params->nbClients + 1)
 {
+    auto const nbClients = params->nbClients;
+    auto const nbVehicles = params->nbVehicles;
+
     // Sort clients randomly
-    auto clients = std::vector<int>(params->nbClients);
+    auto clients = std::vector<int>(nbClients);
     std::iota(clients.begin(), clients.end(), 1);
     std::shuffle(clients.begin(), clients.end(), *rng);
 
     // Distribute clients evenly over the routes
     auto const clientsPerRoute
-        = std::max(params->nbClients / params->nbVehicles, 1);
+        = std::max(nbClients / nbVehicles, 1) + (nbClients % nbVehicles != 0);
 
     for (auto idx = 0; idx != params->nbClients; ++idx)
     {
