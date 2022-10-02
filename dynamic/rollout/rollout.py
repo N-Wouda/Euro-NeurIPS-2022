@@ -29,6 +29,7 @@ def rollout(info, obs, rng):
     ep_inst = obs["epoch_instance"]
     n_requests = ep_inst["is_depot"].size
     sim_tlim = info["epoch_tlim"] * SIM_TLIM_FACTOR
+    must_dispatch = set(np.flatnonzero(ep_inst["must_dispatch"]))
 
     # Statistics
     n_sims = 0
@@ -40,21 +41,15 @@ def rollout(info, obs, rng):
     while (sim_start := time.perf_counter()) + avg_duration < start + sim_tlim:
         sim_inst = simulate_instance(info, obs, rng, N_LOOKAHEAD)
 
-        # sim_sol has indices 1, ..., N
-        sim_sol, _, is_feas = solve_simulation(
+        # Epoch requests have index between 1 and n_requests in sim_sol,
+        # whereas simulated requests have index largen than n_requests.
+        sim_sol, _ = solve_simulation(
             sim_inst, SIM_SOLVE_ITERS, **SIM_SOLVE_CONFIG
         )
 
-        if not is_feas:
-            continue
-
-        # req_sol has requests indices
-        req_sol = utils.sol2ep(sim_sol, sim_inst, postpone_routes=False)
-
-        for route_idx, sim_route in enumerate(sim_sol):
-            # The requests in the route are postponed oOnly if the route
-            # contains simulated requests (identified by negative index).
-            if (req_sol[route_idx] >= 0).all():
+        for sim_route in sim_sol:
+            # Only dispatch routes that contain must dispatch requests
+            if any(idx in must_dispatch for idx in sim_route):
                 dispatch_count[sim_route] += 1
 
         sim_duration = time.perf_counter() - sim_start
