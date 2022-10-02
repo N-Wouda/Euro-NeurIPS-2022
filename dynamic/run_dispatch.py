@@ -23,7 +23,11 @@ def run_dispatch(env, dispatch_strategy, **kwargs):
     observation, static_info = env.reset()
     ep_tlim = static_info["epoch_tlim"]
 
-    while not env.is_done:
+    solutions = {}
+    costs = 0
+    done = False
+
+    while not done:
         start = time.perf_counter()
 
         dispatch_inst = dispatch_strategy(static_info, observation, rng)
@@ -32,7 +36,11 @@ def run_dispatch(env, dispatch_strategy, **kwargs):
         sol, _ = solve_static(dispatch_inst, time_limit=solve_tlim)
         ep_sol = utils.sol2ep(sol, dispatch_inst)
 
+        solutions[observation['current_epoch']] = ep_sol
+
         observation, reward, done, info = env.step(ep_sol)
         assert info["error"] is None, info["error"]
 
-    return env.final_costs, env.final_solutions
+        costs += abs(reward)
+
+    return costs, solutions
