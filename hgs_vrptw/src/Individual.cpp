@@ -158,7 +158,8 @@ Individual::Individual(Params const *params, XorShift128 *rng)
     std::shuffle(clients.begin(), clients.end(), *rng);
 
     // Distribute clients evenly over the routes
-    auto const clientsPerRoute = params->nbClients / params->nbVehicles + 1;
+    auto const clientsPerRoute
+        = std::max(params->nbClients / params->nbVehicles, 1);
 
     for (auto idx = 0; idx != params->nbClients; ++idx)
     {
