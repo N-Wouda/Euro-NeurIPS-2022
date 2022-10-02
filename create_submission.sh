@@ -37,6 +37,7 @@ cat > install.sh <<- INSTALL
 
 # Python dependencies
 pip install -r requirements.txt
+python -OO -m compileall .
 
 # C++ code
 mkdir -p release
