@@ -38,7 +38,7 @@ void Statistics::collectFrom(Population const &pop)
                                  0,
                                  [](size_t val, auto const &route) {
                                      return val + !route.empty();
-                                 };);
+                                 });
     };
 
     if (!pop.feasible.empty())
@@ -49,11 +49,11 @@ void Statistics::collectFrom(Population const &pop)
 
         feasBest_.push_back(pop.feasible[0].indiv->cost());
 
-        auto const feasCost
-            = accumulate(pop.feasible.begin(), pop.feasible.end(), 0, opCost);
+        auto const feasCost = std::accumulate(
+            pop.feasible.begin(), pop.feasible.end(), 0, opCost);
         feasAverage_.push_back(feasCost / numFeas);
 
-        auto const feasNbRoutes = accumulate(
+        auto const feasNbRoutes = std::accumulate(
             pop.feasible.begin(), pop.feasible.end(), 0., opNbRoutes);
         feasNbRoutes_.push_back(feasNbRoutes / static_cast<double>(numFeas));
     }
@@ -73,11 +73,11 @@ void Statistics::collectFrom(Population const &pop)
 
         infeasBest_.push_back(pop.infeasible[0].indiv->cost());
 
-        auto const infeasCost = accumulate(
+        auto const infeasCost = std::accumulate(
             pop.infeasible.begin(), pop.infeasible.end(), 0, opCost);
         infeasAverage_.push_back(infeasCost / numInfeas);
 
-        auto const infeasNbRoutes = accumulate(
+        auto const infeasNbRoutes = std::accumulate(
             pop.infeasible.begin(), pop.infeasible.end(), 0., opNbRoutes);
         infeasNbRoutes_.push_back(infeasNbRoutes
                                   / static_cast<double>(numInfeas));
