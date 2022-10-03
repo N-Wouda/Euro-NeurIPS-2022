@@ -1,29 +1,21 @@
-import os
-from pathlib import Path
-
-import toml
-
 import tools
 
 hgspy = tools.get_hgspy_module()
 
-modes_dir = Path("static/modes")
-modes = {
-    mode.stem: toml.load(modes_dir / mode)
-    for mode in map(Path, os.listdir(modes_dir))
-}
-
 
 def solve(
     instance,
+    node_ops,
+    route_ops,
+    crossover_ops,
     *,
     seed=1,
     max_runtime=None,
     max_iterations=None,
     initial_solutions=(),
-    mode="static",
+    **kwargs,
 ):
-    config = hgspy.Config(seed=seed, **modes[mode]["params"])
+    config = hgspy.Config(seed=seed, **kwargs)
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=seed)
@@ -36,7 +28,7 @@ def solve(
 
     node_ops = [
         getattr(hgspy.operators, op)(params)
-        for op in modes[mode]["operators"]["node"]
+        for op in node_ops
     ]
 
     for op in node_ops:
@@ -44,7 +36,7 @@ def solve(
 
     route_ops = [
         getattr(hgspy.operators, op)(params)
-        for op in modes[mode]["operators"]["route"]
+        for op in route_ops
     ]
 
     for op in route_ops:
@@ -54,7 +46,7 @@ def solve(
 
     crossover_ops = [
         getattr(hgspy.crossover, op)
-        for op in modes[mode]["operators"]["crossover"]
+        for op in crossover_ops
     ]
 
     for op in crossover_ops:

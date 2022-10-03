@@ -1,1 +1,1 @@
-from .solver import modes, solve
+from .solver import solve
