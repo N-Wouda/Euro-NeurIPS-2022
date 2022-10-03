@@ -7,6 +7,10 @@ using Clients = std::vector<Client>;
 using Route = std::vector<Client>;
 using Routes = std::vector<Route>;
 
+std::vector<Client> resolveSubtour(std::vector<Client> &subtour){
+    return subtour;
+}
+
 
 Individual edgeAssembly(
     std::pair<Individual const *, Individual const *> const &parents,
@@ -21,13 +25,13 @@ Individual edgeAssembly(
      * Unordered multimap as we can insert, access and delete through "from" node in constant time
      * and we can keep multiple elements with depot key
     **/
-    std::unordered_multimap<size_t, size_t> AB_edges = {};
-    std::unordered_multimap<size_t, size_t> A_edges = {};
+    std::unordered_multimap<Client, Client> AB_edges = {};
+    std::unordered_multimap<Client, Client> A_edges = {};
     //edges included from parentB have their key shifted by an arbitrary amount so we can easily differentiate for step 2
     int shiftParentB = 2 * params.nbClients;
 
     //add all edges from depot
-    std::set<int> depotEdges = {};
+    std::set<Client> depotEdges = {};
     for (Route route : parents.first->getRoutes()){
         if(!route.empty()){
             A_edges.insert({0,route[1]});
@@ -63,18 +67,18 @@ Individual edgeAssembly(
     //Step 2:
     //Generate cycles based on a random node until all edges are gone
     //Based on Nagata et al. 2010 I believe it should deconstruct AB_edges into cycles, but not sure why
-    std::vector<std::unordered_map<size_t, size_t>> AB_cycles = {};
+    std::vector<std::unordered_map<Client, Client>> AB_cycles = {};
     while(!AB_edges.empty()){
-        std::unordered_map<size_t, size_t> cycle = {};
+        std::unordered_map<Client, Client> cycle = {};
         auto edge = AB_edges.begin(); //technically selects an edge but we consider its start node only
-        int startNode = edge->first;
+        Client startNode = edge->first;
         bool isParentB = 0;
         if(startNode >= 2 * params.nbClients){
             startNode -= 2*params.nbClients;
             isParentB = 1;
         }
-        int currentNode = startNode;
-        int nextNode = startNode;
+        Client currentNode = startNode;
+        Client nextNode = startNode;
         
         do{
             edge = AB_edges.find(currentNode + shiftParentB * isParentB);
@@ -91,12 +95,12 @@ Individual edgeAssembly(
     //Step 3:
     //strategy = 1 is block based
     //strategy = 0 is single based
-    std::unordered_map<size_t, size_t> *E_cycle;
+    std::unordered_map<Client, Client> *E_cycle;
     if(strategy){
         //TODO
 
     }else{
-        //pointer to element in vector?
+        //pointer to element in vector? we don't mess with AB_cycles anymore so should be ok?
         E_cycle = &AB_cycles[rng.randint(AB_cycles.size())];
     }
     
@@ -127,10 +131,10 @@ Individual edgeAssembly(
 
     //We first reorder the maps into routes, all remaining nodes should be in subtour
     //TODO see if we can combine this with the previous loop
-    std::vector<std::vector<size_t>> new_routes = {};
+    Routes new_routes = {};
     auto depot_iterators = A_edges.equal_range(0);
     for(auto it = depot_iterators.first; it != depot_iterators.second; it++){
-        new_routes.push_back({0, it->second});
+        new_routes.push_back({it->second});
     }
     A_edges.erase(depot_iterators.first, depot_iterators.second);
     for(auto &route : new_routes){
@@ -139,24 +143,29 @@ Individual edgeAssembly(
             route.push_back(A_edges.find(route.back())->second);
             A_edges.erase(route.back());
         }
+        //remove depot from back again
+        route.pop_back();
     }
-
-    std::vector<std::vector<size_t>> subtours = {};
+    
+    Routes subtours = {};
     while(!A_edges.empty()){
-        auto start_subtour = A_edges.begin()
-        subtours.push_back({start_subtour->first, start_subtour->second});
-        A_edges.erase(start_subtour);
+        std::pair<Client, Client> edge = *(A_edges.begin());
+        subtours.push_back({});
         //if current subtour is not yet a cycle keep adding edges from A
-        while(subtour.back().front() != subtour.back().back()){
-            auto next_edge = A_edges.find(subtour.back().back());
-            subtour.back().push_back(next_edge->second);
-            A_edges.remove(next_edge);
-        }
+        do{
+            subtours.back().push_back(edge.first);
+            A_edges.erase(edge.first);
+            edge = *A_edges.find(edge.second);
+        }while(subtours.back().front() != edge.second);
     }
 
     //Step 5:
     //Repair the routes
-
-    //TODO correct return value
-    return *parents.first;
+    //Currently we repair by just making subtours into real tours, 
+    //i.e. we insert a depot somewhere in the subtour
+    for(auto &subtour : subtours){
+        new_routes.push_back(resolveSubtour(subtour));
+    }
+    return {&params, new_routes};
 }
+
