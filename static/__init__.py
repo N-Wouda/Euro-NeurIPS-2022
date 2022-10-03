@@ -1,2 +1,2 @@
 from .config import Config
-from .solver import solve, get_solutions
+from .solver import solve, get_solution
