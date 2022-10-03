@@ -27,12 +27,8 @@ def solve(
     rng = hgspy.XorShift128(seed=seed)
     pop = hgspy.Population(params, rng)
 
-    initial_individuals = [
-        hgspy.Individual(params, sol) for sol in initial_solutions
-    ]
-
-    for indiv in initial_individuals:
-        pop.add_individual(indiv)
+    for sol in initial_solutions:
+        hgspy.Individual(params, sol)
 
     ls = hgspy.LocalSearch(params, rng)
 
