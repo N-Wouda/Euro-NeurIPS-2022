@@ -1,8 +1,13 @@
+import os
+from pathlib import Path
+
 import toml
 
 import tools
 
 hgspy = tools.get_hgspy_module()
+
+modes = [Path(mode).stem for mode in os.listdir("configurations")]
 
 
 def solve(
