@@ -5,18 +5,14 @@ hgspy = tools.get_hgspy_module()
 
 def solve(
     instance,
-    node_ops,
-    route_ops,
-    crossover_ops,
+    config,
     *,
-    seed=1,
     max_runtime=None,
     max_iterations=None,
-    initial_solutions=(),
-    **kwargs,
+    seed=1,
+    initial_solutions=()
 ):
-    config = hgspy.Config(seed=seed, **kwargs)
-    params = hgspy.Params(config, **tools.inst_to_vars(instance))
+    params = hgspy.Params(hgspy.Config(seed=seed, **config.solver_config), **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=seed)
     pop = hgspy.Population(params, rng)
@@ -28,7 +24,7 @@ def solve(
 
     node_ops = [
         getattr(hgspy.operators, op)(params)
-        for op in node_ops
+        for op in config.node_operators
     ]
 
     for op in node_ops:
@@ -36,7 +32,7 @@ def solve(
 
     route_ops = [
         getattr(hgspy.operators, op)(params)
-        for op in route_ops
+        for op in config.route_operators
     ]
 
     for op in route_ops:
@@ -46,7 +42,7 @@ def solve(
 
     crossover_ops = [
         getattr(hgspy.crossover, op)
-        for op in crossover_ops
+        for op in config.crossover_operators
     ]
 
     for op in crossover_ops:
