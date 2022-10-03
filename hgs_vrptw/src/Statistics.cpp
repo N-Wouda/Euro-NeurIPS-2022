@@ -4,45 +4,44 @@
 #include <fstream>
 #include <numeric>
 
-namespace
+// TODO Remove auto?
+void Statistics::collectFrom(auto const &subPop,
+                             Statistics::SubPopStats &subStats)
 {
-void collectFrom(auto const &subPop, auto &subStats)
-{
-    auto const opDiversity = [](double val, auto const &subs) {
-        return val + subs.indiv->avgBrokenPairsDistanceClosest();
-    };
-
-    auto const opAverageCost
-        = [](size_t sum, auto const &subs) { return sum + subs.indiv->cost(); };
-
-    auto const opNbRoutes = [&](double val, auto const &subs) {
-        return val
-               + std::accumulate(subs.indiv->getRoutes().begin(),
-                                 subs.indiv->getRoutes().end(),
-                                 0,
-                                 [](size_t val, auto const &route) {
-                                     return val + !route.empty();
-                                 });
-    };
-
     if (!subPop.empty())
     {
         auto const popSize = subPop.size();
         subStats.popSize_.push_back(popSize);
 
-        double const diversity
-            = std::accumulate(subPop.begin(), subPop.end(), 0., opDiversity);
-        subStats.diversity_.push_back(diversity / static_cast<double>(popSize));
+        auto const opDiversity = [](double val, auto const &subs) {
+            return val + subs.indiv->avgBrokenPairsDistanceClosest();
+        };
+        subStats.diversity_.push_back(
+            std::accumulate(subPop.begin(), subPop.end(), 0., opDiversity)
+            / popSize);
 
         subStats.bestCost_.push_back(subPop[0].indiv->cost());
 
-        auto const averageCost
-            = std::accumulate(subPop.begin(), subPop.end(), 0, opAverageCost);
-        subStats.averageCost_.push_back(averageCost / popSize);
+        auto const opAverageCost = [](size_t sum, auto const &subs) {
+            return sum + subs.indiv->cost();
+        };
+        subStats.averageCost_.push_back(
+            std::accumulate(subPop.begin(), subPop.end(), 0, opAverageCost)
+            / popSize);
 
-        auto const nbRoutes
-            = std::accumulate(subPop.begin(), subPop.end(), 0., opNbRoutes);
-        subStats.nbRoutes_.push_back(nbRoutes / static_cast<double>(popSize));
+        auto const opCountNonEmptyRoutes = [](size_t val, auto const &route) {
+            return val + !route.empty();
+        };
+        auto const opNbRoutes = [&](double val, auto const &subs) {
+            return val
+                   + std::accumulate(subs.indiv->getRoutes().begin(),
+                                     subs.indiv->getRoutes().end(),
+                                     0,
+                                     opCountNonEmptyRoutes);
+        };
+        subStats.nbRoutes_.push_back(
+            std::accumulate(subPop.begin(), subPop.end(), 0., opNbRoutes)
+            / popSize);
     }
     else
     {
@@ -53,7 +52,6 @@ void collectFrom(auto const &subPop, auto &subStats)
         subStats.nbRoutes_.push_back(0.);
     }
 }
-}  // namespace
 
 void Statistics::collectFrom(Population const &pop)
 {
@@ -70,8 +68,8 @@ void Statistics::collectFrom(Population const &pop)
     lastIter = clock::now();  // update for next call
 
     // Population statistics
-    ::collectFrom(pop.feasible, feasStats);
-    ::collectFrom(pop.infeasible, infeasStats);
+    collectFrom(pop.feasible, feasStats);
+    collectFrom(pop.infeasible, infeasStats);
 
     // Penalty statistics
     penaltiesCapacity_.push_back(pop.params.penaltyCapacity);

@@ -17,6 +17,9 @@ class Statistics
     clock::time_point lastIter = clock::now();
     size_t numIters_ = 0;
 
+    std::vector<double> runTimes_;
+    std::vector<double> iterTimes_;
+
     struct SubPopStats
     {
         std::vector<size_t> popSize_;
@@ -25,9 +28,6 @@ class Statistics
         std::vector<size_t> averageCost_;
         std::vector<double> nbRoutes_;
     };
-
-    std::vector<double> runTimes_;
-    std::vector<double> iterTimes_;
 
     SubPopStats feasStats;
     SubPopStats infeasStats;
@@ -46,6 +46,8 @@ public:
      * @param population  Population object to collect data from.
      */
     void collectFrom(Population const &population);
+
+    void collectFrom(auto const &subPop, SubPopStats &subStats);
 
     /**
      * Returns the total number of iterations.
