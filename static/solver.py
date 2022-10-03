@@ -7,7 +7,11 @@ import tools
 
 hgspy = tools.get_hgspy_module()
 
-modes = [Path(mode).stem for mode in os.listdir("static/configurations")]
+modes_dir = Path("static/modes")
+modes = {
+    mode.stem: toml.load(modes_dir / mode)
+    for mode in map(Path, os.listdir(modes_dir))
+}
 
 
 def solve(
@@ -19,9 +23,7 @@ def solve(
     initial_solutions=(),
     mode="static",
 ):
-    configuration = toml.load(f"static/configurations/{mode}.toml")
-
-    config = hgspy.Config(seed=seed, **configuration["params"])
+    config = hgspy.Config(seed=seed, **modes[mode]["params"])
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=seed)
@@ -34,7 +36,7 @@ def solve(
 
     node_ops = [
         getattr(hgspy.operators, op)(params)
-        for op in configuration["operators"]["node"]
+        for op in modes[mode]["operators"]["node"]
     ]
 
     for op in node_ops:
@@ -42,7 +44,7 @@ def solve(
 
     route_ops = [
         getattr(hgspy.operators, op)(params)
-        for op in configuration["operators"]["route"]
+        for op in modes[mode]["operators"]["route"]
     ]
 
     for op in route_ops:
@@ -52,7 +54,7 @@ def solve(
 
     crossover_ops = [
         getattr(hgspy.crossover, op)
-        for op in configuration["operators"]["crossover"]
+        for op in modes[mode]["operators"]["crossover"]
     ]
 
     for op in crossover_ops:
