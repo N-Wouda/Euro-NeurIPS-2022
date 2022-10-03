@@ -10,10 +10,9 @@ import numpy as np
 from tqdm.contrib.concurrent import process_map
 
 import plotting
+import static
 import tools
 
-
-hgspy = tools.get_hgspy_module()
 
 matplotlib.use("Agg")  # Don't show plots
 
@@ -41,64 +40,20 @@ def parse_args():
     return parser.parse_args()
 
 
-def solve(loc: str, seed: int, **kwargs):
+def solve(loc: str, **kwargs):
     path = Path(loc)
+
+    if kwargs["phase"] is not None:
+        kwargs["max_runtime"] = tools.static_time_limit(tools.name2size(loc), kwargs["phase"])
 
     instance = tools.read_vrplib(path)
     start = perf_counter()
 
-    config = hgspy.Config(seed=seed, collectStatistics=True)
+    config = static.Config("analysis.toml")
 
-    params = hgspy.Params(config, **tools.inst_to_vars(instance))
+    res = static.solve(instance, config, **kwargs)
 
-    rng = hgspy.XorShift128(seed=seed)
-    pop = hgspy.Population(params, rng)
-    ls = hgspy.LocalSearch(params, rng)
-
-    node_ops = [
-        hgspy.operators.Exchange10(params),
-        hgspy.operators.Exchange11(params),
-        hgspy.operators.Exchange20(params),
-        hgspy.operators.MoveTwoClientsReversed(params),
-        hgspy.operators.Exchange21(params),
-        hgspy.operators.Exchange22(params),
-        hgspy.operators.TwoOpt(params),
-    ]
-
-    for op in node_ops:
-        ls.add_node_operator(op)
-
-    route_ops = [
-        hgspy.operators.RelocateStar(params),
-        hgspy.operators.SwapStar(params),
-    ]
-
-    for op in route_ops:
-        ls.add_route_operator(op)
-
-    algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
-
-    crossover_ops = [
-        hgspy.crossover.broken_pairs_exchange,
-        hgspy.crossover.selective_route_exchange,
-    ]
-
-    for op in crossover_ops:
-        algo.add_crossover_operator(op)
-
-    if kwargs["phase"] is not None:
-        t_lim = tools.static_time_limit(tools.name2size(loc), kwargs["phase"])
-        stop = hgspy.stop.MaxRuntime(t_lim)
-    elif kwargs["max_runtime"] is not None:
-        stop = hgspy.stop.MaxRuntime(kwargs["max_runtime"])
-    else:
-        stop = hgspy.stop.MaxIterations(kwargs["max_iterations"])
-
-    res = algo.run(stop)
-
-    best = res.get_best_found()
-    routes = [route for route in best.get_routes() if route]
-    cost = best.cost()
+    routes, cost = static.get_solution(res)
 
     try:
         actual_cost = tools.validate_static_solution(instance, routes)
