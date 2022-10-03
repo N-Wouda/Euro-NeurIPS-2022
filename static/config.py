@@ -1,12 +1,13 @@
 import toml
+from pathlib import Path
 
 
 class Config:
-    def __init__(self, file=None, **kwargs):
+    def __init__(self, file=None, path="static/configs", **kwargs):
         config = {}
 
         if file is not None:
-            config = toml.load(file)
+            config = toml.load(Path(path) / file)
 
         config.update(kwargs)
 
