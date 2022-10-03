@@ -1,0 +1,26 @@
+[params]
+generationSize = 20
+minPopSize = 5
+nbGranular = 80
+initialTimeWarpPenalty = 250
+penaltyDecrease = 0.5
+
+[operators]
+node = [
+    "Exchange10",
+    "Exchange11",
+    "Exchange20",
+    "MoveTwoClientsReversed",
+    "Exchange21",
+    "Exchange22",
+    "TwoOpt",
+]
+
+route = [
+    "RelocateStar",
+    "SwapStar",
+]
+
+crossover = [
+    "selective_route_exchange"
+]
