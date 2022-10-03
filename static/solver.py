@@ -58,3 +58,12 @@ def solve(
         stop = hgspy.stop.MaxIterations(max_iterations)
 
     return algo.run(stop)
+
+
+def get_solutions(res):
+    best = res.get_best_found()
+
+    routes = [route for route in best.get_routes() if route]
+    cost = best.cost()
+
+    return routes, cost

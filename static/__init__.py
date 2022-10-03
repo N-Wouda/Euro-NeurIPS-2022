@@ -1,1 +1,1 @@
-from .solver import solve
+from .solver import solve, get_solutions
