@@ -26,16 +26,12 @@ class Statistics
         std::vector<double> nbRoutes_;
     };
 
+    std::vector<double> runTimes_;
+    std::vector<double> iterTimes_;
+
     subPopStats feasStats;
     subPopStats infeasStats;
 
-    std::vector<double> runTimes_;
-    std::vector<double> iterTimes_;
-    std::vector<size_t> infeasPopSize_;
-    std::vector<double> infeasDiversity_;
-    std::vector<size_t> infeasBest_;
-    std::vector<size_t> infeasAverage_;
-    std::vector<double> infeasNbRoutes_;
     std::vector<size_t> penaltiesCapacity_;
     std::vector<size_t> penaltiesTimeWarp_;
 
@@ -133,7 +129,7 @@ public:
      */
     [[nodiscard]] std::vector<size_t> const &infeasPopSize() const
     {
-        return infeasPopSize_;
+        return infeasStats.popSize_;
     }
 
     /**
@@ -145,7 +141,7 @@ public:
      */
     [[nodiscard]] std::vector<double> const &infeasDiversity() const
     {
-        return infeasDiversity_;
+        return infeasStats.diversity_;
     }
 
     /**
@@ -155,7 +151,7 @@ public:
      */
     [[nodiscard]] std::vector<size_t> const &infeasBest() const
     {
-        return infeasBest_;
+        return infeasStats.bestCost_;
     }
 
     /**
@@ -165,7 +161,7 @@ public:
      */
     [[nodiscard]] std::vector<size_t> const &infeasAverage() const
     {
-        return infeasAverage_;
+        return infeasStats.averageCost_;
     }
 
     /**
@@ -175,7 +171,7 @@ public:
      */
     [[nodiscard]] std::vector<double> const &infeasNbRoutes() const
     {
-        return infeasNbRoutes_;
+        return infeasStats.nbRoutes_;
     }
 
     /**
