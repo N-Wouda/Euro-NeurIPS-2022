@@ -36,7 +36,7 @@ def run_dispatch(env, dispatch_strategy, **kwargs):
         sol, _ = solve_static(dispatch_inst, time_limit=solve_tlim)
         ep_sol = utils.sol2ep(sol, dispatch_inst)
 
-        current_epoch = observation['current_epoch']
+        current_epoch = observation["current_epoch"]
         solutions[current_epoch] = ep_sol
 
         observation, reward, done, info = env.step(ep_sol)

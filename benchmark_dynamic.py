@@ -29,7 +29,7 @@ def parse_args():
     group.add_argument("--epoch_tlim", type=int)
     group.add_argument("--phase", choices=["quali", "final"])
 
-    parser.add_argument("--aggregate", action='store_true')
+    parser.add_argument("--aggregate", action="store_true")
 
     return parser.parse_args()
 
@@ -52,11 +52,6 @@ def solve(loc: str, instance_seed: int, **kwargs):
         from dynamic.run_oracle import run_oracle
 
         costs, routes = run_oracle(env, **kwargs)
-
-    elif kwargs["strategy"] == "dqn":
-        from dynamic.dqn.run_dqn import run_dqn
-
-        costs, routes = run_dqn(env, **kwargs)
 
     else:
         if kwargs["strategy"] in ["greedy", "random", "lazy"]:

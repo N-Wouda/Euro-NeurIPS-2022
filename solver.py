@@ -50,11 +50,6 @@ def run(args):
 
         run_oracle(env, **vars(args))
 
-    elif args.strategy == "dqn":
-        from dynamic.dqn.run_dqn import run_dqn
-
-        run_dqn(env, **vars(args))
-
     else:
         if args.strategy in ["greedy", "random", "lazy"]:
             from dynamic.random import random_dispatch
