@@ -189,6 +189,17 @@ Individual::Individual(Params const *params, Routes routes)
     evaluateCompleteCost();
 }
 
+Individual::Individual(Individual const &other)  // copy relevant route and cost
+    : nbRoutes(other.nbRoutes),                  // fields from other individual
+      distance(other.distance),                  // - but *not* the proximity
+      capacityExcess(other.capacityExcess),      // structure since the copy
+      timeWarp(other.timeWarp),                  // is not yet part of the same
+      params(other.params),                      // population.
+      routes_(other.routes_),
+      neighbours(other.neighbours)
+{
+}
+
 Individual::~Individual()
 {
     for (auto [dist, other] : indivsByProximity)

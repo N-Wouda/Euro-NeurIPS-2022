@@ -9,8 +9,8 @@
 
 class Result
 {
-    Individual const &bestFound;
-    Statistics stats;
+    Individual const bestFound;
+    Statistics const stats;
     size_t numIters;
     double runTime;
 

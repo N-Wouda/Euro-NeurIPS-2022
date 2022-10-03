@@ -123,9 +123,13 @@ public:
         return cost() == other.cost() && routes_ == other.routes_;
     }
 
+    Individual &operator=(Individual const &other) = default;
+
     Individual(Params const *params, XorShift128 *rng);  // random individual
 
     Individual(Params const *params, Routes routes);
+
+    Individual(Individual const &other);  // copy from other
 
     ~Individual();
 };
