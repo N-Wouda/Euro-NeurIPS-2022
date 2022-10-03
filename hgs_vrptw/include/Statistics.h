@@ -17,13 +17,20 @@ class Statistics
     clock::time_point lastIter = clock::now();
     size_t numIters_ = 0;
 
+    struct subPopStats
+    {
+        std::vector<size_t> popSize_;
+        std::vector<double> diversity_;
+        std::vector<size_t> bestCost_;
+        std::vector<size_t> averageCost_;
+        std::vector<double> nbRoutes_;
+    };
+
+    subPopStats feasStats;
+    subPopStats infeasStats;
+
     std::vector<double> runTimes_;
     std::vector<double> iterTimes_;
-    std::vector<size_t> feasPopSize_;
-    std::vector<double> feasDiversity_;
-    std::vector<size_t> feasBest_;
-    std::vector<double> feasNbRoutes_;
-    std::vector<size_t> feasAverage_;
     std::vector<size_t> infeasPopSize_;
     std::vector<double> infeasDiversity_;
     std::vector<size_t> infeasBest_;
@@ -75,7 +82,7 @@ public:
      */
     [[nodiscard]] std::vector<size_t> const &feasPopSize() const
     {
-        return feasPopSize_;
+        return feasStats.popSize_;
     }
 
     /**
@@ -87,7 +94,7 @@ public:
      */
     [[nodiscard]] std::vector<double> const &feasDiversity() const
     {
-        return feasDiversity_;
+        return feasStats.diversity_;
     }
 
     /**
@@ -97,7 +104,7 @@ public:
      */
     [[nodiscard]] std::vector<size_t> const &feasBest() const
     {
-        return feasBest_;
+        return feasStats.bestCost_;
     }
 
     /**
@@ -107,7 +114,7 @@ public:
      */
     [[nodiscard]] std::vector<size_t> const &feasAverage() const
     {
-        return feasAverage_;
+        return feasStats.averageCost_;
     }
 
     /**
@@ -117,7 +124,7 @@ public:
      */
     [[nodiscard]] std::vector<double> const &feasNbRoutes() const
     {
-        return feasNbRoutes_;
+        return feasStats.nbRoutes_;
     }
 
     /**

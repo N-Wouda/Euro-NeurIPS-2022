@@ -19,9 +19,7 @@ void Statistics::collectFrom(Population const &pop)
     lastIter = clock::now();  // update for next call
 
     // Population statistics
-    auto const numFeas = pop.feasible.size();
     auto const numInfeas = pop.infeasible.size();
-    feasPopSize_.push_back(numFeas);
     infeasPopSize_.push_back(numInfeas);
 
     auto const opDiversity = [](double val, auto const &subs) {
@@ -43,26 +41,31 @@ void Statistics::collectFrom(Population const &pop)
 
     if (!pop.feasible.empty())
     {
+        auto const numFeas = pop.feasible.size();
+        feasStats.popSize_.push_back(numFeas);
+
         double const feasDiv = std::accumulate(
             pop.feasible.begin(), pop.feasible.end(), 0., opDiversity);
-        feasDiversity_.push_back(feasDiv / static_cast<double>(numFeas));
+        feasStats.diversity_.push_back(feasDiv / static_cast<double>(numFeas));
 
-        feasBest_.push_back(pop.feasible[0].indiv->cost());
+        feasStats.bestCost_.push_back(pop.feasible[0].indiv->cost());
 
         auto const feasCost = std::accumulate(
             pop.feasible.begin(), pop.feasible.end(), 0, opCost);
-        feasAverage_.push_back(feasCost / numFeas);
+        feasStats.averageCost_.push_back(feasCost / numFeas);
 
         auto const feasNbRoutes = std::accumulate(
             pop.feasible.begin(), pop.feasible.end(), 0., opNbRoutes);
-        feasNbRoutes_.push_back(feasNbRoutes / static_cast<double>(numFeas));
+        feasStats.nbRoutes_.push_back(feasNbRoutes
+                                      / static_cast<double>(numFeas));
     }
     else
     {
-        feasDiversity_.push_back(0.);  // 0 as substitute for no diversity
-        feasBest_.push_back(INT_MAX);  // INT_MAX as substitute for inf
-        feasAverage_.push_back(INT_MAX);
-        feasNbRoutes_.push_back(0.);
+        feasStats.popSize_.push_back(0);
+        feasStats.diversity_.push_back(0.);  // 0 as substitute for no diversity
+        feasStats.bestCost_.push_back(INT_MAX);  // INT_MAX as subst. for inf
+        feasStats.averageCost_.push_back(INT_MAX);
+        feasStats.nbRoutes_.push_back(0.);
     }
 
     if (!pop.infeasible.empty())
@@ -134,11 +137,11 @@ void Statistics::toCsv(std::string const &path, char const sep) const
     {
         out << runTimes_[it] << sep
             << iterTimes_[it] << sep
-            << feasPopSize_[it] << sep
-            << feasDiversity_[it] << sep
-            << feasBest_[it] << sep
-            << feasAverage_[it] << sep
-            << feasNbRoutes_[it] << sep
+            << feasStats.popSize_[it] << sep
+            << feasStats.diversity_[it] << sep
+            << feasStats.bestCost_[it] << sep
+            << feasStats.averageCost_[it] << sep
+            << feasStats.nbRoutes_[it] << sep
             << infeasPopSize_[it] << sep
             << infeasDiversity_[it] << sep
             << infeasBest_[it] << sep
