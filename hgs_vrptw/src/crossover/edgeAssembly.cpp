@@ -17,7 +17,6 @@ Individual edgeAssembly(
 
     //Step 1:
     //Generate AB graph in XOR fashion
-    //TODO add depots
     /**
      * Unordered multimap as we can insert, access and delete through "from" node in constant time
      * and we can keep multiple elements with depot key
@@ -62,7 +61,8 @@ Individual edgeAssembly(
 
     
     //Step 2:
-    //Generate cycles based on a random node until all edges are gone (O(n))
+    //Generate cycles based on a random node until all edges are gone
+    //Based on Nagata et al. 2010 I believe it should deconstruct AB_edges into cycles, but not sure why
     std::vector<std::unordered_map<size_t, size_t>> AB_cycles = {};
     while(!AB_edges.empty()){
         std::unordered_map<size_t, size_t> cycle = {};
@@ -138,6 +138,19 @@ Individual edgeAssembly(
         while(route.back() != 0){
             route.push_back(A_edges.find(route.back())->second);
             A_edges.erase(route.back());
+        }
+    }
+
+    std::vector<std::vector<size_t>> subtours = {};
+    while(!A_edges.empty()){
+        auto start_subtour = A_edges.begin()
+        subtours.push_back({start_subtour->first, start_subtour->second});
+        A_edges.erase(start_subtour);
+        //if current subtour is not yet a cycle keep adding edges from A
+        while(subtour.back().front() != subtour.back().back()){
+            auto next_edge = A_edges.find(subtour.back().back());
+            subtour.back().push_back(next_edge->second);
+            A_edges.remove(next_edge);
         }
     }
 
