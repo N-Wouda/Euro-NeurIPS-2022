@@ -17,7 +17,7 @@ class Statistics
     clock::time_point lastIter = clock::now();
     size_t numIters_ = 0;
 
-    struct subPopStats
+    struct SubPopStats
     {
         std::vector<size_t> popSize_;
         std::vector<double> diversity_;
@@ -29,8 +29,8 @@ class Statistics
     std::vector<double> runTimes_;
     std::vector<double> iterTimes_;
 
-    subPopStats feasStats;
-    subPopStats infeasStats;
+    SubPopStats feasStats;
+    SubPopStats infeasStats;
 
     std::vector<size_t> penaltiesCapacity_;
     std::vector<size_t> penaltiesTimeWarp_;

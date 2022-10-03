@@ -4,6 +4,57 @@
 #include <fstream>
 #include <numeric>
 
+namespace
+{
+void collectFrom(auto const &subPop, auto &subStats)
+{
+    auto const opDiversity = [](double val, auto const &subs) {
+        return val + subs.indiv->avgBrokenPairsDistanceClosest();
+    };
+
+    auto const opAverageCost
+        = [](size_t sum, auto const &subs) { return sum + subs.indiv->cost(); };
+
+    auto const opNbRoutes = [&](double val, auto const &subs) {
+        return val
+               + std::accumulate(subs.indiv->getRoutes().begin(),
+                                 subs.indiv->getRoutes().end(),
+                                 0,
+                                 [](size_t val, auto const &route) {
+                                     return val + !route.empty();
+                                 });
+    };
+
+    if (!subPop.empty())
+    {
+        auto const popSize = subPop.size();
+        subStats.popSize_.push_back(popSize);
+
+        double const diversity
+            = std::accumulate(subPop.begin(), subPop.end(), 0., opDiversity);
+        subStats.diversity_.push_back(diversity / static_cast<double>(popSize));
+
+        subStats.bestCost_.push_back(subPop[0].indiv->cost());
+
+        auto const averageCost
+            = std::accumulate(subPop.begin(), subPop.end(), 0, opAverageCost);
+        subStats.averageCost_.push_back(averageCost / popSize);
+
+        auto const nbRoutes
+            = std::accumulate(subPop.begin(), subPop.end(), 0., opNbRoutes);
+        subStats.nbRoutes_.push_back(nbRoutes / static_cast<double>(popSize));
+    }
+    else
+    {
+        subStats.popSize_.push_back(0);
+        subStats.diversity_.push_back(0.);  // 0 as substitute for no diversity
+        subStats.bestCost_.push_back(INT_MAX);  // INT_MAX as subst. for inf
+        subStats.averageCost_.push_back(INT_MAX);
+        subStats.nbRoutes_.push_back(0.);
+    }
+}
+}  // namespace
+
 void Statistics::collectFrom(Population const &pop)
 {
     numIters_++;
@@ -18,81 +69,9 @@ void Statistics::collectFrom(Population const &pop)
 
     lastIter = clock::now();  // update for next call
 
-    auto const opDiversity = [](double val, auto const &subs) {
-        return val + subs.indiv->avgBrokenPairsDistanceClosest();
-    };
-
-    auto const opCost
-        = [](size_t sum, auto const &subs) { return sum + subs.indiv->cost(); };
-
-    auto const opNbRoutes = [&](double val, auto const &subs) {
-        return val
-               + std::accumulate(subs.indiv->getRoutes().begin(),
-                                 subs.indiv->getRoutes().end(),
-                                 0,
-                                 [](size_t val, auto const &route) {
-                                     return val + !route.empty();
-                                 });
-    };
-
-    if (!pop.feasible.empty())
-    {
-        auto const numFeas = pop.feasible.size();
-        feasStats.popSize_.push_back(numFeas);
-
-        double const feasDiv = std::accumulate(
-            pop.feasible.begin(), pop.feasible.end(), 0., opDiversity);
-        feasStats.diversity_.push_back(feasDiv / static_cast<double>(numFeas));
-
-        feasStats.bestCost_.push_back(pop.feasible[0].indiv->cost());
-
-        auto const feasCost = std::accumulate(
-            pop.feasible.begin(), pop.feasible.end(), 0, opCost);
-        feasStats.averageCost_.push_back(feasCost / numFeas);
-
-        auto const feasNbRoutes = std::accumulate(
-            pop.feasible.begin(), pop.feasible.end(), 0., opNbRoutes);
-        feasStats.nbRoutes_.push_back(feasNbRoutes
-                                      / static_cast<double>(numFeas));
-    }
-    else
-    {
-        feasStats.popSize_.push_back(0);
-        feasStats.diversity_.push_back(0.);  // 0 as substitute for no diversity
-        feasStats.bestCost_.push_back(INT_MAX);  // INT_MAX as subst. for inf
-        feasStats.averageCost_.push_back(INT_MAX);
-        feasStats.nbRoutes_.push_back(0.);
-    }
-
-    if (!pop.infeasible.empty())
-    {
-        auto const numInfeas = pop.infeasible.size();
-        infeasStats.popSize_.push_back(numInfeas);
-
-        double const infeasDiv = std::accumulate(
-            pop.infeasible.begin(), pop.infeasible.end(), 0., opDiversity);
-        infeasStats.diversity_.push_back(infeasDiv
-                                         / static_cast<double>(numInfeas));
-
-        infeasStats.bestCost_.push_back(pop.infeasible[0].indiv->cost());
-
-        auto const infeasCost = std::accumulate(
-            pop.infeasible.begin(), pop.infeasible.end(), 0, opCost);
-        infeasStats.averageCost_.push_back(infeasCost / numInfeas);
-
-        auto const infeasNbRoutes = std::accumulate(
-            pop.infeasible.begin(), pop.infeasible.end(), 0., opNbRoutes);
-        infeasStats.nbRoutes_.push_back(infeasNbRoutes
-                                        / static_cast<double>(numInfeas));
-    }
-    else
-    {
-        infeasStats.popSize_.push_back(0);
-        infeasStats.diversity_.push_back(0);  // 0 as susbst. for no diversity
-        infeasStats.bestCost_.push_back(INT_MAX);  // INT_MAX as subst. for inf
-        infeasStats.averageCost_.push_back(INT_MAX);
-        infeasStats.nbRoutes_.push_back(0.);
-    }
+    // Population statistics
+    ::collectFrom(pop.feasible, feasStats);
+    ::collectFrom(pop.infeasible, infeasStats);
 
     // Penalty statistics
     penaltiesCapacity_.push_back(pop.params.penaltyCapacity);
