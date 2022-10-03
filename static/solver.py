@@ -10,7 +10,8 @@ def solve(
     max_runtime=None,
     max_iterations=None,
     seed=1,
-    initial_solutions=()
+    initial_solutions=(),
+    **kwargs
 ):
     params = hgspy.Params(hgspy.Config(seed=seed, **config.solver_config), **tools.inst_to_vars(instance))
 
