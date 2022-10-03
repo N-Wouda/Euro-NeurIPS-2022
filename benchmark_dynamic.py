@@ -53,11 +53,6 @@ def solve(loc: str, instance_seed: int, **kwargs):
 
         costs, routes = run_oracle(env, **kwargs)
 
-    elif kwargs["strategy"] == "dqn":
-        from dynamic.dqn.run_dqn import run_dqn
-
-        costs, routes = run_dqn(env, **kwargs)
-
     else:
         if kwargs["strategy"] in ["greedy", "random", "lazy"]:
             from dynamic.random import random_dispatch
