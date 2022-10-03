@@ -17,9 +17,17 @@ def solve_static(instance, time_limit=60, initial_solutions=(), **kwargs):
         kwargs["seed"] = 1
 
     config = static.Config("dynamic.toml")
-    res = static.solve(instance, config, max_runtime=time_limit, initial_solutions=initial_solutions, **kwargs)
+    res = static.solve(
+        instance,
+        config,
+        max_runtime=time_limit,
+        initial_solutions=initial_solutions,
+        **kwargs
+    )
 
-    routes, cost, is_feasible = static.get_solution(res, check_feasibility=True)
+    routes, cost, is_feasible = static.get_solution(
+        res, check_feasibility=True
+    )
 
     assert is_feasible
 

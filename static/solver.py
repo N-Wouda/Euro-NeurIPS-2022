@@ -13,7 +13,10 @@ def solve(
     initial_solutions=(),
     **kwargs
 ):
-    params = hgspy.Params(hgspy.Config(seed=seed, **config.solver_config), **tools.inst_to_vars(instance))
+    params = hgspy.Params(
+        hgspy.Config(seed=seed, **config.solver_config),
+        **tools.inst_to_vars(instance)
+    )
 
     rng = hgspy.XorShift128(seed=seed)
     pop = hgspy.Population(params, rng)
@@ -24,16 +27,14 @@ def solve(
     ls = hgspy.LocalSearch(params, rng)
 
     node_ops = [
-        getattr(hgspy.operators, op)(params)
-        for op in config.node_operators
+        getattr(hgspy.operators, op)(params) for op in config.node_operators
     ]
 
     for op in node_ops:
         ls.add_node_operator(op)
 
     route_ops = [
-        getattr(hgspy.operators, op)(params)
-        for op in config.route_operators
+        getattr(hgspy.operators, op)(params) for op in config.route_operators
     ]
 
     for op in route_ops:
@@ -42,8 +43,7 @@ def solve(
     algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
 
     crossover_ops = [
-        getattr(hgspy.crossover, op)
-        for op in config.crossover_operators
+        getattr(hgspy.crossover, op) for op in config.crossover_operators
     ]
 
     for op in crossover_ops:

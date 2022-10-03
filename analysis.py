@@ -44,7 +44,9 @@ def solve(loc: str, **kwargs):
     path = Path(loc)
 
     if kwargs["phase"] is not None:
-        kwargs["max_runtime"] = tools.static_time_limit(tools.name2size(loc), kwargs["phase"])
+        kwargs["max_runtime"] = tools.static_time_limit(
+            tools.name2size(loc), kwargs["phase"]
+        )
 
     instance = tools.read_vrplib(path)
     start = perf_counter()
