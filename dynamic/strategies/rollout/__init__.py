@@ -1,8 +1,4 @@
-from types import SimpleNamespace
-
-import yaml
-
-with open("dynamic/strategies/rollout/config.yml") as file:
-    config = SimpleNamespace(**yaml.safe_load(file))
+import tools
+config = tools.load_config("dynamic/strategies/rollout/config.yml")
 
 from .algorithms import rollout_count

@@ -4,8 +4,10 @@ import importlib.util
 import json
 import os
 import re
+from types import SimpleNamespace
 
 import numpy as np
+import yaml
 
 
 # https://stackoverflow.com/questions/26646362/numpy-array-is-not-json-serializable
@@ -438,3 +440,8 @@ def name2size(name: str) -> int:
     return int(re.search(r'-n(\d\d\d)-', name).group(1))
 
 
+def load_config(loc):
+    import yaml
+
+    with open(loc) as file:
+        return SimpleNamespace(**yaml.safe_load(file))
