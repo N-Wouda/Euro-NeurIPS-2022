@@ -4,6 +4,10 @@
 #include <fstream>
 #include <numeric>
 
+namespace
+{
+}  // namespace
+
 void Statistics::collectFrom(Population const &pop)
 {
     numIters_++;
@@ -18,12 +22,11 @@ void Statistics::collectFrom(Population const &pop)
 
     lastIter = clock::now();  // update for next call
 
-    // TODO Use numFeas and numInfeas instead of total popsize?
     // Population statistics
     auto const numFeas = pop.feasible.size();
     auto const numInfeas = pop.infeasible.size();
-    popSizes_.push_back(numFeas + numInfeas);
-    numFeasiblePop_.push_back(numFeas);
+    feasPopSize_.push_back(numFeas);
+    infeasPopSize_.push_back(numInfeas);
 
     auto const opDiversity = [](double val, auto const &subs) {
         return val + subs.indiv->avgBrokenPairsDistanceClosest();
@@ -96,11 +99,11 @@ void Statistics::toCsv(std::string const &path, char const sep) const
     // clang-format off
     out << "total run-time (s)" << sep
         << "iteration run-time (s)" << sep
-        << "population size" << sep
         << "# feasible" << sep
         << "feasible diversity" << sep
         << "feasible best objective" << sep
         << "feasible avg. objective" << sep
+        << "# infeasible" << sep
         << "infeasible diversity" << sep
         << "infeasible best. objective" << sep
         << "infeasible avg. objective" << sep
@@ -111,11 +114,11 @@ void Statistics::toCsv(std::string const &path, char const sep) const
     {
         out << runTimes_[it] << sep
             << iterTimes_[it] << sep
-            << popSizes_[it] << sep
-            << numFeasiblePop_[it] << sep
+            << feasPopSize_[it] << sep
             << feasDiversity_[it] << sep
             << feasBest_[it] << sep
             << feasAverage_[it] << sep
+            << infeasPopSize_[it] << sep
             << infeasDiversity_[it] << sep
             << infeasBest_[it] << sep
             << infeasAverage_[it] << sep

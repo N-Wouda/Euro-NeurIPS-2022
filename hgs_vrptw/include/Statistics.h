@@ -19,11 +19,11 @@ class Statistics
 
     std::vector<double> runTimes_;
     std::vector<double> iterTimes_;
-    std::vector<size_t> popSizes_;
-    std::vector<size_t> numFeasiblePop_;
+    std::vector<size_t> feasPopSize_;
     std::vector<double> feasDiversity_;
     std::vector<size_t> feasBest_;
     std::vector<size_t> feasAverage_;
+    std::vector<size_t> infeasPopSize_;
     std::vector<double> infeasDiversity_;
     std::vector<size_t> infeasBest_;
     std::vector<size_t> infeasAverage_;
@@ -68,21 +68,12 @@ public:
     }
 
     /**
-     * Returns a vector of population sizes, one element per iteration.
-     */
-    [[nodiscard]] std::vector<size_t> const &popSizes() const
-    {
-        return popSizes_;
-    }
-
-    /**
      * Returns a vector of the number of feasible individuals in the population,
-     * one element per iteration. Of course, in each iteration, the number of
-     * feasible individuals does not exceed the total population size.
+     * one element per iteration.
      */
-    [[nodiscard]] std::vector<size_t> const &numFeasiblePop() const
+    [[nodiscard]] std::vector<size_t> const &feasPopSize() const
     {
-        return numFeasiblePop_;
+        return feasPopSize_;
     }
 
     /**
@@ -115,6 +106,15 @@ public:
     [[nodiscard]] std::vector<size_t> const &feasAverage() const
     {
         return feasAverage_;
+    }
+
+    /**
+     * Returns a vector of the number of infeasible individuals in the
+     * population, one element per iteration.
+     */
+    [[nodiscard]] std::vector<size_t> const &infeasPopSize() const
+    {
+        return infeasPopSize_;
     }
 
     /**

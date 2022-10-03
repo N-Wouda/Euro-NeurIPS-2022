@@ -51,20 +51,20 @@ def plot_population(ax, stats, step=None, plot_runtimes=False):
 
     x_vals, x_label = x_axis(stats, step, plot_runtimes)
 
-    # Population size
-    line_pop_sizes = ax.plot(
-        x_vals,
-        stats.pop_sizes()[::step],
-        label="Population size",
-        c="tab:blue",
-    )
-
     # Number feasible individuals
-    line_num_feasible_pop = ax.plot(
+    line_feas_pop_size = ax.plot(
         x_vals,
-        stats.num_feasible_pop()[::step],
+        stats.feas_pop_size()[::step],
         label="# Feasible",
         c="tab:orange",
+    )
+
+    # Number infeasible individuals
+    line_infeas_pop_size = ax.plot(
+        x_vals,
+        stats.infeas_pop_size()[::step],
+        label="# Infeasible",
+        c="tab:blue",
     )
 
     ax.set_title("Population statistics")
@@ -89,8 +89,8 @@ def plot_population(ax, stats, step=None, plot_runtimes=False):
 
     # Place different ax labels in one legend
     lines = (
-        line_pop_sizes
-        + line_num_feasible_pop
+        line_feas_pop_size
+        + line_infeas_pop_size
         + line_feas_diversity
         + line_infeas_diversity
     )
