@@ -7,7 +7,7 @@ import tools
 
 hgspy = tools.get_hgspy_module()
 
-modes = [Path(mode).stem for mode in os.listdir("configurations")]
+modes = [Path(mode).stem for mode in os.listdir("static/configurations")]
 
 
 def solve(
@@ -19,7 +19,7 @@ def solve(
     initial_solutions=(),
     mode="static",
 ):
-    configuration = toml.load(f"configurations/{mode}.toml")
+    configuration = toml.load(f"static/configurations/{mode}.toml")
 
     config = hgspy.Config(seed=seed, **configuration["params"])
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
