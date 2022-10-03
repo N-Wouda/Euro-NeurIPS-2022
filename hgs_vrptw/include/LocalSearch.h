@@ -4,7 +4,6 @@
 #include "Individual.h"
 #include "Node.h"
 #include "Params.h"
-#include "Penalties.h"
 #include "Route.h"
 #include "XorShift128.h"
 
@@ -18,9 +17,8 @@ class LocalSearch
     using NodeOp = LocalSearchOperator<Node>;
     using RouteOp = LocalSearchOperator<Route>;
 
-    Penalties penalties;  // Penalty data
-    Params &params;       // Problem parameters
-    XorShift128 &rng;     // Random number generator
+    Params &params;    // Problem parameters
+    XorShift128 &rng;  // Random number generator
 
     std::vector<int> orderNodes;   // random node order used in RI operators
     std::vector<int> orderRoutes;  // random route order used in SWAP* operators
@@ -44,15 +42,24 @@ class LocalSearch
     // Export the LS solution back into an individual
     Individual exportIndividual();
 
-    [[nodiscard]] bool applyNodeOperators(Node *U, Node *V);
+    [[nodiscard]] bool applyNodeOps(Node *U, Node *V);
 
-    [[nodiscard]] bool applyRouteOperators(Route *U, Route *V);
+    [[nodiscard]] bool applyRouteOps(Route *U, Route *V);
 
     // Updates solution state after an improving local search move
     void update(Route *U, Route *V);
 
     // Performs the actual local search procedure
     void search();
+
+    // Final processing before exporting the individual
+    void postProcess();
+
+    // Evaluates the path before -> <nodes in sub path> -> after
+    inline int evaluateSubpath(std::vector<size_t> const &subpath,
+                               Node const *before,
+                               Node const *after,
+                               Route const &route) const;
 
 public:
     /**
@@ -67,14 +74,9 @@ public:
     void addRouteOperator(RouteOp &op) { routeOps.emplace_back(&op); }
 
     /**
-     * Performs the local search procedure around the given individual, using
-     * the passed-in penalty parameters.
-     *
-     * @param indiv           Individual to improve.
-     * @param loadPenalty     Excess load penalty.
-     * @param timeWarpPenalty Penalty for violated time windows.
+     * Performs the local search procedure around the given individual.
      */
-    void operator()(Individual &indiv, int loadPenalty, int timeWarpPenalty);
+    void operator()(Individual &indiv);
 
     LocalSearch(Params &params, XorShift128 &rng);
 };

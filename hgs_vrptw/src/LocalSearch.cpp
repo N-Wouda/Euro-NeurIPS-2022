@@ -7,12 +7,8 @@
 #include <stdexcept>
 #include <vector>
 
-void LocalSearch::operator()(Individual &indiv,
-                             int loadPenalty,
-                             int timeWarpPenalty)
+void LocalSearch::operator()(Individual &indiv)
 {
-    penalties = {params.vehicleCapacity, loadPenalty, timeWarpPenalty};
-
     // Shuffling the node order beforehand adds diversity to the search
     std::shuffle(orderNodes.begin(), orderNodes.end(), rng);
     std::shuffle(orderRoutes.begin(), orderRoutes.end(), rng);
@@ -55,16 +51,15 @@ void LocalSearch::search()
             for (auto const vClient : params.getNeighboursOf(U->client))
             {
                 Node *V = &clients[vClient];
-                auto const lastModifiedRoute = std::max(
-                    lastModified[U->route->idx], lastModified[V->route->idx]);
 
-                // Evaluate operators only if routes have changed recently.
-                if (step == 0 || lastModifiedRoute > lastTestedNode)
+                if (step == 0  // evaluate only if routes have changed recently
+                    || lastModified[U->route->idx] > lastTestedNode
+                    || lastModified[V->route->idx] > lastTestedNode)
                 {
-                    if (applyNodeOperators(U, V))
+                    if (applyNodeOps(U, V))
                         continue;
 
-                    if (p(V)->isDepot() && applyNodeOperators(U, p(V)))
+                    if (p(V)->isDepot() && applyNodeOps(U, p(V)))
                         continue;
                 }
             }
@@ -79,7 +74,7 @@ void LocalSearch::search()
                 if (empty == routes.end())
                     continue;
 
-                if (applyNodeOperators(U, empty->depot))
+                if (applyNodeOps(U, empty->depot))
                     continue;
             }
         }
@@ -112,19 +107,21 @@ void LocalSearch::search()
                     if (step > 0 && lastModifiedRoute <= lastTested)
                         continue;
 
-                    if (applyRouteOperators(&U, &V))
+                    if (applyRouteOps(&U, &V))
                         continue;
                 }
             }
     }
+
+    postProcess();
 }
 
-bool LocalSearch::applyNodeOperators(Node *U, Node *V)
+bool LocalSearch::applyNodeOps(Node *U, Node *V)
 {
-    for (auto &op : nodeOps)
+    for (auto op : nodeOps)
         if (op->evaluate(U, V) < 0)
         {
-            auto *routeU = U->route;  // copy these because the operator could
+            auto *routeU = U->route;  // copy pointers because the operator can
             auto *routeV = V->route;  // modify the node's route membership
 
             op->apply(U, V);
@@ -136,9 +133,9 @@ bool LocalSearch::applyNodeOperators(Node *U, Node *V)
     return false;
 }
 
-bool LocalSearch::applyRouteOperators(Route *U, Route *V)
+bool LocalSearch::applyRouteOps(Route *U, Route *V)
 {
-    for (auto &op : routeOps)
+    for (auto op : routeOps)
         if (op->evaluate(U, V) < 0)
         {
             op->apply(U, V);
@@ -158,17 +155,87 @@ void LocalSearch::update(Route *U, Route *V)
     U->update();
     lastModified[U->idx] = nbMoves;
 
-    for (auto &op : routeOps)  // TODO only route operators use this (SWAP*).
-        op->update(U);         //  Maybe later also expand to node ops?
+    for (auto op : routeOps)  // TODO only route operators use this (SWAP*).
+        op->update(U);        //  Maybe later also expand to node ops?
 
     if (U != V)
     {
         V->update();
         lastModified[V->idx] = nbMoves;
 
-        for (auto &op : routeOps)
+        for (auto op : routeOps)
             op->update(V);
     }
+}
+
+void LocalSearch::postProcess()
+{
+    auto const k = params.config.postProcessPathLength;
+
+    if (k <= 1)  // 0 or 1 means we are either not doing anything at all (0),
+        return;  // or recombining a single node (1). Neither helps.
+
+    std::vector<size_t> path(k);
+
+    // This postprocessing step optimally recombines all node segments of a
+    // given length in each route. This recombination works by enumeration; see
+    // issue #98 for details.
+    for (auto &route : routes)
+    {
+        for (size_t start = 1; start + k <= route.size() + 1; ++start)
+        {
+            // We process the range [start, start + k). So the fixed endpoints
+            // are p(start) and the node at start + k.
+            auto *prev = p(route[start]);
+            auto *next = route[start + k];
+
+            std::iota(path.begin(), path.end(), start);
+            auto currCost = evaluateSubpath(path, prev, next, route);
+
+            while (std::next_permutation(path.begin(), path.end()))
+            {
+                auto const cost = evaluateSubpath(path, prev, next, route);
+
+                if (cost < currCost)  // it is rare to find more improving
+                {                     // moves, so we break after the first
+                    for (auto pos : path)
+                    {
+                        auto *node = route[pos];
+                        node->insertAfter(prev);
+                        prev = node;
+                    }
+
+                    route.update();
+                    break;
+                }
+            }
+        }
+    }
+}
+
+int LocalSearch::evaluateSubpath(std::vector<size_t> const &subpath,
+                                 Node const *before,
+                                 Node const *after,
+                                 Route const &route) const
+{
+    auto totalDist = 0;
+    auto tws = before->twBefore;
+    auto from = before->client;
+
+    // Calculates travel distance and time warp of the subpath permutation.
+    for (auto &pos : subpath)
+    {
+        auto *to = route[pos];
+
+        totalDist += params.dist(from, to->client);
+        tws = TimeWindowSegment::merge(tws, to->tw);
+        from = to->client;
+    }
+
+    totalDist += params.dist(from, after->client);
+    tws = TimeWindowSegment::merge(tws, after->twAfter);
+
+    return totalDist + params.twPenalty(tws.totalTimeWarp());
 }
 
 void LocalSearch::loadIndividual(Individual const &indiv)
@@ -232,11 +299,11 @@ void LocalSearch::loadIndividual(Individual const &indiv)
         route->update();
     }
 
-    for (auto &op : nodeOps)
-        op->init(indiv, &penalties);
+    for (auto op : nodeOps)
+        op->init(indiv);
 
-    for (auto &op : routeOps)
-        op->init(indiv, &penalties);
+    for (auto op : routeOps)
+        op->init(indiv);
 }
 
 Individual LocalSearch::exportIndividual()
@@ -267,10 +334,7 @@ Individual LocalSearch::exportIndividual()
 }
 
 LocalSearch::LocalSearch(Params &params, XorShift128 &rng)
-    : penalties{params.vehicleCapacity,
-                params.penaltyCapacity,
-                params.penaltyTimeWarp},
-      params(params),
+    : params(params),
       rng(rng),
       orderNodes(params.nbClients),
       orderRoutes(params.nbVehicles),

@@ -4,8 +4,6 @@
 #include "Params.h"
 #include "XorShift128.h"
 
-#include <cfloat>
-#include <set>
 #include <string>
 #include <vector>
 
@@ -13,8 +11,8 @@
 class Individual
 {
     using Client = int;
-    using Tour = std::vector<Client>;
-    using Routes = std::vector<Tour>;
+    using Route = std::vector<Client>;
+    using Routes = std::vector<Route>;
 
     size_t nbRoutes = 0;        // Number of routes
     size_t distance = 0;        // Total distance
@@ -22,34 +20,24 @@ class Individual
     size_t timeWarp = 0;        // All route time warp of late arrivals
 
     // The other individuals in the population (cannot be the depot 0), ordered
-    // by increasing proximity (the set container follows a natural ordering
-    // based on the value of the first pair)
-    std::multiset<std::pair<double, Individual *>> indivsPerProximity;
+    // by increasing proximity.
+    std::vector<std::pair<int, Individual *>> indivsByProximity;
 
     Params const *params;  // Problem parameters
-
-    // Giant tour representing the individual: list of integers representing
-    // clients (can not be the depot 0). Size is nbClients.
-    Tour tour_;
 
     // For each vehicle, the associated sequence of deliveries (complete
     // solution). Size is nbVehicles, but quite a few routes are likely empty
     // - the numRoutes() member indicates the number of nonempty routes.
     Routes routes_;
 
-    // Pairs of [predecessor, successor] for each client (index) in the tour
+    // Pairs of [predecessor, successor] for each client (index)
     std::vector<std::pair<Client, Client>> neighbours;
 
-    // Splits the tour chromosome into routes using the linear split algorithm
-    void makeRoutes();
+    // Determines (pred, succ) pairs for each client
+    void makeNeighbours();
 
     // Evaluates this solution's objective value.
     void evaluateCompleteCost();
-
-    /**
-     * Returns a vector of [pred, succ] clients for each client (index).
-     */
-    [[nodiscard]] std::vector<std::pair<Client, Client>> getNeighbours() const;
 
 public:
     /**
@@ -59,8 +47,8 @@ public:
     {
         // clang-format off
         return distance
-               + capacityExcess * params->penaltyCapacity
-               + timeWarp * params->penaltyTimeWarp;
+             + params->loadPenalty(params->vehicleCapacity + capacityExcess)
+             + params->twPenalty(timeWarp);
         // clang-format on
     }
 
@@ -77,9 +65,14 @@ public:
     [[nodiscard]] Routes const &getRoutes() const { return routes_; }
 
     /**
-     * Returns this individual's giant tour chromosome.
+     * Returns a vector of [pred, succ] clients for each client (index) in this
+     * individual's routes.
      */
-    [[nodiscard]] Tour const &getTour() const { return tour_; }
+    [[nodiscard]] std::vector<std::pair<Client, Client>> const &
+    getNeighbours() const
+    {
+        return neighbours;
+    }
 
     /**
      * Returns true when this solution is feasible; false otherwise.
@@ -104,9 +97,8 @@ public:
      */
     [[nodiscard]] bool hasClone() const
     {
-        return !indivsPerProximity.empty()
-               // Another individual with zero proximity indicates duplicity
-               && indivsPerProximity.begin()->first < FLT_EPSILON;
+        return !indivsByProximity.empty()
+               && indivsByProximity.begin()->first == 0;
     }
 
     // Computes and stores a distance measure with another individual, based on
@@ -132,8 +124,6 @@ public:
     }
 
     Individual(Params const *params, XorShift128 *rng);  // random individual
-
-    Individual(Params const *params, Tour tour);
 
     Individual(Params const *params, Routes routes);
 

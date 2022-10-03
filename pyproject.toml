@@ -13,7 +13,7 @@ authors = [
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.9, <4.0"
+python = "^3.8, <4.0"
 
 # From original requirements.txt
 numpy = "1.22.2"
@@ -23,6 +23,8 @@ tqdm = "^4.64.0"
 
 [tool.poetry.dev-dependencies]
 black = "^22.6.0"
+flake8 = "^5.0.4"
+flake8-import-order = "^0.18.1"
 
 
 [build-system]
@@ -36,4 +38,6 @@ hgs_vrptw
 | controller\.py
 | environment\.py
 | tools\.py
+| dynamic/dqn
+| dynamic/supervised
 '''

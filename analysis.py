@@ -1,16 +1,19 @@
 import argparse
-from datetime import datetime
 from functools import partial
 from glob import glob
 from pathlib import Path
+from time import perf_counter
 
-import matplotlib.pyplot as plt
 import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
 from tqdm.contrib.concurrent import process_map
 
 import plotting
 import tools
+
+
+hgspy = tools.get_hgspy_module()
 
 matplotlib.use("Agg")  # Don't show plots
 
@@ -28,6 +31,7 @@ def parse_args():
         "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
     )
     parser.add_argument("--results_dir", type=str)
+    parser.add_argument("--overwrite", action="store_true")
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--max_runtime", type=int)
@@ -40,15 +44,11 @@ def parse_args():
 def solve(loc: str, seed: int, **kwargs):
     path = Path(loc)
 
-    hgspy = tools.get_hgspy_module()
     instance = tools.read_vrplib(path)
-    start = datetime.now()
+    start = perf_counter()
 
-    config = hgspy.Config(
-        seed=seed,
-        nbVeh=tools.n_vehicles_bin_pack(instance),
-        collectStatistics=True,
-    )
+    config = hgspy.Config(seed=seed, collectStatistics=True)
+
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=seed)
@@ -79,25 +79,22 @@ def solve(loc: str, seed: int, **kwargs):
     algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
 
     crossover_ops = [
-        hgspy.crossover.alternating_exchange,
         hgspy.crossover.broken_pairs_exchange,
-        hgspy.crossover.ordered_exchange,
         hgspy.crossover.selective_route_exchange,
     ]
 
     for op in crossover_ops:
         algo.add_crossover_operator(op)
 
-    if "phase" in kwargs and kwargs["phase"]:
+    if kwargs["phase"] is not None:
         t_lim = tools.static_time_limit(tools.name2size(loc), kwargs["phase"])
         stop = hgspy.stop.MaxRuntime(t_lim)
-    elif "max_runtime" in kwargs and kwargs["max_runtime"]:
+    elif kwargs["max_runtime"] is not None:
         stop = hgspy.stop.MaxRuntime(kwargs["max_runtime"])
     else:
         stop = hgspy.stop.MaxIterations(kwargs["max_iterations"])
 
     res = algo.run(stop)
-    finish = round((datetime.now() - start).total_seconds(), 3)
 
     best = res.get_best_found()
     routes = [route for route in best.get_routes() if route]
@@ -111,60 +108,60 @@ def solve(loc: str, seed: int, **kwargs):
     except AssertionError:
         is_ok = "N"
 
+    finish = round(perf_counter() - start, 3)
+
     # Only save results for runs with feasible solutions and if results_dir
     # is a non-empty string
-    if is_ok == "Y" and "results_dir" in kwargs and kwargs["results_dir"]:
-        save_results(res, kwargs["results_dir"], path.stem)
+    if is_ok == "Y" and kwargs["results_dir"] is not None:
+        save_results(instance, res, kwargs["results_dir"], path.stem)
 
     stats = res.get_statistics()
     return (
         path.stem,
         is_ok,
-        int(best.cost()),
+        int(cost),
         res.get_iterations(),
         finish,
         len(stats.incumbents()),
     )
 
 
-def save_results(res, results_dir, inst_name):
+def save_results(instance, res, results_dir, inst_name):
     """
     Save the best solution, statistics and figures of results.
     - Solutions are stored as ``<results_dir>/solutions/<inst_name>.txt``.
     - Statistics are stored as ``<results_dir>/statistics/<inst_name>.csv``.
     - Figures are stored as ``<results_dir>/figures/<inst_name>.png``.
     """
-    res_dir = Path(results_dir)
+    res_path = Path(results_dir)
 
     def make_path(subdir, extension):
-        dir_path = res_dir / subdir
-        fi_path = dir_path / (inst_name + "." + extension)
-        return str(fi_path)
+        return (res_path / subdir / inst_name).with_suffix("." + extension)
 
     # Save best solutions
-    sol_path = make_path(_SOLS_DIR, "txt")
     best = res.get_best_found()
-    stats = res.get_statistics()
+    sol_path = str(make_path(_SOLS_DIR, "txt"))
     best.export_cvrplib_format(sol_path, res.get_run_time())
 
     # Save statistics
-    stats_path = make_path(_STATS_DIR, "csv")
-    stats.to_csv(stats_path, ",")
+    stats = res.get_statistics()
+    stats_path = str(make_path(_STATS_DIR, "csv"))
+    stats.to_csv(stats_path)
 
     # Save plots
-    figs_path = make_path(_FIGS_DIR, "png")
-    plot_single_run(figs_path, stats)
+    fig = plt.figure(figsize=(20, 12))
+    gs = fig.add_gridspec(3, 2, width_ratios=(2 / 5, 3 / 5))
 
+    plotting.plot_population(fig.add_subplot(gs[0, 0]), stats)
+    plotting.plot_objectives(fig.add_subplot(gs[1, 0]), stats)
+    plotting.plot_incumbents(fig.add_subplot(gs[2, 0]), stats)
 
-def plot_single_run(path, stats):
-    _, (ax_pop, ax_objs, ax_inc) = plt.subplots(3, 1, figsize=(8, 12))
-
-    plotting.plot_population(stats, ax_pop)
-    plotting.plot_objectives(stats, ax_objs)
-    plotting.plot_incumbents(stats, ax_inc)
+    routes = best.get_routes()
+    plotting.plot_instance(fig.add_subplot(gs[:, 1]), instance, routes)
 
     plt.tight_layout()
-    plt.savefig(path)
+    plt.savefig(make_path(_FIGS_DIR, "png"))
+    plt.close(fig)
 
 
 def main():
@@ -173,10 +170,10 @@ def main():
     # Make directories to save results
     if args.results_dir is not None:
         res_dir = Path(args.results_dir)
-        res_dir.mkdir()
-        (res_dir / _SOLS_DIR).mkdir(exist_ok=True)
-        (res_dir / _STATS_DIR).mkdir(exist_ok=True)
-        (res_dir / _FIGS_DIR).mkdir(exist_ok=True)
+        res_dir.mkdir(exist_ok=args.overwrite)
+        (res_dir / _SOLS_DIR).mkdir(exist_ok=args.overwrite)
+        (res_dir / _STATS_DIR).mkdir(exist_ok=args.overwrite)
+        (res_dir / _FIGS_DIR).mkdir(exist_ok=args.overwrite)
 
     func = partial(solve, **vars(args))
     func_args = sorted(glob(args.instance_pattern), key=tools.name2size)
@@ -192,6 +189,7 @@ def main():
         ("time", float),
         ("nb_improv", int),
     ]
+
     data = np.array(data, dtype=dtypes)
 
     headers = [
@@ -202,6 +200,7 @@ def main():
         "Time (s)",
         "Improv. (#)",
     ]
+
     table = tools.tabulate(headers, data)
 
     print("\n", table, "\n", sep="")

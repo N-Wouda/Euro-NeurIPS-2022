@@ -13,6 +13,8 @@ public:
 
     explicit MaxIterations(size_t const maxIterations) : maxIters(maxIterations)
     {
+        if (maxIterations == 0)
+            throw std::runtime_error("Zero iterations is not understood.");
     }
 };
 

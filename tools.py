@@ -8,6 +8,7 @@ import re
 
 import numpy as np
 
+
 # https://stackoverflow.com/questions/26646362/numpy-array-is-not-json-serializable
 class NumpyJSONEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -162,6 +163,16 @@ def read_vrptw_solution(filename, return_extra=False):
 
 
 def read_vrplib(filename, rounded=True):
+    """
+    Read a VRPLIB instance from file and return an `instance` dict, containing
+    - 'is_depot': boolean np.array. True for depot; False otherwise.
+    - 'coords': np.array of locations (incl. depot)
+    - 'demands': np.array of location demands (incl. depot with demand zero)
+    - 'capacity': int of vehicle capacity
+    - 'time_windows': np.array of [l, u] time windows per client (incl. depot)
+    - 'service_times': np.array of service times at each client (incl. depot)
+    - 'duration_matrix': distance matrix between clients (incl. depot)
+    """
     loc = []
     demand = []
     mode = ''
@@ -240,6 +251,7 @@ def read_vrplib(filename, rounded=True):
         'service_times': np.array(service_t),
         'duration_matrix': np.array(duration_matrix) if len(duration_matrix) > 0 else None
     }
+
 
 def write_vrplib(filename, instance, name="problem", euclidean=False, is_vrptw=True):
     # LKH/VRP does not take floats (HGS seems to do)
@@ -336,22 +348,31 @@ def get_hgspy_module(where: str = 'release/lib/hgspy*.so'):
 
 
 def inst_to_vars(inst):
+    # Instance is a dict that has the following entries:
+    # - 'is_depot': boolean np.array. True for depot; False otherwise.
+    # - 'coords': np.array of locations (incl. depot)
+    # - 'demands': np.array of location demands (incl. depot with demand zero)
+    # - 'capacity': int of vehicle capacity
+    # - 'time_windows': np.array of [l, u] time windows per client (incl. depot)
+    # - 'service_times': np.array of service times at each client (incl. depot)
+    # - 'duration_matrix': distance matrix between clients (incl. depot)
+    # - optional 'release_times': earliest possible time to leave depot
+
     # Notice that the dictionary key names are not entirely free-form: these
     # should match the argument names defined in the C++/Python bindings.
     if 'release_times' in inst:
-        releases = inst['release_times'].tolist()
+        release_times = inst['release_times']
     else:
-        releases = [0] * (len(inst['coords']) + 1)
+        release_times = np.zeros_like(inst['service_times'])
 
-    # TODO obsolete this by allowing numpy arguments to the bindings.
     return dict(
-        coords=[(x, y) for x, y in inst['coords'].tolist()],
-        demands=inst['demands'].tolist(),
+        coords=inst['coords'],
+        demands=inst['demands'],
         vehicle_cap=inst['capacity'],
-        time_windows=[(l, u) for l, u in inst['time_windows'].tolist()],
-        service_durations=inst['service_times'].tolist(),
-        duration_matrix=inst['duration_matrix'].tolist(),
-        release_times=releases,
+        time_windows=inst['time_windows'],
+        service_durations=inst['service_times'],
+        duration_matrix=inst['duration_matrix'],
+        release_times=release_times,
     )
 
 
@@ -363,17 +384,16 @@ def tabulate(headers, rows) -> str:
         for idx, cell in enumerate(row):
             lengths[idx] = max(lengths[idx], len(str(cell)))
 
-    lines = [
+    header = [
         "  ".join(f"{h:<{l}s}" for l, h in zip(lengths, headers)),
         "  ".join("-" * l for l in lengths),
     ]
 
-    for row in rows:
-        lines.append(
-            "  ".join(f"{str(c):>{l}s}" for l, c in zip(lengths, row))
-        )
+    content = ["  ".join(f"{str(c):>{l}s}"
+                         for l, c in zip(lengths, row))
+               for row in rows]
 
-    return "\n".join(lines)
+    return "\n".join(header + content)
 
 
 def static_time_limit(n_clients: int, phase: str) -> int:
@@ -386,7 +406,7 @@ def static_time_limit(n_clients: int, phase: str) -> int:
     - 5/10/15 minutes for the final phase
     """
     if phase not in ["quali", "final"]:
-        raise ValueError("Phase must be one of ['quali', 'final'].")
+        raise ValueError(f"Invalid phase: {phase}")
 
     if n_clients < 300:
         return 180 if phase == "quali" else 300
@@ -395,17 +415,27 @@ def static_time_limit(n_clients: int, phase: str) -> int:
     else:
         return 480 if phase == "quali" else 900
 
-def name2size(name:str)->int:
+
+def dynamic_time_limit(phase: str) -> int:
+    """
+    Returns the time limit (in seconds) for solving a single
+    epoch of the dynamic problem for and competition phase.
+
+    - 1 minute for the quali(fication) phase
+    - 2 minutes for the final phase
+    """
+    if phase == "quali":
+        return 60
+    elif phase == "final":
+        return 120
+    else:
+        raise ValueError(f"Invalid phase: {phase}")
+
+
+def name2size(name: str) -> int:
     """
     Extracts the instance size (i.e., num clients) from the instance name.
     """
     return int(re.search(r'-n(\d\d\d)-', name).group(1))
 
 
-def n_vehicles_bin_pack(instance, margin=1.3):
-    """
-    Computes the number of vehicles for the given instance using a bin packing
-    heuristic.
-    """
-    total_demand = instance['demands'].sum()
-    return math.ceil(margin * total_demand / instance['capacity']) + 3
