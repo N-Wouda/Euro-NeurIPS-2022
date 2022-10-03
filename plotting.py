@@ -51,52 +51,24 @@ def plot_population(ax, stats, step=None, plot_runtimes=False):
 
     x_vals, x_label = x_axis(stats, step, plot_runtimes)
 
-    # Number feasible individuals
-    line_feas_pop_size = ax.plot(
-        x_vals,
-        stats.feas_pop_size()[::step],
-        label="# Feasible",
-        c="tab:orange",
-    )
-
-    # Number infeasible individuals
-    line_infeas_pop_size = ax.plot(
-        x_vals,
-        stats.infeas_pop_size()[::step],
-        label="# Infeasible",
-        c="tab:blue",
-    )
-
-    ax.set_title("Population statistics")
+    ax.set_title("Population diversity")
     ax.set_xlabel(x_label)
-    ax.set_ylabel("Individuals (#)")
+    ax.set_ylabel("Avg. diversity")
 
-    # Population diversity
-    ax_div = ax.twinx()
-    line_feas_diversity = ax_div.plot(
+    ax.plot(
         x_vals,
         stats.feas_diversity()[::step],
         label="Feas. diversity",
         c="tab:green",
     )
-    line_infeas_diversity = ax_div.plot(
+    ax.plot(
         x_vals,
         stats.infeas_diversity()[::step],
         label="Infeas. diversity",
         c="tab:red",
     )
-    ax_div.set_ylabel("Avg. diversity")
 
-    # Place different ax labels in one legend
-    lines = (
-        line_feas_pop_size
-        + line_infeas_pop_size
-        + line_feas_diversity
-        + line_infeas_diversity
-    )
-
-    labels = [line.get_label() for line in lines]
-    ax.legend(lines, labels, frameon=False)
+    ax.legend(frameon=False)
 
 
 def plot_objectives(ax, stats, step=None, plot_runtimes=False):
