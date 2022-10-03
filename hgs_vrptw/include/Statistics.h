@@ -22,11 +22,13 @@ class Statistics
     std::vector<size_t> feasPopSize_;
     std::vector<double> feasDiversity_;
     std::vector<size_t> feasBest_;
+    std::vector<double> feasNbRoutes_;
     std::vector<size_t> feasAverage_;
     std::vector<size_t> infeasPopSize_;
     std::vector<double> infeasDiversity_;
     std::vector<size_t> infeasBest_;
     std::vector<size_t> infeasAverage_;
+    std::vector<double> infeasNbRoutes_;
     std::vector<size_t> penaltiesCapacity_;
     std::vector<size_t> penaltiesTimeWarp_;
 
@@ -109,6 +111,16 @@ public:
     }
 
     /**
+     * Returns a vector of the average number of routes among feasible
+     * individuals, one element per iteration. If there are no feasible
+     * individuals, then 0 is stored.
+     */
+    [[nodiscard]] std::vector<double> const &feasNbRoutes() const
+    {
+        return feasNbRoutes_;
+    }
+
+    /**
      * Returns a vector of the number of infeasible individuals in the
      * population, one element per iteration.
      */
@@ -147,6 +159,16 @@ public:
     [[nodiscard]] std::vector<size_t> const &infeasAverage() const
     {
         return infeasAverage_;
+    }
+
+    /**
+     * Returns a vector of the average number of routes among infeasible
+     * individuals, one element per iteration. If there are no infeasible
+     * individuals, then 0 is stored.
+     */
+    [[nodiscard]] std::vector<double> const &infeasNbRoutes() const
+    {
+        return infeasNbRoutes_;
     }
 
     /**
