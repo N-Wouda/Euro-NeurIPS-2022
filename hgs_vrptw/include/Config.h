@@ -36,7 +36,7 @@ struct Config
     size_t repairBooster = 10;      // penalty booster when repairing
 
     size_t selectProbability = 90;  // offspring selection probability
-    size_t mutateProbability = 20;  // mutation operator probability
+    size_t mutateProbability = 5;   // mutation operator probability
 
     int nbVeh = INT_MAX;  // Number of vehicles
 
@@ -86,7 +86,7 @@ struct Config
                     size_t repairProbability = 50,
                     size_t repairBooster = 10,
                     size_t selectProbability = 90,
-                    size_t mutateProbability = 20,
+                    size_t mutateProbability = 5,
                     int nbVeh = INT_MAX,
                     size_t nbGranular = 40,
                     int weightWaitTime = 2,

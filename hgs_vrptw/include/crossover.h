@@ -57,4 +57,9 @@ Individual stringRemovalExchange(
     Params const &params,
     XorShift128 &rng);
 
+Individual brokenPairsMutate(Individual &indiv,
+                             Individual const &best,
+                             Params const &params,
+                             XorShift128 &rng);
+
 #endif  // CROSSOVER_H

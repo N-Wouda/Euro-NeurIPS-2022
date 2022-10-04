@@ -61,6 +61,8 @@ try
     solver.addCrossoverOperator(brokenPairsExchange);
     solver.addCrossoverOperator(selectiveRouteExchange);
 
+    solver.addMutationOperator(brokenPairsMutate);
+
     MaxRuntime stop(config.timeLimit);
     auto const res = solver.run(stop);
 

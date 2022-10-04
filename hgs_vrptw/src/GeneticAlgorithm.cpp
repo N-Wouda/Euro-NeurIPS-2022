@@ -98,9 +98,9 @@ Individual GeneticAlgorithm::crossover() const
 
 Individual GeneticAlgorithm::mutate(Individual &indiv) const
 {
-    Individual const *constIndiv = &indiv;
-    auto const &sisr = operators[2];
-    return sisr(std::make_pair(constIndiv, constIndiv), params, rng);
+    for (auto const &op : mutationOps)
+        return op(indiv, population.getBestFound(), params, rng);
+    return indiv;
 }
 
 void GeneticAlgorithm::educate(Individual &indiv)

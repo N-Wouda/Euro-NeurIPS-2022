@@ -106,7 +106,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("repairProbability") = 50,
              py::arg("repairBooster") = 10,
              py::arg("selectProbability") = 90,
-             py::arg("mutateProbability") = 20,
+             py::arg("mutateProbability") = 5,
              py::arg("nbVeh") = INT_MAX,
              py::arg("nbGranular") = 40,
              py::arg("weightWaitTime") = 2,
@@ -216,6 +216,9 @@ PYBIND11_MODULE(hgspy, m)
         .def("add_crossover_operator",
              &GeneticAlgorithm::addCrossoverOperator,
              py::arg("op"))
+        .def("add_mutation_operator",
+             &GeneticAlgorithm::addMutationOperator,
+             py::arg("op"))
         .def("run", &GeneticAlgorithm::run, py::arg("stop"));
 
     // Stopping criteria (as a submodule)
@@ -235,6 +238,7 @@ PYBIND11_MODULE(hgspy, m)
     xOps.def("broken_pairs_exchange", &brokenPairsExchange);
     xOps.def("selective_route_exchange", &selectiveRouteExchange);
     xOps.def("string_removal_exchange", &stringRemovalExchange);
+    xOps.def("broken_pairs_mutate", &brokenPairsMutate);
 
     // Local search operators (as a submodule)
     py::module lsOps = m.def_submodule("operators");

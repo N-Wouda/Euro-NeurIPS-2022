@@ -5,7 +5,8 @@ set(geneticSources
         crossover/crossover.cpp
         crossover/brokenPairsExchange.cpp
         crossover/selectiveRouteExchange.cpp
-        crossover/stringRemovalExchange.cpp)
+        crossover/stringRemovals.cpp
+        crossover/brokenPairs.cpp)
 
 set(individualSources
         Individual.cpp)

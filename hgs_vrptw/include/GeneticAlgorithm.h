@@ -22,6 +22,9 @@ class GeneticAlgorithm
         Params const &,
         XorShift128 &)>;
 
+    using mOp = std::function<Individual(
+        Individual &, Individual const &, Params const &, XorShift128 &)>;
+
     Params &params;    // Problem parameters
     XorShift128 &rng;  // Random number generator
     Population &population;
@@ -30,7 +33,8 @@ class GeneticAlgorithm
     std::vector<bool> loadFeas;  // load feasibility of recent individuals
     std::vector<bool> timeFeas;  // time feasibility of recent individuals
 
-    std::vector<xOp> operators;  // crossover operators
+    std::vector<xOp> operators;    // crossover operators
+    std::vector<mOp> mutationOps;  // mutation operators
 
     /**
      * Runs the crossover algorithm: each given crossover operator is applied
@@ -62,6 +66,11 @@ public:
      * Add a crossover operator to the genetic search algorithm.
      */
     void addCrossoverOperator(xOp const &op) { operators.push_back(op); }
+
+    /**
+     * Add a mutation operator to the genetic search algorithm.
+     */
+    void addMutationOperator(mOp const &op) { mutationOps.push_back(op); }
 
     /**
      * Runs the genetic algorithm with the given stopping criterion.

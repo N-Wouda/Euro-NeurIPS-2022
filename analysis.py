@@ -81,11 +81,18 @@ def solve(loc: str, seed: int, **kwargs):
     crossover_ops = [
         hgspy.crossover.broken_pairs_exchange,
         hgspy.crossover.selective_route_exchange,
-        hgspy.crossover.string_removal_exchange,
+        # hgspy.crossover.string_removal_exchange,
     ]
 
     for op in crossover_ops:
         algo.add_crossover_operator(op)
+
+    mutation_ops = [
+        hgspy.crossover.broken_pairs_mutate,
+    ]
+
+    for op in mutation_ops:
+        algo.add_mutation_operator(op)
 
     if kwargs["phase"] is not None:
         t_lim = tools.static_time_limit(tools.name2size(loc), kwargs["phase"])
