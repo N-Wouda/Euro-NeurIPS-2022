@@ -40,7 +40,13 @@ def solve(loc: str, seed=1, **kwargs):
     start = perf_counter()
 
     config = static.Config("static.toml")
-    res = static.solve(instance, config, max_runtime=kwargs["max_runtime"], max_iterations=kwargs["max_iterations"], seed=seed)
+    res = static.solve(
+        instance,
+        config,
+        max_runtime=kwargs["max_runtime"],
+        max_iterations=kwargs["max_iterations"],
+        seed=seed,
+    )
 
     routes, cost, is_feasible = static.get_solution(res)
 

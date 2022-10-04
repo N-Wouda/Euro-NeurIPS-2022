@@ -2,7 +2,9 @@ import static
 import tools
 
 
-def solve_static(instance, seed=1, max_runtime=60, initial_solutions=(), **kwargs):
+def solve_static(
+    instance, seed=1, max_runtime=60, initial_solutions=(), **kwargs
+):
     # Return empty solution if the instance contains no clients
     if instance["is_depot"].size <= 1:
         return [], 0

@@ -14,7 +14,7 @@ def solve(
 ):
     params = hgspy.Params(
         hgspy.Config(seed=seed, **config.solver_config),
-        **tools.inst_to_vars(instance)
+        **tools.inst_to_vars(instance),
     )
 
     rng = hgspy.XorShift128(seed=seed)
