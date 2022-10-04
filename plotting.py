@@ -73,7 +73,7 @@ def plot_population(ax, stats, step=None, plot_runtimes=False):
 
 def plot_objectives(ax, stats, step=None, plot_runtimes=False):
     if step is None:
-        step = stats.num_iters() // _N_POINTS
+        step = max(1, stats.num_iters() // _N_POINTS)
 
     x_vals, x_label = x_axis(stats, step, plot_runtimes)
 
