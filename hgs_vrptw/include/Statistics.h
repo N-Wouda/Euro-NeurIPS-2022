@@ -20,6 +20,7 @@ class Statistics
     std::vector<double> runTimes_;
     std::vector<double> iterTimes_;
 
+public:
     struct SubPopStats
     {
         std::vector<size_t> popSize_;
@@ -29,6 +30,7 @@ class Statistics
         std::vector<double> nbRoutes_;
     };
 
+private:
     SubPopStats feasStats;
     SubPopStats infeasStats;
 
@@ -46,8 +48,6 @@ public:
      * @param population  Population object to collect data from.
      */
     void collectFrom(Population const &population);
-
-    void collectFrom(auto const &subPop, SubPopStats &subStats);
 
     /**
      * Returns the total number of iterations.

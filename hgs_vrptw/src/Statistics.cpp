@@ -4,9 +4,10 @@
 #include <fstream>
 #include <numeric>
 
-// TODO Remove auto?
-void Statistics::collectFrom(auto const &subPop,
-                             Statistics::SubPopStats &subStats)
+namespace
+{
+void collectSubPopStats(Population::SubPopulation const &subPop,
+                        Statistics::SubPopStats &subStats)
 {
     if (!subPop.empty())
     {
@@ -52,6 +53,7 @@ void Statistics::collectFrom(auto const &subPop,
         subStats.nbRoutes_.push_back(0.);
     }
 }
+}  // namespace
 
 void Statistics::collectFrom(Population const &pop)
 {
@@ -68,8 +70,8 @@ void Statistics::collectFrom(Population const &pop)
     lastIter = clock::now();  // update for next call
 
     // Population statistics
-    collectFrom(pop.feasible, feasStats);
-    collectFrom(pop.infeasible, infeasStats);
+    collectSubPopStats(pop.feasible, feasStats);
+    collectSubPopStats(pop.infeasible, infeasStats);
 
     // Penalty statistics
     penaltiesCapacity_.push_back(pop.params.penaltyCapacity);
