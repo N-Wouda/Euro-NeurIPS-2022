@@ -6,6 +6,8 @@
 
 namespace
 {
+using std::accumulate;
+
 void collectSubPopStats(Population::SubPopulation const &subPop,
                         Statistics::SubPopStats &subStats)
 {
@@ -22,33 +24,26 @@ void collectSubPopStats(Population::SubPopulation const &subPop,
     auto const popSize = subPop.size();
     subStats.popSize_.push_back(popSize);
 
-    auto const opDiversity = [](double val, auto const &subs) {
+    auto const opDiv = [](double val, auto const &subs) {
         return val + subs.indiv->avgBrokenPairsDistanceClosest();
     };
-    subStats.avgDiversity_.push_back(
-        std::accumulate(subPop.begin(), subPop.end(), 0., opDiversity)
-        / popSize);
+    auto const totalDiv = accumulate(subPop.begin(), subPop.end(), 0., opDiv);
+    subStats.avgDiversity_.push_back(totalDiv / popSize);
 
     subStats.bestCost_.push_back(subPop[0].indiv->cost());
 
-    auto const opAverageCost
+    auto const opCost
         = [](size_t sum, auto const &subs) { return sum + subs.indiv->cost(); };
-    subStats.avgCost_.push_back(
-        std::accumulate(subPop.begin(), subPop.end(), 0, opAverageCost)
-        / popSize);
+    auto const totalCost = accumulate(subPop.begin(), subPop.end(), 0, opCost);
+    subStats.avgCost_.push_back(totalCost / popSize);
 
-    auto const opCountNonEmptyRoutes
-        = [](size_t val, auto const &route) { return val + !route.empty(); };
-    auto const opNumRoutes = [&](double val, auto const &subs) {
-        return val
-               + std::accumulate(subs.indiv->getRoutes().begin(),
-                                 subs.indiv->getRoutes().end(),
-                                 0,
-                                 opCountNonEmptyRoutes);
-    };
-    subStats.avgNumRoutes_.push_back(
-        std::accumulate(subPop.begin(), subPop.end(), 0., opNumRoutes)
-        / popSize);
+    double numRoutes = 0.0;
+    for (auto &wrapper : subPop)
+        for (auto &route : wrapper.indiv->getRoutes())
+            if (!route.empty())
+                numRoutes += 1;
+
+    subStats.avgNumRoutes_.push_back(numRoutes / popSize);
 }
 }  // namespace
 
