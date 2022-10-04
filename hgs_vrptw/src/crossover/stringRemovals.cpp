@@ -14,6 +14,7 @@ namespace
 {
 using Parents = std::pair<Individual const *, Individual const *>;
 using Client = int;
+using Clients = std::vector<Client>;
 using ClientSet = std::unordered_set<Client>;
 using Route = std::vector<Client>;
 using Routes = std::vector<Route>;
@@ -39,10 +40,10 @@ std::vector<size_t> selectString(Route const &route,
 }
 
 // Removes a number of strings around the center client
-std::pair<Routes, ClientSet> stringRemoval(Routes routes,
-                                           Client const center,
-                                           Params const &params,
-                                           XorShift128 &rng)
+std::pair<Routes, Clients> stringRemoval(Routes routes,
+                                         Client const center,
+                                         Params const &params,
+                                         XorShift128 &rng)
 {
     auto op = [&](size_t s, auto &r) { return s + r.size(); };
     size_t const avgRouteSize
@@ -92,7 +93,9 @@ std::pair<Routes, ClientSet> stringRemoval(Routes routes,
         }
     }
 
-    return std::make_pair(routes, removedClients);
+    auto const removed
+        = std::vector(removedClients.begin(), removedClients.end());
+    return std::make_pair(routes, removed);
 }
 
 }  // namespace
@@ -108,11 +111,7 @@ Individual stringRemovals(Individual &offspring,
     Client const center = rng.randint(params.nbClients) + 1;
     auto [destroyed, removed] = stringRemoval(routes, center, params, rng);
 
-    // TODO return removed as vector from stringRemoval
-    auto removedVec = std::vector<Client>(removed.begin(), removed.end());
+    crossover::greedyRepair(destroyed, removed, params);
 
-    crossover::greedyRepair(destroyed, removedVec, params);
-
-    Individual indiv{&params, destroyed};
-    return indiv;
+    return {&params, destroyed};
 }
