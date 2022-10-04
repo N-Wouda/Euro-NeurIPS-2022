@@ -40,7 +40,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def solve(loc: str, **kwargs):
+def solve(loc: str, seed=1, **kwargs):
     path = Path(loc)
 
     if kwargs["phase"] is not None:
@@ -53,7 +53,7 @@ def solve(loc: str, **kwargs):
 
     config = static.Config("analysis.toml")
 
-    res = static.solve(instance, config, **kwargs)
+    res = static.solve(instance, config, max_runtime=kwargs["max_runtime"], max_iterations=kwargs["max_iterations"], seed=seed)
 
     routes, cost, is_feasible = static.get_solution(res)
 
