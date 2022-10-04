@@ -60,6 +60,7 @@ try
     GeneticAlgorithm solver(params, rng, pop, ls);
     solver.addCrossoverOperator(brokenPairsExchange);
     solver.addCrossoverOperator(selectiveRouteExchange);
+    solver.addCrossoverOperator(edgeAssembly);
 
     MaxRuntime stop(config.timeLimit);
     auto const res = solver.run(stop);

@@ -7,7 +7,33 @@ using Clients = std::vector<Client>;
 using Route = std::vector<Client>;
 using Routes = std::vector<Route>;
 
-std::vector<Client> resolveSubtour(std::vector<Client> &subtour){
+/**
+ * Currently works by turning the subtour into a tour directly
+ * May still consider changing this into 2-opt as per Nagata et al. 2010
+ */
+std::vector<Client> resolveSubtour(std::vector<Client> &subtour,
+    Params const &params){
+    //selecting a specific client as the starting point results additional distance:
+    //depot->tour[client] + tour[client-1]->depot - tour[client-1]->tour[client]
+
+    int distance = params.dist(0,subtour.front()) + params.dist(subtour.back(), 0) 
+                                    - params.dist(subtour.back(), subtour.front());
+    Client best_client_index = 0;
+
+    for(Client client = 1; client < static_cast<int>(subtour.size()); client++){
+        int dist_alternative = params.dist(0,subtour[client]) + params.dist(subtour[client-1], 0)
+                                    - params.dist(subtour[client-1],subtour[client]);
+        if(dist_alternative < distance){
+            distance = dist_alternative;
+            best_client_index = client;
+        }
+    }
+
+    //move clients from front to back until we start with the best client
+    for(Client idx = 0; idx < best_client_index; idx++){
+        subtour.push_back(subtour.front());
+        subtour.erase(subtour.begin());
+    }
     return subtour;
 }
 
@@ -15,10 +41,8 @@ std::vector<Client> resolveSubtour(std::vector<Client> &subtour){
 Individual edgeAssembly(
     std::pair<Individual const *, Individual const *> const &parents,
     Params const &params,
-    XorShift128 &rng,
-    bool strategy)
+    XorShift128 &rng)
 {
-
     //Step 1:
     //Generate AB graph in XOR fashion
     /**
@@ -96,8 +120,12 @@ Individual edgeAssembly(
     //strategy = 1 is block based
     //strategy = 0 is single based
     std::unordered_map<Client, Client> *E_cycle;
+    
+    //TODO
+    bool strategy = 0;
+
     if(strategy){
-        //TODO
+
 
     }else{
         //pointer to element in vector? we don't mess with AB_cycles anymore so should be ok?
@@ -164,7 +192,7 @@ Individual edgeAssembly(
     //Currently we repair by just making subtours into real tours, 
     //i.e. we insert a depot somewhere in the subtour
     for(auto &subtour : subtours){
-        new_routes.push_back(resolveSubtour(subtour));
+        new_routes.push_back(resolveSubtour(subtour, params));
     }
     return {&params, new_routes};
 }
