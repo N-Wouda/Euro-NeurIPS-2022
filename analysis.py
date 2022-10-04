@@ -81,6 +81,7 @@ def solve(loc: str, seed: int, **kwargs):
     crossover_ops = [
         hgspy.crossover.broken_pairs_exchange,
         hgspy.crossover.selective_route_exchange,
+        hgspy.crossover.string_removal_exchange,
     ]
 
     for op in crossover_ops:

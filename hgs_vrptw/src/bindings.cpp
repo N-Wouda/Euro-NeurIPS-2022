@@ -85,6 +85,7 @@ PYBIND11_MODULE(hgspy, m)
                       int,
                       int,
                       size_t,
+                      size_t,
                       size_t>(),
              py::arg("seed") = 0,
              py::arg("nbIter") = 10'000,
@@ -112,6 +113,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
              py::arg("minCircleSectorSizeDegrees") = 15,
              py::arg("destroyPct") = 20,
+             py::arg("maxStringRemovals") = 3,
              py::arg("postProcessPathLength") = 4)
         .def_readonly("seed", &Config::seed)
         .def_readonly("nbIter", &Config::nbIter)
@@ -139,6 +141,7 @@ PYBIND11_MODULE(hgspy, m)
                       &Config::circleSectorOverlapTolerance)
         .def_readonly("minCircleSectorSize", &Config::minCircleSectorSize)
         .def_readonly("destroyPct", &Config::destroyPct)
+        .def_readonly("maxStringRemovals", &Config::maxStringRemovals)
         .def_readonly("postProcessPathLength", &Config::postProcessPathLength);
 
     py::class_<Params>(m, "Params")
@@ -228,6 +231,7 @@ PYBIND11_MODULE(hgspy, m)
 
     xOps.def("broken_pairs_exchange", &brokenPairsExchange);
     xOps.def("selective_route_exchange", &selectiveRouteExchange);
+    xOps.def("string_removal_exchange", &stringRemovalExchange);
 
     // Local search operators (as a submodule)
     py::module lsOps = m.def_submodule("operators");
