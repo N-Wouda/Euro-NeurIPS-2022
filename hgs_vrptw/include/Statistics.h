@@ -24,10 +24,10 @@ public:
     struct SubPopStats
     {
         std::vector<size_t> popSize_;
-        std::vector<double> diversity_;
+        std::vector<double> avgDiversity_;
         std::vector<size_t> bestCost_;
-        std::vector<size_t> averageCost_;
-        std::vector<double> nbRoutes_;
+        std::vector<size_t> avgCost_;
+        std::vector<double> avgNumRoutes_;
     };
 
 private:
@@ -90,9 +90,9 @@ public:
      * to its neighbours (the neighbourhood size is controlled by the
      * ``nbClose`` setting).
      */
-    [[nodiscard]] std::vector<double> const &feasDiversity() const
+    [[nodiscard]] std::vector<double> const &feasAvgDiversity() const
     {
-        return feasStats.diversity_;
+        return feasStats.avgDiversity_;
     }
 
     /**
@@ -100,7 +100,7 @@ public:
      * one element per iteration. If there are no feasible individuals, then
      * ``INT_MAX`` is stored.
      */
-    [[nodiscard]] std::vector<size_t> const &feasBest() const
+    [[nodiscard]] std::vector<size_t> const &feasBestCost() const
     {
         return feasStats.bestCost_;
     }
@@ -110,9 +110,9 @@ public:
      * one element per iteration. If there are no feasible individuals, then
      * ``INT_MAX`` is stored.
      */
-    [[nodiscard]] std::vector<size_t> const &feasAverage() const
+    [[nodiscard]] std::vector<size_t> const &feasAvgCost() const
     {
-        return feasStats.averageCost_;
+        return feasStats.avgCost_;
     }
 
     /**
@@ -120,9 +120,9 @@ public:
      * individuals, one element per iteration. If there are no feasible
      * individuals, then 0 is stored.
      */
-    [[nodiscard]] std::vector<double> const &feasNbRoutes() const
+    [[nodiscard]] std::vector<double> const &feasAvgNumRoutes() const
     {
-        return feasStats.nbRoutes_;
+        return feasStats.avgNumRoutes_;
     }
 
     /**
@@ -141,9 +141,9 @@ public:
      * to its neighbours (the neighbourhood size is controlled by the
      * ``nbClose`` setting).
      */
-    [[nodiscard]] std::vector<double> const &infeasDiversity() const
+    [[nodiscard]] std::vector<double> const &infeasAvgDiversity() const
     {
-        return infeasStats.diversity_;
+        return infeasStats.avgDiversity_;
     }
 
     /**
@@ -151,7 +151,7 @@ public:
      * one element per iteration. If there are no infeasible individuals, then
      * ``INT_MAX`` is stored.
      */
-    [[nodiscard]] std::vector<size_t> const &infeasBest() const
+    [[nodiscard]] std::vector<size_t> const &infeasBestCost() const
     {
         return infeasStats.bestCost_;
     }
@@ -161,9 +161,9 @@ public:
      * individuals, one element per iteration. If there are no infeasible
      * individuals, then ``INT_MAX`` is stored.
      */
-    [[nodiscard]] std::vector<size_t> const &infeasAverage() const
+    [[nodiscard]] std::vector<size_t> const &infeasAvgCost() const
     {
-        return infeasStats.averageCost_;
+        return infeasStats.avgCost_;
     }
 
     /**
@@ -171,9 +171,9 @@ public:
      * individuals, one element per iteration. If there are no infeasible
      * individuals, then 0 is stored.
      */
-    [[nodiscard]] std::vector<double> const &infeasNbRoutes() const
+    [[nodiscard]] std::vector<double> const &infeasAvgNumRoutes() const
     {
-        return infeasStats.nbRoutes_;
+        return infeasStats.avgNumRoutes_;
     }
 
     /**

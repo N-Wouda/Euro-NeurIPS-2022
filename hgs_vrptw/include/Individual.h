@@ -27,7 +27,7 @@ class Individual
 
     // For each vehicle, the associated sequence of deliveries (complete
     // solution). Size is nbVehicles, but quite a few routes are likely empty
-    // - the numRoutes() member indicates the number of nonempty routes.
+    // - the avgNumRoutes_() member indicates the number of nonempty routes.
     Routes routes_;
 
     // Pairs of [predecessor, successor] for each client (index)

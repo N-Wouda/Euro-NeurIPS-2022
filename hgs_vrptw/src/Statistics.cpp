@@ -17,7 +17,7 @@ void collectSubPopStats(Population::SubPopulation const &subPop,
         auto const opDiversity = [](double val, auto const &subs) {
             return val + subs.indiv->avgBrokenPairsDistanceClosest();
         };
-        subStats.diversity_.push_back(
+        subStats.avgDiversity_.push_back(
             std::accumulate(subPop.begin(), subPop.end(), 0., opDiversity)
             / popSize);
 
@@ -26,31 +26,31 @@ void collectSubPopStats(Population::SubPopulation const &subPop,
         auto const opAverageCost = [](size_t sum, auto const &subs) {
             return sum + subs.indiv->cost();
         };
-        subStats.averageCost_.push_back(
+        subStats.avgCost_.push_back(
             std::accumulate(subPop.begin(), subPop.end(), 0, opAverageCost)
             / popSize);
 
         auto const opCountNonEmptyRoutes = [](size_t val, auto const &route) {
             return val + !route.empty();
         };
-        auto const opNbRoutes = [&](double val, auto const &subs) {
+        auto const opNumRoutes = [&](double val, auto const &subs) {
             return val
                    + std::accumulate(subs.indiv->getRoutes().begin(),
                                      subs.indiv->getRoutes().end(),
                                      0,
                                      opCountNonEmptyRoutes);
         };
-        subStats.nbRoutes_.push_back(
-            std::accumulate(subPop.begin(), subPop.end(), 0., opNbRoutes)
+        subStats.avgNumRoutes_.push_back(
+            std::accumulate(subPop.begin(), subPop.end(), 0., opNumRoutes)
             / popSize);
     }
     else
     {
         subStats.popSize_.push_back(0);
-        subStats.diversity_.push_back(0.);  // 0 as substitute for no diversity
+        subStats.avgDiversity_.push_back(0.);  // 0 as substitute for no diversity
         subStats.bestCost_.push_back(INT_MAX);  // INT_MAX as subst. for inf
-        subStats.averageCost_.push_back(INT_MAX);
-        subStats.nbRoutes_.push_back(0.);
+        subStats.avgCost_.push_back(INT_MAX);
+        subStats.avgNumRoutes_.push_back(0.);
     }
 }
 }  // namespace
@@ -101,12 +101,12 @@ void Statistics::toCsv(std::string const &path, char const sep) const
     out << "total run-time (s)" << sep
         << "iteration run-time (s)" << sep
         << "# feasible" << sep
-        << "feasible diversity" << sep
+        << "feasible avg. diversity" << sep
         << "feasible best objective" << sep
         << "feasible avg. objective" << sep
         << "feasible avg. # routes" << sep
         << "# infeasible" << sep
-        << "infeasible diversity" << sep
+        << "infeasible avg. diversity" << sep
         << "infeasible best. objective" << sep
         << "infeasible avg. objective" << sep
         << "infeasible avg. # routes" << sep
@@ -118,15 +118,15 @@ void Statistics::toCsv(std::string const &path, char const sep) const
         out << runTimes_[it] << sep
             << iterTimes_[it] << sep
             << feasStats.popSize_[it] << sep
-            << feasStats.diversity_[it] << sep
+            << feasStats.avgDiversity_[it] << sep
             << feasStats.bestCost_[it] << sep
-            << feasStats.averageCost_[it] << sep
-            << feasStats.nbRoutes_[it] << sep
+            << feasStats.avgCost_[it] << sep
+            << feasStats.avgNumRoutes_[it] << sep
             << infeasStats.popSize_[it] << sep
-            << infeasStats.diversity_[it] << sep
+            << infeasStats.avgDiversity_[it] << sep
             << infeasStats.bestCost_[it] << sep
-            << infeasStats.averageCost_[it] << sep
-            << infeasStats.nbRoutes_[it] << sep
+            << infeasStats.avgCost_[it] << sep
+            << infeasStats.avgNumRoutes_[it] << sep
             << penaltiesCapacity_[it] << sep
             << penaltiesTimeWarp_[it] << '\n';
     }

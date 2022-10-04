@@ -57,13 +57,13 @@ def plot_population(ax, stats, step=None, plot_runtimes=False):
 
     ax.plot(
         x_vals,
-        stats.feas_diversity()[::step],
+        stats.feas_avg_diversity()[::step],
         label="Feas. diversity",
         c="tab:green",
     )
     ax.plot(
         x_vals,
-        stats.infeas_diversity()[::step],
+        stats.infeas_avg_diversity()[::step],
         label="Infeas. diversity",
         c="tab:red",
     )
@@ -77,15 +77,18 @@ def plot_objectives(ax, stats, step=None, plot_runtimes=False):
 
     x_vals, x_label = x_axis(stats, step, plot_runtimes)
 
-    global_best = np.minimum.accumulate(stats.feas_best())
+    global_best = np.minimum.accumulate(stats.feas_best_cost())
     ax.plot(x_vals, global_best[::step], label="Global best", c="tab:blue")
 
     ax.plot(
-        x_vals, stats.feas_best()[::step], label="Feas best", c="tab:green"
+        x_vals,
+        stats.feas_best_cost()[::step],
+        label="Feas best",
+        c="tab:green",
     )
     ax.plot(
         x_vals,
-        stats.feas_average()[::step],
+        stats.feas_avg_cost()[::step],
         label="Feas avg.",
         c="tab:green",
         alpha=0.3,
@@ -93,13 +96,13 @@ def plot_objectives(ax, stats, step=None, plot_runtimes=False):
     )
     ax.plot(
         x_vals,
-        stats.infeas_best()[::step],
-        label="Infeas best.",
+        stats.infeas_best_cost()[::step],
+        label="Infeas best",
         c="tab:red",
     )
     ax.plot(
         x_vals,
-        stats.infeas_average()[::step],
+        stats.infeas_avg_cost()[::step],
         label="Infeas avg.",
         c="tab:red",
         alpha=0.3,
