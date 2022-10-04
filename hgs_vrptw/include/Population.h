@@ -26,7 +26,10 @@ class Population
         }
     };
 
+public:
     using SubPopulation = std::vector<IndividualWrapper>;
+
+private:
     using Parents = std::pair<Individual const *, Individual const *>;
 
     Params &params;    // Problem parameters

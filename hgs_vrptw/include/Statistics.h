@@ -19,14 +19,21 @@ class Statistics
 
     std::vector<double> runTimes_;
     std::vector<double> iterTimes_;
-    std::vector<size_t> popSizes_;
-    std::vector<size_t> numFeasiblePop_;
-    std::vector<double> feasDiversity_;
-    std::vector<size_t> feasBest_;
-    std::vector<size_t> feasAverage_;
-    std::vector<double> infeasDiversity_;
-    std::vector<size_t> infeasBest_;
-    std::vector<size_t> infeasAverage_;
+
+public:
+    struct SubPopStats
+    {
+        std::vector<size_t> popSize_;
+        std::vector<double> avgDiversity_;
+        std::vector<size_t> bestCost_;
+        std::vector<size_t> avgCost_;
+        std::vector<double> avgNumRoutes_;
+    };
+
+private:
+    SubPopStats feasStats;
+    SubPopStats infeasStats;
+
     std::vector<size_t> penaltiesCapacity_;
     std::vector<size_t> penaltiesTimeWarp_;
 
@@ -68,21 +75,12 @@ public:
     }
 
     /**
-     * Returns a vector of population sizes, one element per iteration.
-     */
-    [[nodiscard]] std::vector<size_t> const &popSizes() const
-    {
-        return popSizes_;
-    }
-
-    /**
      * Returns a vector of the number of feasible individuals in the population,
-     * one element per iteration. Of course, in each iteration, the number of
-     * feasible individuals does not exceed the total population size.
+     * one element per iteration.
      */
-    [[nodiscard]] std::vector<size_t> const &numFeasiblePop() const
+    [[nodiscard]] std::vector<size_t> const &feasPopSize() const
     {
-        return numFeasiblePop_;
+        return feasStats.popSize_;
     }
 
     /**
@@ -92,9 +90,9 @@ public:
      * to its neighbours (the neighbourhood size is controlled by the
      * ``nbClose`` setting).
      */
-    [[nodiscard]] std::vector<double> const &feasDiversity() const
+    [[nodiscard]] std::vector<double> const &feasAvgDiversity() const
     {
-        return feasDiversity_;
+        return feasStats.avgDiversity_;
     }
 
     /**
@@ -102,9 +100,9 @@ public:
      * one element per iteration. If there are no feasible individuals, then
      * ``INT_MAX`` is stored.
      */
-    [[nodiscard]] std::vector<size_t> const &feasBest() const
+    [[nodiscard]] std::vector<size_t> const &feasBestCost() const
     {
-        return feasBest_;
+        return feasStats.bestCost_;
     }
 
     /**
@@ -112,9 +110,28 @@ public:
      * one element per iteration. If there are no feasible individuals, then
      * ``INT_MAX`` is stored.
      */
-    [[nodiscard]] std::vector<size_t> const &feasAverage() const
+    [[nodiscard]] std::vector<size_t> const &feasAvgCost() const
     {
-        return feasAverage_;
+        return feasStats.avgCost_;
+    }
+
+    /**
+     * Returns a vector of the average number of routes among feasible
+     * individuals, one element per iteration. If there are no feasible
+     * individuals, then 0 is stored.
+     */
+    [[nodiscard]] std::vector<double> const &feasAvgNumRoutes() const
+    {
+        return feasStats.avgNumRoutes_;
+    }
+
+    /**
+     * Returns a vector of the number of infeasible individuals in the
+     * population, one element per iteration.
+     */
+    [[nodiscard]] std::vector<size_t> const &infeasPopSize() const
+    {
+        return infeasStats.popSize_;
     }
 
     /**
@@ -124,9 +141,9 @@ public:
      * to its neighbours (the neighbourhood size is controlled by the
      * ``nbClose`` setting).
      */
-    [[nodiscard]] std::vector<double> const &infeasDiversity() const
+    [[nodiscard]] std::vector<double> const &infeasAvgDiversity() const
     {
-        return infeasDiversity_;
+        return infeasStats.avgDiversity_;
     }
 
     /**
@@ -134,9 +151,9 @@ public:
      * one element per iteration. If there are no infeasible individuals, then
      * ``INT_MAX`` is stored.
      */
-    [[nodiscard]] std::vector<size_t> const &infeasBest() const
+    [[nodiscard]] std::vector<size_t> const &infeasBestCost() const
     {
-        return infeasBest_;
+        return infeasStats.bestCost_;
     }
 
     /**
@@ -144,9 +161,19 @@ public:
      * individuals, one element per iteration. If there are no infeasible
      * individuals, then ``INT_MAX`` is stored.
      */
-    [[nodiscard]] std::vector<size_t> const &infeasAverage() const
+    [[nodiscard]] std::vector<size_t> const &infeasAvgCost() const
     {
-        return infeasAverage_;
+        return infeasStats.avgCost_;
+    }
+
+    /**
+     * Returns a vector of the average number of routes among infeasible
+     * individuals, one element per iteration. If there are no infeasible
+     * individuals, then 0 is stored.
+     */
+    [[nodiscard]] std::vector<double> const &infeasAvgNumRoutes() const
+    {
+        return infeasStats.avgNumRoutes_;
     }
 
     /**

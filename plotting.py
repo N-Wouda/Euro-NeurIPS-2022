@@ -51,69 +51,44 @@ def plot_population(ax, stats, step=None, plot_runtimes=False):
 
     x_vals, x_label = x_axis(stats, step, plot_runtimes)
 
-    # Population size
-    line_pop_sizes = ax.plot(
-        x_vals,
-        stats.pop_sizes()[::step],
-        label="Population size",
-        c="tab:blue",
-    )
-
-    # Number feasible individuals
-    line_num_feasible_pop = ax.plot(
-        x_vals,
-        stats.num_feasible_pop()[::step],
-        label="# Feasible",
-        c="tab:orange",
-    )
-
-    ax.set_title("Population statistics")
+    ax.set_title("Population diversity")
     ax.set_xlabel(x_label)
-    ax.set_ylabel("Individuals (#)")
+    ax.set_ylabel("Avg. diversity")
 
-    # Population diversity
-    ax_div = ax.twinx()
-    line_feas_diversity = ax_div.plot(
+    ax.plot(
         x_vals,
-        stats.feas_diversity()[::step],
+        stats.feas_avg_diversity()[::step],
         label="Feas. diversity",
         c="tab:green",
     )
-    line_infeas_diversity = ax_div.plot(
+    ax.plot(
         x_vals,
-        stats.infeas_diversity()[::step],
+        stats.infeas_avg_diversity()[::step],
         label="Infeas. diversity",
         c="tab:red",
     )
-    ax_div.set_ylabel("Avg. diversity")
 
-    # Place different ax labels in one legend
-    lines = (
-        line_pop_sizes
-        + line_num_feasible_pop
-        + line_feas_diversity
-        + line_infeas_diversity
-    )
-
-    labels = [line.get_label() for line in lines]
-    ax.legend(lines, labels, frameon=False)
+    ax.legend(frameon=False)
 
 
 def plot_objectives(ax, stats, step=None, plot_runtimes=False):
     if step is None:
-        step = stats.num_iters() // _N_POINTS
+        step = max(1, stats.num_iters() // _N_POINTS)
 
     x_vals, x_label = x_axis(stats, step, plot_runtimes)
 
-    global_best = np.minimum.accumulate(stats.feas_best())
+    global_best = np.minimum.accumulate(stats.feas_best_cost())
     ax.plot(x_vals, global_best[::step], label="Global best", c="tab:blue")
 
     ax.plot(
-        x_vals, stats.feas_best()[::step], label="Feas best", c="tab:green"
+        x_vals,
+        stats.feas_best_cost()[::step],
+        label="Feas best",
+        c="tab:green",
     )
     ax.plot(
         x_vals,
-        stats.feas_average()[::step],
+        stats.feas_avg_cost()[::step],
         label="Feas avg.",
         c="tab:green",
         alpha=0.3,
@@ -121,13 +96,13 @@ def plot_objectives(ax, stats, step=None, plot_runtimes=False):
     )
     ax.plot(
         x_vals,
-        stats.infeas_best()[::step],
-        label="Infeas best.",
+        stats.infeas_best_cost()[::step],
+        label="Infeas best",
         c="tab:red",
     )
     ax.plot(
         x_vals,
-        stats.infeas_average()[::step],
+        stats.infeas_avg_cost()[::step],
         label="Infeas avg.",
         c="tab:red",
         alpha=0.3,
