@@ -42,7 +42,7 @@ def rollout(info, obs, rng):
 
         # Epoch requests have index between 1 and n_requests in sim_sol,
         # whereas simulated requests have index largen than n_requests.
-        sim_sol, _ = solve_simulation(sim_inst, SIM_SOLVE_ITERS, seed=1)
+        sim_sol, _, _ = solve_simulation(sim_inst, SIM_SOLVE_ITERS, seed=1)
 
         for sim_route in sim_sol:
             # Only dispatch routes that contain must dispatch requests

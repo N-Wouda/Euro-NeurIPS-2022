@@ -57,13 +57,10 @@ def solve(
     return algo.run(stop)
 
 
-def get_solution(res, check_feasibility=False):
+def get_solution(res):
     best = res.get_best_found()
 
     routes = [route for route in best.get_routes() if route]
     cost = best.cost()
 
-    if not check_feasibility:
-        return routes, cost
-    else:
-        return routes, cost, best.is_feasible()
+    return routes, cost, best.is_feasible()

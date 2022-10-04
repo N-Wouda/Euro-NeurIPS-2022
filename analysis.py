@@ -55,7 +55,7 @@ def solve(loc: str, **kwargs):
 
     res = static.solve(instance, config, **kwargs)
 
-    routes, cost = static.get_solution(res)
+    routes, cost, is_feasible = static.get_solution(res)
 
     try:
         actual_cost = tools.validate_static_solution(instance, routes)
