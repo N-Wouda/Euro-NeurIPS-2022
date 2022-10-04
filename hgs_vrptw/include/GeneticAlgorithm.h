@@ -40,6 +40,11 @@ class GeneticAlgorithm
     [[nodiscard]] Individual crossover() const;
 
     /**
+     * TODO Add dosctring
+     */
+    [[nodiscard]] Individual mutate(Individual &indiv) const;
+
+    /**
      * Performs local search and adds the individual to the population. If the
      * individual is infeasible, with some probability we try to repair it and
      * add it if this succeeds.

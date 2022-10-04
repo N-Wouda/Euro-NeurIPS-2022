@@ -77,6 +77,7 @@ PYBIND11_MODULE(hgspy, m)
                       size_t,
                       size_t,
                       size_t,
+                      size_t,
                       int,
                       size_t,
                       int,
@@ -105,6 +106,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("repairProbability") = 50,
              py::arg("repairBooster") = 10,
              py::arg("selectProbability") = 90,
+             py::arg("mutateProbability") = 20,
              py::arg("nbVeh") = INT_MAX,
              py::arg("nbGranular") = 40,
              py::arg("weightWaitTime") = 2,
@@ -113,7 +115,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
              py::arg("minCircleSectorSizeDegrees") = 15,
              py::arg("destroyPct") = 20,
-             py::arg("maxStringRemovals") = 3,
+             py::arg("maxStringRemovals") = 6,
              py::arg("postProcessPathLength") = 4)
         .def_readonly("seed", &Config::seed)
         .def_readonly("nbIter", &Config::nbIter)
@@ -133,6 +135,7 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("repairProbability", &Config::repairProbability)
         .def_readonly("repairBooster", &Config::repairBooster)
         .def_readonly("selectProbability", &Config::selectProbability)
+        .def_readonly("mutateProbability", &Config::mutateProbability)
         .def_readonly("nbVeh", &Config::nbVeh)
         .def_readonly("nbGranular", &Config::nbGranular)
         .def_readonly("weightWaitTime", &Config::weightWaitTime)

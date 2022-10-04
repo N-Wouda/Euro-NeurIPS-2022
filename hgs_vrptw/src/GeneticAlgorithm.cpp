@@ -41,6 +41,10 @@ Result GeneticAlgorithm::run(StoppingCriterion &stop)
         auto const currBest = population.getCurrentBestFeasibleCost();
 
         auto offspring = crossover();
+
+        if (rng.randint(100) < params.config.mutateProbability)
+            offspring = mutate(offspring);
+
         educate(offspring);
 
         auto const newBest = population.getCurrentBestFeasibleCost();
@@ -72,8 +76,14 @@ Individual GeneticAlgorithm::crossover() const
     std::vector<Individual> offspring;
     offspring.reserve(operators.size());
 
+    auto idx = 0;
     for (auto const &op : operators)
+    {
         offspring.push_back(op(parents, params, rng));
+        idx += 1;
+        if (idx == 2)  // Stop at SISRX
+            break;
+    }
 
     // A simple geometric acceptance criterion: select the best with some
     // probability. If not accepted, test the second best, etc.
@@ -84,6 +94,13 @@ Individual GeneticAlgorithm::crossover() const
             return indiv;
 
     return offspring.back();  // fallback in case no offspring were selected
+}
+
+Individual GeneticAlgorithm::mutate(Individual &indiv) const
+{
+    Individual const *constIndiv = &indiv;
+    auto const &sisr = operators[2];
+    return sisr(std::make_pair(constIndiv, constIndiv), params, rng);
 }
 
 void GeneticAlgorithm::educate(Individual &indiv)
