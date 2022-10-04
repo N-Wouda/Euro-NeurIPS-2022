@@ -9,49 +9,46 @@ namespace
 void collectSubPopStats(Population::SubPopulation const &subPop,
                         Statistics::SubPopStats &subStats)
 {
-    if (!subPop.empty())
-    {
-        auto const popSize = subPop.size();
-        subStats.popSize_.push_back(popSize);
-
-        auto const opDiversity = [](double val, auto const &subs) {
-            return val + subs.indiv->avgBrokenPairsDistanceClosest();
-        };
-        subStats.avgDiversity_.push_back(
-            std::accumulate(subPop.begin(), subPop.end(), 0., opDiversity)
-            / popSize);
-
-        subStats.bestCost_.push_back(subPop[0].indiv->cost());
-
-        auto const opAverageCost = [](size_t sum, auto const &subs) {
-            return sum + subs.indiv->cost();
-        };
-        subStats.avgCost_.push_back(
-            std::accumulate(subPop.begin(), subPop.end(), 0, opAverageCost)
-            / popSize);
-
-        auto const opCountNonEmptyRoutes = [](size_t val, auto const &route) {
-            return val + !route.empty();
-        };
-        auto const opNumRoutes = [&](double val, auto const &subs) {
-            return val
-                   + std::accumulate(subs.indiv->getRoutes().begin(),
-                                     subs.indiv->getRoutes().end(),
-                                     0,
-                                     opCountNonEmptyRoutes);
-        };
-        subStats.avgNumRoutes_.push_back(
-            std::accumulate(subPop.begin(), subPop.end(), 0., opNumRoutes)
-            / popSize);
-    }
-    else
+    if (subPop.empty())
     {
         subStats.popSize_.push_back(0);
         subStats.avgDiversity_.push_back(0.);   // 0 as subst. for no diversity
         subStats.bestCost_.push_back(INT_MAX);  // INT_MAX as subst. for inf
         subStats.avgCost_.push_back(INT_MAX);
         subStats.avgNumRoutes_.push_back(0.);
+        return;
     }
+
+    auto const popSize = subPop.size();
+    subStats.popSize_.push_back(popSize);
+
+    auto const opDiversity = [](double val, auto const &subs) {
+        return val + subs.indiv->avgBrokenPairsDistanceClosest();
+    };
+    subStats.avgDiversity_.push_back(
+        std::accumulate(subPop.begin(), subPop.end(), 0., opDiversity)
+        / popSize);
+
+    subStats.bestCost_.push_back(subPop[0].indiv->cost());
+
+    auto const opAverageCost
+        = [](size_t sum, auto const &subs) { return sum + subs.indiv->cost(); };
+    subStats.avgCost_.push_back(
+        std::accumulate(subPop.begin(), subPop.end(), 0, opAverageCost)
+        / popSize);
+
+    auto const opCountNonEmptyRoutes
+        = [](size_t val, auto const &route) { return val + !route.empty(); };
+    auto const opNumRoutes = [&](double val, auto const &subs) {
+        return val
+               + std::accumulate(subs.indiv->getRoutes().begin(),
+                                 subs.indiv->getRoutes().end(),
+                                 0,
+                                 opCountNonEmptyRoutes);
+    };
+    subStats.avgNumRoutes_.push_back(
+        std::accumulate(subPop.begin(), subPop.end(), 0., opNumRoutes)
+        / popSize);
 }
 }  // namespace
 
