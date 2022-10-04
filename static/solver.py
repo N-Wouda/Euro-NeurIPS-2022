@@ -22,7 +22,7 @@ def solve(
     pop = hgspy.Population(params, rng)
 
     for sol in initial_solutions:
-        hgspy.Individual(params, sol)
+        pop.add_individual(hgspy.Individual(params, sol))
 
     ls = hgspy.LocalSearch(params, rng)
 
