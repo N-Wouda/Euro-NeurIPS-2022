@@ -24,8 +24,8 @@ void collectSubPopStats(Population::SubPopulation const &subPop,
     auto const popSize = subPop.size();
     subStats.popSize_.push_back(popSize);
 
-    auto const opDiv = [](double val, auto const &subs) {
-        return val + subs.indiv->avgBrokenPairsDistanceClosest();
+    auto const opDiv = [](double val, auto const &sub) {
+        return val + sub.indiv->avgBrokenPairsDistanceClosest();
     };
     auto const totalDiv = accumulate(subPop.begin(), subPop.end(), 0., opDiv);
     subStats.avgDiversity_.push_back(totalDiv / popSize);
@@ -33,7 +33,7 @@ void collectSubPopStats(Population::SubPopulation const &subPop,
     subStats.bestCost_.push_back(subPop[0].indiv->cost());
 
     auto const opCost
-        = [](size_t sum, auto const &subs) { return sum + subs.indiv->cost(); };
+        = [](size_t sum, auto const &sub) { return sum + sub.indiv->cost(); };
     auto const totalCost = accumulate(subPop.begin(), subPop.end(), 0, opCost);
     subStats.avgCost_.push_back(totalCost / popSize);
 
