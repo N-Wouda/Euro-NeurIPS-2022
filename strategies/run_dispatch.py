@@ -36,7 +36,7 @@ def run_dispatch(env, dispatch_strategy, **kwargs):
         dispatch_inst = dispatch_strategy(static_info, observation, rng)
         solve_tlim = round(ep_tlim - (time.perf_counter() - start))
 
-        config = hgspy.Config()
+        config = hgspy.Config(seed=1)
         stop = hgspy.stop.MaxRuntime(solve_tlim)
 
         node_ops = [

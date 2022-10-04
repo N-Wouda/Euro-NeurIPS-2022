@@ -20,6 +20,7 @@ Result GeneticAlgorithm::run(StoppingCriterion &stop)
                                  "crossover operators.");
 
     Statistics stats;
+
     size_t iter = 0;
     size_t nbIterNoImprove = 1;
 
