@@ -41,9 +41,9 @@ Individual brokenPairsExchange(
     Params const &params,
     XorShift128 &rng);
 
-Individual edgeAssembly(
-    std::pair<Individual const *, Individual const *> const &parents,
-    Params const &params,
-    XorShift128 &rng);
+Individual
+edgeAssembly(std::pair<Individual const *, Individual const *> const &parents,
+             Params const &params,
+             XorShift128 &rng);
 
 #endif  // CROSSOVER_H

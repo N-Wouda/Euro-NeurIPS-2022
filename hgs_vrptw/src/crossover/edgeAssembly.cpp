@@ -126,7 +126,6 @@ Individual edgeAssembly(
 
     if(strategy){
 
-
     }else{
         //pointer to element in vector? we don't mess with AB_cycles anymore so should be ok?
         E_cycle = &AB_cycles[rng.randint(AB_cycles.size())];
