@@ -19,7 +19,7 @@ def run_oracle(env, **kwargs):
         observation, _, done, _ = env.step(ep_sol)
 
     hindsight_inst = env.get_hindsight_problem()
-    solution, _ = solve_static(hindsight_inst, time_limit=ep_tlim)
+    solution, _ = solve_static(hindsight_inst, max_runtime=ep_tlim)
 
     observation, _ = env.reset()
 

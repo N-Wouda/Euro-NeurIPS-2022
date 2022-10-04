@@ -33,7 +33,7 @@ def run_dispatch(env, dispatch_strategy, **kwargs):
         dispatch_inst = dispatch_strategy(static_info, observation, rng)
         solve_tlim = round(ep_tlim - (time.perf_counter() - start))
 
-        sol, _ = solve_static(dispatch_inst, time_limit=solve_tlim)
+        sol, _ = solve_static(dispatch_inst, max_runtime=solve_tlim)
         ep_sol = utils.sol2ep(sol, dispatch_inst)
 
         current_epoch = observation["current_epoch"]
