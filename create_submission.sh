@@ -10,7 +10,7 @@ find hgs_vrptw \
   -exec zip -o -r "tmp/submissions/$DATE.zip" {} +
 
 # Python code (solver, utilities, and code for the dynamic problem)
-zip -o -r "tmp/submissions/$DATE.zip" dynamic/*
+zip -o -r "tmp/submissions/$DATE.zip" python/*
 zip -o -r "tmp/submissions/$DATE.zip" solver.py tools.py environment.py
 
 # Required CodaLab file

@@ -1,4 +1,7 @@
+import tools
 from .solve_static import solve_static
+
+hgspy = tools.get_hgspy_module()
 
 
 def run_oracle(env, **kwargs):
@@ -19,8 +22,35 @@ def run_oracle(env, **kwargs):
         observation, _, done, _ = env.step(ep_sol)
 
     hindsight_inst = env.get_hindsight_problem()
-    solution, _ = solve_static(hindsight_inst, time_limit=ep_tlim)
 
+    config = hgspy.Config()
+    stop = hgspy.stop.MaxRuntime(ep_tlim)
+
+    node_ops = [
+        hgspy.operators.Exchange10,
+        hgspy.operators.Exchange11,
+        hgspy.operators.Exchange20,
+        hgspy.operators.MoveTwoClientsReversed,
+        hgspy.operators.Exchange21,
+        hgspy.operators.Exchange22,
+        hgspy.operators.TwoOpt,
+    ]
+
+    route_ops = [
+        hgspy.operators.RelocateStar,
+        hgspy.operators.SwapStar,
+    ]
+
+    crossover_ops = [
+        hgspy.crossover.selective_route_exchange,
+    ]
+
+    res = solve_static(
+        hindsight_inst, config, node_ops, route_ops, crossover_ops, stop
+    )
+
+    best = res.get_best_found()
+    routes = [route for route in best.get_routes() if route]
     observation, _ = env.reset()
 
     # Submit the solution from the hindsight problem
@@ -32,7 +62,7 @@ def run_oracle(env, **kwargs):
         # solution that are dispatched in the current epoch.
         ep_sol = [
             route
-            for route in solution
+            for route in routes
             if len(requests.intersection(route)) == len(route)
         ]
 

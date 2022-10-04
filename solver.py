@@ -5,7 +5,7 @@ import sys
 from datetime import datetime
 
 import tools
-from dynamic.run_dispatch import run_dispatch
+from strategies.run_dispatch import run_dispatch
 from environment import ControllerEnvironment, VRPEnvironment
 
 
@@ -46,19 +46,19 @@ def run(args):
     args.epoch_tlim = None
 
     if args.strategy == "oracle":
-        from dynamic.run_oracle import run_oracle
+        from strategies.run_oracle import run_oracle
 
         run_oracle(env, **vars(args))
 
     else:
         if args.strategy in ["greedy", "random", "lazy"]:
-            from dynamic.random import random_dispatch
+            from strategies.random import random_dispatch
 
             probs = {"greedy": 1, "random": 0.5, "lazy": 0}
             strategy = random_dispatch(probs[args.strategy])
 
         elif args.strategy == "rollout":
-            from dynamic.rollout import rollout as strategy
+            from strategies.rollout import rollout as strategy
 
         else:
             raise ValueError(f"Invalid strategy: {args.strategy}")

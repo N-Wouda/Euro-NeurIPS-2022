@@ -1,6 +1,6 @@
 import functools
 
-from .. import utils
+import strategies.utils as utils
 
 
 def random_dispatch(prob):
