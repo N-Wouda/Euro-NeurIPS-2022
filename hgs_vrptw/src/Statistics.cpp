@@ -47,7 +47,7 @@ void collectSubPopStats(Population::SubPopulation const &subPop,
     else
     {
         subStats.popSize_.push_back(0);
-        subStats.avgDiversity_.push_back(0.);  // 0 as substitute for no diversity
+        subStats.avgDiversity_.push_back(0.);   // 0 as subst. for no diversity
         subStats.bestCost_.push_back(INT_MAX);  // INT_MAX as subst. for inf
         subStats.avgCost_.push_back(INT_MAX);
         subStats.avgNumRoutes_.push_back(0.);
