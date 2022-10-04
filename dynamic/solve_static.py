@@ -1,6 +1,8 @@
 import static
 import tools
 
+config = static.Config("dynamic.toml")
+
 
 def solve_static(
     instance, seed=1, max_runtime=60, initial_solutions=(), **kwargs
@@ -15,7 +17,6 @@ def solve_static(
         cost = tools.validate_static_solution(instance, solution)
         return solution, cost
 
-    config = static.Config("dynamic.toml")
     res = static.solve(
         instance,
         config,

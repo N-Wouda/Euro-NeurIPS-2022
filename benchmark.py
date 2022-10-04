@@ -10,6 +10,8 @@ from tqdm.contrib.concurrent import process_map
 import static
 import tools
 
+config = static.Config("static.toml")
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -39,7 +41,6 @@ def solve(loc: str, seed=1, **kwargs):
     instance = tools.read_vrplib(path)
     start = perf_counter()
 
-    config = static.Config("static.toml")
     res = static.solve(
         instance,
         config,

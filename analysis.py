@@ -13,6 +13,7 @@ import plotting
 import static
 import tools
 
+config = static.Config("analysis.toml")
 
 matplotlib.use("Agg")  # Don't show plots
 
@@ -50,8 +51,6 @@ def solve(loc: str, seed=1, **kwargs):
 
     instance = tools.read_vrplib(path)
     start = perf_counter()
-
-    config = static.Config("analysis.toml")
 
     res = static.solve(
         instance,
