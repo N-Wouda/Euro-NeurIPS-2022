@@ -55,4 +55,4 @@ zip -o -r "tmp/submissions/$DATE.zip" run.sh install.sh
 rm install.sh
 rm run.sh
 
-echo "Created tmp/submissions/submission_$DATE.zip"
+echo "Created tmp/submissions/$DATE.zip"
