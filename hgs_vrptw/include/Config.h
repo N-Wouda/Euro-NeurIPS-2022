@@ -28,7 +28,7 @@ struct Config
     size_t generationSize = 40;   // max size before culling a generation
     size_t nbElite = 4;           // number of elite individuals in pop
     size_t nbClose = 5;           // # individuals when calculating diversity
-    double targetFeasible = 0.2;  // target feasible pop fraction
+    double targetFeasible = 0.4;  // target feasible pop fraction
     size_t nbKeepOnRestart
         = 1;  // # best individuals we keep when resetting the population
 
@@ -77,7 +77,7 @@ struct Config
                     size_t generationSize = 40,
                     size_t nbElite = 4,
                     size_t nbClose = 5,
-                    double targetFeasible = 0.2,
+                    double targetFeasible = 0.4,
                     size_t nbKeepOnRestart = 1,
                     size_t repairProbability = 50,
                     size_t repairBooster = 10,

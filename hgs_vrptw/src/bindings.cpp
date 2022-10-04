@@ -99,7 +99,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("generationSize") = 40,
              py::arg("nbElite") = 4,
              py::arg("nbClose") = 5,
-             py::arg("targetFeasible") = 0.2,
+             py::arg("targetFeasible") = 0.4,
              py::arg("nbKeepOnRestart") = 1,
              py::arg("repairProbability") = 50,
              py::arg("repairBooster") = 10,
