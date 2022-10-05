@@ -38,6 +38,7 @@ def solve_dynamic(env, dispatch_strategy, solver_seed):
         dispatch_inst = dispatch_strategy(static_info, observation, rng)
         solve_tlim = round(ep_tlim - (time.perf_counter() - start))
 
+        # TODO use a seed different from the dynamic rng for the static solver
         config = hgspy.Config(seed=solver_seed)
         stop = hgspy.stop.MaxRuntime(solve_tlim)
 
