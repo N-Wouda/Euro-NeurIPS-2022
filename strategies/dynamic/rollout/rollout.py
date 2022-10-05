@@ -2,7 +2,7 @@ import time
 
 import numpy as np
 
-from .. import utils
+from strategies.utils import filter_instance
 from .constants import (
     DISPATCH_THRESHOLD,
     N_LOOKAHEAD,
@@ -63,4 +63,4 @@ def rollout(info, obs, rng):
         | (dispatch_count >= max(1, n_sims) * DISPATCH_THRESHOLD)
     )
 
-    return utils.filter_instance(ep_inst, dispatch)
+    return filter_instance(ep_inst, dispatch)

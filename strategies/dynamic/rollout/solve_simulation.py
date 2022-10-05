@@ -7,7 +7,7 @@ def solve_simulation(instance, max_iterations=None, **kwargs):
     config = hgspy.Config(**kwargs)
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
-    rng = hgspy.XorShift128(seed=kwargs["seed"])
+    rng = hgspy.XorShift128(seed=config.seed)
     pop = hgspy.Population(params, rng)
     ls = hgspy.LocalSearch(params, rng)
 

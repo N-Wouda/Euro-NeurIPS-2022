@@ -4,12 +4,12 @@ from .solve_static import solve_static
 hgspy = tools.get_hgspy_module()
 
 
-def run_oracle(env, **kwargs):
+def solve_hindsight(env, solver_seed):
     """
     Solve the dynamic VRPTW problem using the oracle strategy, i.e., the
     problem is solved as static VRPTW with release dates using the information
     that is known in hindsight. The found solution is then submitted to the
-    environment.
+    environment. The given seed is passed to the static solver.
     """
     observation, info = env.reset()
     ep_tlim = info["epoch_tlim"]
@@ -23,7 +23,7 @@ def run_oracle(env, **kwargs):
 
     hindsight_inst = env.get_hindsight_problem()
 
-    config = hgspy.Config()
+    config = hgspy.Config(seed=solver_seed)
     stop = hgspy.stop.MaxRuntime(ep_tlim)
 
     node_ops = [
