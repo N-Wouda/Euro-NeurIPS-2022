@@ -9,7 +9,7 @@ from .solve_static import solve_static
 hgspy = tools.get_hgspy_module()
 
 
-def solve_dynamic(env, dispatch_strategy, **kwargs):
+def solve_dynamic(env, dispatch_strategy, solver_seed):
     """
     Solve the dynamic VRPTW problem using the passed-in dispatching strategy.
 
@@ -21,7 +21,7 @@ def solve_dynamic(env, dispatch_strategy, **kwargs):
     and returns
     - ``dispatch_instance``: the dispatched requests for the current epoch
     """
-    rng = np.random.default_rng(kwargs["solver_seed"])
+    rng = np.random.default_rng(solver_seed)
 
     observation, static_info = env.reset()
     ep_tlim = static_info["epoch_tlim"]

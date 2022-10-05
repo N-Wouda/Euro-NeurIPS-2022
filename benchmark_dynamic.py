@@ -58,12 +58,11 @@ def solve(loc: str,
 
     start = perf_counter()
 
-    print(hindsight, strategy, kwargs)
-
     if hindsight:
-        costs, routes = solve_hindsight(env, **kwargs)
+        costs, routes = solve_hindsight(env)
     else:
-        costs, routes = solve_dynamic(env, STRATEGIES[strategy], **kwargs)
+        seed = kwargs["solver_seed"]
+        costs, routes = solve_dynamic(env, STRATEGIES[strategy], seed)
 
     run_time = round(perf_counter() - start, 3)
 

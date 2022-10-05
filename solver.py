@@ -38,11 +38,8 @@ def run(args):
             is_static=args.static,
         )
     else:
-        assert (
-            args.strategy != "oracle"
-        ), "Oracle incompatible with external controller"
-
         # Run within external controller
+        assert not args.hindsight, "Cannot solve hindsight using controller"
         env = ControllerEnvironment(sys.stdin, sys.stdout)
 
     # Make sure these parameters are not used by your solver
@@ -52,9 +49,9 @@ def run(args):
     args.epoch_tlim = None
 
     if args.hindsight:
-        solve_hindsight(env, **vars(args))
+        solve_hindsight(env)
     else:
-        solve_dynamic(env, STRATEGIES[args.strategy], **vars(args))
+        solve_dynamic(env, STRATEGIES[args.strategy], args.solver_seed)
 
 
 def main():
