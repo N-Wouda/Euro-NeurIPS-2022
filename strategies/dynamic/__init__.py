@@ -1,4 +1,4 @@
-from .random import greedy, lazy, random
+from .baselines import greedy, lazy, random
 from .rollout import rollout
 
 
