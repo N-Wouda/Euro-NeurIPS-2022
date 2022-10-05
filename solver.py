@@ -22,9 +22,9 @@ def parse_args():
 
     problem_type = parser.add_mutually_exclusive_group()
     problem_type.add_argument("--hindsight", action="store_true")
-    problem_type.add_argument("--strategy",
-                              choices=STRATEGIES.keys(),
-                              default="rollout")
+    problem_type.add_argument(
+        "--strategy", choices=STRATEGIES.keys(), default="rollout"
+    )
 
     return parser.parse_args()
 

@@ -27,9 +27,9 @@ def parse_args():
 
     problem_type = parser.add_mutually_exclusive_group()
     problem_type.add_argument("--hindsight", action="store_true")
-    problem_type.add_argument("--strategy",
-                              choices=STRATEGIES.keys(),
-                              default="rollout")
+    problem_type.add_argument(
+        "--strategy", choices=STRATEGIES.keys(), default="rollout"
+    )
 
     stop = parser.add_mutually_exclusive_group(required=True)
     stop.add_argument("--epoch_tlim", type=int)
@@ -40,11 +40,9 @@ def parse_args():
     return parser.parse_args()
 
 
-def solve(loc: str,
-          instance_seed: int,
-          hindsight: bool,
-          strategy: str,
-          **kwargs):
+def solve(
+    loc: str, instance_seed: int, hindsight: bool, strategy: str, **kwargs
+):
     path = Path(loc)
 
     if kwargs["phase"] is not None:
