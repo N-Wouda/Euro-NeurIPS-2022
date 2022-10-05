@@ -19,13 +19,13 @@ Result GeneticAlgorithm::run(StoppingCriterion &stop)
         throw std::runtime_error("Cannot run genetic algorithm without "
                                  "crossover operators.");
 
-    if (params.nbClients == 1)
-        throw std::runtime_error("Cannot run genetic algorithm with one node.");
-
     Statistics stats;
 
     size_t iter = 0;
     size_t nbIterNoImprove = 1;
+
+    if (params.nbClients <= 1)
+        return {population.getBestFound(), stats, iter, 0.};
 
     auto start = clock::now();
     while (not stop())

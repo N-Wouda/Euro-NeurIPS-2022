@@ -10,7 +10,7 @@ import numpy as np
 from tqdm.contrib.concurrent import process_map
 
 import tools
-from dynamic.run_dispatch import run_dispatch
+from strategies.run_dispatch import run_dispatch
 from environment import VRPEnvironment
 
 
@@ -49,19 +49,19 @@ def solve(loc: str, instance_seed: int, **kwargs):
     start = perf_counter()
 
     if kwargs["strategy"] == "oracle":
-        from dynamic.run_oracle import run_oracle
+        from strategies.run_oracle import run_oracle
 
         costs, routes = run_oracle(env, **kwargs)
 
     else:
         if kwargs["strategy"] in ["greedy", "random", "lazy"]:
-            from dynamic.random import random_dispatch
+            from strategies.random import random_dispatch
 
             probs = {"greedy": 1, "random": 0.5, "lazy": 0}
             strategy = random_dispatch(probs[kwargs["strategy"]])
 
         elif kwargs["strategy"] == "rollout":
-            from dynamic.rollout import rollout as strategy
+            from strategies.rollout import rollout as strategy
 
         else:
             raise ValueError(f"Invalid strategy: {kwargs['strategy']}")
@@ -135,7 +135,7 @@ def main():
         " ".join(f"--{key} {value}" for key, value in vars(args).items()),
     )
     if args.strategy == "rollout":
-        from dynamic.rollout import constants
+        from strategies.rollout import constants
 
         print(
             " ".join(

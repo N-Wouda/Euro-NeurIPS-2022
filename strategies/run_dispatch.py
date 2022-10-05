@@ -2,8 +2,11 @@ import time
 
 import numpy as np
 
-import dynamic.utils as utils
+import strategies.utils as utils
+import tools
 from .solve_static import solve_static
+
+hgspy = tools.get_hgspy_module()
 
 
 def run_dispatch(env, dispatch_strategy, **kwargs):
@@ -33,8 +36,36 @@ def run_dispatch(env, dispatch_strategy, **kwargs):
         dispatch_inst = dispatch_strategy(static_info, observation, rng)
         solve_tlim = round(ep_tlim - (time.perf_counter() - start))
 
-        sol, _ = solve_static(dispatch_inst, time_limit=solve_tlim)
-        ep_sol = utils.sol2ep(sol, dispatch_inst)
+        config = hgspy.Config(seed=1)
+        stop = hgspy.stop.MaxRuntime(solve_tlim)
+
+        node_ops = [
+            hgspy.operators.Exchange10,
+            hgspy.operators.Exchange11,
+            hgspy.operators.Exchange20,
+            hgspy.operators.MoveTwoClientsReversed,
+            hgspy.operators.Exchange21,
+            hgspy.operators.Exchange22,
+            hgspy.operators.TwoOpt,
+        ]
+
+        route_ops = [
+            hgspy.operators.RelocateStar,
+            hgspy.operators.SwapStar,
+        ]
+
+        crossover_ops = [
+            hgspy.crossover.selective_route_exchange,
+        ]
+
+        res = solve_static(
+            dispatch_inst, config, node_ops, route_ops, crossover_ops, stop
+        )
+
+        best = res.get_best_found()
+        routes = [route for route in best.get_routes() if route]
+
+        ep_sol = utils.sol2ep(routes, dispatch_inst)
 
         current_epoch = observation["current_epoch"]
         solutions[current_epoch] = ep_sol
