@@ -1,4 +1,4 @@
-import strategies.utils as utils
+from strategies.utils import filter_instance
 
 
 def random_dispatch(info, obs, rng, prob):
@@ -12,4 +12,4 @@ def random_dispatch(info, obs, rng, prob):
         | instance["must_dispatch"]
         | (rng.random(instance["must_dispatch"].shape) < prob)
     )
-    return utils.filter_instance(instance, to_dispatch)
+    return filter_instance(instance, to_dispatch)
