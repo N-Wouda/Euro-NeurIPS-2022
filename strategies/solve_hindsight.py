@@ -4,7 +4,7 @@ from .solve_static import solve_static
 hgspy = tools.get_hgspy_module()
 
 
-def run_oracle(env, **kwargs):
+def solve_hindsight(env, **kwargs):
     """
     Solve the dynamic VRPTW problem using the oracle strategy, i.e., the
     problem is solved as static VRPTW with release dates using the information

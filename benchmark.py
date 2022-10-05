@@ -8,7 +8,7 @@ import numpy as np
 from tqdm.contrib.concurrent import process_map
 
 import tools
-from strategies.solve_static import solve_static
+from strategies import solve_static
 
 hgspy = tools.get_hgspy_module()
 

@@ -1,17 +1,7 @@
-import functools
-
 import strategies.utils as utils
 
 
-def random_dispatch(prob):
-    """
-    Return the random dispatch strategy where requests are dispatched with
-    probability ``prob``.
-    """
-    return functools.partial(_dispatch_decision, prob=prob)
-
-
-def _dispatch_decision(info, observation, rng, prob):
+def random_dispatch(info, observation, rng, prob):
     """
     Decide which requests to dispach in the current epoch. Non-must dispatch
     requests are dispatched with probability ``prob``.

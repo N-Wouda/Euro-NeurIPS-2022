@@ -9,7 +9,7 @@ from .solve_static import solve_static
 hgspy = tools.get_hgspy_module()
 
 
-def run_dispatch(env, dispatch_strategy, **kwargs):
+def solve_dynamic(env, dispatch_strategy, **kwargs):
     """
     Solve the dynamic VRPTW problem using the passed-in dispatching strategy.
 

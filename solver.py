@@ -5,20 +5,26 @@ import sys
 from datetime import datetime
 
 import tools
-from strategies.run_dispatch import run_dispatch
 from environment import ControllerEnvironment, VRPEnvironment
+from strategies import solve_dynamic, solve_hindsight
+from strategies.dynamic import STRATEGIES
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--strategy", type=str, default="rollout")
     parser.add_argument("--instance")
     parser.add_argument("--instance_seed", type=int, default=1)
     parser.add_argument("--solver_seed", type=int, default=1)
     parser.add_argument("--static", action="store_true")
     parser.add_argument("--epoch_tlim", type=int, default=120)
     parser.add_argument("--profile", action="store_true")
+
+    problem_type = parser.add_mutually_exclusive_group(required=True)
+    problem_type.add_argument("--hindsight", action="store_true")
+    problem_type.add_argument("--strategy",
+                              choices=STRATEGIES.keys(),
+                              default="rollout")
 
     return parser.parse_args()
 
@@ -45,25 +51,10 @@ def run(args):
     args.static = None
     args.epoch_tlim = None
 
-    if args.strategy == "oracle":
-        from strategies.run_oracle import run_oracle
-
-        run_oracle(env, **vars(args))
-
+    if args.hindsight:
+        solve_hindsight(env, **vars(args))
     else:
-        if args.strategy in ["greedy", "random", "lazy"]:
-            from strategies.random import random_dispatch
-
-            probs = {"greedy": 1, "random": 0.5, "lazy": 0}
-            strategy = random_dispatch(probs[args.strategy])
-
-        elif args.strategy == "rollout":
-            from strategies.rollout import rollout as strategy
-
-        else:
-            raise ValueError(f"Invalid strategy: {args.strategy}")
-
-        run_dispatch(env, dispatch_strategy=strategy, **vars(args))
+        solve_dynamic(env, STRATEGIES[args.strategy], **vars(args))
 
 
 def main():

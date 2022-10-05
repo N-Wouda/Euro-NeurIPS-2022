@@ -2,7 +2,7 @@ import time
 
 import numpy as np
 
-from .. import utils
+from strategies import utils
 from .constants import (
     DISPATCH_THRESHOLD,
     N_LOOKAHEAD,

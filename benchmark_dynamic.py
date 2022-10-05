@@ -10,8 +10,9 @@ import numpy as np
 from tqdm.contrib.concurrent import process_map
 
 import tools
-from strategies.run_dispatch import run_dispatch
 from environment import VRPEnvironment
+from strategies import solve_dynamic, solve_hindsight
+from strategies.dynamic import STRATEGIES
 
 
 def parse_args():
@@ -20,21 +21,30 @@ def parse_args():
     parser.add_argument("--num_seeds", type=int, default=1)
     parser.add_argument("--solver_seed", type=int, default=1)
     parser.add_argument("--num_procs", type=int, default=4)
-    parser.add_argument("--strategy", type=str, default="rollout")
     parser.add_argument(
         "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
     )
 
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--epoch_tlim", type=int)
-    group.add_argument("--phase", choices=["quali", "final"])
+    problem_type = parser.add_mutually_exclusive_group(required=True)
+    problem_type.add_argument("--hindsight", action="store_true")
+    problem_type.add_argument("--strategy",
+                              choices=STRATEGIES.keys(),
+                              default="rollout")
+
+    stop = parser.add_mutually_exclusive_group(required=True)
+    stop.add_argument("--epoch_tlim", type=int)
+    stop.add_argument("--phase", choices=["quali", "final"])
 
     parser.add_argument("--aggregate", action="store_true")
 
     return parser.parse_args()
 
 
-def solve(loc: str, instance_seed: int, **kwargs):
+def solve(loc: str,
+          instance_seed: int,
+          hindsight: bool,
+          strategy: str,
+          **kwargs):
     path = Path(loc)
 
     if kwargs["phase"] is not None:
@@ -48,25 +58,12 @@ def solve(loc: str, instance_seed: int, **kwargs):
 
     start = perf_counter()
 
-    if kwargs["strategy"] == "oracle":
-        from strategies.run_oracle import run_oracle
+    print(hindsight, strategy, kwargs)
 
-        costs, routes = run_oracle(env, **kwargs)
-
+    if hindsight:
+        costs, routes = solve_hindsight(env, **kwargs)
     else:
-        if kwargs["strategy"] in ["greedy", "random", "lazy"]:
-            from strategies.random import random_dispatch
-
-            probs = {"greedy": 1, "random": 0.5, "lazy": 0}
-            strategy = random_dispatch(probs[kwargs["strategy"]])
-
-        elif kwargs["strategy"] == "rollout":
-            from strategies.rollout import rollout as strategy
-
-        else:
-            raise ValueError(f"Invalid strategy: {kwargs['strategy']}")
-
-        costs, routes = run_dispatch(env, dispatch_strategy=strategy, **kwargs)
+        costs, routes = solve_dynamic(env, STRATEGIES[strategy], **kwargs)
 
     run_time = round(perf_counter() - start, 3)
 
@@ -135,7 +132,7 @@ def main():
         " ".join(f"--{key} {value}" for key, value in vars(args).items()),
     )
     if args.strategy == "rollout":
-        from strategies.rollout import constants
+        from strategies.dynamic.rollout import constants
 
         print(
             " ".join(
