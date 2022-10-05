@@ -20,7 +20,7 @@ def parse_args():
     parser.add_argument("--num_procs", type=int, default=4)
     parser.add_argument("--mutate_probability", type=int, default=10)
     parser.add_argument("--destroy_pct", type=int, default=10)
-    parser.add_argument("--mutation", choices=["quali", "final"])
+    parser.add_argument("--mutation", choices=["bpx", "sisrx"])
     parser.add_argument(
         "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
     )
