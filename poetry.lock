@@ -286,7 +286,7 @@ python-versions = ">=3.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8, <4.0"
-content-hash = "2fa40c187734fd827381623b067896316e2b5c367ec8ace9fa3819ada24a5d68"
+content-hash = "d8e45ab045caf5af64055aad26e41d90b5a7d28fe936c441ae85de0400975577"
 
 [metadata.files]
 black = []

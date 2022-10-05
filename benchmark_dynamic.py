@@ -41,7 +41,12 @@ def parse_args():
 
 
 def solve(
-    loc: str, instance_seed: int, hindsight: bool, strategy: str, **kwargs
+    loc: str,
+    instance_seed: int,
+    solver_seed: int,
+    hindsight: bool,
+    strategy: str,
+    **kwargs,
 ):
     path = Path(loc)
 
@@ -56,12 +61,10 @@ def solve(
 
     start = perf_counter()
 
-    seed = kwargs["solver_seed"]
-
     if hindsight:
-        costs, routes = solve_hindsight(env, seed)
+        costs, routes = solve_hindsight(env, solver_seed)
     else:
-        costs, routes = solve_dynamic(env, STRATEGIES[strategy], seed)
+        costs, routes = solve_dynamic(env, STRATEGIES[strategy], solver_seed)
 
     run_time = round(perf_counter() - start, 3)
 

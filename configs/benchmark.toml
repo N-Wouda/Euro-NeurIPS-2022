@@ -1,0 +1,21 @@
+node_operators = [
+    "Exchange10",
+    "Exchange11",
+    "Exchange20",
+    "MoveTwoClientsReversed",
+    "Exchange21",
+    "Exchange22",
+    "TwoOpt",
+]
+
+route_operators = [
+    "RelocateStar",
+    "SwapStar",
+]
+
+crossover_operators = [
+    "broken_pairs_exchange",
+    "selective_route_exchange",
+]
+
+[params]

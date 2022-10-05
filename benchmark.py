@@ -9,6 +9,7 @@ from tqdm.contrib.concurrent import process_map
 
 import tools
 from strategies import solve_static
+from strategies.config import Config
 
 hgspy = tools.get_hgspy_module()
 
@@ -18,6 +19,7 @@ def parse_args():
 
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--num_procs", type=int, default=4)
+    parser.add_argument("--config_loc", default="configs/benchmark.toml")
     parser.add_argument(
         "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
     )
@@ -30,33 +32,11 @@ def parse_args():
     return parser.parse_args()
 
 
-def solve(loc: str, seed: int, **kwargs):
+def solve(loc: str, seed: int, config_loc: str, **kwargs):
     path = Path(loc)
 
     instance = tools.read_vrplib(path)
     start = perf_counter()
-
-    config = hgspy.Config(seed=seed)
-
-    node_ops = [
-        hgspy.operators.Exchange10,
-        hgspy.operators.Exchange11,
-        hgspy.operators.Exchange20,
-        hgspy.operators.MoveTwoClientsReversed,
-        hgspy.operators.Exchange21,
-        hgspy.operators.Exchange22,
-        hgspy.operators.TwoOpt,
-    ]
-
-    route_ops = [
-        hgspy.operators.RelocateStar,
-        hgspy.operators.SwapStar,
-    ]
-
-    crossover_ops = [
-        hgspy.crossover.broken_pairs_exchange,
-        hgspy.crossover.selective_route_exchange,
-    ]
 
     if kwargs["phase"] is not None:
         t_lim = tools.static_time_limit(tools.name2size(loc), kwargs["phase"])
@@ -66,8 +46,15 @@ def solve(loc: str, seed: int, **kwargs):
     else:
         stop = hgspy.stop.MaxIterations(kwargs["max_iterations"])
 
+    config = Config.from_file(config_loc)
+
     res = solve_static(
-        instance, config, node_ops, route_ops, crossover_ops, stop
+        instance,
+        hgspy.Config(seed=seed, **config.static_params()),
+        config.node_ops(),
+        config.route_ops(),
+        config.crossover_ops(),
+        stop,
     )
 
     best = res.get_best_found()
