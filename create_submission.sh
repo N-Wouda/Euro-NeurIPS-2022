@@ -26,6 +26,7 @@ rm metadata
 cat > requirements.txt <<- REQ
 numpy == 1.22.2
 matplotlib == 3.5.1
+tomli == 2.0.1
 REQ
 
 zip -o -r "tmp/submissions/$DATE.zip" requirements.txt
