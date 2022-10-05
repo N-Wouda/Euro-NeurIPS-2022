@@ -1,12 +1,12 @@
 import strategies.utils as utils
 
 
-def random_dispatch(info, observation, rng, prob):
+def random_dispatch(info, obs, rng, prob):
     """
-    Decide which requests to dispach in the current epoch. Non-must dispatch
-    requests are dispatched with probability ``prob``.
+    Decide which requests to dispatch in the current epoch. Requests that are
+    not "must dispatch" are dispatched with probability ``prob``.
     """
-    instance = observation["epoch_instance"]
+    instance = obs["epoch_instance"]
     to_dispatch = (
         instance["is_depot"]
         | instance["must_dispatch"]

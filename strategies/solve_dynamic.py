@@ -2,9 +2,9 @@ import time
 
 import numpy as np
 
-import strategies.utils as utils
 import tools
 from .solve_static import solve_static
+from .utils import sol2ep
 
 hgspy = tools.get_hgspy_module()
 
@@ -65,7 +65,7 @@ def solve_dynamic(env, dispatch_strategy, solver_seed):
         best = res.get_best_found()
         routes = [route for route in best.get_routes() if route]
 
-        ep_sol = utils.sol2ep(routes, dispatch_inst)
+        ep_sol = sol2ep(routes, dispatch_inst)
 
         current_epoch = observation["current_epoch"]
         solutions[current_epoch] = ep_sol
