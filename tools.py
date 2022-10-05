@@ -2,9 +2,9 @@ import glob
 import importlib.machinery
 import importlib.util
 import json
-import math
 import os
 import re
+from functools import lru_cache
 
 import numpy as np
 
@@ -337,6 +337,7 @@ def write_vrplib(filename, instance, name="problem", euclidean=False, is_vrptw=T
         f.write("EOF\n")
 
 
+@lru_cache
 def get_hgspy_module(where: str = 'release/lib/hgspy*.so'):
     lib_path = next(glob.iglob(where))
     loader = importlib.machinery.ExtensionFileLoader('hgspy', lib_path)

@@ -1,0 +1,75 @@
+[hindsight]
+node_ops = [
+    "Exchange10",
+    "Exchange11",
+    "Exchange20",
+    "MoveTwoClientsReversed",
+    "Exchange21",
+    "Exchange22",
+    "TwoOpt",
+]
+
+route_ops = [
+    "RelocateStar",
+    "SwapStar",
+]
+
+crossover_ops = [
+    "selective_route_exchange",
+]
+
+
+[dynamic]
+node_ops = [
+    "Exchange10",
+    "Exchange11",
+    "Exchange20",
+    "MoveTwoClientsReversed",
+    "Exchange21",
+    "Exchange22",
+    "TwoOpt",
+]
+
+route_ops = [
+    "RelocateStar",
+    "SwapStar",
+]
+
+crossover_ops = [
+    "selective_route_exchange",
+]
+
+
+[dynamic.strategy]
+n_lookahead = 3
+sim_tlim_factor = 0.5
+sim_solve_iters = 25
+dispatch_threshold = 0.15
+
+node_ops = [
+    "Exchange10",
+    "Exchange11",
+    "Exchange20",
+    "MoveTwoClientsReversed",
+    "Exchange21",
+    "Exchange22",
+    "TwoOpt",
+]
+
+route_ops = [
+    "RelocateStar",
+    "SwapStar",
+]
+
+crossover_ops = [
+    "selective_route_exchange",
+]
+
+
+[dynamic.strategy.sim_config]
+seed = 1
+generationSize = 20
+minPopSize = 5
+nbGranular = 80
+initialTimeWarpPenalty = 250
+penaltyDecrease = 0.5

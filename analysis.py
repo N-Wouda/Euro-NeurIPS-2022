@@ -43,28 +43,37 @@ def parse_args():
     return parser.parse_args()
 
 
-def solve(loc: str, seed: int, config_loc: str, result_dir: str, **kwargs):
+def solve(
+    loc: str,
+    seed: int,
+    config_loc: str,
+    result_dir: str,
+    max_runtime,
+    max_iterations,
+    phase,
+    **kwargs,
+):
     path = Path(loc)
 
     instance = tools.read_vrplib(path)
     start = perf_counter()
 
-    if kwargs["phase"] is not None:
-        t_lim = tools.static_time_limit(tools.name2size(loc), kwargs["phase"])
+    if phase is not None:
+        t_lim = tools.static_time_limit(tools.name2size(loc), phase)
         stop = hgspy.stop.MaxRuntime(t_lim)
-    elif kwargs["max_runtime"] is not None:
-        stop = hgspy.stop.MaxRuntime(kwargs["max_runtime"])
+    elif max_runtime is not None:
+        stop = hgspy.stop.MaxRuntime(max_runtime)
     else:
-        stop = hgspy.stop.MaxIterations(kwargs["max_iterations"])
+        stop = hgspy.stop.MaxIterations(max_iterations)
 
     config = Config.from_file(config_loc)
 
     res = solve_static(
         instance,
-        hgspy.Config(seed=seed, **config.static_params()),
-        config.node_ops(),
-        config.route_ops(),
-        config.crossover_ops(),
+        hgspy.Config(seed=seed, **config.static_solver_params()),
+        config.static_node_ops(),
+        config.static_route_ops(),
+        config.static_crossover_ops(),
         stop,
     )
 

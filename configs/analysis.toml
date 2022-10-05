@@ -1,4 +1,5 @@
-node_operators = [
+[static]
+node_ops = [
     "Exchange10",
     "Exchange11",
     "Exchange20",
@@ -8,15 +9,16 @@ node_operators = [
     "TwoOpt",
 ]
 
-route_operators = [
+route_ops = [
     "RelocateStar",
     "SwapStar",
 ]
 
-crossover_operators = [
+crossover_ops = [
     "broken_pairs_exchange",
     "selective_route_exchange",
 ]
 
-[params]
+
+[static.params]
 collectStatistics = true
