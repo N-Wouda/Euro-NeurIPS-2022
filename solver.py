@@ -20,7 +20,7 @@ def parse_args():
     parser.add_argument("--epoch_tlim", type=int, default=120)
     parser.add_argument("--profile", action="store_true")
 
-    problem_type = parser.add_mutually_exclusive_group(required=True)
+    problem_type = parser.add_mutually_exclusive_group()
     problem_type.add_argument("--hindsight", action="store_true")
     problem_type.add_argument("--strategy",
                               choices=STRATEGIES.keys(),
