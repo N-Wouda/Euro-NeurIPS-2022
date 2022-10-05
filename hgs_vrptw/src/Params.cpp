@@ -363,7 +363,7 @@ Params::Params(Config const &config,
                std::vector<int> const &releases)
     : config(config),
       nbClients(static_cast<int>(coords.size()) - 1),
-      nbVehicles(config.nbVeh >= nbClients ? nbClients : config.nbVeh),
+      nbVehicles(std::max(std::min(config.nbVeh, nbClients), 1)),
       vehicleCapacity(vehicleCap)
 {
     dist_ = Matrix<int>(distMat.size());
@@ -375,8 +375,9 @@ Params::Params(Config const &config,
     maxDist_ = dist_.max();
 
     // A reasonable scale for the initial values of the penalties
-    int maxDemand = *std::max_element(demands.begin(), demands.end());
-    penaltyCapacity = std::max(1, std::min(1000, maxDist_ / maxDemand));
+    int const maxDemand = *std::max_element(demands.begin(), demands.end());
+    int const initCapPenalty = maxDist_ / std::max(maxDemand, 1);
+    penaltyCapacity = std::max(std::min(1000, initCapPenalty), 1);
 
     // Initial parameter values of this parameter is not argued
     penaltyTimeWarp = static_cast<int>(config.initialTimeWarpPenalty);
