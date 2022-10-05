@@ -12,6 +12,8 @@ hgspy = tools.get_hgspy_module()
 def solve_dynamic(env, dispatch_strategy, solver_seed):
     """
     Solve the dynamic VRPTW problem using the passed-in dispatching strategy.
+    The given seed is used to initialise both the random number stream on the
+    Python side, and for the static solver on the C++ side.
 
     ``dispatch_strategy`` is a function that should take as inputs
     - ``static_info``: static information, including base instance and number
@@ -36,7 +38,7 @@ def solve_dynamic(env, dispatch_strategy, solver_seed):
         dispatch_inst = dispatch_strategy(static_info, observation, rng)
         solve_tlim = round(ep_tlim - (time.perf_counter() - start))
 
-        config = hgspy.Config(seed=1)
+        config = hgspy.Config(seed=solver_seed)
         stop = hgspy.stop.MaxRuntime(solve_tlim)
 
         node_ops = [

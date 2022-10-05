@@ -49,7 +49,7 @@ def run(args):
     args.epoch_tlim = None
 
     if args.hindsight:
-        solve_hindsight(env)
+        solve_hindsight(env, args.solver_seed)
     else:
         solve_dynamic(env, STRATEGIES[args.strategy], args.solver_seed)
 
