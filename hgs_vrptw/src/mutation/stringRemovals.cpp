@@ -49,9 +49,8 @@ std::pair<Routes, Clients> stringRemoval(Routes routes,
     auto op = [&](size_t s, auto &r) { return s + r.size(); };
     size_t const avgRouteSize
         = std::accumulate(routes.begin(), routes.end(), 0, op) / routes.size();
-
-    // Compute the maximum number of customers to remove
-    size_t const nRemovals = params.config.destroyPct * params.nbClients / 100;
+    size_t const maxStringSize
+        = std::max(params.config.maxStringLength, avgRouteSize);
 
     std::set<Route> destroyedRoutes;
     ClientSet removedClients;
@@ -61,7 +60,7 @@ std::pair<Routes, Clients> stringRemoval(Routes routes,
 
     for (auto c : neighbors)
     {
-        if (removedClients.size() >= nRemovals)
+        if (destroyedRoutes.size() >= params.config.maxStringRemovals)
             break;
 
         if (removedClients.contains(c))
@@ -76,7 +75,7 @@ std::pair<Routes, Clients> stringRemoval(Routes routes,
                 continue;
 
             auto const stringSize
-                = rng.randint(std::min(route.size(), avgRouteSize)) + 1;
+                = rng.randint(std::min(route.size(), maxStringSize)) + 1;
 
             // Find the route indices of the string to be removed
             auto indices = selectString(route, c, stringSize, rng);

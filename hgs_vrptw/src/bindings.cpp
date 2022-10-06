@@ -88,6 +88,7 @@ PYBIND11_MODULE(hgspy, m)
                       int,
                       size_t,
                       size_t,
+                      size_t,
                       size_t>(),
              py::arg("seed") = 0,
              py::arg("nbIter") = 10'000,
@@ -117,6 +118,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("minCircleSectorSizeDegrees") = 15,
              py::arg("destroyPct") = 20,
              py::arg("maxStringRemovals") = 6,
+             py::arg("maxStringLength") = 10,
              py::arg("postProcessPathLength") = 4)
         .def_readonly("seed", &Config::seed)
         .def_readonly("nbIter", &Config::nbIter)
@@ -146,6 +148,7 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("minCircleSectorSize", &Config::minCircleSectorSize)
         .def_readonly("destroyPct", &Config::destroyPct)
         .def_readonly("maxStringRemovals", &Config::maxStringRemovals)
+        .def_readonly("maxStringLength", &Config::maxStringLength)
         .def_readonly("postProcessPathLength", &Config::postProcessPathLength);
 
     py::class_<Params>(m, "Params")

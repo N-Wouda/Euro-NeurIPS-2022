@@ -62,8 +62,9 @@ struct Config
     // Percentage of customers to remove in brokenPairsExchange
     size_t destroyPct = 20;
 
-    // Number of string removals in stringRemovalExchange
+    // Parameters related to string selection in stringRemovals
     size_t maxStringRemovals = 6;  // max number of string removals
+    size_t maxStringLength = 10;   // max length of string removals
 
     // Number of nodes we improve by enumeration in LS postprocessing
     size_t postProcessPathLength = 4;
@@ -96,6 +97,7 @@ struct Config
                     int minCircleSectorSizeDegrees = 15,
                     size_t destroyPct = 20,
                     size_t maxStringRemovals = 6,
+                    size_t maxStringLength = 10,
                     size_t postProcessPathLength = 4)
         : seed(seed),
           nbIter(nbIter),
@@ -122,6 +124,7 @@ struct Config
           intensificationProbability(intensificationProbability),
           destroyPct(destroyPct),
           maxStringRemovals(maxStringRemovals),
+          maxStringLength(maxStringLength),
           postProcessPathLength(postProcessPathLength)
     {
         auto const overlap = circleSectorOverlapToleranceDegrees / 360. * 65536;
