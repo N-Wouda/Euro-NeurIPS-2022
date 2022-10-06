@@ -76,7 +76,6 @@ def solve(loc: str, seed: int, **kwargs):
 
     mutation_ops = [
         hgspy.crossover.string_removals,
-        hgspy.crossover.broken_pairs,
     ]
 
     for op in mutation_ops:

@@ -54,10 +54,4 @@ Individual stringRemovals(Individual &offspring,
                           Individual const &best,
                           Params const &params,
                           XorShift128 &rng);
-
-Individual brokenPairs(Individual &offspring,
-                       Individual const &best,
-                       Params const &params,
-                       XorShift128 &rng);
-
 #endif  // CROSSOVER_H
