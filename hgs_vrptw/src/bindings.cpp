@@ -17,6 +17,7 @@
 #include "TwoOpt.h"
 #include "XorShift128.h"
 #include "crossover.h"
+#include "mutation.h"
 
 #include <pybind11/chrono.h>
 #include <pybind11/functional.h>
@@ -106,7 +107,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("repairProbability") = 50,
              py::arg("repairBooster") = 10,
              py::arg("selectProbability") = 90,
-             py::arg("mutateProbability") = 5,
+             py::arg("mutateProbability") = 15,
              py::arg("nbVeh") = INT_MAX,
              py::arg("nbGranular") = 40,
              py::arg("weightWaitTime") = 2,
@@ -239,7 +240,10 @@ PYBIND11_MODULE(hgspy, m)
 
     xOps.def("broken_pairs_exchange", &brokenPairsExchange);
     xOps.def("selective_route_exchange", &selectiveRouteExchange);
-    xOps.def("string_removals", &stringRemovals);
+
+    // Mutation operators (as a submodule)
+    py::module mOps = m.def_submodule("mutation");
+    mOps.def("string_removals", &stringRemovals);
 
     // Local search operators (as a submodule)
     py::module lsOps = m.def_submodule("operators");

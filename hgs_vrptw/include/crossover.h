@@ -41,17 +41,4 @@ Individual brokenPairsExchange(
     Params const &params,
     XorShift128 &rng);
 
-/**
- * Performs a SISR mutation of the passed-in offspring. SISRX first removes
- * strings of clients from each parent based on "Slack Induction String Removals
- * (SISRs)" [1]. Removed clients from one parent are then also removed from the
- * other parent. Both parents are repaired to complete solutions by greedily
- * re-inserting the unplanned clients. <br /> [1]: Christiaens, J., & Vanden
- * Berghe, G. (2020). Slack induction by string removals for vehicle routing
- * problems. Transportation Science, 54(2), 417-433.
- */
-Individual stringRemovals(Individual &offspring,
-                          Individual const &best,
-                          Params const &params,
-                          XorShift128 &rng);
 #endif  // CROSSOVER_H

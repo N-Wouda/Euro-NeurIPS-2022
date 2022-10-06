@@ -1,4 +1,5 @@
 #include "crossover.h"
+#include "mutation.h"
 
 #include "Individual.h"
 #include "Params.h"
@@ -100,12 +101,10 @@ std::pair<Routes, Clients> stringRemoval(Routes routes,
 
 }  // namespace
 
-Individual stringRemovals(Individual &offspring,
-                          Individual const &best,
-                          Params const &params,
-                          XorShift128 &rng)
+Individual
+stringRemovals(Individual &indiv, Params const &params, XorShift128 &rng)
 {
-    auto const routes = offspring.getRoutes();
+    auto const routes = indiv.getRoutes();
 
     // Remove strings around a randomly picked center node
     Client const center = rng.randint(params.nbClients) + 1;

@@ -76,14 +76,8 @@ Individual GeneticAlgorithm::crossover() const
     std::vector<Individual> offspring;
     offspring.reserve(operators.size());
 
-    auto idx = 0;
     for (auto const &op : operators)
-    {
         offspring.push_back(op(parents, params, rng));
-        idx += 1;
-        if (idx == 2)  // Stop at SISRX
-            break;
-    }
 
     // A simple geometric acceptance criterion: select the best with some
     // probability. If not accepted, test the second best, etc.
@@ -98,9 +92,21 @@ Individual GeneticAlgorithm::crossover() const
 
 Individual GeneticAlgorithm::mutate(Individual &indiv) const
 {
+    std::vector<Individual> indivs;
+    indivs.reserve(mutationOps.size());
+
     for (auto const &op : mutationOps)
-        return op(indiv, population.getBestFound(), params, rng);
-    return indiv;
+        indivs.push_back(op(indiv, params, rng));
+
+    // A simple geometric acceptance criterion: select the best with some
+    // probability. If not accepted, test the second best, etc.
+    std::sort(indivs.begin(), indivs.end());
+
+    for (auto &indivsIndiv : indivs)
+        if (rng.randint(100) < params.config.selectProbability)
+            return indivsIndiv;
+
+    return indivs.back();  // fallback in case no mutated indiv was selected
 }
 
 void GeneticAlgorithm::educate(Individual &indiv)

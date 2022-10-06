@@ -11,6 +11,7 @@
 #include "TwoOpt.h"
 #include "XorShift128.h"
 #include "crossover.h"
+#include "mutation.h"
 
 #include <chrono>
 #include <iostream>

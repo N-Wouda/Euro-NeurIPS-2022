@@ -36,7 +36,7 @@ struct Config
     size_t repairBooster = 10;      // penalty booster when repairing
 
     size_t selectProbability = 90;  // offspring selection probability
-    size_t mutateProbability = 5;   // mutation operator probability
+    size_t mutateProbability = 15;  // mutation operator probability
 
     int nbVeh = INT_MAX;  // Number of vehicles
 
@@ -63,7 +63,7 @@ struct Config
     size_t destroyPct = 20;
 
     // Number of string removals in stringRemovalExchange
-    size_t maxStringRemovals = 3;  // max number of string removals
+    size_t maxStringRemovals = 6;  // max number of string removals
 
     // Number of nodes we improve by enumeration in LS postprocessing
     size_t postProcessPathLength = 4;
@@ -86,7 +86,7 @@ struct Config
                     size_t repairProbability = 50,
                     size_t repairBooster = 10,
                     size_t selectProbability = 90,
-                    size_t mutateProbability = 5,
+                    size_t mutateProbability = 15,
                     int nbVeh = INT_MAX,
                     size_t nbGranular = 40,
                     int weightWaitTime = 2,
@@ -95,7 +95,7 @@ struct Config
                     int circleSectorOverlapToleranceDegrees = 0,
                     int minCircleSectorSizeDegrees = 15,
                     size_t destroyPct = 20,
-                    size_t maxStringRemovals = 3,
+                    size_t maxStringRemovals = 6,
                     size_t postProcessPathLength = 4)
         : seed(seed),
           nbIter(nbIter),

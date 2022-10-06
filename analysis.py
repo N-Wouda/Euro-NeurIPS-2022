@@ -87,7 +87,7 @@ def solve(loc: str, seed: int, **kwargs):
         algo.add_crossover_operator(op)
 
     mutation_ops = [
-        hgspy.crossover.string_removals,
+        hgspy.mutation.string_removals,
     ]
 
     for op in mutation_ops:

@@ -23,7 +23,7 @@ class GeneticAlgorithm
         XorShift128 &)>;
 
     using mOp = std::function<Individual(
-        Individual &, Individual const &, Params const &, XorShift128 &)>;
+        Individual &, Params const &, XorShift128 &)>;
 
     Params &params;    // Problem parameters
     XorShift128 &rng;  // Random number generator
@@ -44,7 +44,9 @@ class GeneticAlgorithm
     [[nodiscard]] Individual crossover() const;
 
     /**
-     * TODO Add dosctring
+     * Runs the mutation algoritm: each mutation operator is applied once, the
+     * resulting mutated individual is inspected, and a geometric acceptance
+     * criterion is applied to select the mutated individual to return.
      */
     [[nodiscard]] Individual mutate(Individual &indiv) const;
 
