@@ -56,14 +56,19 @@ def solve(
     **kwargs,
 ):
     path = Path(loc)
-    config = Config.from_file(config_loc)
-    tlim = epoch_tlim if phase is None else tools.dynamic_time_limit(phase)
+
+    if phase is not None:
+        tlim = tools.dynamic_time_limit(phase)
+    else:
+        tlim = epoch_tlim
 
     env = VRPEnvironment(
         seed=instance_seed, instance=tools.read_vrplib(path), epoch_tlim=tlim
     )
 
     start = perf_counter()
+
+    config = Config.from_file(config_loc)
 
     if hindsight:
         costs, routes = solve_hindsight(env, config.hindsight(), solver_seed)
