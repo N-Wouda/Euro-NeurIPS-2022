@@ -67,6 +67,7 @@ def solve(loc: str, seed: int, **kwargs):
     algo = hgspy.GeneticAlgorithm(params, rng, pop, ls)
 
     crossover_ops = [
+        hgspy.crossover.broken_pairs_exchange,
         hgspy.crossover.selective_route_exchange,
     ]
 
