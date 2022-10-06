@@ -18,9 +18,6 @@ def parse_args():
 
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--num_procs", type=int, default=4)
-    parser.add_argument("--mutate_probability", type=int, default=10)
-    parser.add_argument("--destroy_pct", type=int, default=10)
-    parser.add_argument("--mutation", choices=["quali", "final"])
     parser.add_argument(
         "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
     )
@@ -39,11 +36,7 @@ def solve(loc: str, seed: int, **kwargs):
     instance = tools.read_vrplib(path)
     start = perf_counter()
 
-    config = hgspy.Config(
-        seed=seed,
-        mutateProbability=kwargs["mutate_probability"],
-        destroyPct=kwargs["destroy_pct"],
-    )
+    config = hgspy.Config(seed=seed)
     params = hgspy.Params(config, **tools.inst_to_vars(instance))
 
     rng = hgspy.XorShift128(seed=seed)
@@ -80,16 +73,10 @@ def solve(loc: str, seed: int, **kwargs):
     for op in crossover_ops:
         algo.add_crossover_operator(op)
 
-    if kwargs["mutation"] == "bpx":
-        mutation_ops = [
-            hgspy.crossover.broken_pairs,
-        ]
-    elif kwargs["mutation"] == "sisrx":
-        mutation_ops = [
-            hgspy.crossover.string_removals,
-        ]
-    else:
-        mutation_ops = []
+    mutation_ops = [
+        hgspy.crossover.string_removals,
+        hgspy.crossover.broken_pairs,
+    ]
 
     for op in mutation_ops:
         algo.add_mutation_operator(op)

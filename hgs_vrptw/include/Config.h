@@ -37,7 +37,6 @@ struct Config
 
     size_t selectProbability = 90;  // offspring selection probability
     size_t mutateProbability = 5;   // mutation operator probability
-    // TODO change default when done and rename this to mutationProbability
 
     int nbVeh = INT_MAX;  // Number of vehicles
 
