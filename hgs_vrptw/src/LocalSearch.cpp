@@ -13,6 +13,10 @@ void LocalSearch::operator()(Individual &indiv)
     std::shuffle(orderNodes.begin(), orderNodes.end(), rng);
     std::shuffle(orderRoutes.begin(), orderRoutes.end(), rng);
 
+    // Shuffling the operators beforehand also adds diversity to the search
+    std::shuffle(nodeOps.begin(), nodeOps.end(), rng);
+    std::shuffle(routeOps.begin(), routeOps.end(), rng);
+
     loadIndividual(indiv);       // load individual...
     search();                    // ...perform local search...
     indiv = exportIndividual();  // ...export result back into the individual
