@@ -15,7 +15,6 @@ route_ops = [
 ]
 
 crossover_ops = [
-    "broken_pairs_exchange",
     "selective_route_exchange",
 ]
 
