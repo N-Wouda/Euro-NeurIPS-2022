@@ -50,7 +50,9 @@ std::pair<Routes, Clients> stringRemoval(Routes routes,
     size_t const avgRouteSize
         = std::accumulate(routes.begin(), routes.end(), 0, op) / routes.size();
     size_t const maxStringSize
-        = std::max(params.config.maxStringLength, avgRouteSize);
+        = std::min(params.config.maxStringLength, avgRouteSize);
+    size_T const maxNumRemovals
+        = std::min(params.config.maxStringRemovals, routes.size());
 
     std::set<Route> destroyedRoutes;
     ClientSet removedClients;
@@ -60,7 +62,7 @@ std::pair<Routes, Clients> stringRemoval(Routes routes,
 
     for (auto c : neighbors)
     {
-        if (destroyedRoutes.size() >= params.config.maxStringRemovals)
+        if (destroyedRoutes.size() >= maxNumRemovals)
             break;
 
         if (removedClients.contains(c))
