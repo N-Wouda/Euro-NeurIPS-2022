@@ -11,8 +11,8 @@ from tqdm.contrib.concurrent import process_map
 
 import plotting
 import tools
-from strategies import solve_static
 from strategies.config import Config
+from strategies.static import hgs
 
 hgspy = tools.get_hgspy_module()
 
@@ -47,7 +47,7 @@ def solve(
     loc: str,
     seed: int,
     config_loc: str,
-    result_dir: str,
+    results_dir: str,
     max_runtime,
     max_iterations,
     phase,
@@ -66,14 +66,14 @@ def solve(
     else:
         stop = hgspy.stop.MaxIterations(max_iterations)
 
-    config = Config.from_file(config_loc)
+    static_config = Config.from_file(config_loc).static()
 
-    res = solve_static(
+    res = hgs(
         instance,
-        hgspy.Config(seed=seed, **config.static_solver_params()),
-        config.static_node_ops(),
-        config.static_route_ops(),
-        config.static_crossover_ops(),
+        hgspy.Config(seed=seed, **static_config.solver_params()),
+        static_config.node_ops(),
+        static_config.route_ops(),
+        static_config.crossover_ops(),
         stop,
     )
 
@@ -93,8 +93,8 @@ def solve(
 
     # Only save results for runs with feasible solutions and if results_dir
     # is a non-empty string
-    if is_ok == "Y" and result_dir is not None:
-        save_results(instance, res, result_dir, path.stem)
+    if is_ok == "Y" and results_dir is not None:
+        save_results(instance, res, results_dir, path.stem)
 
     stats = res.get_statistics()
     return (

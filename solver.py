@@ -52,10 +52,9 @@ def run(args):
 
     config = Config.from_file(args.config_loc)
 
-    # TODO separate static case from solve_dynamic?
     if args.hindsight:
-        solve_hindsight(env, config, args.solver_seed)
-    else:  # is either static or dynamic; both are solved via this function
+        solve_hindsight(env, config.hindsight(), args.solver_seed)
+    else:
         solve_dynamic(env, config, args.solver_seed, STRATEGIES[args.strategy])
 
 

@@ -8,7 +8,7 @@ import numpy as np
 from tqdm.contrib.concurrent import process_map
 
 import tools
-from strategies import solve_static
+from strategies.static import hgs
 from strategies.config import Config
 
 hgspy = tools.get_hgspy_module()
@@ -54,14 +54,14 @@ def solve(
     else:
         stop = hgspy.stop.MaxIterations(max_iterations)
 
-    config = Config.from_file(config_loc)
+    static_config = Config.from_file(config_loc).static()
 
-    res = solve_static(
+    res = hgs(
         instance,
-        hgspy.Config(seed=seed, **config.static_solver_params()),
-        config.static_node_ops(),
-        config.static_route_ops(),
-        config.static_crossover_ops(),
+        hgspy.Config(seed=seed, **static_config.solver_params()),
+        static_config.node_ops(),
+        static_config.route_ops(),
+        static_config.crossover_ops(),
         stop,
     )
 

@@ -1,3 +1,24 @@
+[static]
+node_ops = [
+    "Exchange10",
+    "Exchange11",
+    "Exchange20",
+    "MoveTwoClientsReversed",
+    "Exchange21",
+    "Exchange22",
+    "TwoOpt",
+]
+
+route_ops = [
+    "RelocateStar",
+    "SwapStar",
+]
+
+crossover_ops = [
+    "selective_route_exchange",
+]
+
+
 [hindsight]
 node_ops = [
     "Exchange10",

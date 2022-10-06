@@ -3,7 +3,7 @@ import time
 import numpy as np
 
 import tools
-from strategies import solve_static
+from strategies.static import hgs
 from strategies.utils import filter_instance
 from .simulate_instance import simulate_instance
 
@@ -50,7 +50,7 @@ def rollout(
     while (sim_start := time.perf_counter()) + avg_duration < start + sim_tlim:
         stop = hgspy.stop.MaxIterations(sim_solve_iters)
 
-        res = solve_static(
+        res = hgs(
             simulate_instance(info, obs, rng, n_lookahead),
             hgspy.Config(**sim_config),
             [getattr(hgspy.operators, op) for op in node_ops],

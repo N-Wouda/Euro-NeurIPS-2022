@@ -3,7 +3,7 @@ import time
 import numpy as np
 
 import tools
-from .solve_static import solve_static
+from strategies.static import hgs
 from .utils import sol2ep
 
 hgspy = tools.get_hgspy_module()
@@ -45,22 +45,30 @@ def solve_dynamic(env, config, solver_seed, dispatch_strategy):
     costs = {}
     done = False
 
+    if static_info["is_static"]:
+        config = config.static()
+    else:
+        config = config.dynamic()
+
     while not done:
         start = time.perf_counter()
 
-        dispatch_inst = dispatch_strategy(
-            static_info, observation, rng, **config.dynamic_strategy_params()
-        )
+        if static_info["is_static"]:
+            dispatch_inst = observation["epoch_instance"]
+        else:
+            dispatch_inst = dispatch_strategy(
+                static_info, observation, rng, **config.strategy_params()
+            )
 
         solve_tlim = round(ep_tlim - (time.perf_counter() - start))
 
         # TODO use a seed different from the dynamic rng for the static solver
-        res = solve_static(
+        res = hgs(
             dispatch_inst,
-            hgspy.Config(seed=solver_seed, **config.dynamic_solver_params()),
-            config.dynamic_node_ops(),
-            config.dynamic_route_ops(),
-            config.dynamic_crossover_ops(),
+            hgspy.Config(seed=solver_seed, **config.solver_params()),
+            config.node_ops(),
+            config.route_ops(),
+            config.crossover_ops(),
             hgspy.stop.MaxRuntime(solve_tlim),
         )
 

@@ -1,5 +1,5 @@
 import tools
-from .solve_static import solve_static
+from strategies.static import hgs
 
 hgspy = tools.get_hgspy_module()
 
@@ -23,12 +23,12 @@ def solve_hindsight(env, config, solver_seed):
 
     hindsight_inst = env.get_hindsight_problem()
 
-    res = solve_static(
+    res = hgs(
         hindsight_inst,
-        hgspy.Config(seed=solver_seed, **config.hindsight_solver_params()),
-        config.hindsight_node_ops(),
-        config.hindsight_route_ops(),
-        config.hindsight_crossover_ops(),
+        hgspy.Config(seed=solver_seed, **config.solver_params()),
+        config.node_ops(),
+        config.route_ops(),
+        config.crossover_ops(),
         hgspy.stop.MaxRuntime(ep_tlim),
     )
 

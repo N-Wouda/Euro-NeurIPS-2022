@@ -66,7 +66,7 @@ def solve(
     start = perf_counter()
 
     if hindsight:
-        costs, routes = solve_hindsight(env, config, solver_seed)
+        costs, routes = solve_hindsight(env, config.hindsight(), solver_seed)
     else:
         costs, routes = solve_dynamic(
             env, config, solver_seed, STRATEGIES[strategy]
