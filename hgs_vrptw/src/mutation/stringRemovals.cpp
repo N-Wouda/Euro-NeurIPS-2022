@@ -51,7 +51,7 @@ std::pair<Routes, Clients> stringRemoval(Routes routes,
         = std::accumulate(routes.begin(), routes.end(), 0, op) / routes.size();
     size_t const maxStringSize
         = std::min(params.config.maxStringLength, avgRouteSize);
-    size_T const maxNumRemovals
+    size_t const maxNumRemovals
         = std::min(params.config.maxStringRemovals, routes.size());
 
     std::set<Route> destroyedRoutes;
