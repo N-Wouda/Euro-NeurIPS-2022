@@ -116,8 +116,6 @@ void LocalSearch::search()
                 }
             }
     }
-
-    postProcess();
 }
 
 bool LocalSearch::applyNodeOps(Node *U, Node *V)
@@ -172,8 +170,10 @@ void LocalSearch::update(Route *U, Route *V)
     }
 }
 
-void LocalSearch::postProcess()
+void LocalSearch::postProcess(Individual &indiv)
 {
+    loadIndividual(indiv);
+
     auto const k = params.config.postProcessPathLength;
 
     if (k <= 1)  // 0 or 1 means we are either not doing anything at all (0),
@@ -186,6 +186,7 @@ void LocalSearch::postProcess()
     // issue #98 for details.
     for (auto &route : routes)
     {
+        // TODO also optimise route if it is smaller than k
         for (size_t start = 1; start + k <= route.size() + 1; ++start)
         {
             // We process the range [start, start + k). So the fixed endpoints
@@ -200,8 +201,10 @@ void LocalSearch::postProcess()
             {
                 auto const cost = evaluateSubpath(path, prev, next, route);
 
-                if (cost < currCost)  // it is rare to find more improving
-                {                     // moves, so we break after the first
+                if (cost < currCost)
+                {
+                    currCost = cost;
+
                     for (auto pos : path)
                     {
                         auto *node = route[pos];
@@ -210,11 +213,12 @@ void LocalSearch::postProcess()
                     }
 
                     route.update();
-                    break;
                 }
             }
         }
     }
+
+    indiv = exportIndividual();
 }
 
 int LocalSearch::evaluateSubpath(std::vector<size_t> const &subpath,

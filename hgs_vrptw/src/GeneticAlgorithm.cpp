@@ -46,7 +46,12 @@ Result GeneticAlgorithm::run(StoppingCriterion &stop)
         auto const newBest = population.getCurrentBestFeasibleCost();
 
         if (currBest > newBest)  // has new best!
+        {
+            auto indiv = population.getBestFound();
+            localSearch.postProcess(indiv);
+            population.addIndividual(indiv);
             nbIterNoImprove = 1;
+        }
         else
             nbIterNoImprove++;
 
@@ -60,6 +65,10 @@ Result GeneticAlgorithm::run(StoppingCriterion &stop)
         if (params.config.collectStatistics)
             stats.collectFrom(population);
     }
+
+//    auto indiv = population.getBestFound();
+//    localSearch.postProcess(indiv);
+//    population.addIndividual(indiv);
 
     std::chrono::duration<double> runTime = clock::now() - start;
     return {population.getBestFound(), stats, iter, runTime.count()};
