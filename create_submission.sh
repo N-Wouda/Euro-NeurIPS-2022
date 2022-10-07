@@ -10,7 +10,7 @@ find hgs_vrptw \
   -exec zip -o -r "tmp/submissions/$DATE.zip" {} +
 
 # Python code (utilities and various solver strategies)
-zip -o -r "tmp/submissions/$DATE.zip" stategies/*
+zip -o -r "tmp/submissions/$DATE.zip" strategies/*
 zip -o -r "tmp/submissions/$DATE.zip" solver.py tools.py environment.py
 
 # Required CodaLab file
