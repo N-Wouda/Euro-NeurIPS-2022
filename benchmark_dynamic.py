@@ -71,7 +71,7 @@ def solve(
     config = Config.from_file(config_loc)
 
     if hindsight:
-        costs, routes = solve_hindsight(env, config.hindsight(), solver_seed)
+        costs, routes = solve_hindsight(env, config.static(), solver_seed)
     else:
         costs, routes = solve_dynamic(
             env, config, solver_seed, STRATEGIES[strategy]

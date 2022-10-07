@@ -53,7 +53,7 @@ def run(args):
     config = Config.from_file(args.config_loc)
 
     if args.hindsight:
-        solve_hindsight(env, config.hindsight(), args.solver_seed)
+        solve_hindsight(env, config.static(), args.solver_seed)
     else:
         solve_dynamic(env, config, args.solver_seed, STRATEGIES[args.strategy])
 

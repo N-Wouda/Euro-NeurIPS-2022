@@ -35,7 +35,6 @@ class Config:
     def __init__(self, **kwargs):
         self._static = _SubConfig(**kwargs.get("static", {}))
         self._dynamic = _SubConfig(**kwargs.get("dynamic", {}))
-        self._hindsight = _SubConfig(**kwargs.get("hindsight", {}))
 
     @classmethod
     def from_file(cls, where: str) -> Config:
@@ -48,6 +47,3 @@ class Config:
 
     def dynamic(self) -> _SubConfig:
         return self._dynamic
-
-    def hindsight(self) -> _SubConfig:
-        return self._hindsight

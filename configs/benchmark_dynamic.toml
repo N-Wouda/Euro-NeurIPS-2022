@@ -1,4 +1,4 @@
-[hindsight]
+[static]
 node_ops = [
     "Exchange10",
     "Exchange11",
