@@ -57,4 +57,4 @@ jobs:
           make --directory=release
       - name: Test solver
         run: |
-          poetry run python benchmark.py --max_runtime 1 --num_procs 2
+          poetry run python benchmark.py --max_iterations 1 --num_procs 2
