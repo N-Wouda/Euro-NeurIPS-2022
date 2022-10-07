@@ -15,6 +15,7 @@ def rollout(
     obs,
     rng,
     n_lookahead: int,
+    n_requests: int,
     sim_tlim_factor: float,
     sim_solve_iters: int,
     dispatch_threshold: float,
@@ -36,27 +37,24 @@ def rollout(
 
     # Parameters
     ep_inst = obs["epoch_instance"]
-    n_requests = ep_inst["is_depot"].size
     sim_tlim = info["epoch_tlim"] * sim_tlim_factor
     must_dispatch = set(np.flatnonzero(ep_inst["must_dispatch"]))
 
     # Statistics
     n_sims = 0
     avg_duration = 0.0
-    dispatch_count = np.zeros(n_requests, dtype=int)
+    dispatch_count = np.zeros(ep_inst["is_depot"].size, dtype=int)
 
     # Only do another simulation if there's (on average) enough time for it to
     # complete before the time limit.
     while (sim_start := time.perf_counter()) + avg_duration < start + sim_tlim:
-        stop = hgspy.stop.MaxIterations(sim_solve_iters)
-
         res = hgs(
-            simulate_instance(info, obs, rng, n_lookahead),
+            simulate_instance(info, obs, rng, n_lookahead, n_requests),
             hgspy.Config(**sim_config),
             [getattr(hgspy.operators, op) for op in node_ops],
             [getattr(hgspy.operators, op) for op in route_ops],
             [getattr(hgspy.crossover, op) for op in crossover_ops],
-            stop,
+            hgspy.stop.MaxIterations(sim_solve_iters),
         )
 
         best = res.get_best_found()
