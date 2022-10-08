@@ -186,7 +186,7 @@ void LocalSearch::postProcess(Individual &indiv)
     // issue #98 for details.
     for (auto &route : routes)
     {
-        // TODO also optimise route if it is smaller than k
+        // TODO should we also deal with about routes smaller than k?
         for (size_t start = 1; start + k <= route.size() + 1; ++start)
         {
             // We process the range [start, start + k). So the fixed endpoints
@@ -201,10 +201,8 @@ void LocalSearch::postProcess(Individual &indiv)
             {
                 auto const cost = evaluateSubpath(path, prev, next, route);
 
-                if (cost < currCost)
-                {
-                    currCost = cost;
-
+                if (cost < currCost)  // it is rare to find more improving
+                {                     // moves, so we break after the first
                     for (auto pos : path)
                     {
                         auto *node = route[pos];
@@ -213,6 +211,7 @@ void LocalSearch::postProcess(Individual &indiv)
                     }
 
                     route.update();
+                    break;
                 }
             }
         }

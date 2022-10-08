@@ -36,7 +36,7 @@ def solve(loc: str, seed: int, **kwargs):
     instance = tools.read_vrplib(path)
     start = perf_counter()
 
-    config = hgspy.Config(seed=seed)
+    config = hgspy.Config(seed=seed, postProcessPathLength=6)
 
     node_ops = [
         hgspy.operators.Exchange10,

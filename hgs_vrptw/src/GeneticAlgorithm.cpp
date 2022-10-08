@@ -66,9 +66,9 @@ Result GeneticAlgorithm::run(StoppingCriterion &stop)
             stats.collectFrom(population);
     }
 
-//    auto indiv = population.getBestFound();
-//    localSearch.postProcess(indiv);
-//    population.addIndividual(indiv);
+    //    auto indiv = population.getBestFound();
+    //    localSearch.postProcess(indiv);
+    //    population.addIndividual(indiv);
 
     std::chrono::duration<double> runTime = clock::now() - start;
     return {population.getBestFound(), stats, iter, runTime.count()};
