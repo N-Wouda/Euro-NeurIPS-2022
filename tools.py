@@ -182,6 +182,7 @@ def read_vrplib(filename, rounded=True):
     duration_matrix = []
     service_t = []
     timewi = []
+    release_times = []
     with open(filename, 'r') as f:
         
         for line in f:
@@ -208,6 +209,8 @@ def read_vrplib(filename, rounded=True):
                 mode = "time_windows"
             elif line == "SERVICE_TIME_SECTION":
                 mode = "service_t"
+            elif line =="RELEASE_TIME_SECTION":
+                mode = "release_time"
             elif line == "EOF":
                 break
             elif mode == 'coord':
@@ -241,6 +244,10 @@ def read_vrplib(filename, rounded=True):
                 l, u = (int(l), int(u)) if rounded else (float(l), float(u))
                 assert node == len(timewi) + 1
                 timewi.append([l, u])
+            elif mode =='release_time':
+                node, release_time = line.split()
+                release_time = int(release_time)
+                release_times.append(release_time)
     
     return {
         'is_depot': np.array([1] + [0] * len(loc), dtype=bool),
@@ -249,7 +256,8 @@ def read_vrplib(filename, rounded=True):
         'capacity': capacity,
         'time_windows': np.array(timewi),
         'service_times': np.array(service_t),
-        'duration_matrix': np.array(duration_matrix) if len(duration_matrix) > 0 else None
+        'duration_matrix': np.array(duration_matrix) if len(duration_matrix) > 0 else None,
+        'release_times': np.array(release_times) if release_times else np.zeros(len(loc)+1),
     }
 
 
@@ -436,6 +444,4 @@ def name2size(name: str) -> int:
     """
     Extracts the instance size (i.e., num clients) from the instance name.
     """
-    return int(re.search(r'-n(\d\d\d)-', name).group(1))
-
-
+    return int(re.search(r'-n(\d{1,3})-', name).group(1))
