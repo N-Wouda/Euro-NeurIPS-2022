@@ -1,8 +1,8 @@
+import hgspy
 import tools
 
 
 def solve_simulation(instance, max_iterations=None, **kwargs):
-    hgspy = tools.get_hgspy_module()
 
     config = hgspy.Config(**kwargs)
     params = hgspy.Params(config, **tools.inst_to_vars(instance))

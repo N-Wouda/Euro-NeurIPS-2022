@@ -1,7 +1,5 @@
-import tools
+import hgspy
 from .solve_static import solve_static
-
-hgspy = tools.get_hgspy_module()
 
 
 def solve_hindsight(env, solver_seed):
