@@ -45,7 +45,7 @@ Result GeneticAlgorithm::run(StoppingCriterion &stop)
 
         auto const newBest = population.getCurrentBestFeasibleCost();
 
-        if (currBest > newBest)  // has new best!
+        if (newBest < currBest)  // has new best!
         {
             auto indiv = population.getBestFound();
             localSearch.postProcess(indiv);
