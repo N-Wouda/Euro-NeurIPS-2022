@@ -8,7 +8,6 @@ import tools
 from environment import ControllerEnvironment, VRPEnvironment
 from strategies import solve_dynamic, solve_hindsight
 from strategies.config import Config
-from strategies.dynamic import STRATEGIES
 
 
 def parse_args():
