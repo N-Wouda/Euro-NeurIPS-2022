@@ -3,13 +3,14 @@ import time
 import numpy as np
 
 import tools
+from strategies.dynamic import STRATEGIES
 from strategies.static import hgs
 from .utils import sol2ep
 
 hgspy = tools.get_hgspy_module()
 
 
-def solve_dynamic(env, config, solver_seed, dispatch_strategy):
+def solve_dynamic(env, config, solver_seed):
     """
     Solve the dynamic VRPTW problem using the passed-in dispatching strategy.
     The given seed is used to initialise both the random number stream on the
@@ -22,19 +23,6 @@ def solve_dynamic(env, config, solver_seed, dispatch_strategy):
         The configuration object, storing the strategy and solver parameters.
     solver_seed : int
         RNG seed. Seed is shared between static and dynamic solver.
-    dispatch_strategy : callable
-        The strategy to use for deciding which requests to dispatch in each
-        epoch. This function should take the following arguments:
-
-        * static_info: static information, including base instance and number
-                       of epochs.
-        * observation: the realisations of the current epoch.
-        * rng: a seeded random number generator.
-        * kwargs: any additional keyword arguments taken from the configuration
-          object's strategy parameters.
-
-        Using these arguments, the function should return which requests to
-        dispatch in the current epoch.
     """
     rng = np.random.default_rng(solver_seed)
 
@@ -56,7 +44,8 @@ def solve_dynamic(env, config, solver_seed, dispatch_strategy):
         if static_info["is_static"]:
             dispatch_inst = observation["epoch_instance"]
         else:
-            dispatch_inst = dispatch_strategy(
+            strategy = STRATEGIES[config.strategy()]
+            dispatch_inst = strategy(
                 static_info, observation, rng, **config.strategy_params()
             )
 

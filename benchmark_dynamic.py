@@ -13,7 +13,6 @@ import tools
 from environment import VRPEnvironment
 from strategies import solve_dynamic, solve_hindsight
 from strategies.config import Config
-from strategies.dynamic import STRATEGIES
 
 
 def parse_args():
@@ -28,18 +27,12 @@ def parse_args():
     parser.add_argument(
         "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
     )
-
-    problem_type = parser.add_mutually_exclusive_group()
-    problem_type.add_argument("--hindsight", action="store_true")
-    problem_type.add_argument(
-        "--strategy", choices=STRATEGIES.keys(), default="rollout"
-    )
+    parser.add_argument("--hindsight", action="store_true")
+    parser.add_argument("--aggregate", action="store_true")
 
     stop = parser.add_mutually_exclusive_group(required=True)
     stop.add_argument("--epoch_tlim", type=int)
     stop.add_argument("--phase", choices=["quali", "final"])
-
-    parser.add_argument("--aggregate", action="store_true")
 
     return parser.parse_args()
 
@@ -50,7 +43,6 @@ def solve(
     solver_seed: int,
     config_loc: str,
     hindsight: bool,
-    strategy: str,
     epoch_tlim,
     phase,
     **kwargs,
@@ -73,9 +65,7 @@ def solve(
     if hindsight:
         costs, routes = solve_hindsight(env, config.static(), solver_seed)
     else:
-        costs, routes = solve_dynamic(
-            env, config, solver_seed, STRATEGIES[strategy]
-        )
+        costs, routes = solve_dynamic(env, config, solver_seed)
 
     run_time = round(perf_counter() - start, 3)
 

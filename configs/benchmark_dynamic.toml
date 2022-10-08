@@ -39,8 +39,9 @@ crossover_ops = [
     "selective_route_exchange",
 ]
 
+strategy = "rollout"
 
-[dynamic.strategy]
+[dynamic.strategy_params]
 n_lookahead = 3
 n_requests = 100
 sim_tlim_factor = 0.5
@@ -67,7 +68,7 @@ crossover_ops = [
 ]
 
 
-[dynamic.strategy.sim_config]
+[dynamic.strategy_params.sim_config]
 seed = 1
 generationSize = 20
 minPopSize = 5

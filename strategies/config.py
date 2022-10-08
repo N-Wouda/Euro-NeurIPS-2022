@@ -28,7 +28,12 @@ class _SubConfig(dict):
         return self.get("params", {})
 
     def strategy_params(self):
-        return self.get("strategy", {})
+        return self.get("strategy_params", {})
+
+    def strategy(self):
+        # There's no obvious default for this string value. If the key is
+        # accessed but not set, that should raise an error.
+        return self["strategy"]
 
 
 class Config:

@@ -24,9 +24,6 @@ def parse_args():
     problem_type = parser.add_mutually_exclusive_group()
     problem_type.add_argument("--static", action="store_true")
     problem_type.add_argument("--hindsight", action="store_true")
-    problem_type.add_argument(
-        "--strategy", choices=STRATEGIES.keys(), default="rollout"
-    )
 
     return parser.parse_args()
 
@@ -55,7 +52,7 @@ def run(args):
     if args.hindsight:
         solve_hindsight(env, config.static(), args.solver_seed)
     else:
-        solve_dynamic(env, config, args.solver_seed, STRATEGIES[args.strategy])
+        solve_dynamic(env, config, args.solver_seed)
 
 
 def main():
