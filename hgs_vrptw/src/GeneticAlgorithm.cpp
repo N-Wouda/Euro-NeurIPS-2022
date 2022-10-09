@@ -61,10 +61,6 @@ Result GeneticAlgorithm::run(StoppingCriterion &stop)
             stats.collectFrom(population);
     }
 
-    auto indiv = population.getBestFound();
-    localSearch.postProcess(indiv);
-    population.addIndividual(indiv);
-
     std::chrono::duration<double> runTime = clock::now() - start;
     return {population.getBestFound(), stats, iter, runTime.count()};
 }
@@ -94,9 +90,9 @@ void GeneticAlgorithm::educate(Individual &indiv)
 {
     localSearch(indiv);
 
-//    if (indiv.isFeasible()
-//        && indiv.cost() < population.getCurrentBestFeasibleCost())
-//        localSearch.postProcess(indiv);
+    if (indiv.isFeasible()
+        && indiv.cost() < population.getCurrentBestFeasibleCost())
+        localSearch.postProcess(indiv);
 
     population.addIndividual(indiv);
 
@@ -112,8 +108,8 @@ void GeneticAlgorithm::educate(Individual &indiv)
 
         if (indiv.isFeasible())
         {
-//            if (indiv.cost() < population.getCurrentBestFeasibleCost())
-//                localSearch.postProcess(indiv);
+            if (indiv.cost() < population.getCurrentBestFeasibleCost())
+                localSearch.postProcess(indiv);
 
             population.addIndividual(indiv);
 
