@@ -46,12 +46,7 @@ Result GeneticAlgorithm::run(StoppingCriterion &stop)
         auto const newBest = population.getCurrentBestFeasibleCost();
 
         if (newBest < currBest)  // has new best!
-        {
-            auto indiv = population.getBestFound();
-            localSearch.postProcess(indiv);
-            population.addIndividual(indiv);
             nbIterNoImprove = 1;
-        }
         else
             nbIterNoImprove++;
 
@@ -66,9 +61,9 @@ Result GeneticAlgorithm::run(StoppingCriterion &stop)
             stats.collectFrom(population);
     }
 
-    //    auto indiv = population.getBestFound();
-    //    localSearch.postProcess(indiv);
-    //    population.addIndividual(indiv);
+    auto indiv = population.getBestFound();
+    localSearch.postProcess(indiv);
+    population.addIndividual(indiv);
 
     std::chrono::duration<double> runTime = clock::now() - start;
     return {population.getBestFound(), stats, iter, runTime.count()};
@@ -98,6 +93,10 @@ Individual GeneticAlgorithm::crossover() const
 void GeneticAlgorithm::educate(Individual &indiv)
 {
     localSearch(indiv);
+
+//    if (indiv.cost() < population.getCurrentBestFeasibleCost())
+//        localSearch.postProcess(indiv);
+
     population.addIndividual(indiv);
 
     loadFeas.push_back(!indiv.hasExcessCapacity());
@@ -112,6 +111,9 @@ void GeneticAlgorithm::educate(Individual &indiv)
 
         if (indiv.isFeasible())
         {
+//            if (indiv.cost() < population.getCurrentBestFeasibleCost())
+//                localSearch.postProcess(indiv);
+
             population.addIndividual(indiv);
 
             loadFeas.push_back(!indiv.hasExcessCapacity());
