@@ -90,7 +90,8 @@ void GeneticAlgorithm::educate(Individual &indiv)
 {
     localSearch(indiv);
 
-    if (indiv.cost() < population.getCurrentBestFeasibleCost())
+    if (indiv.isFeasible()
+        && indiv.cost() < population.getCurrentBestFeasibleCost())
         localSearch.postProcess(indiv);
 
     population.addIndividual(indiv);
