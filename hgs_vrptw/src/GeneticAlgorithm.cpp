@@ -45,7 +45,7 @@ Result GeneticAlgorithm::run(StoppingCriterion &stop)
 
         auto const newBest = population.getCurrentBestFeasibleCost();
 
-        if (currBest > newBest)  // has new best!
+        if (newBest < currBest)  // has new best!
             nbIterNoImprove = 1;
         else
             nbIterNoImprove++;
@@ -89,6 +89,11 @@ Individual GeneticAlgorithm::crossover() const
 void GeneticAlgorithm::educate(Individual &indiv)
 {
     localSearch(indiv);
+
+    if (indiv.isFeasible()
+        && indiv.cost() < population.getCurrentBestFeasibleCost())
+        localSearch.postProcess(indiv);
+
     population.addIndividual(indiv);
 
     loadFeas.push_back(!indiv.hasExcessCapacity());
@@ -103,6 +108,9 @@ void GeneticAlgorithm::educate(Individual &indiv)
 
         if (indiv.isFeasible())
         {
+            if (indiv.cost() < population.getCurrentBestFeasibleCost())
+                localSearch.postProcess(indiv);
+
             population.addIndividual(indiv);
 
             loadFeas.push_back(!indiv.hasExcessCapacity());
