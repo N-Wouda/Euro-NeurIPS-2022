@@ -186,13 +186,15 @@ void LocalSearch::postProcess(Individual &indiv)
     // issue #98 for details.
     for (auto &route : routes)
     {
-        // TODO should we also deal with about routes smaller than k?
-        for (size_t start = 1; start + k <= route.size() + 1; ++start)
+        auto const kRoute = std::min(k, route.size());
+        path.resize(kRoute);
+
+        for (size_t start = 1; start + kRoute <= route.size() + 1; ++start)
         {
             // We process the range [start, start + k). So the fixed endpoints
             // are p(start) and the node at start + k.
             auto *prev = p(route[start]);
-            auto *next = route[start + k];
+            auto *next = route[start + kRoute];
 
             std::iota(path.begin(), path.end(), start);
             auto currCost = evaluateSubpath(path, prev, next, route);
