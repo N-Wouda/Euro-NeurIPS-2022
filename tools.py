@@ -257,7 +257,7 @@ def read_vrplib(filename, rounded=True):
         'time_windows': np.array(timewi),
         'service_times': np.array(service_t),
         'duration_matrix': np.array(duration_matrix) if len(duration_matrix) > 0 else None,
-        'release_times': np.array(release_times) if release_times else np.zeros(len(loc)+1),
+        'release_times': np.array(release_times) if release_times else np.zeros(len(loc) + 1, dtype=int),
     }
 
 
