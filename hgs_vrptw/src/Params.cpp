@@ -421,31 +421,32 @@ void Params::calculateNeighbours()
                 continue;
 
             // Compute proximity using Eq. 4 in Vidal 2012. The proximity is
-            // considered as the arc (i, j) or (j, i), whichever is best.
+            // computed by the distance, min. wait time and min. time warp
+            // going from either i -> j or j -> i, whichever is the least.
             int const maxRelease
                 = std::max(clients[i].releaseTime, clients[j].releaseTime);
 
             // Proximity from j to i
-            int const minWaitTime1 = clients[i].twEarly - dist(j, i)
-                                     - clients[j].servDur - clients[j].twLate;
+            int const waitTime1 = clients[i].twEarly - dist(j, i)
+                                  - clients[j].servDur - clients[j].twLate;
             int const earliestArrival1
                 = std::max(maxRelease + dist(0, j), clients[j].twEarly);
-            int const minTimeWarp1 = earliestArrival1 + clients[j].servDur
-                                     + dist(j, i) - clients[i].twLate;
-            int const prox1
-                = dist(j, i) + config.weightWaitTime * std::max(0, minWaitTime1)
-                  + config.weightTimeWarp * std::max(0, minTimeWarp1);
+            int const timeWarp1 = earliestArrival1 + clients[j].servDur
+                                  + dist(j, i) - clients[i].twLate;
+            int const prox1 = dist(j, i)
+                              + config.weightWaitTime * std::max(0, waitTime1)
+                              + config.weightTimeWarp * std::max(0, timeWarp1);
 
             // Proximity from i to j
-            int const minWaitTime2 = clients[j].twEarly - dist(i, j)
-                                     - clients[i].servDur - clients[i].twLate;
+            int const waitTime2 = clients[j].twEarly - dist(i, j)
+                                  - clients[i].servDur - clients[i].twLate;
             int const earliestArrival2
                 = std::max(maxRelease + dist(0, i), clients[i].twEarly);
-            int const minTimeWarp2 = earliestArrival2 + clients[i].servDur
-                                     + dist(i, j) - clients[j].twLate;
-            int const prox2
-                = dist(i, j) + config.weightWaitTime * std::max(0, minWaitTime2)
-                  + config.weightTimeWarp * std::max(0, minTimeWarp2);
+            int const timeWarp2 = earliestArrival2 + clients[i].servDur
+                                  + dist(i, j) - clients[j].twLate;
+            int const prox2 = dist(i, j)
+                              + config.weightWaitTime * std::max(0, waitTime2)
+                              + config.weightTimeWarp * std::max(0, timeWarp2);
 
             proximity.emplace_back(std::min(prox1, prox2), j);
         }

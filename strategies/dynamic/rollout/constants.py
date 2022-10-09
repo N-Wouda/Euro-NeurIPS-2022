@@ -3,9 +3,9 @@ EPOCH_DURATION = 3600
 
 N_LOOKAHEAD = 3  # number of lookahead simulations
 SIM_TLIM_FACTOR = 0.6  # percent of epoch tlim
-SIM_SOLVE_ITERS = 50  # iterations to solve a simulation instance
+SIM_SOLVE_ITERS = 40  # iterations to solve a simulation instance
 
-DISPATCH_THRESHOLD = 0.25
+DISPATCH_THRESHOLD = 0.20
 
 # Configuration to solve simulation instances
 SIM_SOLVE_CONFIG = {
