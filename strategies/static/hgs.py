@@ -2,7 +2,7 @@ import hgspy
 import tools
 
 
-def solve_static(
+def hgs(
     instance,
     config,
     node_ops,

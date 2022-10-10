@@ -12,7 +12,8 @@ from tqdm.contrib.concurrent import process_map
 import hgspy
 import plotting
 import tools
-from strategies.solve_static import solve_static
+from strategies.config import Config
+from strategies.static import hgs
 
 matplotlib.use("Agg")  # Don't show plots
 
@@ -26,6 +27,7 @@ def parse_args():
 
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--num_procs", type=int, default=4)
+    parser.add_argument("--config_loc", default="configs/analysis.toml")
     parser.add_argument(
         "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
     )
@@ -40,44 +42,38 @@ def parse_args():
     return parser.parse_args()
 
 
-def solve(loc: str, seed: int, **kwargs):
+def solve(
+    loc: str,
+    seed: int,
+    config_loc: str,
+    results_dir: str,
+    max_runtime,
+    max_iterations,
+    phase,
+    **kwargs,
+):
     path = Path(loc)
 
     instance = tools.read_vrplib(path)
     start = perf_counter()
 
-    config = hgspy.Config(seed=seed, collectStatistics=True)
-
-    node_ops = [
-        hgspy.operators.Exchange10,
-        hgspy.operators.Exchange11,
-        hgspy.operators.Exchange20,
-        hgspy.operators.MoveTwoClientsReversed,
-        hgspy.operators.Exchange21,
-        hgspy.operators.Exchange22,
-        hgspy.operators.TwoOpt,
-    ]
-
-    route_ops = [
-        hgspy.operators.RelocateStar,
-        hgspy.operators.SwapStar,
-    ]
-
-    crossover_ops = [
-        hgspy.crossover.broken_pairs_exchange,
-        hgspy.crossover.selective_route_exchange,
-    ]
-
-    if kwargs["phase"] is not None:
-        t_lim = tools.static_time_limit(tools.name2size(loc), kwargs["phase"])
+    if phase is not None:
+        t_lim = tools.static_time_limit(tools.name2size(loc), phase)
         stop = hgspy.stop.MaxRuntime(t_lim)
-    elif kwargs["max_runtime"] is not None:
-        stop = hgspy.stop.MaxRuntime(kwargs["max_runtime"])
+    elif max_runtime is not None:
+        stop = hgspy.stop.MaxRuntime(max_runtime)
     else:
-        stop = hgspy.stop.MaxIterations(kwargs["max_iterations"])
+        stop = hgspy.stop.MaxIterations(max_iterations)
 
-    res = solve_static(
-        instance, config, node_ops, route_ops, crossover_ops, stop
+    static_config = Config.from_file(config_loc).static()
+
+    res = hgs(
+        instance,
+        hgspy.Config(seed=seed, **static_config.solver_params()),
+        static_config.node_ops(),
+        static_config.route_ops(),
+        static_config.crossover_ops(),
+        stop,
     )
 
     best = res.get_best_found()
@@ -96,8 +92,8 @@ def solve(loc: str, seed: int, **kwargs):
 
     # Only save results for runs with feasible solutions and if results_dir
     # is a non-empty string
-    if is_ok == "Y" and kwargs["results_dir"] is not None:
-        save_results(instance, res, kwargs["results_dir"], path.stem)
+    if is_ok == "Y" and results_dir is not None:
+        save_results(instance, res, results_dir, path.stem)
 
     stats = res.get_statistics()
     return (

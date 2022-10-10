@@ -12,7 +12,7 @@ from tqdm.contrib.concurrent import process_map
 import tools
 from environment import VRPEnvironment
 from strategies import solve_dynamic, solve_hindsight
-from strategies.dynamic import STRATEGIES
+from strategies.config import Config
 
 
 def parse_args():
@@ -22,33 +22,37 @@ def parse_args():
     parser.add_argument("--solver_seed", type=int, default=1)
     parser.add_argument("--num_procs", type=int, default=4)
     parser.add_argument(
+        "--config_loc", default="configs/benchmark_dynamic.toml"
+    )
+    parser.add_argument(
         "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
     )
-
-    problem_type = parser.add_mutually_exclusive_group()
-    problem_type.add_argument("--hindsight", action="store_true")
-    problem_type.add_argument(
-        "--strategy", choices=STRATEGIES.keys(), default="rollout"
-    )
+    parser.add_argument("--hindsight", action="store_true")
+    parser.add_argument("--aggregate", action="store_true")
 
     stop = parser.add_mutually_exclusive_group(required=True)
     stop.add_argument("--epoch_tlim", type=int)
     stop.add_argument("--phase", choices=["quali", "final"])
 
-    parser.add_argument("--aggregate", action="store_true")
-
     return parser.parse_args()
 
 
 def solve(
-    loc: str, instance_seed: int, hindsight: bool, strategy: str, **kwargs
+    loc: str,
+    instance_seed: int,
+    solver_seed: int,
+    config_loc: str,
+    hindsight: bool,
+    epoch_tlim,
+    phase,
+    **kwargs,
 ):
     path = Path(loc)
 
-    if kwargs["phase"] is not None:
-        tlim = tools.dynamic_time_limit(kwargs["phase"])
+    if phase is not None:
+        tlim = tools.dynamic_time_limit(phase)
     else:
-        tlim = kwargs["epoch_tlim"]
+        tlim = epoch_tlim
 
     env = VRPEnvironment(
         seed=instance_seed, instance=tools.read_vrplib(path), epoch_tlim=tlim
@@ -56,12 +60,12 @@ def solve(
 
     start = perf_counter()
 
-    seed = kwargs["solver_seed"]
+    config = Config.from_file(config_loc)
 
     if hindsight:
-        costs, routes = solve_hindsight(env, seed)
+        costs, routes = solve_hindsight(env, config.static(), solver_seed)
     else:
-        costs, routes = solve_dynamic(env, STRATEGIES[strategy], seed)
+        costs, routes = solve_dynamic(env, config, solver_seed)
 
     run_time = round(perf_counter() - start, 3)
 

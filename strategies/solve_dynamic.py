@@ -3,23 +3,24 @@ import time
 import numpy as np
 
 import hgspy
-from .solve_static import solve_static
+from strategies.dynamic import STRATEGIES
+from strategies.static import hgs
 from .utils import sol2ep
 
 
-def solve_dynamic(env, dispatch_strategy, solver_seed):
+def solve_dynamic(env, config, solver_seed):
     """
     Solve the dynamic VRPTW problem using the passed-in dispatching strategy.
     The given seed is used to initialise both the random number stream on the
     Python side, and for the static solver on the C++ side.
 
-    ``dispatch_strategy`` is a function that should take as inputs
-    - ``static_info``: static information, including base instance and number
-                       of epochs.
-    - ``observation``: the observation of the current epoch.
-    - ``rng``: a random number generator (same seed as static solver).
-    and returns
-    - ``dispatch_instance``: the dispatched requests for the current epoch
+    Parameters
+    ----------
+    env : Environment
+    config : Config
+        The configuration object, storing the strategy and solver parameters.
+    solver_seed : int
+        RNG seed. Seed is shared between static and dynamic solver.
     """
     rng = np.random.default_rng(solver_seed)
 
@@ -30,37 +31,32 @@ def solve_dynamic(env, dispatch_strategy, solver_seed):
     costs = {}
     done = False
 
+    if static_info["is_static"]:
+        config = config.static()
+    else:
+        config = config.dynamic()
+
     while not done:
         start = time.perf_counter()
 
-        dispatch_inst = dispatch_strategy(static_info, observation, rng)
+        if static_info["is_static"]:
+            dispatch_inst = observation["epoch_instance"]
+        else:
+            strategy = STRATEGIES[config.strategy()]
+            dispatch_inst = strategy(
+                static_info, observation, rng, **config.strategy_params()
+            )
+
         solve_tlim = round(ep_tlim - (time.perf_counter() - start))
 
         # TODO use a seed different from the dynamic rng for the static solver
-        config = hgspy.Config(seed=solver_seed)
-        stop = hgspy.stop.MaxRuntime(solve_tlim)
-
-        node_ops = [
-            hgspy.operators.Exchange10,
-            hgspy.operators.Exchange11,
-            hgspy.operators.Exchange20,
-            hgspy.operators.MoveTwoClientsReversed,
-            hgspy.operators.Exchange21,
-            hgspy.operators.Exchange22,
-            hgspy.operators.TwoOpt,
-        ]
-
-        route_ops = [
-            hgspy.operators.RelocateStar,
-            hgspy.operators.SwapStar,
-        ]
-
-        crossover_ops = [
-            hgspy.crossover.selective_route_exchange,
-        ]
-
-        res = solve_static(
-            dispatch_inst, config, node_ops, route_ops, crossover_ops, stop
+        res = hgs(
+            dispatch_inst,
+            hgspy.Config(seed=solver_seed, **config.solver_params()),
+            config.node_ops(),
+            config.route_ops(),
+            config.crossover_ops(),
+            hgspy.stop.MaxRuntime(solve_tlim),
         )
 
         best = res.get_best_found()
