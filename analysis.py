@@ -9,11 +9,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from tqdm.contrib.concurrent import process_map
 
+import hgspy
 import plotting
 import tools
 from strategies.solve_static import solve_static
-
-hgspy = tools.get_hgspy_module()
 
 matplotlib.use("Agg")  # Don't show plots
 

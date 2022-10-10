@@ -2,11 +2,9 @@ import time
 
 import numpy as np
 
-import tools
+import hgspy
 from .solve_static import solve_static
 from .utils import sol2ep
-
-hgspy = tools.get_hgspy_module()
 
 
 def solve_dynamic(env, dispatch_strategy, solver_seed):

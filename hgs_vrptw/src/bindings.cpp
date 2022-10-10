@@ -56,7 +56,8 @@ PYBIND11_MODULE(hgspy, m)
              static_cast<void (LocalSearch::*)(LocalSearchOperator<Route> &)>(
                  &LocalSearch::addRouteOperator),
              py::arg("op"))
-        .def("__call__", &LocalSearch::operator(), py::arg("indiv"));
+        .def("search", &LocalSearch::search, py::arg("indiv"))
+        .def("intensify", &LocalSearch::intensify, py::arg("indiv"));
 
     py::class_<Config>(m, "Config")
         .def(py::init<int,
@@ -81,7 +82,6 @@ PYBIND11_MODULE(hgspy, m)
                       size_t,
                       int,
                       int,
-                      size_t,
                       int,
                       int,
                       size_t,
@@ -100,7 +100,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("nbElite") = 4,
              py::arg("nbClose") = 5,
              py::arg("targetFeasible") = 0.4,
-             py::arg("nbKeepOnRestart") = 1,
+             py::arg("nbKeepOnRestart") = 0,
              py::arg("repairProbability") = 50,
              py::arg("repairBooster") = 10,
              py::arg("selectProbability") = 90,
@@ -108,11 +108,10 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("nbGranular") = 40,
              py::arg("weightWaitTime") = 2,
              py::arg("weightTimeWarp") = 10,
-             py::arg("intensificationProbability") = 0,
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
              py::arg("minCircleSectorSizeDegrees") = 15,
              py::arg("destroyPct") = 20,
-             py::arg("postProcessPathLength") = 4)
+             py::arg("postProcessPathLength") = 6)
         .def_readonly("seed", &Config::seed)
         .def_readonly("nbIter", &Config::nbIter)
         .def_readonly("timeLimit", &Config::timeLimit)
