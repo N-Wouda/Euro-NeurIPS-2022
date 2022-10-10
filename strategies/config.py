@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import tomli
 
-import tools
-
-hgspy = tools.get_hgspy_module()
+import hgspy
 
 
 class _SubConfig(dict):
