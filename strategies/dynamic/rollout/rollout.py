@@ -2,12 +2,10 @@ import time
 
 import numpy as np
 
-import tools
+import hgspy
 from strategies.static import hgs
 from strategies.utils import filter_instance
 from .simulate_instance import simulate_instance
-
-hgspy = tools.get_hgspy_module()
 
 
 def rollout(
