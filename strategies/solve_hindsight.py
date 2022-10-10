@@ -2,7 +2,6 @@ import hgspy
 from strategies.static import hgs
 
 
-
 def solve_hindsight(env, config, solver_seed):
     """
     Solve the dynamic VRPTW problem using the oracle strategy, i.e., the

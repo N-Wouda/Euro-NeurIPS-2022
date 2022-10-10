@@ -8,7 +8,6 @@ from strategies.static import hgs
 from .utils import sol2ep
 
 
-
 def solve_dynamic(env, config, solver_seed):
     """
     Solve the dynamic VRPTW problem using the passed-in dispatching strategy.
