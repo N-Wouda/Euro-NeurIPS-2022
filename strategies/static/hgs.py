@@ -1,6 +1,5 @@
+import hgspy
 import tools
-
-hgspy = tools.get_hgspy_module()
 
 
 def hgs(
