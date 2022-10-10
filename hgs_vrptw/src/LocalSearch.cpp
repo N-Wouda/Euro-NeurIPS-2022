@@ -23,6 +23,8 @@ void LocalSearch::search(Individual &indiv)
     // a route was last *actually* modified.
     std::vector<int> lastTestedNodes(params.nbClients + 1, -1);
     lastModified = std::vector<int>(params.nbVehicles, 0);
+
+    searchCompleted = false;
     nbMoves = 0;
 
     // At least two iterations as empty routes are not evaluated in the first
@@ -83,6 +85,7 @@ void LocalSearch::intensify(Individual &indiv)
     std::shuffle(routeOps.begin(), routeOps.end(), rng);
 
     std::vector<int> lastTestedRoutes(params.nbVehicles, -1);
+    lastModified = std::vector<int>(params.nbVehicles, 0);
 
     searchCompleted = false;
     nbMoves = 0;
@@ -122,7 +125,7 @@ void LocalSearch::intensify(Individual &indiv)
         }
     }
 
-    enumerateSubpath();
+    enumerateSubpaths();
 
     indiv = exportIndividual();
 }
@@ -179,7 +182,9 @@ void LocalSearch::update(Route *U, Route *V)
     }
 }
 
-void LocalSearch::enumerateSubpath()
+// TODO this should be some sort of operator passed into LS, it should not be
+//  defined here.
+void LocalSearch::enumerateSubpaths()
 {
     auto const k = params.config.postProcessPathLength;
 

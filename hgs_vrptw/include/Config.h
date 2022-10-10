@@ -47,9 +47,6 @@ struct Config
     int weightWaitTime = 2;   // weight for wait-time nearness
     int weightTimeWarp = 10;  // weight for time warp nearness
 
-    // Probability that route operators are applied during local search
-    size_t intensificationProbability = 0;
-
     // Margin to take (in degrees 0 - 359 as ints [0 - 65536]) to determine
     // overlap of circle sectors for SWAP*
     int circleSectorOverlapTolerance = 0;
@@ -86,7 +83,6 @@ struct Config
                     size_t nbGranular = 40,
                     int weightWaitTime = 2,
                     int weightTimeWarp = 10,
-                    size_t intensificationProbability = 0,
                     int circleSectorOverlapToleranceDegrees = 0,
                     int minCircleSectorSizeDegrees = 15,
                     size_t destroyPct = 20,
@@ -113,7 +109,6 @@ struct Config
           nbGranular(nbGranular),
           weightWaitTime(weightWaitTime),
           weightTimeWarp(weightTimeWarp),
-          intensificationProbability(intensificationProbability),
           destroyPct(destroyPct),
           postProcessPathLength(postProcessPathLength)
     {

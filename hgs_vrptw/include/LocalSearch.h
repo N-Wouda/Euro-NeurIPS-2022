@@ -50,7 +50,7 @@ class LocalSearch
     void update(Route *U, Route *V);
 
     // Enumerates and optimally recombines subpaths of the current solution
-    void enumerateSubpath();
+    void enumerateSubpaths();
 
     // Evaluates the path before -> <nodes in sub path> -> after
     inline int evaluateSubpath(std::vector<size_t> const &subpath,
