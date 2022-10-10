@@ -433,15 +433,16 @@ void Params::calculateNeighbours()
 
             int const second
                 = config.weightWaitTime
-                      * std::max(clients[i].twEarly - dist(i, j)
+                      * std::max(clients[i].twEarly - dist(j, i)
                                      - clients[j].servDur - clients[j].twLate,
                                  0)
                   + config.weightTimeWarp
                         * std::max(clients[j].twEarly + clients[j].servDur
-                                       + dist(i, j) - clients[i].twLate,
+                                       + dist(j, i) - clients[i].twLate,
                                    0);
 
-            proximity.emplace_back(dist(i, j) + std::min(first, second), j);
+            proximity.emplace_back(
+                std::min(dist(i, j) + first, dist(j, i) + second), j);
         }
 
         std::sort(proximity.begin(), proximity.end());

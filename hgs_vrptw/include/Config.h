@@ -62,7 +62,7 @@ struct Config
     size_t destroyPct = 20;
 
     // Number of nodes we improve by enumeration in LS postprocessing
-    size_t postProcessPathLength = 4;
+    size_t postProcessPathLength = 6;
 
     explicit Config(int seed = 0,
                     size_t nbIter = 10'000,
@@ -90,7 +90,7 @@ struct Config
                     int circleSectorOverlapToleranceDegrees = 0,
                     int minCircleSectorSizeDegrees = 15,
                     size_t destroyPct = 20,
-                    size_t postProcessPathLength = 4)
+                    size_t postProcessPathLength = 6)
         : seed(seed),
           nbIter(nbIter),
           timeLimit(timeLimit),

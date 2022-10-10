@@ -52,9 +52,6 @@ class LocalSearch
     // Performs the actual local search procedure
     void search();
 
-    // Final processing before exporting the individual
-    void postProcess();
-
     // Evaluates the path before -> <nodes in sub path> -> after
     inline int evaluateSubpath(std::vector<size_t> const &subpath,
                                Node const *before,
@@ -77,6 +74,8 @@ public:
      * Performs the local search procedure around the given individual.
      */
     void operator()(Individual &indiv);
+
+    void postProcess(Individual &indiv);
 
     LocalSearch(Params &params, XorShift128 &rng);
 };
