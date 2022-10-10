@@ -1,8 +1,8 @@
 import hgspy
-from .solve_static import solve_static
+from strategies.static import hgs
 
 
-def solve_hindsight(env, solver_seed):
+def solve_hindsight(env, config, solver_seed):
     """
     Solve the dynamic VRPTW problem using the oracle strategy, i.e., the
     problem is solved as static VRPTW with release dates using the information
@@ -21,30 +21,13 @@ def solve_hindsight(env, solver_seed):
 
     hindsight_inst = env.get_hindsight_problem()
 
-    config = hgspy.Config(seed=solver_seed)
-    stop = hgspy.stop.MaxRuntime(ep_tlim)
-
-    node_ops = [
-        hgspy.operators.Exchange10,
-        hgspy.operators.Exchange11,
-        hgspy.operators.Exchange20,
-        hgspy.operators.MoveTwoClientsReversed,
-        hgspy.operators.Exchange21,
-        hgspy.operators.Exchange22,
-        hgspy.operators.TwoOpt,
-    ]
-
-    route_ops = [
-        hgspy.operators.RelocateStar,
-        hgspy.operators.SwapStar,
-    ]
-
-    crossover_ops = [
-        hgspy.crossover.selective_route_exchange,
-    ]
-
-    res = solve_static(
-        hindsight_inst, config, node_ops, route_ops, crossover_ops, stop
+    res = hgs(
+        hindsight_inst,
+        hgspy.Config(seed=solver_seed, **config.solver_params()),
+        config.node_ops(),
+        config.route_ops(),
+        config.crossover_ops(),
+        hgspy.stop.MaxRuntime(ep_tlim),
     )
 
     best = res.get_best_found()

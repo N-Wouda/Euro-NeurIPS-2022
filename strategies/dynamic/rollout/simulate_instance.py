@@ -1,9 +1,10 @@
 import numpy as np
 
-from .constants import EPOCH_DURATION, EPOCH_N_REQUESTS
+# Fixed value given in the competition rules.
+_EPOCH_DURATION = 3600
 
 
-def simulate_instance(info, obs, rng, n_lookahead=1):
+def simulate_instance(info, obs, rng, n_lookahead: int, n_requests: int):
     """
     Simulate a VRPTW instance with n_lookahead epochs.
     - Sample ``EPOCH_N_REQUESTS`` requests per future epoch
@@ -19,7 +20,7 @@ def simulate_instance(info, obs, rng, n_lookahead=1):
 
     epochs_left = info["end_epoch"] - obs["current_epoch"]
     max_lookahead = min(n_lookahead, epochs_left)
-    n_samples = max_lookahead * EPOCH_N_REQUESTS
+    n_samples = max_lookahead * n_requests
 
     n_customers = static_inst["is_depot"].size - 1  # Exclude depot
 
@@ -30,8 +31,8 @@ def simulate_instance(info, obs, rng, n_lookahead=1):
     # These are static time windows and release times, which are used to
     # determine request feasibility. Will be clipped later to fit the epoch.
     sim_tw = tws[tw_idx]
-    sim_epochs = np.repeat(np.arange(1, max_lookahead + 1), EPOCH_N_REQUESTS)
-    sim_release = start_time + sim_epochs * EPOCH_DURATION
+    sim_epochs = np.repeat(np.arange(1, max_lookahead + 1), n_requests)
+    sim_release = start_time + sim_epochs * _EPOCH_DURATION
     sim_service = static_inst["service_times"][service_idx]
 
     # Earliest arrival is release time + drive time or earliest time window.
@@ -45,7 +46,7 @@ def simulate_instance(info, obs, rng, n_lookahead=1):
     n_new_customers = len(new_custs)
 
     if n_new_customers == 0:  # this should not happen a lot
-        return simulate_instance(info, obs, rng, n_lookahead)
+        return simulate_instance(info, obs, rng, n_lookahead, n_requests)
 
     sim_tw = sim_tw[feas]
     sim_release = sim_release[feas]
