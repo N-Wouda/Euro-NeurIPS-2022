@@ -29,8 +29,7 @@ struct Config
     size_t nbElite = 4;           // number of elite individuals in pop
     size_t nbClose = 5;           // # individuals when calculating diversity
     double targetFeasible = 0.4;  // target feasible pop fraction
-    size_t nbKeepOnRestart
-        = 1;  // # best individuals we keep when resetting the population
+    size_t nbKeepOnRestart = 0;   // # individuals to keep when restarting
 
     size_t repairProbability = 50;  // probability of repair if infeasible
     size_t repairBooster = 10;      // penalty booster when repairing
@@ -46,9 +45,6 @@ struct Config
     // See Vidal 2012, HGS for VRPTW. Multiplied by 10 for integer arithmetic.
     int weightWaitTime = 2;   // weight for wait-time nearness
     int weightTimeWarp = 10;  // weight for time warp nearness
-
-    // Probability that route operators are applied during local search
-    size_t intensificationProbability = 0;
 
     // Margin to take (in degrees 0 - 359 as ints [0 - 65536]) to determine
     // overlap of circle sectors for SWAP*
@@ -78,7 +74,7 @@ struct Config
                     size_t nbElite = 4,
                     size_t nbClose = 5,
                     double targetFeasible = 0.4,
-                    size_t nbKeepOnRestart = 1,
+                    size_t nbKeepOnRestart = 0,
                     size_t repairProbability = 50,
                     size_t repairBooster = 10,
                     size_t selectProbability = 90,
@@ -86,7 +82,6 @@ struct Config
                     size_t nbGranular = 40,
                     int weightWaitTime = 2,
                     int weightTimeWarp = 10,
-                    size_t intensificationProbability = 0,
                     int circleSectorOverlapToleranceDegrees = 0,
                     int minCircleSectorSizeDegrees = 15,
                     size_t destroyPct = 20,
@@ -113,7 +108,6 @@ struct Config
           nbGranular(nbGranular),
           weightWaitTime(weightWaitTime),
           weightTimeWarp(weightTimeWarp),
-          intensificationProbability(intensificationProbability),
           destroyPct(destroyPct),
           postProcessPathLength(postProcessPathLength)
     {

@@ -88,11 +88,10 @@ Individual GeneticAlgorithm::crossover() const
 
 void GeneticAlgorithm::educate(Individual &indiv)
 {
-    localSearch(indiv);
+    localSearch.search(indiv);
 
-    if (indiv.isFeasible()
-        && indiv.cost() < population.getCurrentBestFeasibleCost())
-        localSearch.postProcess(indiv);
+    if (indiv.isFeasible() && indiv < population.getBestFound())
+        localSearch.intensify(indiv);
 
     population.addIndividual(indiv);
 
@@ -104,12 +103,12 @@ void GeneticAlgorithm::educate(Individual &indiv)
     {
         // Re-run, but penalise infeasibility more using a penalty booster.
         auto const booster = params.getPenaltyBooster();
-        localSearch(indiv);
+        localSearch.search(indiv);
 
         if (indiv.isFeasible())
         {
-            if (indiv.cost() < population.getCurrentBestFeasibleCost())
-                localSearch.postProcess(indiv);
+            if (indiv < population.getBestFound())
+                localSearch.intensify(indiv);
 
             population.addIndividual(indiv);
 
