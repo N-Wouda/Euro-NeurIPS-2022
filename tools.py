@@ -248,16 +248,20 @@ def read_vrplib(filename, rounded=True):
                 node, release_time = line.split()
                 release_time = int(release_time)
                 release_times.append(release_time)
-    
+
     return {
-        'is_depot': np.array([1] + [0] * len(loc), dtype=bool),
-        'coords': np.array([depot] + loc),
-        'demands': np.array(demand),
-        'capacity': capacity,
-        'time_windows': np.array(timewi),
-        'service_times': np.array(service_t),
-        'duration_matrix': np.array(duration_matrix) if len(duration_matrix) > 0 else None,
-        'release_times': np.array(release_times) if release_times else np.zeros(len(loc) + 1, dtype=int),
+        "is_depot": np.array([1] + [0] * len(loc), dtype=bool),
+        "coords": np.array([depot] + loc),
+        "demands": np.array(demand),
+        "capacity": capacity,
+        "time_windows": np.array(timewi),
+        "service_times": np.array(service_t),
+        "duration_matrix": np.array(duration_matrix)
+        if len(duration_matrix) > 0
+        else None,
+        "release_times": np.array(release_times)
+        if release_times
+        else np.zeros(len(loc) + 1, dtype=int),
     }
 
 
