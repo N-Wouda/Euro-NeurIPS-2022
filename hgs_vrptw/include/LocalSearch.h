@@ -49,8 +49,8 @@ class LocalSearch
     // Updates solution state after an improving local search move
     void update(Route *U, Route *V);
 
-    // Performs the actual local search procedure
-    void search();
+    // Enumerates and optimally recombines subpaths of the current solution
+    void enumerateSubpath();
 
     // Evaluates the path before -> <nodes in sub path> -> after
     inline int evaluateSubpath(std::vector<size_t> const &subpath,
@@ -71,11 +71,15 @@ public:
     void addRouteOperator(RouteOp &op) { routeOps.emplace_back(&op); }
 
     /**
-     * Performs the local search procedure around the given individual.
+     * Performs regular (node-based) local search around the given individual.
      */
-    void operator()(Individual &indiv);
+    void search(Individual &indiv);
 
-    void postProcess(Individual &indiv);
+    /**
+     * Performs a more intensive local search around the given individual,
+     * using route-based operators and subpath enumeration.
+     */
+    void intensify(Individual &indiv);
 
     LocalSearch(Params &params, XorShift128 &rng);
 };

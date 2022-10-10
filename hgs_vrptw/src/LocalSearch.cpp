@@ -7,34 +7,21 @@
 #include <stdexcept>
 #include <vector>
 
-void LocalSearch::operator()(Individual &indiv)
+void LocalSearch::search(Individual &indiv)
 {
-    // Shuffling the node order beforehand adds diversity to the search
+    loadIndividual(indiv);
+
+    // Shuffling the order beforehand adds diversity to the search
     std::shuffle(orderNodes.begin(), orderNodes.end(), rng);
-    std::shuffle(orderRoutes.begin(), orderRoutes.end(), rng);
-
-    // Shuffling the operators beforehand also adds diversity to the search
     std::shuffle(nodeOps.begin(), nodeOps.end(), rng);
-    std::shuffle(routeOps.begin(), routeOps.end(), rng);
 
-    loadIndividual(indiv);       // load individual...
-    search();                    // ...perform local search...
-    indiv = exportIndividual();  // ...export result back into the individual
-}
-
-void LocalSearch::search()
-{
     if (nodeOps.empty() && routeOps.empty())
         throw std::runtime_error("No known node or route operators.");
-
-    bool const intensify
-        = rng.randint(100) < params.config.intensificationProbability;
 
     // Caches the last time node or routes were tested for modification (uses
     // nbMoves to track this). The lastModified field, in contrast, track when
     // a route was last *actually* modified.
     std::vector<int> lastTestedNodes(params.nbClients + 1, -1);
-    std::vector<int> lastTestedRoutes(params.nbVehicles, -1);
     lastModified = std::vector<int>(params.nbVehicles, 0);
     nbMoves = 0;
 
@@ -82,40 +69,62 @@ void LocalSearch::search()
                     continue;
             }
         }
+    }
 
-        // Route operators are evaluated only after node operators get stuck,
-        // and only sometimes when we want to intensify the search.
-        if (searchCompleted && intensify)
-            for (int const rU : orderRoutes)
+    indiv = exportIndividual();
+}
+
+void LocalSearch::intensify(Individual &indiv)
+{
+    loadIndividual(indiv);
+
+    // Shuffling the order beforehand adds diversity to the search
+    std::shuffle(orderRoutes.begin(), orderRoutes.end(), rng);
+    std::shuffle(routeOps.begin(), routeOps.end(), rng);
+
+    std::vector<int> lastTestedRoutes(params.nbVehicles, -1);
+
+    searchCompleted = false;
+    nbMoves = 0;
+
+    while (!searchCompleted)
+    {
+        searchCompleted = true;
+
+        for (int const rU : orderRoutes)
+        {
+            auto &U = routes[rU];
+
+            if (U.empty())
+                continue;
+
+            auto const lastTested = lastTestedRoutes[U.idx];
+            lastTestedRoutes[U.idx] = nbMoves;
+
+            // Shuffling in this loop should not matter much as we are
+            // already randomizing the routes U.
+            for (int rV = 0; rV != U.idx; ++rV)
             {
-                auto &U = routes[rU];
+                auto &V = routes[rV];
 
-                if (U.empty())
+                if (V.empty() || !U.overlapsWith(V))
                     continue;
 
-                auto const lastTested = lastTestedRoutes[U.idx];
-                lastTestedRoutes[U.idx] = nbMoves;
+                auto const lastModifiedRoute
+                    = std::max(lastModified[U.idx], lastModified[V.idx]);
 
-                // Shuffling in this loop should not matter much as we are
-                // already randomizing the routes U.
-                for (int rV = 0; rV != U.idx; ++rV)
-                {
-                    auto &V = routes[rV];
+                if (lastModifiedRoute <= lastTested)
+                    continue;
 
-                    if (V.empty() || !U.overlapsWith(V))
-                        continue;
-
-                    auto const lastModifiedRoute
-                        = std::max(lastModified[U.idx], lastModified[V.idx]);
-
-                    if (step > 0 && lastModifiedRoute <= lastTested)
-                        continue;
-
-                    if (applyRouteOps(&U, &V))
-                        continue;
-                }
+                if (applyRouteOps(&U, &V))
+                    continue;
             }
+        }
     }
+
+    enumerateSubpath();
+
+    indiv = exportIndividual();
 }
 
 bool LocalSearch::applyNodeOps(Node *U, Node *V)
@@ -170,10 +179,8 @@ void LocalSearch::update(Route *U, Route *V)
     }
 }
 
-void LocalSearch::postProcess(Individual &indiv)
+void LocalSearch::enumerateSubpath()
 {
-    loadIndividual(indiv);
-
     auto const k = params.config.postProcessPathLength;
 
     if (k <= 1)  // 0 or 1 means we are either not doing anything at all (0),
@@ -218,8 +225,6 @@ void LocalSearch::postProcess(Individual &indiv)
             }
         }
     }
-
-    indiv = exportIndividual();
 }
 
 int LocalSearch::evaluateSubpath(std::vector<size_t> const &subpath,
