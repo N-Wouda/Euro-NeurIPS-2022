@@ -16,14 +16,15 @@ struct InsertPos  // best insert position, used to plan unplanned clients
 // Evaluates the cost change of inserting client between prev and next.
 int deltaCost(Client client, Client prev, Client next, Params const &params)
 {
-    int clientLate = params.clients[client].twLate;
+    int prevEarly = params.clients[prev].twEarly + params.clients[prev].servDur;
     int distToInsert = params.dist(prev, client);
-    int prevEarly = params.clients[prev].twEarly;
+    int clientLate = params.clients[client].twLate;
 
     if (prevEarly + distToInsert >= clientLate)
         return INT_MAX;
 
-    int clientEarly = params.clients[client].twEarly;
+    int clientEarly
+        = params.clients[client].twEarly + params.clients[client].servDur;
     int distFromInsert = params.dist(client, next);
     int nextLate = params.clients[next].twLate;
 
