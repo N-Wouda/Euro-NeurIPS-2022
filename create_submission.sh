@@ -9,9 +9,10 @@ find hgs_vrptw \
   -o \( -name "*.cpp" -o -name "*.h" -o -name "CMakeLists.txt" -o -name "*.cmake" \) \
   -exec zip -o -r "tmp/submissions/$DATE.zip" {} +
 
-# Python code (utilities and various solver strategies)
+# Python code (utilities and various solver strategies + configs)
 zip -o -r "tmp/submissions/$DATE.zip" strategies/*
-zip -o -r "tmp/submissions/$DATE.zip" solver.py tools.py environment.py
+zip -o -r "tmp/submissions/$DATE.zip" configs/solver.toml
+zip -o -r "tmp/submissions/$DATE.zip" solver.py tools.py environment.py hgspy.py
 
 # Required CodaLab file
 cat > metadata <<- META
