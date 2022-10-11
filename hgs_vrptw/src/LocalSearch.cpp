@@ -122,10 +122,10 @@ void LocalSearch::intensify(Individual &indiv)
                 if (applyRouteOps(&U, &V))
                     continue;
             }
+
+            enumerateSubpaths(U);
         }
     }
-
-    enumerateSubpaths();
 
     indiv = exportIndividual();
 }
@@ -184,9 +184,9 @@ void LocalSearch::update(Route *U, Route *V)
 
 // TODO this should be some sort of operator passed into LS, it should not be
 //  defined here.
-void LocalSearch::enumerateSubpaths()
+void LocalSearch::enumerateSubpaths(Route &U)
 {
-    auto const k = params.config.postProcessPathLength;
+    auto const k = std::min(params.config.postProcessPathLength, U.size());
 
     if (k <= 1)  // 0 or 1 means we are either not doing anything at all (0),
         return;  // or recombining a single node (1). Neither helps.
@@ -196,37 +196,29 @@ void LocalSearch::enumerateSubpaths()
     // This postprocessing step optimally recombines all node segments of a
     // given length in each route. This recombination works by enumeration; see
     // issue #98 for details.
-    for (auto &route : routes)
+    for (size_t start = 1; start + k <= U.size() + 1; ++start)
     {
-        auto const kRoute = std::min(k, route.size());
-        path.resize(kRoute);
+        auto *prev = p(U[start]);   // we process [start, start + k). So fixed
+        auto *next = U[start + k];  // endpoints are p(start) and start + k
 
-        for (size_t start = 1; start + kRoute <= route.size() + 1; ++start)
+        std::iota(path.begin(), path.end(), start);
+        auto currCost = evaluateSubpath(path, prev, next, U);
+
+        while (std::next_permutation(path.begin(), path.end()))
         {
-            // We process the range [start, start + k). So the fixed endpoints
-            // are p(start) and the node at start + k.
-            auto *prev = p(route[start]);
-            auto *next = route[start + kRoute];
+            auto const cost = evaluateSubpath(path, prev, next, U);
 
-            std::iota(path.begin(), path.end(), start);
-            auto currCost = evaluateSubpath(path, prev, next, route);
-
-            while (std::next_permutation(path.begin(), path.end()))
+            if (cost < currCost)
             {
-                auto const cost = evaluateSubpath(path, prev, next, route);
-
-                if (cost < currCost)  // it is rare to find more improving
-                {                     // moves, so we break after the first
-                    for (auto pos : path)
-                    {
-                        auto *node = route[pos];
-                        node->insertAfter(prev);
-                        prev = node;
-                    }
-
-                    route.update();
-                    break;
+                for (auto pos : path)
+                {
+                    auto *node = U[pos];
+                    node->insertAfter(prev);
+                    prev = node;
                 }
+
+                update(&U, &U);  // it is rare to find more than one improving
+                break;           // move, so we break after the first
             }
         }
     }
