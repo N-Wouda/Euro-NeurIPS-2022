@@ -186,7 +186,7 @@ void LocalSearch::update(Route *U, Route *V)
 //  defined here.
 void LocalSearch::enumerateSubpaths(Route &U)
 {
-    auto const k = params.config.postProcessPathLength;
+    auto const k = std::min(params.config.postProcessPathLength, U.size());
 
     if (k <= 1)  // 0 or 1 means we are either not doing anything at all (0),
         return;  // or recombining a single node (1). Neither helps.
@@ -196,15 +196,10 @@ void LocalSearch::enumerateSubpaths(Route &U)
     // This postprocessing step optimally recombines all node segments of a
     // given length in each route. This recombination works by enumeration; see
     // issue #98 for details.
-    auto const kRoute = std::min(k, U.size());
-    path.resize(kRoute);
-
-    for (size_t start = 1; start + kRoute <= U.size() + 1; ++start)
+    for (size_t start = 1; start + k <= U.size() + 1; ++start)
     {
-        // We process the range [start, start + k). So the fixed endpoints
-        // are p(start) and the node at start + k.
-        auto *prev = p(U[start]);
-        auto *next = U[start + kRoute];
+        auto *prev = p(U[start]);   // we process [start, start + k). So fixed
+        auto *next = U[start + k];  // endpoints are p(start) and start + k
 
         std::iota(path.begin(), path.end(), start);
         auto currCost = evaluateSubpath(path, prev, next, U);
@@ -215,8 +210,6 @@ void LocalSearch::enumerateSubpaths(Route &U)
 
             if (cost < currCost)
             {
-                currCost = cost;
-
                 for (auto pos : path)
                 {
                     auto *node = U[pos];
@@ -224,7 +217,8 @@ void LocalSearch::enumerateSubpaths(Route &U)
                     prev = node;
                 }
 
-                update(&U, &U);
+                update(&U, &U);  // it is rare to find more than one improving
+                break;           // move, so we break after the first
             }
         }
     }
