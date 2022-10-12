@@ -133,16 +133,7 @@ def main():
         Path(__file__).name,
         " ".join(f"--{key} {value}" for key, value in vars(args).items()),
     )
-    if args.strategy == "rollout":
-        from strategies.dynamic.rollout import constants
 
-        print(
-            " ".join(
-                f"--{key} {value}"
-                for key, value in vars(constants).items()
-                if not key.startswith("_")
-            )
-        )
     print("\n", table, "\n", sep="")
     print(f"      Avg. objective: {data['cost'].mean():.0f}")
     print(f"   Avg. run-time (s): {data['time'].mean():.2f}")
