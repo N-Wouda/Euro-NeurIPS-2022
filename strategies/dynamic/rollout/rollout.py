@@ -38,12 +38,24 @@ def rollout(
     ep_inst = obs["epoch_instance"]
     sim_tlim = info["epoch_tlim"] * sim_tlim_factor
     must_dispatch = set(np.flatnonzero(ep_inst["must_dispatch"]))
-    postpone_idcs = np.zeros(ep_inst["is_depot"].size, dtype=int)
+    n_ep_reqs = ep_inst["is_depot"].size
 
     # Statistics
     n_sims = 0
     avg_duration = 0.0
-    dispatch_count = np.zeros(ep_inst["is_depot"].size, dtype=int)
+    dispatch_count = np.zeros(n_ep_reqs, dtype=int)
+    postpone_idcs = np.zeros(n_ep_reqs, dtype=int)
+
+    # Initial solution based on epoch instance
+    res_init = hgs(
+        ep_inst,
+        hgspy.Config(**sim_config),
+        [getattr(hgspy.operators, op) for op in node_ops],
+        [getattr(hgspy.operators, op) for op in route_ops],
+        [getattr(hgspy.crossover, op) for op in crossover_ops],
+        hgspy.stop.MaxIterations(sim_solve_iters),
+    )
+    base_init = res_init.get_best_found().get_routes()
 
     # Only do another simulation if there's (on average) enough time for it to
     # complete before the time limit.
@@ -57,6 +69,9 @@ def rollout(
             ep_release=postpone_idcs * 3600,
         )
 
+        singletons = [[r] for r in range(n_ep_reqs, sim_inst["is_depot"].size)]
+        sim_init = base_init + singletons
+
         res = hgs(
             sim_inst,
             hgspy.Config(**sim_config),
@@ -64,6 +79,7 @@ def rollout(
             [getattr(hgspy.operators, op) for op in route_ops],
             [getattr(hgspy.crossover, op) for op in crossover_ops],
             hgspy.stop.MaxIterations(sim_solve_iters),
+            initial_solutions=[sim_init],
         )
 
         best = res.get_best_found()
@@ -79,17 +95,21 @@ def rollout(
 
         # Postpone requests after ``n_update_threshold`` simulations,
         # and update (lower) the corresponding postponement threshold.
-        if n_sims % n_update_threshold == 0:
-            postpone_count = n_sims - dispatch_count
-            postpone_threshold = n_sims - dispatch_threshold
-            T = 0.90
-            factor = n_sims // n_update_threshold
-            postpone_idcs = postpone_count >= postpone_threshold * max(
-                0.8, T**factor
-            )
+        # if n_sims % n_update_threshold == 0:
+
+    postpone_count = n_sims - dispatch_count
+    postpone_threshold = n_sims - dispatch_threshold
+    # factor = max(0.90 * n_sims // n_update_threshold, 0.8)
+    postpone_idcs = postpone_count >= postpone_threshold  # * factor
 
     print(n_sims)
 
-    dispatch = ep_inst["is_depot"] | ep_inst["must_dispatch"] | ~postpone_idcs
+    dispatch = (
+        ep_inst["is_depot"]
+        | ep_inst["must_dispatch"]
+        # Only dispatch requests that are dispatched in enough simulations
+        | (dispatch_count >= max(1, n_sims) * dispatch_threshold)
+    )
+    # dispatch = ep_inst["is_depot"] | ep_inst["must_dispatch"] | ~postpone_idcs
 
     return filter_instance(ep_inst, dispatch)
