@@ -18,7 +18,7 @@ from strategies.config import Config
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--num_seeds", type=int, default=1)
+    parser.add_argument("--instance_seed", type=int, default=1)
     parser.add_argument("--solver_seed", type=int, default=1)
     parser.add_argument("--num_procs", type=int, default=4)
     parser.add_argument(
@@ -100,10 +100,11 @@ def main():
     args = parse_args()
 
     func = partial(solve, **vars(args))
-    func_args = product(glob(args.instance_pattern), range(args.num_seeds))
+    func_args = glob(args.instance_pattern)
 
     tqdm_kwargs = dict(max_workers=args.num_procs, unit="instance")
-    data = process_map(func, *zip(*func_args), **tqdm_kwargs)
+    data = process_map(func, func_args, **tqdm_kwargs)
+
     if args.aggregate:
         headers = [
             "Instance",
