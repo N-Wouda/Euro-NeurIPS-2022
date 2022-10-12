@@ -4,7 +4,9 @@ import numpy as np
 _EPOCH_DURATION = 3600
 
 
-def simulate_instance(info, obs, rng, n_lookahead: int, n_requests: int):
+def simulate_instance(
+    info, obs, rng, n_lookahead: int, n_requests: int, ep_release
+):
     """
     Simulate a VRPTW instance with n_lookahead epochs.
     - Sample ``EPOCH_N_REQUESTS`` requests per future epoch
@@ -63,7 +65,6 @@ def simulate_instance(info, obs, rng, n_lookahead: int, n_requests: int):
     sim_tw = np.maximum(sim_tw - start_time, 0)
     req_tw = np.concatenate((ep_inst["time_windows"], sim_tw))
 
-    ep_release = np.zeros(ep_inst["is_depot"].size, dtype=int)
     sim_release = np.maximum(sim_release - start_time, 0)
     req_release = np.concatenate((ep_release, sim_release))
 

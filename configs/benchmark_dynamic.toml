@@ -45,6 +45,7 @@ strategy = "rollout"
 n_lookahead = 3
 n_requests = 100
 sim_tlim_factor = 0.5
+n_update_threshold = 20
 sim_solve_iters = 25
 dispatch_threshold = 0.15
 
