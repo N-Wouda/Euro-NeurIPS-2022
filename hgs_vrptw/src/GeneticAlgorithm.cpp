@@ -90,8 +90,8 @@ void GeneticAlgorithm::educate(Individual &indiv)
 {
     localSearch.search(indiv);
 
-    if (params.config.shouldIntensify
-        && indiv.isFeasible()
+    if (params.config.shouldIntensify  // only intensify feasible, new best
+        && indiv.isFeasible()          // solutions. Cf. also repair below.
         && indiv < population.getBestFound())
         localSearch.intensify(indiv);
 
