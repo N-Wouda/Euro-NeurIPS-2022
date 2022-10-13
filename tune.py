@@ -1,17 +1,16 @@
 import argparse
+from glob import glob
 
 import numpy as np
 from ConfigSpace import ConfigurationSpace, UniformIntegerHyperparameter
 from mpi4py import MPI
 from smac import HyperparameterOptimizationFacade, Scenario
 from smac.runhistory.dataclasses import TrialValue
-from glob import glob
 
 import hgspy
 import tools
 from strategies.config import Config
 from strategies.static import hgs
-
 
 defaults = Config.from_file("configs/solver.toml").static()
 
