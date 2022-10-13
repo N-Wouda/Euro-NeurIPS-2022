@@ -151,9 +151,9 @@ class VRPEnvironment(Environment):
 
         assert not self.is_done, "Environment is finished"
 
-        # Check time limit
-        if self.get_elapsed_time_epoch() > self.epoch_tlim + self.TLIM_GRACE_PERIOD:
-            return self._fail_episode("Time exceeded")
+        # # Check time limit
+        # if self.get_elapsed_time_epoch() > self.epoch_tlim + self.TLIM_GRACE_PERIOD:
+        #     return self._fail_episode("Time exceeded")
 
         # Check if solution is valid
         try:
