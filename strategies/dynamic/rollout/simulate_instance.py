@@ -48,7 +48,9 @@ def simulate_instance(
     n_new_customers = len(new_custs)
 
     if n_new_customers == 0:  # this should not happen a lot
-        return simulate_instance(info, obs, rng, n_lookahead, n_requests)
+        return simulate_instance(
+            info, obs, rng, n_lookahead, n_requests, ep_release
+        )
 
     sim_tw = sim_tw[feas]
     sim_release = sim_release[feas]
