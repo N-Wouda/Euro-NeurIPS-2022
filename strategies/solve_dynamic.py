@@ -65,7 +65,7 @@ def solve_dynamic(env, config, solver_seed):
 
         ep_sol = sol2ep(routes, dispatch_inst)
 
-        dispatch_stats(static_info, observation, dispatch_inst, ep_sol)
+        # dispatch_stats(static_info, observation, dispatch_inst, ep_sol)
 
         current_epoch = observation["current_epoch"]
         solutions[current_epoch] = ep_sol

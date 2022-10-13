@@ -146,20 +146,21 @@ def rollout(
     postpone_threshold = max(1, n_sims) * (1 - dispatch_threshold)
     must_postpone = postpone_count >= postpone_threshold
 
-    # print((dispatch_count / n_sims).round(2))
-    print(f"  Potential postpone: {n_ep_reqs-ep_inst['must_dispatch'].sum()}")
-    print(f"    Average postpone: {np.mean(avg):.2f}")
-    print(f"        Max postpone: {np.max(avg):.2f}")
-    print(f"        Min postpone: {np.min(avg):.2f}")
-    print(f"       Std. postpone: {np.std(avg):.2f}")
-    print(f"15% Thresh. postpone: {must_postpone.sum()}")
-    print(n_sims)
+    # # print((dispatch_count / n_sims).round(2))
+    # print(f"  Potential postpone: {n_ep_reqs-ep_inst['must_dispatch'].sum()}")
+    # print(f"    Average postpone: {np.mean(avg):.2f}")
+    # print(f"        Max postpone: {np.max(avg):.2f}")
+    # print(f"        Min postpone: {np.min(avg):.2f}")
+    # print(f"       Std. postpone: {np.std(avg):.2f}")
+    # print(f"15% Thresh. postpone: {must_postpone.sum()}")
+    # print(n_sims)
 
-    n_to_postpone = int(np.mean(avg))
+    n_to_postpone = max(1, (int(np.mean(avg)) + must_postpone.sum()) // 2)
     top_postpone = (postpone_count / n_sims).argsort()[::-1][:n_to_postpone]
     post = np.zeros(n_ep_reqs, dtype=bool)
     post[top_postpone] = True
     disp = ~post
+    # TODO don't postpone if the postpone count is very low
 
     dispatch = (
         ep_inst["is_depot"]
