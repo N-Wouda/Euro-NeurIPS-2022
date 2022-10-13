@@ -15,14 +15,13 @@ python = "^3.8, <4.0"
 # From original requirements.txt
 numpy = "^1.22.2"
 matplotlib = "^3.5.1"
-
-# Additional dependency for config management
 tomli = "^2.0.1"
-
-# For various scripts
 tqdm = "^4.64.0"
 
-# For tuning
+[tool.poetry.group.tune]
+optional = true
+
+[tool.poetry.group.tune.dependencies]
 mpi4py = "^3.1.3"
 smac = "2.0.0a1"
 

@@ -137,13 +137,7 @@ def main():
 
     if rank == 0:
         incumbent = smac.optimize()
-        rh = smac.get_runhistory()
-
-        # Print best configuration, its average cost across evaluations, and the
-        # number of evaluation runs.
         print(incumbent)
-        print(rh.average_cost(incumbent),
-              len(rh.get_runs_for_config(incumbent, False)))
 
 
 if __name__ == "__main__":
