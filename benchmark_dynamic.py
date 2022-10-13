@@ -28,7 +28,6 @@ def parse_args():
         "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
     )
     parser.add_argument("--hindsight", action="store_true")
-    parser.add_argument("--aggregate", action="store_true")
 
     stop = parser.add_mutually_exclusive_group(required=True)
     stop.add_argument("--epoch_tlim", type=int)
@@ -69,31 +68,14 @@ def solve(
 
     run_time = round(perf_counter() - start, 3)
 
-    return path.stem, instance_seed, sum(costs.values()), run_time
-
-
-def groupby_mean(data):
-    n_items = defaultdict(int)
-    rewards = defaultdict(int)
-    runtimes = defaultdict(int)
-
-    for inst, _, reward, runtime in data:
-        n_items[inst] += 1
-        rewards[inst] += reward
-        runtimes[inst] += runtime
-
-    averaged = [
-        (inst, round(rewards[inst] / n), round(runtimes[inst] / n, 3))
-        for inst, n in n_items.items()
-    ]
-
-    dtypes = [
-        ("inst", "U37"),
-        ("cost", int),
-        ("time", float),
-    ]
-
-    return np.asarray(averaged, dtype=dtypes)
+    return (
+        path.stem,
+        instance_seed,
+        sum(costs.values()),
+        sum([len(rts) for rts in routes.values()]),
+        tuple([sum(len(route) for route in sol) for sol in routes.values()]),
+        run_time,
+    )
 
 
 def main():
@@ -105,29 +87,24 @@ def main():
     tqdm_kwargs = dict(max_workers=args.num_procs, unit="instance")
     data = process_map(func, func_args, **tqdm_kwargs)
 
-    if args.aggregate:
-        headers = [
-            "Instance",
-            "Avg. cost",
-            "Time (s)",
-        ]
+    headers = [
+        "Instance",
+        "Seed",
+        "Cost",
+        "Tot. routes",
+        "Requests",
+        "Time (s)",
+    ]
 
-        data = groupby_mean(data)
-    else:
-        headers = [
-            "Instance",
-            "Seed",
-            "Cost",
-            "Time (s)",
-        ]
-
-        dtypes = [
-            ("inst", "U37"),
-            ("seed", int),
-            ("cost", int),
-            ("time", float),
-        ]
-        data = np.asarray(data, dtype=dtypes)
+    dtypes = [
+        ("inst", "U37"),
+        ("seed", int),
+        ("cost", int),
+        ("routes", int),
+        ("requests", tuple),
+        ("time", float),
+    ]
+    data = np.asarray(data, dtype=dtypes)
 
     table = tools.tabulate(headers, data)
     print(
