@@ -18,9 +18,9 @@ void LocalSearch::search(Individual &indiv)
     if (nodeOps.empty() && routeOps.empty())
         throw std::runtime_error("No known node or route operators.");
 
-    // Caches the last time node or routes were tested for modification (uses
-    // nbMoves to track this). The lastModified field, in contrast, track when
-    // a route was last *actually* modified.
+    // Caches the last time nodes were tested for modification (uses nbMoves to
+    // track this). The lastModified field, in contrast, track when a route was
+    // last *actually* modified.
     std::vector<int> lastTestedNodes(params.nbClients + 1, -1);
     lastModified = std::vector<int>(params.nbVehicles, 0);
 
