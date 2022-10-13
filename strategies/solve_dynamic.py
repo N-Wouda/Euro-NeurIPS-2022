@@ -48,6 +48,7 @@ def solve_dynamic(env, config, solver_seed):
             )
 
         solve_tlim = round(ep_tlim - (time.perf_counter() - start))
+        # solve_tlim = 10
 
         # TODO use a seed different from the dynamic rng for the static solver
         res = hgs(
@@ -64,6 +65,8 @@ def solve_dynamic(env, config, solver_seed):
 
         ep_sol = sol2ep(routes, dispatch_inst)
 
+        dispatch_stats(static_info, observation, dispatch_inst, ep_sol)
+
         current_epoch = observation["current_epoch"]
         solutions[current_epoch] = ep_sol
 
@@ -73,3 +76,18 @@ def solve_dynamic(env, config, solver_seed):
         assert info["error"] is None, info["error"]
 
     return costs, solutions
+
+
+def dispatch_stats(static_info, observation, dispatch_inst, ep_sol):
+    ep_inst = observation["epoch_instance"]
+    n_dispatch = len(dispatch_inst["coords"]) - 1
+    n_requests = len(ep_inst["coords"]) - 1
+    n_must_dispatch = sum(ep_inst["must_dispatch"])
+    n_sol = len([x for route in ep_sol for x in route])
+    print(
+        f"Epoch: {observation['current_epoch']} / {static_info['end_epoch']}",
+        end=" - ",
+    )
+    print(
+        f"Dispatch: {n_dispatch} / {n_requests}, {n_must_dispatch=}, {n_sol=}"
+    )

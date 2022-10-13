@@ -45,9 +45,9 @@ strategy = "rollout"
 n_lookahead = 8
 n_requests = 100
 sim_tlim_factor = 0.5
-n_update_threshold = 10
+n_update_threshold = 4
 sim_solve_iters = 25
-dispatch_threshold = 0.25
+dispatch_threshold = 0.15
 
 node_ops = [
     "Exchange10",

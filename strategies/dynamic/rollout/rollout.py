@@ -54,9 +54,10 @@ def rollout(
         [getattr(hgspy.operators, op) for op in node_ops],
         [getattr(hgspy.operators, op) for op in route_ops],
         [getattr(hgspy.crossover, op) for op in crossover_ops],
-        hgspy.stop.MaxIterations(sim_solve_iters),
+        hgspy.stop.MaxIterations(sim_solve_iters * 5),
     )
     base_init = res_init.get_best_found().get_routes()
+    avg = []
 
     # Only do another simulation if there's (on average) enough time for it to
     # complete before the time limit.
@@ -72,8 +73,7 @@ def rollout(
         )
 
         # Compute partial solution of simulation requests
-        sim_idcs = sim_inst["release_times"] >= 3600
-        sim_idcs[0] = True
+        sim_idcs = sim_inst["request_idx"] <= 0
         sim_only = filter_instance(sim_inst, sim_idcs)
 
         res = hgs(
@@ -82,7 +82,7 @@ def rollout(
             [getattr(hgspy.operators, op) for op in node_ops],
             [getattr(hgspy.operators, op) for op in route_ops],
             [getattr(hgspy.crossover, op) for op in crossover_ops],
-            hgspy.stop.MaxIterations(20),
+            hgspy.stop.MaxIterations(sim_solve_iters),
         )
         partial_sim_init = res.get_best_found().get_routes()
         partial_sim_init = [
@@ -113,6 +113,12 @@ def rollout(
         avg_duration = (n_sims * avg_duration + sim_duration) / (n_sims + 1)
         n_sims += 1
 
+        total_dispatch_count += dispatch_count
+        n_sim_postponed = n_ep_reqs - dispatch_count.sum()
+        avg.append(n_sim_postponed)
+
+        dispatch_count *= 0
+
         # # Postpone requests after ``n_update_threshold`` simulations,
         # # and update (lower) the corresponding postponement threshold.
         # if n_sims % n_update_threshold == 0:
@@ -121,36 +127,50 @@ def rollout(
         #     postpone_count = n_update_threshold - dispatch_count
 
         #     # Decrease the threshold gradually but don't go too low
-        #     pct = (n_update) * 0.01
-        #     fraction = max(0.9, 1 - pct)
-        #     postpone_threshold = max(1, n_update_threshold) * fraction
+        #     # pct = (n_update) * 0.05
+        #     # fraction = max(0.9, 0.95 - pct)
+        #     postpone_threshold = max(1, n_update_threshold) * 0.75
         #     must_postpone = postpone_count >= postpone_threshold
         #     must_postpone[0] = False  # Fix depot
 
-        #     print(pct, postpone_threshold, must_postpone)
-        # breakpoint()
+        #     #     print(pct, postpone_threshold, must_postpone)
 
+        #     print(postpone_count)
         #     # Reset dispatch count
         #     total_dispatch_count += dispatch_count
         #     dispatch_count *= 0
+        #     # breakpoint()
 
-    # breakpoint()
     # Final update in case simulations didn't reach the update threshold
-    postpone_count = n_sims - dispatch_count
+    postpone_count = n_sims - total_dispatch_count
     postpone_threshold = max(1, n_sims) * (1 - dispatch_threshold)
     must_postpone = postpone_count >= postpone_threshold
 
     # print((dispatch_count / n_sims).round(2))
+    print(f"  Potential postpone: {n_ep_reqs-ep_inst['must_dispatch'].sum()}")
+    print(f"    Average postpone: {np.mean(avg):.2f}")
+    print(f"        Max postpone: {np.max(avg):.2f}")
+    print(f"        Min postpone: {np.min(avg):.2f}")
+    print(f"       Std. postpone: {np.std(avg):.2f}")
+    print(f"15% Thresh. postpone: {must_postpone.sum()}")
+    print(n_sims)
 
-    # print(n_sims)
+    n_to_postpone = int(np.mean(avg))
+    top_postpone = (postpone_count / n_sims).argsort()[::-1][:n_to_postpone]
+    post = np.zeros(n_ep_reqs, dtype=bool)
+    post[top_postpone] = True
+    disp = ~post
 
     dispatch = (
         ep_inst["is_depot"]
         | ep_inst["must_dispatch"]
-        | ~must_postpone.astype(bool)
+        | disp
         # Only dispatch requests that are dispatched in enough simulations
         # | (dispatch_count > max(1, n_sims) * dispatch_threshold)
     )
+
+    # print(dispatch.sum())
     # dispatch = ep_inst["is_depot"] | ep_inst["must_dispatch"] | ~postpone_idcs
 
+    # breakpoint()
     return filter_instance(ep_inst, dispatch)
