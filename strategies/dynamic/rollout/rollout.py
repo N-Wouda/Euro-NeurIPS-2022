@@ -109,8 +109,8 @@ def rollout(
             if any(idx in must_dispatch for idx in sim_route):
                 dispatch_count[sim_route] += 1
 
-        # sim_duration = time.perf_counter() - sim_start
-        # avg_duration = (n_sims * avg_duration + sim_duration) / (n_sims + 1)
+        sim_duration = time.perf_counter() - sim_start
+        avg_duration = (n_sims * avg_duration + sim_duration) / (n_sims + 1)
         n_sims += 1
 
         # # Postpone requests after ``n_update_threshold`` simulations,
@@ -140,9 +140,9 @@ def rollout(
     postpone_threshold = max(1, n_sims) * (1 - dispatch_threshold)
     must_postpone = postpone_count >= postpone_threshold
 
-    print((dispatch_count / n_sims).round(2))
+    # print((dispatch_count / n_sims).round(2))
 
-    print(n_sims)
+    # print(n_sims)
 
     dispatch = (
         ep_inst["is_depot"]
