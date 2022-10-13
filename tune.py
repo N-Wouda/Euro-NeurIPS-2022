@@ -4,7 +4,7 @@ from glob import glob
 import numpy as np
 from ConfigSpace import ConfigurationSpace, UniformIntegerHyperparameter
 from mpi4py import MPI
-from smac import HyperparameterOptimizationFacade, Scenario
+from smac import AlgorithmConfigurationFacade as ACFacade, Scenario
 from smac.runhistory.dataclasses import TrialValue
 
 import hgspy
@@ -56,8 +56,7 @@ def get_space(seed: int):
 
 
 def evaluate(config, instance: str, seed: int):
-    # TODO  tools.static_time_limit(tools.name2size(inst), "quali")
-    run_time = 5
+    run_time = tools.static_time_limit(tools.name2size(instance), "quali")
     params = defaults.solver_params() | config.get_dictionary()
 
     res = hgs(
@@ -89,7 +88,8 @@ def main():
 
     args = parse_args()
 
-    # TODO make this work with actual instances / kfold crossvalidation?
+    # TODO make this work with actual instances / kfold crossvalidation in a
+    #  distributed fashion
     instances = args2instances(args)
     features = {name: [tools.name2size(name)] for name in instances}
 
@@ -107,7 +107,7 @@ def main():
         settings["walltime_limit"] = args.time_limit
         stop = hgspy.stop.MaxRuntime(args.time_limit)
 
-    smac = HyperparameterOptimizationFacade(
+    smac = ACFacade(
         Scenario(**settings),
         evaluate,
         overwrite=args.overwrite
