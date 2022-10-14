@@ -1,4 +1,5 @@
 import argparse
+import logging
 from glob import glob
 
 import numpy as np
@@ -12,6 +13,7 @@ import tools
 from strategies.config import Config
 from strategies.static import hgs
 
+logger = logging.getLogger(__name__)
 defaults = Config.from_file("configs/solver.toml").static()
 
 
@@ -56,7 +58,8 @@ def get_space(seed: int):
 
 
 def evaluate(config, instance: str, seed: int):
-    run_time = tools.static_time_limit(tools.name2size(instance), "quali")
+    # TODO set run time to quali
+    run_time = 5  # tools.static_time_limit(tools.name2size(instance), "quali")
     params = defaults.solver_params() | config.get_dictionary()
 
     res = hgs(
@@ -85,18 +88,18 @@ def args2instances(args):
 def main():
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
+    size = comm.Get_size()
 
     args = parse_args()
 
-    # TODO make this work with actual instances / kfold crossvalidation in a
-    #  distributed fashion
-    instances = args2instances(args)
-    features = {name: [tools.name2size(name)] for name in instances}
+    # TODO make this work with crossvalidation in distributed fashion
+    instances = args2instances(args)[:2]
+    assert len(instances) % size == 0, "Cannot cleanly divide work!"
+    instances = np.split(np.array(instances), size)
+    local_instances = instances[rank]
 
     settings = {
         "configspace": get_space(args.seed),
-        "instances": instances,
-        "instance_features": features,
         "output_directory": args.out_dir,
     }
 
@@ -107,14 +110,15 @@ def main():
         settings["walltime_limit"] = args.time_limit
         stop = hgspy.stop.MaxRuntime(args.time_limit)
 
-    smac = ACFacade(
-        Scenario(**settings),
-        evaluate,
-        overwrite=args.overwrite
-    )
+    if rank == 0:
+        # The processor at rank 0 is in charge of the SMAC algorithm; the other
+        # processors only help out with evaluating the requested configurations.
+        smac = ACFacade(
+            Scenario(**settings),
+            evaluate,
+            overwrite=args.overwrite
+        )
 
-    # The processor at rank 0 is in charge of the SMAC algorithm; the other
-    # processors only help out with evaluating the requested configurations.
     while True:
         done = stop() if rank == 0 else False
         done = comm.bcast(done, root=0)
@@ -126,7 +130,7 @@ def main():
         info = comm.bcast(info, root=0)
 
         objs = [evaluate(info.config, inst, info.seed)
-                for inst in instances]
+                for inst in local_instances]
 
         objs = comm.gather(np.mean(objs), root=0)  # objectives
 
@@ -134,9 +138,11 @@ def main():
             avg_cost = np.mean(objs)
             smac.tell(info, TrialValue(cost=avg_cost))
 
+            logger.info(f"Ran {info.config.get_dictionary()} with average cost "
+                        f"{avg_cost:.0f}")
+
     if rank == 0:
-        incumbent = smac.optimize()
-        print(incumbent)
+        print(smac.incumbent)
 
 
 if __name__ == "__main__":
