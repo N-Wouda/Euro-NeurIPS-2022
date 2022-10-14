@@ -50,7 +50,7 @@ def get_space(seed: int):
 
     params = [
         # Penalty management
-        Integer("initialTimeWarpPenalty", (1, 100), default=1, q=11),
+        Integer("initialTimeWarpPenalty", (1, 25), default=1),
         Integer("nbPenaltyManagement", (25, 500), default=100, q=25),
         Float("feasBooster", (1, 10), default=2.0, q=0.1),
         Float("penaltyIncrease", (1, 5), default=1.2, q=0.1),
