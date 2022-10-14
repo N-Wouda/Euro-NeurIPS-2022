@@ -57,6 +57,8 @@ def rollout(
         hgspy.stop.MaxIterations(sim_solve_iters * 5),
     )
     base_init = res_init.get_best_found().get_routes()
+    best_cost = res_init.get_best_found().cost()
+    print(best_cost)
     avg = []
 
     # Only do another simulation if there's (on average) enough time for it to
@@ -82,7 +84,7 @@ def rollout(
             [getattr(hgspy.operators, op) for op in node_ops],
             [getattr(hgspy.operators, op) for op in route_ops],
             [getattr(hgspy.crossover, op) for op in crossover_ops],
-            hgspy.stop.MaxIterations(sim_solve_iters),
+            hgspy.stop.MaxIterations(sim_solve_iters * 2),
         )
         partial_sim_init = res.get_best_found().get_routes()
         partial_sim_init = [
@@ -94,7 +96,13 @@ def rollout(
 
         res = hgs(
             sim_inst,
-            hgspy.Config(**sim_config),
+            hgspy.Config(
+                seed=1,
+                generationSize=2,
+                minPopSize=1,
+                nbGranular=200,
+                initialTimeWarpPenalty=25,
+            ),
             [getattr(hgspy.operators, op) for op in node_ops],
             [getattr(hgspy.operators, op) for op in route_ops],
             [getattr(hgspy.crossover, op) for op in crossover_ops],
@@ -146,21 +154,23 @@ def rollout(
     postpone_threshold = max(1, n_sims) * (1 - dispatch_threshold)
     must_postpone = postpone_count >= postpone_threshold
 
-    # # print((dispatch_count / n_sims).round(2))
-    # print(f"  Potential postpone: {n_ep_reqs-ep_inst['must_dispatch'].sum()}")
-    # print(f"    Average postpone: {np.mean(avg):.2f}")
-    # print(f"        Max postpone: {np.max(avg):.2f}")
-    # print(f"        Min postpone: {np.min(avg):.2f}")
-    # print(f"       Std. postpone: {np.std(avg):.2f}")
-    # print(f"15% Thresh. postpone: {must_postpone.sum()}")
-    # print(n_sims)
+    # print((dispatch_count / n_sims).round(2))
+    print(f"  Potential postpone: {n_ep_reqs-ep_inst['must_dispatch'].sum()}")
+    print(f"    Average postpone: {np.mean(avg):.2f}")
+    print(f"        Max postpone: {np.max(avg):.2f}")
+    print(f"        Min postpone: {np.min(avg):.2f}")
+    print(f"       Std. postpone: {np.std(avg):.2f}")
+    print(f"15% Thresh. postpone: {must_postpone.sum()}")
+    print(n_sims)
 
     n_to_postpone = max(1, (int(np.mean(avg)) + must_postpone.sum()) // 2)
-    top_postpone = (postpone_count / n_sims).argsort()[::-1][:n_to_postpone]
+    top_postpone = postpone_count.argsort()[::-1][:n_to_postpone]
+
     post = np.zeros(n_ep_reqs, dtype=bool)
     post[top_postpone] = True
     disp = ~post
-    # TODO don't postpone if the postpone count is very low
+
+    print(postpone_count[top_postpone] / n_sims)
 
     dispatch = (
         ep_inst["is_depot"]
