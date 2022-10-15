@@ -43,16 +43,29 @@ def rollout(
     avg_duration = 0.0
     dispatch_count = np.zeros(ep_inst["is_depot"].size, dtype=int)
 
+    ep_init = _epoch_initial_solution(
+        ep_inst,
+        sim_config,
+        node_ops,
+        route_ops,
+        crossover_ops,
+        sim_solve_iters,
+    )
+
     # Only do another simulation if there's (on average) enough time for it to
     # complete before the time limit.
     while (sim_start := time.perf_counter()) + avg_duration < start + sim_tlim:
+        sim_inst = simulate_instance(info, obs, rng, n_lookahead, n_requests)
+        sim_init = _sim_initial_solution(sim_inst, ep_init)
+
         res = hgs(
-            simulate_instance(info, obs, rng, n_lookahead, n_requests),
+            sim_inst,
             hgspy.Config(**sim_config),
             [getattr(hgspy.operators, op) for op in node_ops],
             [getattr(hgspy.operators, op) for op in route_ops],
             [getattr(hgspy.crossover, op) for op in crossover_ops],
             hgspy.stop.MaxIterations(sim_solve_iters),
+            initial_solutions=(sim_init,),
         )
 
         best = res.get_best_found()
@@ -74,3 +87,32 @@ def rollout(
     )
 
     return filter_instance(ep_inst, dispatch)
+
+
+def _epoch_initial_solution(
+    ep_inst, sim_config, node_ops, route_ops, crossover_ops, sim_solve_iters
+):
+    """
+    Make the initial epoch solution using the full epoch instance. This
+    is the same for all simulation instances.
+    """
+    # Initial solution based on epoch instance
+    res_init = hgs(
+        ep_inst,
+        hgspy.Config(**sim_config),
+        [getattr(hgspy.operators, op) for op in node_ops],
+        [getattr(hgspy.operators, op) for op in route_ops],
+        [getattr(hgspy.crossover, op) for op in crossover_ops],
+        hgspy.stop.MaxIterations(sim_solve_iters),
+    )
+    return res_init.get_best_found().get_routes()
+
+
+def _sim_initial_solution(sim_inst, ep_init):
+    """
+    Create a full initial solution for the simulation instance by appending
+    singletons to the epoch initial solution.
+    """
+    n_epoch_reqs = sum(sim_inst["request_idx"] >= 0)
+    singletons = [[r] for r in range(n_epoch_reqs, sim_inst["is_depot"].size)]
+    return ep_init + singletons
