@@ -28,8 +28,8 @@ def rollout(
     Determine the dispatch instance by simulating the next epochs and analyzing
     those simulations.
     """
-    # Return the full epoch instance for first and last epoch
-    if obs["current_epoch"] in [info["start_epoch"], info["end_epoch"]]:
+    # Return the full epoch instance for the last epoch
+    if obs["current_epoch"] in [info["end_epoch"]]:
         return obs["epoch_instance"]
 
     start = time.perf_counter()
