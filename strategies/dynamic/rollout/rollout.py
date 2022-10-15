@@ -103,7 +103,7 @@ def _epoch_initial_solution(
         [getattr(hgspy.operators, op) for op in node_ops],
         [getattr(hgspy.operators, op) for op in route_ops],
         [getattr(hgspy.crossover, op) for op in crossover_ops],
-        hgspy.stop.MaxIterations(sim_solve_iters),
+        hgspy.stop.MaxIterations(sim_solve_iters // 2),
     )
     return res.get_best_found().get_routes()
 
@@ -130,7 +130,7 @@ def _sim_only_initial_solution(
         [getattr(hgspy.operators, op) for op in node_ops],
         [getattr(hgspy.operators, op) for op in route_ops],
         [getattr(hgspy.crossover, op) for op in crossover_ops],
-        hgspy.stop.MaxIterations(sim_solve_iters),
+        hgspy.stop.MaxIterations(sim_solve_iters // 2),
     )
 
     # Re-index the sim-only solution to the full simulation instance indices
