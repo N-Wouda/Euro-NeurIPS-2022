@@ -37,26 +37,27 @@ def rollout(
     ep_inst = obs["epoch_instance"]
     sim_tlim = info["epoch_tlim"] * sim_tlim_factor
     must_dispatch = set(np.flatnonzero(ep_inst["must_dispatch"]))
+    solver_config = {
+        "sim_config": sim_config,
+        "node_ops": node_ops,
+        "route_ops": route_ops,
+        "crossover_ops": crossover_ops,
+        "sim_solve_iters": sim_solve_iters,
+    }
 
     # Statistics
     n_sims = 0
     avg_duration = 0.0
     dispatch_count = np.zeros(ep_inst["is_depot"].size, dtype=int)
 
-    ep_init = _epoch_initial_solution(
-        ep_inst,
-        sim_config,
-        node_ops,
-        route_ops,
-        crossover_ops,
-        sim_solve_iters,
-    )
+    # Create initial epoch solution
+    ep_init = _epoch_initial_solution(ep_inst, **solver_config)
 
     # Only do another simulation if there's (on average) enough time for it to
     # complete before the time limit.
     while (sim_start := time.perf_counter()) + avg_duration < start + sim_tlim:
         sim_inst = simulate_instance(info, obs, rng, n_lookahead, n_requests)
-        sim_init = _sim_initial_solution(sim_inst, ep_init)
+        sim_only_init = _sim_only_initial_solution(sim_inst, **solver_config)
 
         res = hgs(
             sim_inst,
@@ -65,7 +66,7 @@ def rollout(
             [getattr(hgspy.operators, op) for op in route_ops],
             [getattr(hgspy.crossover, op) for op in crossover_ops],
             hgspy.stop.MaxIterations(sim_solve_iters),
-            initial_solutions=(sim_init,),
+            initial_solutions=(ep_init + sim_only_init,),
         )
 
         best = res.get_best_found()
@@ -96,8 +97,7 @@ def _epoch_initial_solution(
     Make the initial epoch solution using the full epoch instance. This
     is the same for all simulation instances.
     """
-    # Initial solution based on epoch instance
-    res_init = hgs(
+    res = hgs(
         ep_inst,
         hgspy.Config(**sim_config),
         [getattr(hgspy.operators, op) for op in node_ops],
@@ -105,14 +105,37 @@ def _epoch_initial_solution(
         [getattr(hgspy.crossover, op) for op in crossover_ops],
         hgspy.stop.MaxIterations(sim_solve_iters),
     )
-    return res_init.get_best_found().get_routes()
+    return res.get_best_found().get_routes()
 
 
-def _sim_initial_solution(sim_inst, ep_init):
+def _sim_only_initial_solution(
+    sim_inst,
+    sim_config,
+    node_ops,
+    route_ops,
+    crossover_ops,
+    sim_solve_iters,
+):
     """
-    Create a full initial solution for the simulation instance by appending
-    singletons to the epoch initial solution.
+    Solve the simulation instance without the epoch instance. Then create a
+    complete initial solution for the simulation instance by appending the
+    found initial solution and the epoch initial solution.
     """
-    n_epoch_reqs = sum(sim_inst["request_idx"] >= 0)
-    singletons = [[r] for r in range(n_epoch_reqs, sim_inst["is_depot"].size)]
-    return ep_init + singletons
+    sim_idcs = sim_inst["request_idx"] <= 0
+    sim_only_inst = filter_instance(sim_inst, sim_idcs)
+
+    res = hgs(
+        sim_only_inst,
+        hgspy.Config(**sim_config),
+        [getattr(hgspy.operators, op) for op in node_ops],
+        [getattr(hgspy.operators, op) for op in route_ops],
+        [getattr(hgspy.crossover, op) for op in crossover_ops],
+        hgspy.stop.MaxIterations(sim_solve_iters),
+    )
+
+    # Re-index the sim-only solution to the full simulation instance indices
+    n_ep_reqs = sum(sim_inst["request_idx"] >= 0)
+    sim_only_init = res.get_best_found().get_routes()
+    sim_only_init = [[idx + n_ep_reqs - 1 for idx in r] for r in sim_only_init]
+
+    return sim_only_init
