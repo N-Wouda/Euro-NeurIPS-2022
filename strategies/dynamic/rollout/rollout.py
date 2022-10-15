@@ -37,39 +37,22 @@ def rollout(
     ep_inst = obs["epoch_instance"]
     sim_tlim = info["epoch_tlim"] * sim_tlim_factor
     must_dispatch = set(np.flatnonzero(ep_inst["must_dispatch"]))
-    solver_config = {
-        "sim_config": sim_config,
-        "node_ops": node_ops,
-        "route_ops": route_ops,
-        "crossover_ops": crossover_ops,
-        "sim_solve_iters": sim_solve_iters,
-    }
 
     # Statistics
     n_sims = 0
     avg_duration = 0.0
     dispatch_count = np.zeros(ep_inst["is_depot"].size, dtype=int)
 
-    # Create initial epoch solution
-    ep_init = _epoch_initial_solution(ep_inst, **solver_config)
-
     # Only do another simulation if there's (on average) enough time for it to
     # complete before the time limit.
     while (sim_start := time.perf_counter()) + avg_duration < start + sim_tlim:
-        sim_inst = simulate_instance(info, obs, rng, n_lookahead, n_requests)
-        sim_only_init = [
-            [r]
-            for r in range(ep_inst["is_depot"].size, sim_inst["is_depot"].size)
-        ]
-
         res = hgs(
-            sim_inst,
+            simulate_instance(info, obs, rng, n_lookahead, n_requests),
             hgspy.Config(**sim_config),
             [getattr(hgspy.operators, op) for op in node_ops],
             [getattr(hgspy.operators, op) for op in route_ops],
             [getattr(hgspy.crossover, op) for op in crossover_ops],
             hgspy.stop.MaxIterations(sim_solve_iters),
-            initial_solutions=(ep_init + sim_only_init,),
         )
 
         best = res.get_best_found()
@@ -91,21 +74,3 @@ def rollout(
     )
 
     return filter_instance(ep_inst, dispatch)
-
-
-def _epoch_initial_solution(
-    ep_inst, sim_config, node_ops, route_ops, crossover_ops, sim_solve_iters
-):
-    """
-    Make the initial epoch solution using the full epoch instance. This
-    is the same for all simulation instances.
-    """
-    res = hgs(
-        ep_inst,
-        hgspy.Config(**sim_config),
-        [getattr(hgspy.operators, op) for op in node_ops],
-        [getattr(hgspy.operators, op) for op in route_ops],
-        [getattr(hgspy.crossover, op) for op in crossover_ops],
-        hgspy.stop.MaxIterations(sim_solve_iters // 2),
-    )
-    return res.get_best_found().get_routes()
