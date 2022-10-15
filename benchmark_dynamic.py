@@ -66,13 +66,14 @@ def solve(
     else:
         costs, routes = solve_dynamic(env, config, solver_seed)
 
-    run_time = round(perf_counter() - start, 3)
+    run_time = round(perf_counter() - start, 2)
 
     return (
         path.stem,
         instance_seed,
         sum(costs.values()),
-        sum([len(rts) for rts in routes.values()]),
+        tuple(costs.values()),
+        tuple([len(rts) for rts in routes.values()]),
         tuple([sum(len(route) for route in sol) for sol in routes.values()]),
         run_time,
     )
@@ -90,8 +91,9 @@ def main():
     headers = [
         "Instance",
         "Seed",
-        "Cost",
-        "Tot. routes",
+        "Total",
+        "Costs",
+        "Routes",
         "Requests",
         "Time (s)",
     ]
@@ -99,8 +101,9 @@ def main():
     dtypes = [
         ("inst", "U37"),
         ("seed", int),
-        ("cost", int),
-        ("routes", int),
+        ("total", int),
+        ("costs", tuple),
+        ("routes", tuple),
         ("requests", tuple),
         ("time", float),
     ]
@@ -113,7 +116,7 @@ def main():
     )
 
     print("\n", table, "\n", sep="")
-    print(f"      Avg. objective: {data['cost'].mean():.0f}")
+    print(f"      Avg. objective: {data['total'].mean():.0f}")
     print(f"   Avg. run-time (s): {data['time'].mean():.2f}")
 
 
