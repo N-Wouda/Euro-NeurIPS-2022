@@ -24,7 +24,7 @@ def parse_args():
     )
 
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--max_runtime", type=int)
+    group.add_argument("--max_runtime", type=float)
     group.add_argument("--max_iterations", type=int)
     group.add_argument("--phase", choices=["quali", "final"])
 
