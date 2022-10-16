@@ -1,8 +1,6 @@
 import argparse
-from collections import defaultdict
 from functools import partial
 from glob import glob
-from itertools import product
 from pathlib import Path
 from time import perf_counter
 
