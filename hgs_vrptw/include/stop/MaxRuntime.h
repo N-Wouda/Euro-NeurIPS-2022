@@ -27,7 +27,7 @@ public:
         : maxRuntime(maxRuntime), start(clock::now())
     {
         if (maxRuntime <= 0)
-            throw std::runtime_error("Run-time of <0s is not understood.");
+            throw std::runtime_error("Run-time <= 0 is not understood.");
     }
 };
 
