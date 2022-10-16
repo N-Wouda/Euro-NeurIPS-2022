@@ -10,7 +10,7 @@ class MaxRuntime : public StoppingCriterion
     using clock = std::chrono::system_clock;
     using seconds = std::chrono::duration<double>;
 
-    double maxRuntime;
+    double const maxRuntime;
     clock::time_point const start;
 
 public:
