@@ -44,7 +44,7 @@ strategy = "rollout"
 [dynamic.strategy_params]
 rollout_tlim = 45
 sim_cycle_time = 22
-sim_cycle_size = 35
+sim_cycle_iters = 35
 n_lookahead = 3
 n_requests = 100
 dispatch_threshold = 0.18 # unused

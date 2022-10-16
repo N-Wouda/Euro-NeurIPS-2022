@@ -14,7 +14,7 @@ def rollout(
     rng,
     rollout_tlim: float,
     sim_cycle_time: int,
-    sim_cycle_size: int,
+    sim_cycle_iters: int,
     n_lookahead: int,
     n_requests: int,
     dispatch_threshold: float,
@@ -48,11 +48,11 @@ def rollout(
     to_dispatch = np.zeros(ep_size, dtype=bool)  # unused
 
     n_cycles = rollout_tlim // sim_cycle_time
-    sim_tlim = sim_cycle_time / sim_cycle_size
+    sim_tlim = sim_cycle_time / sim_cycle_iters
 
     for _ in range(n_cycles):
-        # Simulate ``sim_cycle_size`` instances and count dispatch actions
-        for _ in range(sim_cycle_size):
+        # Simulate ``sim_cycle_iters`` instances and count dispatch actions
+        for _ in range(sim_cycle_iters):
             sim_inst = simulate_instance(
                 info, obs, rng, n_lookahead, n_requests, to_postpone * 3600
             )
@@ -77,7 +77,7 @@ def rollout(
 
         # Select requests to postpone based on thresholds
         postpone_count = 1 - dispatch_count
-        to_postpone = postpone_count >= postpone_threshold * sim_cycle_size
+        to_postpone = postpone_count >= postpone_threshold * sim_cycle_iters
         dispatch_count *= 0  # reset dispatch count
 
     dispatch = ep_inst["is_depot"] | ep_inst["must_dispatch"] | ~to_postpone
