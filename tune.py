@@ -1,6 +1,5 @@
 import argparse
 import logging
-from concurrent.futures import wait
 from glob import glob
 
 from ConfigSpace import (
@@ -13,7 +12,7 @@ from ConfigSpace import (
     NotEqualsCondition,
 )
 from mpi4py import MPI
-from mpi4py.futures import MPICommExecutor
+from mpi4py.futures import MPICommExecutor, wait
 from smac import AlgorithmConfigurationFacade as ACFacade, Scenario
 from smac.runhistory.dataclasses import TrialValue
 
@@ -129,7 +128,7 @@ def get_space(seed: int):
 
 
 def evaluate(config, instance: str, seed: int):
-    run_time = tools.static_time_limit(tools.name2size(instance), "quali")
+    run_time = 5  # tools.static_time_limit(tools.name2size(instance), "quali")
     params = config.get_dictionary()
 
     node_ops = [
@@ -198,10 +197,8 @@ def main():
     }
 
     if args.num_trials:
-        settings["n_trials"] = args.num_trials
         stop = hgspy.stop.MaxIterations(args.num_trials)
     else:
-        settings["walltime_limit"] = args.time_limit
         stop = hgspy.stop.MaxRuntime(args.time_limit)
 
     with MPICommExecutor() as executor:
@@ -233,6 +230,7 @@ def main():
                 # ..update SMAC with observations..
                 for info, fut in futures:
                     smac.tell(info, TrialValue(cost=fut.result()))
+                    logger.info(f"Evaluated {info.instance}: {fut.result()}.")
 
                 # ..and reset the list of futures
                 futures = []
