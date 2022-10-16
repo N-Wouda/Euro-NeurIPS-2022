@@ -14,7 +14,8 @@ def rollout(
     rng,
     n_lookahead: int,
     n_requests: int,
-    n_update_threshold: int,
+    n_sim_cycles: int,
+    sim_cycle_length: int,
     sim_tlim_factor: float,
     sim_solve_iters: int,
     dispatch_threshold: float,
@@ -51,7 +52,7 @@ def rollout(
     # Only do another simulation if there's (on average) enough time for it to
     # complete before the time limit.
     # while (sim_start := time.perf_counter()) + avg_duration < start + sim_tlim:
-    for _ in range(4 * n_update_threshold + 1):
+    for _ in range(n_sim_cycles * sim_cycle_length + 1):
         sim_inst = simulate_instance(
             info,
             obs,
@@ -85,12 +86,11 @@ def rollout(
 
         # Postpone requests after ``n_update_threshold`` simulations,
         # and update (lower) the corresponding postponement threshold.
-        if n_sims % n_update_threshold == 0:
-            factor = n_sims // n_update_threshold - 1
-            postpone_count = n_update_threshold - dispatch_count
-            postpone_threshold = 0.85
+        if n_sims % sim_cycle_length == 0:
+            postpone_count = sim_cycle_length - dispatch_count
+            postpone_threshold = 1 - dispatch_threshold
             must_postpone = (
-                postpone_count >= postpone_threshold * n_update_threshold
+                postpone_count >= postpone_threshold * sim_cycle_length
             )
             must_postpone[0] = False  # Fix depot
 
@@ -99,8 +99,7 @@ def rollout(
 
     # print((dispatch_count / n_sims).round(2))
     print(f"  Potential postpone: {n_ep_reqs-ep_inst['must_dispatch'].sum()}")
-    print(f"15% Thresh. postpone: {must_postpone.sum()}")
-    print(n_sims)
+    print(f"     Actual postpone: {must_postpone.sum()}")
 
     dispatch = ep_inst["is_depot"] | ep_inst["must_dispatch"] | ~must_postpone
 
