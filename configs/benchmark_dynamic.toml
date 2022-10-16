@@ -44,9 +44,11 @@ strategy = "rollout"
 [dynamic.strategy_params]
 n_lookahead = 3
 n_requests = 100
-sim_tlim_factor = 0.7
-sim_solve_iters = 40
-dispatch_threshold = 0.18
+rollout_tlim = 45
+sim_cycle_time = 22
+sim_cycle_size = 35
+dispatch_threshold = 0.18 # unused
+postpone_threshold = 0.85
 
 node_ops = [
     "Exchange10",

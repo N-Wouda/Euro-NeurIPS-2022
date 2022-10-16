@@ -14,9 +14,11 @@ def rollout(
     rng,
     n_lookahead: int,
     n_requests: int,
-    sim_tlim_factor: float,
-    sim_solve_iters: int,
+    rollout_tlim: float,
+    sim_cycle_time: int,
+    sim_cycle_size: int,
     dispatch_threshold: float,
+    postpone_threshold: float,
     sim_config: dict,
     node_ops: list,
     route_ops: list,
@@ -35,42 +37,48 @@ def rollout(
 
     # Parameters
     ep_inst = obs["epoch_instance"]
-    sim_tlim = info["epoch_tlim"] * sim_tlim_factor
     must_dispatch = set(np.flatnonzero(ep_inst["must_dispatch"]))
+    ep_size = ep_inst["is_depot"].size
 
     # Statistics
     n_sims = 0
     avg_duration = 0.0
-    dispatch_count = np.zeros(ep_inst["is_depot"].size, dtype=int)
+    dispatch_count = np.zeros(ep_size, dtype=int)
+    to_postpone = np.zeros(ep_size, dtype=bool)
 
-    # Only do another simulation if there's (on average) enough time for it to
-    # complete before the time limit.
-    while (sim_start := time.perf_counter()) + avg_duration < start + sim_tlim:
-        res = hgs(
-            simulate_instance(info, obs, rng, n_lookahead, n_requests),
-            hgspy.Config(**sim_config),
-            [getattr(hgspy.operators, op) for op in node_ops],
-            [getattr(hgspy.operators, op) for op in route_ops],
-            [getattr(hgspy.crossover, op) for op in crossover_ops],
-            hgspy.stop.MaxIterations(sim_solve_iters),
-        )
+    n_cycles = rollout_tlim // sim_cycle_time
+    sim_solve_time = sim_cycle_time / sim_cycle_size
 
-        best = res.get_best_found()
+    for _ in range(n_cycles):
+        # Simulate ``sim_cycle_size`` instances and count dispatch actions
+        for _ in range(sim_cycle_size):
+            sim_inst = simulate_instance(
+                info, obs, rng, n_lookahead, n_requests, to_postpone * 3600
+            )
 
-        for sim_route in best.get_routes():
-            # Only dispatch routes that contain must dispatch requests
-            if any(idx in must_dispatch for idx in sim_route):
-                dispatch_count[sim_route] += 1
+            res = hgs(
+                sim_inst,
+                hgspy.Config(**sim_config),
+                [getattr(hgspy.operators, op) for op in node_ops],
+                [getattr(hgspy.operators, op) for op in route_ops],
+                [getattr(hgspy.crossover, op) for op in crossover_ops],
+                hgspy.stop.MaxRuntime(sim_solve_time),
+            )
 
-        sim_duration = time.perf_counter() - sim_start
-        avg_duration = (n_sims * avg_duration + sim_duration) / (n_sims + 1)
-        n_sims += 1
+            best = res.get_best_found()
 
-    dispatch = (
-        ep_inst["is_depot"]
-        | ep_inst["must_dispatch"]
-        # Only dispatch requests that are dispatched in enough simulations
-        | (dispatch_count >= max(1, n_sims) * dispatch_threshold)
-    )
+            for sim_route in best.get_routes():
+                # Only dispatch routes that contain must dispatch requests
+                if any(idx in must_dispatch for idx in sim_route):
+                    dispatch_count[sim_route] += 1
+
+            dispatch_count[0] += 1  # Depot is also "dispatched"
+
+        # Select requests to postpone based on thresholds
+        postpone_count = 1 - dispatch_count
+        to_postpone = postpone_count >= postpone_threshold * sim_cycle_size
+        dispatch_count *= 0  # reset dispatch count
+
+    dispatch = ep_inst["is_depot"] | ep_inst["must_dispatch"] | ~to_postpone
 
     return filter_instance(ep_inst, dispatch)
