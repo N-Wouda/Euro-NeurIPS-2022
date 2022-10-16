@@ -8,7 +8,7 @@
 class MaxRuntime : public StoppingCriterion
 {
     using clock = std::chrono::system_clock;
-    using fsec = std::chrono::duration<double>;
+    using seconds = std::chrono::duration<double>;
 
     double maxRuntime;
     clock::time_point const start;
@@ -16,7 +16,7 @@ class MaxRuntime : public StoppingCriterion
 public:
     bool operator()() override
     {
-        return fsec(clock::now() - start).count() >= maxRuntime;
+        return seconds(clock::now() - start).count() >= maxRuntime;
     }
 
     /**
