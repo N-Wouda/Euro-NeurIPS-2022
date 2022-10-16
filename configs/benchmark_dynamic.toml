@@ -44,9 +44,9 @@ strategy = "rollout"
 [dynamic.strategy_params]
 n_lookahead = 3
 n_requests = 100
-sim_tlim_factor = 0.5
-sim_solve_iters = 25
-dispatch_threshold = 0.15
+sim_tlim_factor = 0.7
+sim_solve_iters = 40
+dispatch_threshold = 0.18
 
 node_ops = [
     "Exchange10",
@@ -70,8 +70,10 @@ crossover_ops = [
 
 [dynamic.strategy_params.sim_config]
 seed = 1
-generationSize = 20
-minPopSize = 5
-nbGranular = 80
-initialTimeWarpPenalty = 250
-penaltyDecrease = 0.5
+generationSize = 2
+minPopSize = 1
+nbGranular = 70
+initialTimeWarpPenalty = 25
+penaltyDecrease = 0.25
+nbPenaltyManagement = 1
+repairProbability = 0
