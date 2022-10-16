@@ -222,7 +222,7 @@ PYBIND11_MODULE(hgspy, m)
         .def(py::init<size_t>(), py::arg("max_iterations"));
 
     py::class_<MaxRuntime, StoppingCriterion>(stop, "MaxRuntime")
-        .def(py::init<size_t>(), py::arg("max_runtime"));
+        .def(py::init<double>(), py::arg("max_runtime"));
 
     // Crossover operators (as a submodule)
     py::module xOps = m.def_submodule("crossover");
