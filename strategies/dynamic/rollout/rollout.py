@@ -12,11 +12,11 @@ def rollout(
     info,
     obs,
     rng,
-    n_lookahead: int,
-    n_requests: int,
     rollout_tlim: float,
     sim_cycle_time: int,
     sim_cycle_size: int,
+    n_lookahead: int,
+    n_requests: int,
     dispatch_threshold: float,
     postpone_threshold: float,
     sim_config: dict,
@@ -45,9 +45,10 @@ def rollout(
     avg_duration = 0.0
     dispatch_count = np.zeros(ep_size, dtype=int)
     to_postpone = np.zeros(ep_size, dtype=bool)
+    to_dispatch = np.zeros(ep_size, dtype=bool)  # unused
 
     n_cycles = rollout_tlim // sim_cycle_time
-    sim_solve_time = sim_cycle_time / sim_cycle_size
+    sim_tlim = sim_cycle_time / sim_cycle_size
 
     for _ in range(n_cycles):
         # Simulate ``sim_cycle_size`` instances and count dispatch actions
@@ -62,7 +63,7 @@ def rollout(
                 [getattr(hgspy.operators, op) for op in node_ops],
                 [getattr(hgspy.operators, op) for op in route_ops],
                 [getattr(hgspy.crossover, op) for op in crossover_ops],
-                hgspy.stop.MaxRuntime(sim_solve_time),
+                hgspy.stop.MaxRuntime(sim_tlim),
             )
 
             best = res.get_best_found()
