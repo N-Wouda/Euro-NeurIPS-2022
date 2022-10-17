@@ -33,10 +33,7 @@ def parse_args():
     size.add_argument("--medium", action="store_true")
     size.add_argument("--large", action="store_true")
 
-    stop = parser.add_mutually_exclusive_group(required=True)
-    stop.add_argument("--time_limit", type=int)
-    stop.add_argument("--num_trials", type=int)
-
+    parser.add_argument("--time_limit", type=int)
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--out_dir", default="tmp/smac")
@@ -172,7 +169,10 @@ def evaluate(config, instance: str, seed: int):
         hgspy.stop.MaxRuntime(run_time),
     )
 
-    return res.get_best_found().cost()
+    cost = res.get_best_found().cost()
+    logger.debug(f"Evaluated {instance}: {cost}.")
+
+    return cost
 
 
 def args2instances(args):
@@ -187,58 +187,46 @@ def args2instances(args):
 
 
 def main():
-    args = parse_args()
-    num_workers = MPI.COMM_WORLD.Get_size() - 1
+    with MPICommExecutor() as ex:
+        if ex is None:  # then this process is a worker
+            return
 
-    instances = args2instances(args)
-    features = {name: [tools.name2size(name)] for name in instances}
+        args = parse_args()
+        num_workers = MPI.COMM_WORLD.Get_size() - 1
 
-    settings = {
-        "configspace": get_space(args.seed),
-        "instances": instances,
-        "instance_features": features,
-        "output_directory": args.out_dir,
-    }
+        instances = args2instances(args)
+        features = {name: [tools.name2size(name)] for name in instances}
 
-    if args.num_trials:
-        stop = hgspy.stop.MaxIterations(args.num_trials)
-    else:
+        settings = {
+            "configspace": get_space(args.seed),
+            "instances": instances,
+            "instance_features": features,
+            "min_budget": 10,
+            "output_directory": args.out_dir,
+        }
+
+        logger.info(f"SMAC evaluator is running with {num_workers = }.")
+
         stop = hgspy.stop.MaxRuntime(args.time_limit)
+        smac = ACFacade(
+            Scenario(**settings), evaluate, overwrite=args.overwrite
+        )
 
-    with MPICommExecutor() as executor:
-        if executor is not None:
-            logger.info(f"SMAC evaluator is running with {num_workers = }.")
-            smac = ACFacade(
-                Scenario(**settings), evaluate, overwrite=args.overwrite
-            )
+        while not stop():
+            infos = [smac.ask() for _ in range(num_workers)]
+            futures = [
+                ex.submit(evaluate, info.config, info.instance, info.seed)
+                for info in infos
+            ]
 
-            futures = []
+            # Wait until all jobs have completed...
+            wait(futures)
 
-            while not stop():
-                info = smac.ask()
+            # ..and update SMAC with observations
+            for info, fut in zip(infos, futures):
+                smac.tell(info, TrialValue(cost=fut.result()))
 
-                fut = executor.submit(
-                    evaluate, info.config, info.instance, info.seed
-                )
-
-                futures.append((info, fut))
-
-                # Assign work until every CPU is doing something.
-                if len(futures) < num_workers:
-                    continue
-
-                # Wait until all jobs have completed...
-                wait([fut for _, fut in futures])
-
-                # ..update SMAC with observations..
-                for info, fut in futures:
-                    smac.tell(info, TrialValue(cost=fut.result()))
-                    logger.info(f"Evaluated {info.instance}: {fut.result()}.")
-
-                # ..and reset the list of futures
-                futures = []
-
-            print(smac.incumbent)
+        print(smac.incumbent)
 
 
 if __name__ == "__main__":
