@@ -185,6 +185,7 @@ def args2instances(args):
 def main():
     args = parse_args()
     num_workers = MPI.COMM_WORLD.Get_size() - 1
+    rank = MPI.COMM_WORLD.Get_rank()
 
     instances = args2instances(args)
     features = {name: [tools.name2size(name)] for name in instances}
@@ -203,8 +204,7 @@ def main():
 
     with MPICommExecutor() as executor:
         if executor is not None:
-            # Processor 0 is in charge of the SMAC algorithm; the others only
-            # help out with evaluating the requested configurations.
+            logger.info("SMAC evaluator is running.")
             smac = ACFacade(
                 Scenario(**settings), evaluate, overwrite=args.overwrite
             )
@@ -236,6 +236,8 @@ def main():
                 futures = []
 
             print(smac.incumbent)
+        else:
+            logger.info(f"Worker {rank = } is running.")
 
 
 if __name__ == "__main__":
