@@ -18,11 +18,11 @@ from smac.runhistory.dataclasses import TrialValue
 
 import hgspy
 import tools
-from strategies.config import Config
 from strategies.static import hgs
 
 logger = logging.getLogger(__name__)
-defaults = Config.from_file("configs/solver.toml").static()
+mpi_comm = MPI.COMM_WORLD
+mpi_rank = mpi_comm.Get_rank()
 
 
 def parse_args():
@@ -128,7 +128,9 @@ def get_space(seed: int):
 
 
 def evaluate(config, instance: str, seed: int):
-    run_time = 5  # tools.static_time_limit(tools.name2size(instance), "quali")
+    logger.debug(f"Evaluating {instance} with {seed = } on rank {mpi_rank}.")
+
+    run_time = tools.static_time_limit(tools.name2size(instance), "quali")
     params = config.get_dictionary()
 
     node_ops = [
@@ -148,6 +150,8 @@ def evaluate(config, instance: str, seed: int):
         getattr(hgspy.operators, op) for op in node_ops if params.pop(op, True)
     ]
 
+    route_ops = [hgspy.operators.RelocateStar, hgspy.operators.SwapStar]
+
     crossover_ops = [
         "broken_pairs_exchange",
         "selective_route_exchange",
@@ -163,7 +167,7 @@ def evaluate(config, instance: str, seed: int):
         tools.read_vrplib(instance),
         hgspy.Config(seed=seed, **params),
         node_ops,
-        defaults.route_ops(),
+        route_ops,
         crossover_ops,
         hgspy.stop.MaxRuntime(run_time),
     )
@@ -185,7 +189,6 @@ def args2instances(args):
 def main():
     args = parse_args()
     num_workers = MPI.COMM_WORLD.Get_size() - 1
-    rank = MPI.COMM_WORLD.Get_rank()
 
     instances = args2instances(args)
     features = {name: [tools.name2size(name)] for name in instances}
@@ -204,7 +207,7 @@ def main():
 
     with MPICommExecutor() as executor:
         if executor is not None:
-            logger.info("SMAC evaluator is running.")
+            logger.info(f"SMAC evaluator is running with {num_workers = }.")
             smac = ACFacade(
                 Scenario(**settings), evaluate, overwrite=args.overwrite
             )
@@ -220,7 +223,7 @@ def main():
 
                 futures.append((info, fut))
 
-                # assign work until every CPU is doing something.
+                # Assign work until every CPU is doing something.
                 if len(futures) < num_workers:
                     continue
 
@@ -236,8 +239,6 @@ def main():
                 futures = []
 
             print(smac.incumbent)
-        else:
-            logger.info(f"Worker {rank = } is running.")
 
 
 if __name__ == "__main__":
