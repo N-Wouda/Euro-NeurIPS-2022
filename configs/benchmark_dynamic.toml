@@ -42,8 +42,8 @@ crossover_ops = [
 strategy = "rollout"
 
 [dynamic.strategy_params]
-rollout_tlim = 45
-sim_cycle_time = 22
+rollout_tlim = 47
+sim_cycle_time = 23
 sim_cycle_iters = 35
 n_lookahead = 3
 n_requests = 100
