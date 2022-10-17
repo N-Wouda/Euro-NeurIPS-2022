@@ -116,7 +116,7 @@ def get_space(seed: int):
         ForbiddenAndConjunction(
             ForbiddenEqualsClause(cs["broken_pairs_exchange"], 0),
             ForbiddenEqualsClause(cs["selective_route_exchange"], 0),
-        )
+        ),
     ]
 
     cs.add_forbidden_clauses(forbidden_clauses)
@@ -128,7 +128,7 @@ def evaluate(config, instance: str, seed: int):
     logger.debug(f"Evaluating {instance} with {seed = } on rank {mpi_rank}.")
 
     run_time = tools.static_time_limit(tools.name2size(instance), "quali")
-    params = config.get_dictionary()
+    params = config.get_dictionary().copy()
 
     node_ops = [
         "Exchange10",
@@ -213,17 +213,23 @@ def main():
         )
 
         while not stop():
-            infos = [smac.ask() for _ in range(num_workers)]
+            # First submit work to the worker processes, so those are busy..
+            other = [smac.ask() for _ in range(num_workers)]
             futures = [
                 ex.submit(evaluate, info.config, info.instance, info.seed)
-                for info in infos
+                for info in other
             ]
 
-            # Wait until all jobs have completed...
+            # ..then make sure we're doing something useful too..
+            here = smac.ask()
+            obj = evaluate(here.config, here.instance, here.seed)
+            smac.tell(here, TrialValue(cost=obj))
+
+            # ..wait until all worker jobs have completed...
             wait(futures)
 
-            # ..and update SMAC with observations
-            for info, fut in zip(infos, futures):
+            # ..and update SMAC with their observations
+            for info, fut in zip(other, futures):
                 smac.tell(info, TrialValue(cost=fut.result()))
 
         print(smac.incumbent)
