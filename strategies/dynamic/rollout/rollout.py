@@ -76,7 +76,7 @@ def rollout(
             dispatch_count[0] += 1  # Depot is also "dispatched"
 
         # Select requests to postpone based on thresholds
-        postpone_count = 1 - dispatch_count
+        postpone_count = sim_cycle_iters - dispatch_count
         to_postpone = postpone_count >= postpone_threshold * sim_cycle_iters
         dispatch_count *= 0  # reset dispatch count
 
