@@ -1,5 +1,3 @@
-import time
-
 import numpy as np
 
 import hgspy
@@ -12,12 +10,11 @@ def rollout(
     info,
     obs,
     rng,
-    rollout_tlim: float,
-    sim_cycle_time: int,
+    rollout_tlim_factor: float,
+    n_sim_cycles: int,
     sim_cycle_iters: int,
     n_lookahead: int,
     n_requests: int,
-    dispatch_threshold: float,
     postpone_threshold: float,
     sim_config: dict,
     node_ops: list,
@@ -33,24 +30,19 @@ def rollout(
     if obs["current_epoch"] in [info["start_epoch"], info["end_epoch"]]:
         return obs["epoch_instance"]
 
-    start = time.perf_counter()
-
     # Parameters
     ep_inst = obs["epoch_instance"]
     must_dispatch = set(np.flatnonzero(ep_inst["must_dispatch"]))
     ep_size = ep_inst["is_depot"].size
 
     # Statistics
-    n_sims = 0
-    avg_duration = 0.0
     dispatch_count = np.zeros(ep_size, dtype=int)
     to_postpone = np.zeros(ep_size, dtype=bool)
-    to_dispatch = np.zeros(ep_size, dtype=bool)  # unused
 
-    n_cycles = rollout_tlim // sim_cycle_time
-    sim_tlim = sim_cycle_time / sim_cycle_iters
+    rollout_tlim = rollout_tlim_factor * info["epoch_tlim"]
+    sim_tlim = rollout_tlim / n_sim_cycles / sim_cycle_iters
 
-    for _ in range(n_cycles):
+    for _ in range(n_sim_cycles):
         # Simulate ``sim_cycle_iters`` instances and count dispatch actions
         for _ in range(sim_cycle_iters):
             sim_inst = simulate_instance(
