@@ -434,7 +434,7 @@ void Params::calculateNeighbours()
             int const timeWarp1 = earliestArrival1 - clients[i].twLate;
 
             int const earliestArrival2
-                = earliestArrival + clients[i].servDur + dist(i, j);
+                = earliestArrival1 + clients[i].servDur + dist(i, j);
             int const timeWarp2 = earliestArrival2 - clients[j].twLate;
 
             int const prox = dist(i, j)
