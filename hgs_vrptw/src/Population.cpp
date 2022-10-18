@@ -62,11 +62,13 @@ void Population::updateBiasedFitness(SubPopulation &subPop) const
     std::sort(diversity.begin(), diversity.end(), std::greater<>());
 
     auto const popSize = static_cast<double>(subPop.size());
-    for (size_t divRank = 0; divRank != popSize; divRank++)
+    auto const nbElite = std::min(params.config.nbElite, subPop.size());
+
+    for (size_t divRank = 0; divRank != subPop.size(); divRank++)
     {
         // Ranking the individuals based on the cost and diversity rank
         auto const costRank = diversity[divRank].second;
-        auto const divWeight = 1 - (params.config.nbElite / popSize);
+        auto const divWeight = 1 - nbElite / popSize;
 
         subPop[costRank].fitness = (costRank + divWeight * divRank) / popSize;
     }
