@@ -228,6 +228,7 @@ PYBIND11_MODULE(hgspy, m)
 
     xOps.def("broken_pairs_exchange", &brokenPairsExchange);
     xOps.def("selective_route_exchange", &selectiveRouteExchange);
+    xOps.def("edge_assembly", &edgeAssembly);
 
     // Local search operators (as a submodule)
     py::module lsOps = m.def_submodule("operators");
