@@ -420,20 +420,27 @@ void Params::calculateNeighbours()
             if (i == j)  // exclude the current client
                 continue;
 
-            // Compute proximity using Eq. 4 in Vidal 2012. The proximity is
-            // computed by the distance, min. wait time and min. time warp
-            // going from i -> j.
+            // Compute proximity from i to j, defined as the sum of distance,
+            // min. wait time and min. time warp on segment depot -> i -> j.
+            // (Vidal 2012, Eq. 4)
             int const waitTime = clients[j].twEarly - dist(i, j)
                                  - clients[i].servDur - clients[i].twLate;
+
             int const maxRelease
                 = std::max(clients[i].releaseTime, clients[j].releaseTime);
-            int const earliestArrival
+
+            int const earliestArrival1
                 = std::max(maxRelease + dist(0, i), clients[i].twEarly);
-            int const timeWarp = earliestArrival + clients[i].servDur
-                                 + dist(i, j) - clients[j].twLate;
+            int const timeWarp1 = earliestArrival1 - clients[i].twLate;
+
+            int const earliestArrival2
+                = earliestArrival + clients[i].servDur + dist(i, j);
+            int const timeWarp2 = earliestArrival2 - clients[j].twLate;
+
             int const prox = dist(i, j)
                              + config.weightWaitTime * std::max(0, waitTime)
-                             + config.weightTimeWarp * std::max(0, timeWarp);
+                             + config.weightTimeWarp * std::max(0, timeWarp1)
+                             + config.weightTimeWarp * std::max(0, timeWarp2);
 
             proximity.emplace_back(prox, j);
         }
