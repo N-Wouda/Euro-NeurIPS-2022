@@ -35,17 +35,15 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install poetry
           poetry install
       - name: Run black
-        run: |
-          poetry run black .
+        run: poetry run black .
       - name: Run flake8
-        run: |
-          poetry run flake8 .
+        run: poetry run flake8 .
       - uses: DoozyX/clang-format-lint-action@v0.13
         with:
           source: 'hgs_vrptw/src hgs_vrptw/include'
@@ -55,6 +53,5 @@ jobs:
         run: |
           cmake -Brelease -Shgs_vrptw
           make --directory=release
-      - name: Test solver
-        run: |
-          poetry run python benchmark.py --max_iterations 1 --num_procs 2
+      - name: Test static solver
+        run: poetry run python benchmark.py --max_iterations 1 --num_procs 2

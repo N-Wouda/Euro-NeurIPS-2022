@@ -82,6 +82,7 @@ PYBIND11_MODULE(hgspy, m)
                       size_t,
                       int,
                       int,
+                      bool,
                       int,
                       int,
                       size_t,
@@ -108,6 +109,7 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("nbGranular") = 40,
              py::arg("weightWaitTime") = 2,
              py::arg("weightTimeWarp") = 10,
+             py::arg("shouldIntensify") = true,
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
              py::arg("minCircleSectorSizeDegrees") = 15,
              py::arg("destroyPct") = 20,
@@ -219,10 +221,12 @@ PYBIND11_MODULE(hgspy, m)
     py::class_<StoppingCriterion>(stop, "StoppingCriterion");
 
     py::class_<MaxIterations, StoppingCriterion>(stop, "MaxIterations")
-        .def(py::init<size_t>(), py::arg("max_iterations"));
+        .def(py::init<size_t>(), py::arg("max_iterations"))
+        .def("__call__", &MaxIterations::operator());
 
     py::class_<MaxRuntime, StoppingCriterion>(stop, "MaxRuntime")
-        .def(py::init<double>(), py::arg("max_runtime"));
+        .def(py::init<double>(), py::arg("max_runtime"))
+        .def("__call__", &MaxRuntime::operator());
 
     // Crossover operators (as a submodule)
     py::module xOps = m.def_submodule("crossover");
