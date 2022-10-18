@@ -48,13 +48,8 @@ void LocalSearch::search(Individual &indiv)
                 if (step == 0  // evaluate only if routes have changed recently
                     || lastModified[U->route->idx] > lastTestedNode
                     || lastModified[V->route->idx] > lastTestedNode)
-                {
-                    if (applyNodeOps(U, V))
+                    if (U != p(V) && applyNodeOps(U, p(V)))
                         continue;
-
-                    if (p(V)->isDepot() && applyNodeOps(U, p(V)))
-                        continue;
-                }
             }
 
             // Empty route moves are not tested in the first iteration to avoid
