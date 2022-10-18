@@ -3,10 +3,7 @@ name = "euro-neurips-2022"
 version = "0.1.0"
 description = ""
 authors = [
-    "Charaf, Sara <s.charaf@tue.nl>",
     "Doorn, Jasper van <j.m.h.van.doorn@vu.nl>",
-    "Heide, Lieke van der <l.m.van.der.heide@rug.nl>",
-    "Jansen, Yde <yde_jansen@hotmail.com>",
     "Lan, Leon <l.lan@vu.nl>",
     "Pentinga, Luuk <l.pentinga@rug.nl>",
     "Wouda, Niels <n.a.wouda@rug.nl>"]
@@ -16,9 +13,17 @@ license = "MIT"
 python = "^3.8, <4.0"
 
 # From original requirements.txt
-numpy = "1.22.2"
-matplotlib = "3.5.1"
+numpy = "^1.22.2"
+matplotlib = "^3.5.1"
+tomli = "^2.0.1"
 tqdm = "^4.64.0"
+
+[tool.poetry.group.tune]
+optional = true
+
+[tool.poetry.group.tune.dependencies]
+mpi4py = "^3.1.3"
+smac = "2.0.0a1"
 
 
 [tool.poetry.dev-dependencies]
@@ -30,6 +35,7 @@ flake8-import-order = "^0.18.1"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
 
 [tool.black]
 line-length = 79

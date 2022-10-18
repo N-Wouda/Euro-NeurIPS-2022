@@ -7,31 +7,24 @@
 #include <stdexcept>
 #include <vector>
 
-void LocalSearch::operator()(Individual &indiv)
+void LocalSearch::search(Individual &indiv)
 {
-    // Shuffling the node order beforehand adds diversity to the search
+    loadIndividual(indiv);
+
+    // Shuffling the order beforehand adds diversity to the search
     std::shuffle(orderNodes.begin(), orderNodes.end(), rng);
-    std::shuffle(orderRoutes.begin(), orderRoutes.end(), rng);
+    std::shuffle(nodeOps.begin(), nodeOps.end(), rng);
 
-    loadIndividual(indiv);       // load individual...
-    search();                    // ...perform local search...
-    indiv = exportIndividual();  // ...export result back into the individual
-}
+    if (nodeOps.empty())
+        throw std::runtime_error("No known node operators.");
 
-void LocalSearch::search()
-{
-    if (nodeOps.empty() && routeOps.empty())
-        throw std::runtime_error("No known node or route operators.");
-
-    bool const intensify
-        = rng.randint(100) < params.config.intensificationProbability;
-
-    // Caches the last time node or routes were tested for modification (uses
-    // nbMoves to track this). The lastModified field, in contrast, track when
-    // a route was last *actually* modified.
+    // Caches the last time nodes were tested for modification (uses nbMoves to
+    // track this). The lastModified field, in contrast, track when a route was
+    // last *actually* modified.
     std::vector<int> lastTestedNodes(params.nbClients + 1, -1);
-    std::vector<int> lastTestedRoutes(params.nbVehicles, -1);
     lastModified = std::vector<int>(params.nbVehicles, 0);
+
+    searchCompleted = false;
     nbMoves = 0;
 
     // At least two iterations as empty routes are not evaluated in the first
@@ -78,42 +71,63 @@ void LocalSearch::search()
                     continue;
             }
         }
-
-        // Route operators are evaluated only after node operators get stuck,
-        // and only sometimes when we want to intensify the search.
-        if (searchCompleted && intensify)
-            for (int const rU : orderRoutes)
-            {
-                auto &U = routes[rU];
-
-                if (U.empty())
-                    continue;
-
-                auto const lastTested = lastTestedRoutes[U.idx];
-                lastTestedRoutes[U.idx] = nbMoves;
-
-                // Shuffling in this loop should not matter much as we are
-                // already randomizing the routes U.
-                for (int rV = 0; rV != U.idx; ++rV)
-                {
-                    auto &V = routes[rV];
-
-                    if (V.empty() || !U.overlapsWith(V))
-                        continue;
-
-                    auto const lastModifiedRoute
-                        = std::max(lastModified[U.idx], lastModified[V.idx]);
-
-                    if (step > 0 && lastModifiedRoute <= lastTested)
-                        continue;
-
-                    if (applyRouteOps(&U, &V))
-                        continue;
-                }
-            }
     }
 
-    postProcess();
+    indiv = exportIndividual();
+}
+
+void LocalSearch::intensify(Individual &indiv)
+{
+    loadIndividual(indiv);
+
+    // Shuffling the order beforehand adds diversity to the search
+    std::shuffle(orderRoutes.begin(), orderRoutes.end(), rng);
+    std::shuffle(routeOps.begin(), routeOps.end(), rng);
+
+    std::vector<int> lastTestedRoutes(params.nbVehicles, -1);
+    lastModified = std::vector<int>(params.nbVehicles, 0);
+
+    searchCompleted = false;
+    nbMoves = 0;
+
+    while (!searchCompleted)
+    {
+        searchCompleted = true;
+
+        for (int const rU : orderRoutes)
+        {
+            auto &U = routes[rU];
+
+            if (U.empty())
+                continue;
+
+            auto const lastTested = lastTestedRoutes[U.idx];
+            lastTestedRoutes[U.idx] = nbMoves;
+
+            // Shuffling in this loop should not matter much as we are
+            // already randomizing the routes U.
+            for (int rV = 0; rV != U.idx; ++rV)
+            {
+                auto &V = routes[rV];
+
+                if (V.empty() || !U.overlapsWith(V))
+                    continue;
+
+                auto const lastModifiedRoute
+                    = std::max(lastModified[U.idx], lastModified[V.idx]);
+
+                if (lastModifiedRoute <= lastTested)
+                    continue;
+
+                if (applyRouteOps(&U, &V))
+                    continue;
+            }
+
+            enumerateSubpaths(U);
+        }
+    }
+
+    indiv = exportIndividual();
 }
 
 bool LocalSearch::applyNodeOps(Node *U, Node *V)
@@ -168,9 +182,11 @@ void LocalSearch::update(Route *U, Route *V)
     }
 }
 
-void LocalSearch::postProcess()
+// TODO this should be some sort of operator passed into LS, it should not be
+//  defined here.
+void LocalSearch::enumerateSubpaths(Route &U)
 {
-    auto const k = params.config.postProcessPathLength;
+    auto const k = std::min(params.config.postProcessPathLength, U.size());
 
     if (k <= 1)  // 0 or 1 means we are either not doing anything at all (0),
         return;  // or recombining a single node (1). Neither helps.
@@ -180,34 +196,29 @@ void LocalSearch::postProcess()
     // This postprocessing step optimally recombines all node segments of a
     // given length in each route. This recombination works by enumeration; see
     // issue #98 for details.
-    for (auto &route : routes)
+    for (size_t start = 1; start + k <= U.size() + 1; ++start)
     {
-        for (size_t start = 1; start + k <= route.size() + 1; ++start)
+        auto *prev = p(U[start]);   // we process [start, start + k). So fixed
+        auto *next = U[start + k];  // endpoints are p(start) and start + k
+
+        std::iota(path.begin(), path.end(), start);
+        auto currCost = evaluateSubpath(path, prev, next, U);
+
+        while (std::next_permutation(path.begin(), path.end()))
         {
-            // We process the range [start, start + k). So the fixed endpoints
-            // are p(start) and the node at start + k.
-            auto *prev = p(route[start]);
-            auto *next = route[start + k];
+            auto const cost = evaluateSubpath(path, prev, next, U);
 
-            std::iota(path.begin(), path.end(), start);
-            auto currCost = evaluateSubpath(path, prev, next, route);
-
-            while (std::next_permutation(path.begin(), path.end()))
+            if (cost < currCost)
             {
-                auto const cost = evaluateSubpath(path, prev, next, route);
-
-                if (cost < currCost)  // it is rare to find more improving
-                {                     // moves, so we break after the first
-                    for (auto pos : path)
-                    {
-                        auto *node = route[pos];
-                        node->insertAfter(prev);
-                        prev = node;
-                    }
-
-                    route.update();
-                    break;
+                for (auto pos : path)
+                {
+                    auto *node = U[pos];
+                    node->insertAfter(prev);
+                    prev = node;
                 }
+
+                update(&U, &U);  // it is rare to find more than one improving
+                break;           // move, so we break after the first
             }
         }
     }

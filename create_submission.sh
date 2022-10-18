@@ -9,9 +9,10 @@ find hgs_vrptw \
   -o \( -name "*.cpp" -o -name "*.h" -o -name "CMakeLists.txt" -o -name "*.cmake" \) \
   -exec zip -o -r "tmp/submissions/$DATE.zip" {} +
 
-# Python code (solver, utilities, and code for the dynamic problem)
-zip -o -r "tmp/submissions/$DATE.zip" dynamic/*
-zip -o -r "tmp/submissions/$DATE.zip" solver.py tools.py environment.py
+# Python code (utilities and various solver strategies + configs)
+zip -o -r "tmp/submissions/$DATE.zip" strategies/*
+zip -o -r "tmp/submissions/$DATE.zip" configs/solver.toml
+zip -o -r "tmp/submissions/$DATE.zip" solver.py tools.py environment.py hgspy.py
 
 # Required CodaLab file
 cat > metadata <<- META
@@ -26,6 +27,7 @@ rm metadata
 cat > requirements.txt <<- REQ
 numpy == 1.22.2
 matplotlib == 3.5.1
+tomli == 2.0.1
 REQ
 
 zip -o -r "tmp/submissions/$DATE.zip" requirements.txt
@@ -55,4 +57,4 @@ zip -o -r "tmp/submissions/$DATE.zip" run.sh install.sh
 rm install.sh
 rm run.sh
 
-echo "Created tmp/submissions/submission_$DATE.zip"
+echo "Created tmp/submissions/$DATE.zip"

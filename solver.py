@@ -5,20 +5,24 @@ import sys
 from datetime import datetime
 
 import tools
-from dynamic.run_dispatch import run_dispatch
 from environment import ControllerEnvironment, VRPEnvironment
+from strategies import solve_dynamic, solve_hindsight
+from strategies.config import Config
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--strategy", type=str, default="rollout")
     parser.add_argument("--instance")
     parser.add_argument("--instance_seed", type=int, default=1)
     parser.add_argument("--solver_seed", type=int, default=1)
-    parser.add_argument("--static", action="store_true")
     parser.add_argument("--epoch_tlim", type=int, default=120)
+    parser.add_argument("--config_loc", default="configs/solver.toml")
     parser.add_argument("--profile", action="store_true")
+
+    problem_type = parser.add_mutually_exclusive_group()
+    problem_type.add_argument("--static", action="store_true")
+    problem_type.add_argument("--hindsight", action="store_true")
 
     return parser.parse_args()
 
@@ -32,11 +36,8 @@ def run(args):
             is_static=args.static,
         )
     else:
-        assert (
-            args.strategy != "oracle"
-        ), "Oracle incompatible with external controller"
-
         # Run within external controller
+        assert not args.hindsight, "Cannot solve hindsight using controller"
         env = ControllerEnvironment(sys.stdin, sys.stdout)
 
     # Make sure these parameters are not used by your solver
@@ -45,30 +46,12 @@ def run(args):
     args.static = None
     args.epoch_tlim = None
 
-    if args.strategy == "oracle":
-        from dynamic.run_oracle import run_oracle
+    config = Config.from_file(args.config_loc)
 
-        run_oracle(env, **vars(args))
-
-    elif args.strategy == "dqn":
-        from dynamic.dqn.run_dqn import run_dqn
-
-        run_dqn(env, **vars(args))
-
+    if args.hindsight:
+        solve_hindsight(env, config.static(), args.solver_seed)
     else:
-        if args.strategy in ["greedy", "random", "lazy"]:
-            from dynamic.random import random_dispatch
-
-            probs = {"greedy": 1, "random": 0.5, "lazy": 0}
-            strategy = random_dispatch(probs[args.strategy])
-
-        elif args.strategy == "rollout":
-            from dynamic.rollout import rollout as strategy
-
-        else:
-            raise ValueError(f"Invalid strategy: {args.strategy}")
-
-        run_dispatch(env, dispatch_strategy=strategy, **vars(args))
+        solve_dynamic(env, config, args.solver_seed)
 
 
 def main():

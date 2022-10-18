@@ -363,7 +363,7 @@ Params::Params(Config const &config,
                std::vector<int> const &releases)
     : config(config),
       nbClients(static_cast<int>(coords.size()) - 1),
-      nbVehicles(config.nbVeh >= nbClients ? nbClients : config.nbVeh),
+      nbVehicles(std::max(std::min(config.nbVeh, nbClients), 1)),
       vehicleCapacity(vehicleCap)
 {
     dist_ = Matrix<int>(distMat.size());
@@ -375,8 +375,9 @@ Params::Params(Config const &config,
     maxDist_ = dist_.max();
 
     // A reasonable scale for the initial values of the penalties
-    int maxDemand = *std::max_element(demands.begin(), demands.end());
-    penaltyCapacity = std::max(1, std::min(1000, maxDist_ / maxDemand));
+    int const maxDemand = *std::max_element(demands.begin(), demands.end());
+    int const initCapPenalty = maxDist_ / std::max(maxDemand, 1);
+    penaltyCapacity = std::max(std::min(1000, initCapPenalty), 1);
 
     // Initial parameter values of this parameter is not argued
     penaltyTimeWarp = static_cast<int>(config.initialTimeWarpPenalty);
@@ -419,28 +420,35 @@ void Params::calculateNeighbours()
             if (i == j)  // exclude the current client
                 continue;
 
-            // Compute proximity using Eq. 4 in Vidal 2012
-            int const first
-                = config.weightWaitTime
-                      * std::max(clients[j].twEarly - dist(i, j)
-                                     - clients[i].servDur - clients[i].twLate,
-                                 0)
-                  + config.weightTimeWarp
-                        * std::max(clients[i].twEarly + clients[i].servDur
-                                       + dist(i, j) - clients[j].twLate,
-                                   0);
+            // Compute proximity using Eq. 4 in Vidal 2012. The proximity is
+            // computed by the distance, min. wait time and min. time warp
+            // going from either i -> j or j -> i, whichever is the least.
+            int const maxRelease
+                = std::max(clients[i].releaseTime, clients[j].releaseTime);
 
-            int const second
-                = config.weightWaitTime
-                      * std::max(clients[i].twEarly - dist(i, j)
-                                     - clients[j].servDur - clients[j].twLate,
-                                 0)
-                  + config.weightTimeWarp
-                        * std::max(clients[j].twEarly + clients[j].servDur
-                                       + dist(i, j) - clients[i].twLate,
-                                   0);
+            // Proximity from j to i
+            int const waitTime1 = clients[i].twEarly - dist(j, i)
+                                  - clients[j].servDur - clients[j].twLate;
+            int const earliestArrival1
+                = std::max(maxRelease + dist(0, j), clients[j].twEarly);
+            int const timeWarp1 = earliestArrival1 + clients[j].servDur
+                                  + dist(j, i) - clients[i].twLate;
+            int const prox1 = dist(j, i)
+                              + config.weightWaitTime * std::max(0, waitTime1)
+                              + config.weightTimeWarp * std::max(0, timeWarp1);
 
-            proximity.emplace_back(dist(i, j) + std::min(first, second), j);
+            // Proximity from i to j
+            int const waitTime2 = clients[j].twEarly - dist(i, j)
+                                  - clients[i].servDur - clients[i].twLate;
+            int const earliestArrival2
+                = std::max(maxRelease + dist(0, i), clients[i].twEarly);
+            int const timeWarp2 = earliestArrival2 + clients[i].servDur
+                                  + dist(i, j) - clients[j].twLate;
+            int const prox2 = dist(i, j)
+                              + config.weightWaitTime * std::max(0, waitTime2)
+                              + config.weightTimeWarp * std::max(0, timeWarp2);
+
+            proximity.emplace_back(std::min(prox1, prox2), j);
         }
 
         std::sort(proximity.begin(), proximity.end());

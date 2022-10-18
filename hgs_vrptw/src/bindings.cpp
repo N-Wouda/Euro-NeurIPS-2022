@@ -56,7 +56,8 @@ PYBIND11_MODULE(hgspy, m)
              static_cast<void (LocalSearch::*)(LocalSearchOperator<Route> &)>(
                  &LocalSearch::addRouteOperator),
              py::arg("op"))
-        .def("__call__", &LocalSearch::operator(), py::arg("indiv"));
+        .def("search", &LocalSearch::search, py::arg("indiv"))
+        .def("intensify", &LocalSearch::intensify, py::arg("indiv"));
 
     py::class_<Config>(m, "Config")
         .def(py::init<int,
@@ -81,7 +82,7 @@ PYBIND11_MODULE(hgspy, m)
                       size_t,
                       int,
                       int,
-                      size_t,
+                      bool,
                       int,
                       int,
                       size_t,
@@ -99,8 +100,8 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("generationSize") = 40,
              py::arg("nbElite") = 4,
              py::arg("nbClose") = 5,
-             py::arg("targetFeasible") = 0.2,
-             py::arg("nbKeepOnRestart") = 1,
+             py::arg("targetFeasible") = 0.4,
+             py::arg("nbKeepOnRestart") = 0,
              py::arg("repairProbability") = 50,
              py::arg("repairBooster") = 10,
              py::arg("selectProbability") = 90,
@@ -108,11 +109,11 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("nbGranular") = 40,
              py::arg("weightWaitTime") = 2,
              py::arg("weightTimeWarp") = 10,
-             py::arg("intensificationProbability") = 0,
+             py::arg("shouldIntensify") = true,
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
              py::arg("minCircleSectorSizeDegrees") = 15,
              py::arg("destroyPct") = 20,
-             py::arg("postProcessPathLength") = 4)
+             py::arg("postProcessPathLength") = 6)
         .def_readonly("seed", &Config::seed)
         .def_readonly("nbIter", &Config::nbIter)
         .def_readonly("timeLimit", &Config::timeLimit)
@@ -171,14 +172,16 @@ PYBIND11_MODULE(hgspy, m)
         .def("num_iters", &Statistics::numIters)
         .def("run_times", &Statistics::runTimes)
         .def("iter_times", &Statistics::iterTimes)
-        .def("pop_sizes", &Statistics::popSizes)
-        .def("num_feasible_pop", &Statistics::numFeasiblePop)
-        .def("feas_diversity", &Statistics::feasDiversity)
-        .def("feas_best", &Statistics::feasBest)
-        .def("feas_average", &Statistics::feasAverage)
-        .def("infeas_diversity", &Statistics::infeasDiversity)
-        .def("infeas_best", &Statistics::infeasBest)
-        .def("infeas_average", &Statistics::infeasAverage)
+        .def("feas_pop_size", &Statistics::feasPopSize)
+        .def("feas_avg_diversity", &Statistics::feasAvgDiversity)
+        .def("feas_best_cost", &Statistics::feasBestCost)
+        .def("feas_avg_cost", &Statistics::feasAvgCost)
+        .def("feas_avg_num_routes", &Statistics::feasAvgNumRoutes)
+        .def("infeas_pop_size", &Statistics::infeasPopSize)
+        .def("infeas_avg_diversity", &Statistics::infeasAvgDiversity)
+        .def("infeas_best_cost", &Statistics::infeasBestCost)
+        .def("infeas_avg_cost", &Statistics::infeasAvgCost)
+        .def("infeas_avg_num_routes", &Statistics::infeasAvgNumRoutes)
         .def("penalties_capacity", &Statistics::penaltiesCapacity)
         .def("penalties_time_warp", &Statistics::penaltiesTimeWarp)
         .def("incumbents", &Statistics::incumbents)
@@ -218,10 +221,12 @@ PYBIND11_MODULE(hgspy, m)
     py::class_<StoppingCriterion>(stop, "StoppingCriterion");
 
     py::class_<MaxIterations, StoppingCriterion>(stop, "MaxIterations")
-        .def(py::init<size_t>(), py::arg("max_iterations"));
+        .def(py::init<size_t>(), py::arg("max_iterations"))
+        .def("__call__", &MaxIterations::operator());
 
     py::class_<MaxRuntime, StoppingCriterion>(stop, "MaxRuntime")
-        .def(py::init<size_t>(), py::arg("max_runtime"));
+        .def(py::init<double>(), py::arg("max_runtime"))
+        .def("__call__", &MaxRuntime::operator());
 
     // Crossover operators (as a submodule)
     py::module xOps = m.def_submodule("crossover");

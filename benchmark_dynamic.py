@@ -10,8 +10,9 @@ import numpy as np
 from tqdm.contrib.concurrent import process_map
 
 import tools
-from dynamic.run_dispatch import run_dispatch
 from environment import VRPEnvironment
+from strategies import solve_dynamic, solve_hindsight
+from strategies.config import Config
 
 
 def parse_args():
@@ -20,27 +21,38 @@ def parse_args():
     parser.add_argument("--num_seeds", type=int, default=1)
     parser.add_argument("--solver_seed", type=int, default=1)
     parser.add_argument("--num_procs", type=int, default=4)
-    parser.add_argument("--strategy", type=str, default="rollout")
+    parser.add_argument(
+        "--config_loc", default="configs/benchmark_dynamic.toml"
+    )
     parser.add_argument(
         "--instance_pattern", default="instances/ORTEC-VRPTW-ASYM-*.txt"
     )
+    parser.add_argument("--hindsight", action="store_true")
+    parser.add_argument("--aggregate", action="store_true")
 
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--epoch_tlim", type=int)
-    group.add_argument("--phase", choices=["quali", "final"])
-
-    parser.add_argument("--aggregate", action='store_true')
+    stop = parser.add_mutually_exclusive_group(required=True)
+    stop.add_argument("--epoch_tlim", type=int)
+    stop.add_argument("--phase", choices=["quali", "final"])
 
     return parser.parse_args()
 
 
-def solve(loc: str, instance_seed: int, **kwargs):
+def solve(
+    loc: str,
+    instance_seed: int,
+    solver_seed: int,
+    config_loc: str,
+    hindsight: bool,
+    epoch_tlim,
+    phase,
+    **kwargs,
+):
     path = Path(loc)
 
-    if kwargs["phase"] is not None:
-        tlim = tools.dynamic_time_limit(kwargs["phase"])
+    if phase is not None:
+        tlim = tools.dynamic_time_limit(phase)
     else:
-        tlim = kwargs["epoch_tlim"]
+        tlim = epoch_tlim
 
     env = VRPEnvironment(
         seed=instance_seed, instance=tools.read_vrplib(path), epoch_tlim=tlim
@@ -48,30 +60,12 @@ def solve(loc: str, instance_seed: int, **kwargs):
 
     start = perf_counter()
 
-    if kwargs["strategy"] == "oracle":
-        from dynamic.run_oracle import run_oracle
+    config = Config.from_file(config_loc)
 
-        costs, routes = run_oracle(env, **kwargs)
-
-    elif kwargs["strategy"] == "dqn":
-        from dynamic.dqn.run_dqn import run_dqn
-
-        costs, routes = run_dqn(env, **kwargs)
-
+    if hindsight:
+        costs, routes = solve_hindsight(env, config.static(), solver_seed)
     else:
-        if kwargs["strategy"] in ["greedy", "random", "lazy"]:
-            from dynamic.random import random_dispatch
-
-            probs = {"greedy": 1, "random": 0.5, "lazy": 0}
-            strategy = random_dispatch(probs[kwargs["strategy"]])
-
-        elif kwargs["strategy"] == "rollout":
-            from dynamic.rollout import rollout as strategy
-
-        else:
-            raise ValueError(f"Invalid strategy: {kwargs['strategy']}")
-
-        costs, routes = run_dispatch(env, dispatch_strategy=strategy, **kwargs)
+        costs, routes = solve_dynamic(env, config, solver_seed)
 
     run_time = round(perf_counter() - start, 3)
 
@@ -140,7 +134,7 @@ def main():
         " ".join(f"--{key} {value}" for key, value in vars(args).items()),
     )
     if args.strategy == "rollout":
-        from dynamic.rollout import constants
+        from strategies.dynamic.rollout import constants
 
         print(
             " ".join(

@@ -16,21 +16,31 @@ struct InsertPos  // best insert position, used to plan unplanned clients
 // Evaluates the cost change of inserting client between prev and next.
 int deltaCost(Client client, Client prev, Client next, Params const &params)
 {
+    int prevClientRelease = std::max(params.clients[prev].releaseTime,
+                                     params.clients[client].releaseTime);
+    int prevEarliestArrival = std::max(prevClientRelease + params.dist(0, prev),
+                                       params.clients[prev].twEarly);
+    int prevEarliestFinish = prevEarliestArrival + params.clients[prev].servDur;
+    int distPrevClient = params.dist(prev, client);
     int clientLate = params.clients[client].twLate;
-    int distToInsert = params.dist(prev, client);
-    int prevEarly = params.clients[prev].twEarly;
 
-    if (prevEarly + distToInsert >= clientLate)
+    if (prevEarliestFinish + distPrevClient >= clientLate)
         return INT_MAX;
 
-    int clientEarly = params.clients[client].twEarly;
-    int distFromInsert = params.dist(client, next);
+    int clientNextRelease = std::max(params.clients[client].releaseTime,
+                                     params.clients[next].releaseTime);
+    int clientEarliestArrival
+        = std::max(clientNextRelease + params.dist(0, client),
+                   params.clients[client].twEarly);
+    int clientEarliestFinish
+        = clientEarliestArrival + params.clients[client].servDur;
+    int distClientNext = params.dist(client, next);
     int nextLate = params.clients[next].twLate;
 
-    if (clientEarly + distFromInsert >= nextLate)
+    if (clientEarliestFinish + distClientNext >= nextLate)
         return INT_MAX;
 
-    return distToInsert + distFromInsert - params.dist(prev, next);
+    return distPrevClient + distClientNext - params.dist(prev, next);
 }
 }  // namespace
 

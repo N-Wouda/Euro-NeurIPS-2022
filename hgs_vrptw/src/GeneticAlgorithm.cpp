@@ -19,13 +19,13 @@ Result GeneticAlgorithm::run(StoppingCriterion &stop)
         throw std::runtime_error("Cannot run genetic algorithm without "
                                  "crossover operators.");
 
-    if (params.nbClients == 1)
-        throw std::runtime_error("Cannot run genetic algorithm with one node.");
-
     Statistics stats;
 
     size_t iter = 0;
     size_t nbIterNoImprove = 1;
+
+    if (params.nbClients <= 1)
+        return {population.getBestFound(), stats, iter, 0.};
 
     auto start = clock::now();
     while (not stop())
@@ -45,7 +45,7 @@ Result GeneticAlgorithm::run(StoppingCriterion &stop)
 
         auto const newBest = population.getCurrentBestFeasibleCost();
 
-        if (currBest > newBest)  // has new best!
+        if (newBest < currBest)  // has new best!
             nbIterNoImprove = 1;
         else
             nbIterNoImprove++;
@@ -88,7 +88,13 @@ Individual GeneticAlgorithm::crossover() const
 
 void GeneticAlgorithm::educate(Individual &indiv)
 {
-    localSearch(indiv);
+    localSearch.search(indiv);
+
+    if (params.config.shouldIntensify  // only intensify feasible, new best
+        && indiv.isFeasible()          // solutions. Cf. also repair below.
+        && indiv < population.getBestFound())
+        localSearch.intensify(indiv);
+
     population.addIndividual(indiv);
 
     loadFeas.push_back(!indiv.hasExcessCapacity());
@@ -99,10 +105,14 @@ void GeneticAlgorithm::educate(Individual &indiv)
     {
         // Re-run, but penalise infeasibility more using a penalty booster.
         auto const booster = params.getPenaltyBooster();
-        localSearch(indiv);
+        localSearch.search(indiv);
 
         if (indiv.isFeasible())
         {
+            if (params.config.shouldIntensify
+                && indiv < population.getBestFound())
+                localSearch.intensify(indiv);
+
             population.addIndividual(indiv);
 
             loadFeas.push_back(!indiv.hasExcessCapacity());

@@ -1,8 +1,4 @@
-import glob
-import importlib.machinery
-import importlib.util
 import json
-import math
 import os
 import re
 
@@ -182,6 +178,7 @@ def read_vrplib(filename, rounded=True):
     duration_matrix = []
     service_t = []
     timewi = []
+    release_times = []
     with open(filename, 'r') as f:
         
         for line in f:
@@ -208,6 +205,8 @@ def read_vrplib(filename, rounded=True):
                 mode = "time_windows"
             elif line == "SERVICE_TIME_SECTION":
                 mode = "service_t"
+            elif line =="RELEASE_TIME_SECTION":
+                mode = "release_time"
             elif line == "EOF":
                 break
             elif mode == 'coord':
@@ -241,15 +240,24 @@ def read_vrplib(filename, rounded=True):
                 l, u = (int(l), int(u)) if rounded else (float(l), float(u))
                 assert node == len(timewi) + 1
                 timewi.append([l, u])
-    
+            elif mode =='release_time':
+                node, release_time = line.split()
+                release_time = int(release_time)
+                release_times.append(release_time)
+
     return {
-        'is_depot': np.array([1] + [0] * len(loc), dtype=bool),
-        'coords': np.array([depot] + loc),
-        'demands': np.array(demand),
-        'capacity': capacity,
-        'time_windows': np.array(timewi),
-        'service_times': np.array(service_t),
-        'duration_matrix': np.array(duration_matrix) if len(duration_matrix) > 0 else None
+        "is_depot": np.array([1] + [0] * len(loc), dtype=bool),
+        "coords": np.array([depot] + loc),
+        "demands": np.array(demand),
+        "capacity": capacity,
+        "time_windows": np.array(timewi),
+        "service_times": np.array(service_t),
+        "duration_matrix": np.array(duration_matrix)
+        if len(duration_matrix) > 0
+        else None,
+        "release_times": np.array(release_times)
+        if release_times
+        else np.zeros(len(loc) + 1, dtype=int),
     }
 
 
@@ -335,16 +343,6 @@ def write_vrplib(filename, instance, name="problem", euclidean=False, is_vrptw=T
                 f.write("\n")
             
         f.write("EOF\n")
-
-
-def get_hgspy_module(where: str = 'release/lib/hgspy*.so'):
-    lib_path = next(glob.iglob(where))
-    loader = importlib.machinery.ExtensionFileLoader('hgspy', lib_path)
-    spec = importlib.util.spec_from_loader(loader.name, loader)
-    hgspy = importlib.util.module_from_spec(spec)
-    loader.exec_module(hgspy)
-
-    return hgspy
 
 
 def inst_to_vars(inst):
@@ -436,6 +434,4 @@ def name2size(name: str) -> int:
     """
     Extracts the instance size (i.e., num clients) from the instance name.
     """
-    return int(re.search(r'-n(\d\d\d)-', name).group(1))
-
-
+    return int(re.search(r'-n(\d{1,3})-', name).group(1))
