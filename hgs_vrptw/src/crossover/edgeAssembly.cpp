@@ -134,13 +134,13 @@ edgeAssembly(std::pair<Individual const *, Individual const *> const &parents,
     abGraph.empty = 1;
 
     // fill all edges from A
-    for (Route route : parents.first->getRoutes())
+    for (Route const &route : parents.first->getRoutes())
     {
         if (route.empty())
             continue;
 
         abGraph.depotSuccA.push_back(route.front());
-        for (Client idx = 1; idx < static_cast<int>(route.size()); idx++)
+        for (size_t idx = 1; idx < route.size(); idx++)
         {
             abGraph.clientSuccA[route[idx - 1]] = route[idx];
         }
@@ -151,7 +151,7 @@ edgeAssembly(std::pair<Individual const *, Individual const *> const &parents,
     Clients depotSuccChild = abGraph.depotSuccA;
 
     // check if edge in B is already in A. Yes-> remove. No->invert and add to B
-    for (Route route : parents.second->getRoutes())
+    for (Route const &route : parents.second->getRoutes())
     {
         if (route.empty())
             continue;
@@ -175,7 +175,7 @@ edgeAssembly(std::pair<Individual const *, Individual const *> const &parents,
             abGraph.empty = 0;
         }
         // clients in middle of route
-        for (Client idx = 1; idx < static_cast<int>(route.size()); idx++)
+        for (size_t idx = 1; idx < route.size(); idx++)
         {
             if (abGraph.clientSuccA[route[idx - 1]] == route[idx])
             {
