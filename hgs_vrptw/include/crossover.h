@@ -41,6 +41,17 @@ Individual brokenPairsExchange(
     Params const &params,
     XorShift128 &rng);
 
+/**
+ * Performs edge assembly exchange crossover operator. We take the edges from
+ * the parent in XOR fashion, and construct a cycle that alternates edges from
+ * parent A and B, with B in the opposite direction from A. This cycle is
+ * reinserted into A and the resulting routes are repaired. May fail to find a
+ * solution and returns parent A in this case. Largely based on: Yuichi Nagata,
+ * Olli Bräysy, Wout Dullaert, "A penalty-based edge assembly memetic algorithm
+ * for the vehicle routing problem with time windows". In: Computers &
+ * Operations research,Volume 37, Issue 4,Pages 724-737,
+ * https://doi.org/10.1016/j.cor.2009.06.022.
+ */
 Individual
 edgeAssembly(std::pair<Individual const *, Individual const *> const &parents,
              Params const &params,

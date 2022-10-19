@@ -5,12 +5,16 @@ using Clients = std::vector<Client>;
 using Route = std::vector<Client>;
 using Routes = std::vector<Route>;
 
-struct AB_graph
+struct ABGraph
 {
-    std::vector<Client> A;
-    std::vector<Client> B;
-    std::vector<Client> A_from_depot;
-    std::vector<Client> B_to_depot;
+    // successors for non-depot clients in A
+    std::vector<Client> clientSuccA;
+    // successors for depot in A
+    std::vector<Client> depotSuccA;
+    // predecessors for non-depot clients in B
+    std::vector<Client> clientPredB;
+    // predecessors for depot in B
+    std::vector<Client> depotPredB;
     bool empty;
 };
 
@@ -28,80 +32,82 @@ std::vector<Client> resolveSubtour(std::vector<Client> &subtour,
     int distance = params.dist(0, subtour.front())
                    + params.dist(subtour.back(), 0)
                    - params.dist(subtour.back(), subtour.front());
-    Client best_client_index = 0;
+    Client bestClientIdx = 0;
 
     for (Client client = 1; client < static_cast<int>(subtour.size()); client++)
     {
-        int dist_alternative
+        int distAlternative
             = params.dist(0, subtour[client])
               + params.dist(subtour[client - 1], 0)
               - params.dist(subtour[client - 1], subtour[client]);
-        if (dist_alternative < distance)
+        if (distAlternative < distance)
         {
-            distance = dist_alternative;
-            best_client_index = client;
+            distance = distAlternative;
+            bestClientIdx = client;
         }
     }
 
     // move clients from front to back until we start with the best client
-    for (Client idx = 0; idx < best_client_index; idx++)
+    for (Client idx = 0; idx < bestClientIdx; idx++)
     {
         subtour.push_back(subtour.front());
-        subtour.erase(subtour.begin());
     }
+    subtour.erase(subtour.begin(), subtour.begin() + bestClientIdx);
     return subtour;
 }
 
-// we do depth first search to find a cycle
-bool find_cycle(AB_graph &ab_graph,
-                Route &cycle,
-                std::vector<Clients> &visited,
-                bool parent,
-                Client current)
+// we do depth first search to find a AB cycle
+// every recursion we switch parents,
+bool findCycle(ABGraph &abGraph,
+               Route &cycle,
+               std::vector<Clients> &visited,
+               bool selectFromA,
+               Client current)
 {
     Clients next = {-1};
-    if (current == 0 && parent)
+    if (current == 0 && selectFromA)
     {
         // from depot and last parent was B
-        if (!ab_graph.A_from_depot.empty())
-            next = ab_graph.A_from_depot;
+        if (!abGraph.depotSuccA.empty())
+            next = abGraph.depotSuccA;
     }
-    else if (current == 0 && !parent)
+    else if (current == 0 && !selectFromA)
     {
         // from depot and last parent was A
-        if (!ab_graph.B_to_depot.empty())
-            next = ab_graph.B_to_depot;
+        if (!abGraph.depotPredB.empty())
+            next = abGraph.depotPredB;
     }
-    else if (parent)
+    else if (selectFromA)
     {
         // not from depot and last parent was B
-        next = {ab_graph.A[current]};
+        next = {abGraph.clientSuccA[current]};
     }
     else
     {
         // not from depot and last parent was A
-        next = {ab_graph.B[current]};
+        next = {abGraph.clientPredB[current]};
     }
-    for (auto &next_client : next)
+    for (auto &nextClient : next)
     {
-        visited[!parent][current] = 1;
+        visited[selectFromA][current] = 1;
 
-        if (next_client == -1)
+        if (nextClient == -1)
         {
             // we cannot continue from this node, return false
             return 0;
         }
-
-        if (visited[parent][next_client] == 1)
+        // we already got to this client, and used an edge of the opposite
+        // parent -> AB-cycle complete.
+        if (visited[!selectFromA][nextClient] == 1)
         {
             // we have found a cycle, append and return true
-            cycle.push_back(next_client);
+            cycle.push_back(nextClient);
             cycle.push_back(current);
             return 1;
         }
 
         bool cycleFound
-            = find_cycle(ab_graph, cycle, visited, !parent, next_client);
+            = findCycle(abGraph, cycle, visited, !selectFromA, nextClient);
         if (cycleFound)
         {
             cycle.push_back(current);
@@ -122,113 +128,115 @@ edgeAssembly(std::pair<Individual const *, Individual const *> const &parents,
     // Also, edges from B are inverted i.e. e=(u,v) is denoted as e=(v,u)
     // vector of sets as we may have multiple edges from depots
 
-    AB_graph ab_graph;
-    ab_graph.A.resize(params.nbClients + 1, -1);
-    ab_graph.B.resize(params.nbClients + 1, -1);
-    ab_graph.empty = 1;
+    ABGraph abGraph;
+    abGraph.clientSuccA.resize(params.nbClients + 1, -1);
+    abGraph.clientPredB.resize(params.nbClients + 1, -1);
+    abGraph.empty = 1;
 
     // fill all edges from A
     for (Route route : parents.first->getRoutes())
     {
-        if (!route.empty())
+        if (route.empty())
+            continue;
+
+        abGraph.depotSuccA.push_back(route.front());
+        for (Client idx = 1; idx < static_cast<int>(route.size()); idx++)
         {
-            ab_graph.A_from_depot.push_back(route.front());
-            for (Client idx = 1; idx < static_cast<int>(route.size()); idx++)
-            {
-                ab_graph.A[route[idx - 1]] = route[idx];
-            }
-            ab_graph.A[route.back()] = 0;
+            abGraph.clientSuccA[route[idx - 1]] = route[idx];
         }
+        abGraph.clientSuccA[route.back()] = 0;
     }
     // copy for later use
-    Clients child_edges = ab_graph.A;
-    Clients child_from_depot = ab_graph.A_from_depot;
+    Clients clientSuccChild = abGraph.clientSuccA;
+    Clients depotSuccChild = abGraph.depotSuccA;
 
     // check if edge in B is already in A. Yes-> remove. No->invert and add to B
     for (Route route : parents.second->getRoutes())
     {
-        if (!route.empty())
+        if (route.empty())
+            continue;
+
+        // first edge from depot
+        bool found = 0;
+        for (auto it = abGraph.depotSuccA.begin();
+             it != abGraph.depotSuccA.end();
+             it++)
         {
-            // first edge from depot
-            bool found = 0;
-            for (auto it = ab_graph.A_from_depot.begin();
-                 it != ab_graph.A_from_depot.end();
-                 it++)
+            if (*it == route.front())
             {
-                if (*it == route.front())
-                {
-                    ab_graph.A_from_depot.erase(it);
-                    found = 1;
-                    break;
-                }
+                abGraph.depotSuccA.erase(it);
+                found = 1;
+                break;
             }
-            if (!found)
+        }
+        if (!found)
+        {
+            abGraph.clientPredB[route.front()] = 0;
+            abGraph.empty = 0;
+        }
+        // clients in middle of route
+        for (Client idx = 1; idx < static_cast<int>(route.size()); idx++)
+        {
+            if (abGraph.clientSuccA[route[idx - 1]] == route[idx])
             {
-                ab_graph.B[route.front()] = 0;
-                ab_graph.empty = 0;
-            }
-            // clients in middle of route
-            for (Client idx = 1; idx < static_cast<int>(route.size()); idx++)
-            {
-                if (ab_graph.A[route[idx - 1]] == route[idx])
-                {
-                    ab_graph.A[route[idx - 1]] = -1;
-                }
-                else
-                {
-                    ab_graph.B[route[idx]] = route[idx - 1];
-                    ab_graph.empty = 0;
-                }
-            }
-            // last edge to depot
-            if (ab_graph.A[route.back()] == 0)
-            {
-                ab_graph.A[route.back()] = -1;
+                abGraph.clientSuccA[route[idx - 1]] = -1;
             }
             else
             {
-                ab_graph.B_to_depot.push_back(route.back());
-                ab_graph.empty = 0;
+                abGraph.clientPredB[route[idx]] = route[idx - 1];
+                abGraph.empty = 0;
             }
+        }
+        // last edge to depot
+        if (abGraph.clientSuccA[route.back()] == 0)
+        {
+            abGraph.clientSuccA[route.back()] = -1;
+        }
+        else
+        {
+            abGraph.depotPredB.push_back(route.back());
+            abGraph.empty = 0;
         }
     }
 
     // if parents are the same we stop
-    if (ab_graph.empty)
+    if (abGraph.empty)
     {
         Routes some_parent = parents.first->getRoutes();
         return {&params, some_parent};
     }
 
     // Step 2:
-    // Generate cycles based on a random node until all edges are gone
-    // Based on Nagata et al. 2010 I believe it should deconstruct AB_edges into
-    // cycles, but not sure why
+    // We generate an AB-cycle if it exists and is connected to the random first
+    // client that we select
 
-    Route AB_cycle = {};
+    Route abCycle = {};
     std::vector<Clients> visited = {};
     Clients tmp(params.nbClients + 1, 0);
     visited.push_back(tmp);
     visited.push_back(tmp);
 
-    Client first_client = rng.randint(params.nbClients);
-    bool succes = find_cycle(ab_graph, AB_cycle, visited, 0, first_client);
-    if (!succes)
+    Client firstClient = rng.randint(params.nbClients);
+    bool hasCycle = findCycle(abGraph, abCycle, visited, 0, firstClient);
+    if (!hasCycle)
     {
         // if we find no AB_cycles we just return the first parent
-        Routes some_parent = parents.first->getRoutes();
-        return {&params, some_parent};
+        Routes someParent = parents.first->getRoutes();
+        return {&params, someParent};
     }
-
-    for (size_t idx = 0; idx < AB_cycle.size(); idx++)
+    // abCycle contains a cycle, but also a bunch of other nodes. Also, it is in
+    // reverse order. thus, we look at uneven length subvectors until the first
+    // node matches up with the last
+    for (size_t idx = 0; idx < abCycle.size(); idx += 2)
     {
-        if (idx % 2 == 0 && AB_cycle[idx] == AB_cycle.front())
+        if (abCycle[idx] == abCycle.front())
         {
-            AB_cycle.resize(idx + 1);
+            abCycle.resize(idx + 1);
             break;
         }
     }
-    std::reverse(AB_cycle.begin(), AB_cycle.end());
+    // get the correct order
+    std::reverse(abCycle.begin(), abCycle.end());
 
     // Step 3: We only select a single cycle so no step 3.
 
@@ -241,99 +249,98 @@ edgeAssembly(std::pair<Individual const *, Individual const *> const &parents,
     // loop over all clients, find all edges from client in A, see if they are
     // in E
 
-    for (size_t idx = 0; idx < AB_cycle.size() - 1; idx++)
+    for (size_t idx = 0; idx < abCycle.size() - 1; idx++)
     {
         Client current;
         Client next;
         if (idx % 2 == 0)
         {
             // the edge is from A
-            current = AB_cycle[idx];
-            next = AB_cycle[idx + 1];
+            current = abCycle[idx];
+            next = abCycle[idx + 1];
         }
         else
         {
             // the edge is from B
-            current = AB_cycle[idx + 1];
-            next = AB_cycle[idx];
+            current = abCycle[idx + 1];
+            next = abCycle[idx];
         }
         if (current == 0)
         {
-            for (auto it = child_from_depot.end();
-                 it != child_from_depot.begin();)
+            for (auto it = depotSuccChild.rbegin(); it != depotSuccChild.rend();
+                 it++)
             {
-                it--;
                 if (*it == next)
                 {
-                    child_from_depot.erase(it);
+                    depotSuccChild.erase((it + 1).base());
                     break;
                 }
                 else
                 {
-                    child_from_depot.push_back(next);
+                    depotSuccChild.push_back(next);
                     break;
                 }
             }
         }
         else
         {
-            if (child_edges[current] == next)
+            if (clientSuccChild[current] == next)
             {
-                child_edges[current] = -1;
+                clientSuccChild[current] = -1;
             }
             else
             {
-                child_edges[current] = next;
+                clientSuccChild[current] = next;
             }
         }
     }
 
     // We first reorder the maps into routes, all remaining nodes should be in
     // subtour
-    Routes new_routes = {};
-    for (auto &el : child_from_depot)
+    Routes newRoutes = {};
+    for (auto &el : depotSuccChild)
     {
-        new_routes.push_back({el});
+        newRoutes.push_back({el});
     }
-    for (auto &route : new_routes)
+    for (auto &route : newRoutes)
     {
         Client current = route.back();
         // when route.back() == 0 we are back at depot
-        Client next = child_edges[current];
+        Client next = clientSuccChild[current];
         while (next != 0)
         {
             route.push_back(next);
             current = next;
-            next = child_edges[current];
+            next = clientSuccChild[current];
         }
     }
-    for (auto &route : new_routes)
+    for (auto &route : newRoutes)
     {
         for (auto &visited : route)
         {
-            child_edges[visited] = -1;
+            clientSuccChild[visited] = -1;
         }
     }
 
     Routes subtours = {};
-    for (Client idx = 0; idx < static_cast<int>(child_edges.size()); idx++)
+    for (Client idx = 0; idx < static_cast<int>(clientSuccChild.size()); idx++)
     {
-        if (child_edges[idx] != -1)
+        if (clientSuccChild[idx] != -1)
         {
-            Route subtour = {idx, child_edges[idx]};
+            Route subtour = {idx, clientSuccChild[idx]};
             Client current = subtour.back();
-            Client next = child_edges[current];
+            Client next = clientSuccChild[current];
 
             while (next != subtour.front())
             {
                 subtour.push_back(next);
                 current = next;
-                next = child_edges[current];
+                next = clientSuccChild[current];
             }
 
             for (auto &visited : subtour)
             {
-                child_edges[visited] = -1;
+                clientSuccChild[visited] = -1;
             }
         }
     }
@@ -343,9 +350,9 @@ edgeAssembly(std::pair<Individual const *, Individual const *> const &parents,
     // i.e. we insert a depot somewhere in the subtour
     for (auto &subtour : subtours)
     {
-        new_routes.push_back(resolveSubtour(subtour, params));
+        newRoutes.push_back(resolveSubtour(subtour, params));
     }
 
-    new_routes.resize(params.nbVehicles);
-    return {&params, new_routes};
+    newRoutes.resize(params.nbVehicles);
+    return {&params, newRoutes};
 }
