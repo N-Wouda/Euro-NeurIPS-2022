@@ -39,6 +39,11 @@ class Config:
         self._static = _SubConfig(**kwargs.get("static", {}))
         self._dynamic = _SubConfig(**kwargs.get("dynamic", {}))
 
+    def __repr__(self):
+        return " ".join(
+            f"--{key} {value}" for key, value in self._static.items()
+        )
+
     @classmethod
     def from_file(cls, where: str) -> Config:
         with open(where, "rb") as fh:
