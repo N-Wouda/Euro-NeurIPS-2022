@@ -134,68 +134,65 @@ edgeAssembly(std::pair<Individual const *, Individual const *> const &parents,
     abGraph.empty = 1;
 
     // fill all edges from A
-    for (Route const &route : parents.first->getRoutes())
+    auto const &firstNeighbours = parents.first->getNeighbours();
+    for (auto client = 1; client <= params.nbClients; client++)
     {
-        if (route.empty())
-            continue;
-
-        abGraph.depotSuccA.push_back(route.front());
-        for (size_t idx = 1; idx < route.size(); idx++)
+        auto const [pred, succ] = firstNeighbours[client];
+        abGraph.clientSuccA[client] = succ;
+        if (pred == 0)
         {
-            abGraph.clientSuccA[route[idx - 1]] = route[idx];
+            abGraph.depotSuccA.push_back(client);
         }
-        abGraph.clientSuccA[route.back()] = 0;
     }
+
     // copy for later use
     Clients clientSuccChild = abGraph.clientSuccA;
     Clients depotSuccChild = abGraph.depotSuccA;
 
     // check if edge in B is already in A. Yes-> remove. No->invert and add to B
-    for (Route const &route : parents.second->getRoutes())
+    auto const &secondNeighbours = parents.second->getNeighbours();
+    for (auto client = 1; client <= params.nbClients; client++)
     {
-        if (route.empty())
-            continue;
+        auto const [pred, succ] = secondNeighbours[client];
 
-        // first edge from depot
-        bool found = 0;
-        for (auto it = abGraph.depotSuccA.begin();
-             it != abGraph.depotSuccA.end();
-             it++)
+        // if edge is from depot search for it in A.
+        if (pred == 0)
         {
-            if (*it == route.front())
+            bool found = 0;
+            for (auto it = abGraph.depotSuccA.begin();
+                 it != abGraph.depotSuccA.end();
+                 it++)
             {
-                abGraph.depotSuccA.erase(it);
-                found = 1;
-                break;
+                if (*it == client)
+                {
+                    abGraph.depotSuccA.erase(it);
+                    found = 1;
+                    break;
+                }
             }
-        }
-        if (!found)
-        {
-            abGraph.clientPredB[route.front()] = 0;
-            abGraph.empty = 0;
-        }
-        // clients in middle of route
-        for (size_t idx = 1; idx < route.size(); idx++)
-        {
-            if (abGraph.clientSuccA[route[idx - 1]] == route[idx])
+            if (!found)
             {
-                abGraph.clientSuccA[route[idx - 1]] = -1;
-            }
-            else
-            {
-                abGraph.clientPredB[route[idx]] = route[idx - 1];
+                abGraph.clientPredB[client] = 0;
                 abGraph.empty = 0;
             }
         }
-        // last edge to depot
-        if (abGraph.clientSuccA[route.back()] == 0)
+
+        // if [client,succ] in clientSuccA, replace by -1. Else, add [succ,
+        // client] to clientPredB or depotPredB
+        if (abGraph.depotSuccA[client] == succ)
         {
-            abGraph.clientSuccA[route.back()] = -1;
+            abGraph.depotSuccA[client] = -1;
         }
         else
         {
-            abGraph.depotPredB.push_back(route.back());
-            abGraph.empty = 0;
+            if (succ == 0)
+            {
+                abGraph.depotPredB.push_back(client);
+            }
+            else
+            {
+                abGraph.clientPredB[succ] = client;
+            }
         }
     }
 
