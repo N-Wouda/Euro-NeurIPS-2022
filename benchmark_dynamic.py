@@ -112,7 +112,10 @@ def main():
         Path(__file__).name,
         " ".join(f"--{key} {value}" for key, value in vars(args).items()),
     )
-    print(Config.from_file(args.config_loc))
+
+    config = Config.from_file(args.config_loc)
+    print("dynamic config:")
+    print(config.dynamic())
 
     print("\n", table, "\n", sep="")
     print(f"      Avg. objective: {data['total'].mean():.0f}")

@@ -40,13 +40,9 @@ class Config:
         self._dynamic = _SubConfig(**kwargs.get("dynamic", {}))
 
     def __repr__(self):
-        static_params = "static: " + " ".join(
+        return " ".join(
             f"--{key} {value}" for key, value in self._static.items()
         )
-        dynamic_params = "dynamic: " + " ".join(
-            f"--{key} {value}" for key, value in self._dynamic.items()
-        )
-        return static_params + "\n" + dynamic_params
 
     @classmethod
     def from_file(cls, where: str) -> Config:
