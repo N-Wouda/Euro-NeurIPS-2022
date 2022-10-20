@@ -32,9 +32,9 @@ std::vector<Client> resolveSubtour(std::vector<Client> &subtour,
     int distance = params.dist(0, subtour.front())
                    + params.dist(subtour.back(), 0)
                    - params.dist(subtour.back(), subtour.front());
-    Client bestClientIdx = 0;
+    size_t bestClientIdx = 0;
 
-    for (Client client = 1; client < static_cast<int>(subtour.size()); client++)
+    for (size_t client = 1; client < subtour.size(); client++)
     {
         int distAlternative
             = params.dist(0, subtour[client])
@@ -48,7 +48,7 @@ std::vector<Client> resolveSubtour(std::vector<Client> &subtour,
     }
 
     // move clients from front to back until we start with the best client
-    for (Client idx = 0; idx < bestClientIdx; idx++)
+    for (size_t idx = 0; idx < bestClientIdx; idx++)
     {
         subtour.push_back(subtour.front());
     }
@@ -179,9 +179,9 @@ edgeAssembly(std::pair<Individual const *, Individual const *> const &parents,
 
         // if [client,succ] in clientSuccA, replace by -1. Else, add [succ,
         // client] to clientPredB or depotPredB
-        if (abGraph.depotSuccA[client] == succ)
+        if (abGraph.clientSuccA[client] == succ)
         {
-            abGraph.depotSuccA[client] = -1;
+            abGraph.clientSuccA[client] = -1;
         }
         else
         {

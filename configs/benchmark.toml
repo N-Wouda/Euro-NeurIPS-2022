@@ -16,4 +16,5 @@ route_ops = [
 
 crossover_ops = [
     "selective_route_exchange",
+    "edge_assembly",
 ]
