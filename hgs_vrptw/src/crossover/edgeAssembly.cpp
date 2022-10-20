@@ -218,17 +218,16 @@ edgeAssembly(std::pair<Individual const *, Individual const *> const &parents,
     bool hasCycle = findCycle(abGraph, abCycle, visited, 0, firstClient);
     if (!hasCycle)
     {
-        for (auto &client : visited[0])
+        for (Client client = 0; client <= params.nbClients; client++)
         {
-            if (client == 0)
-            {
+            if(!visited.front()[client]){
                 hasCycle = findCycle(abGraph, abCycle, visited, 0, client);
                 if (hasCycle)
                     break;
             }
         }
     }
-
+    
     if (!hasCycle)
     {
         // if we find no AB_cycles we just return the first parent
