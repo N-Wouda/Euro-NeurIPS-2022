@@ -103,7 +103,7 @@ public:
 
     // Computes and returns a distance measure with another individual, based
     // on the number of arcs that differ between two solutions.
-    int brokenPairsDistance(Individual *other) const;
+    int brokenPairsDistance(Individual const *other) const;
 
     // Updates the proximity structures of this and the other individual.
     void registerNearbyIndividual(Individual *other);

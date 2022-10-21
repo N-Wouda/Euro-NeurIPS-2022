@@ -79,7 +79,7 @@ void Individual::evaluateCompleteCost()
     }
 }
 
-int Individual::brokenPairsDistance(Individual *other) const
+int Individual::brokenPairsDistance(Individual const *other) const
 {
     int dist = 0;
 
