@@ -116,14 +116,12 @@ void LocalSearch::intensify(Individual &indiv)
                 auto const lastModifiedRoute
                     = std::max(lastModified[U.idx], lastModified[V.idx]);
 
-                if (lastModifiedRoute <= lastTested)
-                    continue;
-
-                if (applyRouteOps(&U, &V))
+                if (lastModifiedRoute > lastTested && applyRouteOps(&U, &V))
                     continue;
             }
 
-            enumerateSubpaths(U);
+            if (lastModified[U.idx] > lastTested)
+                enumerateSubpaths(U);
         }
     }
 
