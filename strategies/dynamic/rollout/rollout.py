@@ -32,12 +32,10 @@ def rollout(
     # Parameters
     ep_inst = obs["epoch_instance"]
     must_dispatch = set(np.flatnonzero(ep_inst["must_dispatch"]))
-    ep_size = ep_inst["is_depot"].size
-
     rollout_tlim = rollout_tlim_factor * info["epoch_tlim"]
     sim_tlim = rollout_tlim / n_simulations
 
-    dispatch_count = np.zeros(ep_size, dtype=int)
+    dispatch_count = np.zeros(ep_inst["is_depot"].size, dtype=int)
 
     for _ in range(n_simulations):
         res = hgs(
