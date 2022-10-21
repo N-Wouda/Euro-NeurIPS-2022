@@ -42,6 +42,7 @@ PYBIND11_MODULE(hgspy, m)
         .def("is_feasible", &Individual::isFeasible)
         .def("has_excess_capacity", &Individual::hasExcessCapacity)
         .def("has_time_warp", &Individual::hasTimeWarp)
+        .def("broken_pairs_distance", &Individual::brokenPairsDistance)
         .def("export_cvrplib_format", &Individual::exportCVRPLibFormat);
 
     py::class_<LocalSearch>(m, "LocalSearch")

@@ -79,7 +79,7 @@ void Individual::evaluateCompleteCost()
     }
 }
 
-void Individual::brokenPairsDistance(Individual *other)
+int Individual::brokenPairsDistance(Individual *other) const
 {
     int dist = 0;
 
@@ -97,6 +97,12 @@ void Individual::brokenPairsDistance(Individual *other)
         dist += tPred == 0 && oPred != 0 && oSucc != 0;
     }
 
+    return dist;
+}
+
+void Individual::registerNearbyIndividual(Individual *other)
+{
+    auto const dist = brokenPairsDistance(other);
     auto cmp = [](auto &elem, auto &value) { return elem.first < value; };
 
     auto &oProx = other->indivsByProximity;

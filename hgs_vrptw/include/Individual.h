@@ -19,6 +19,10 @@ class Individual
     size_t capacityExcess = 0;  // Total excess load over all routes
     size_t timeWarp = 0;        // All route time warp of late arrivals
 
+    // The other individuals in the population (cannot be the depot 0), ordered
+    // by increasing proximity.
+    std::vector<std::pair<int, Individual *>> indivsByProximity;
+
     Params const *params;  // Problem parameters
 
     // For each vehicle, the associated sequence of deliveries (complete
@@ -36,10 +40,6 @@ class Individual
     void evaluateCompleteCost();
 
 public:
-    // The other individuals in the population (cannot be the depot 0), ordered
-    // by increasing proximity.
-    std::vector<std::pair<int, Individual *>> indivsByProximity;
-
     /**
      * Returns this individual's objective (penalized cost).
      */
@@ -101,9 +101,12 @@ public:
                && indivsByProximity.begin()->first == 0;
     }
 
-    // Computes and stores a distance measure with another individual, based on
-    // the number of arcs that differ between two solutions.
-    void brokenPairsDistance(Individual *other);
+    // Computes and returns a distance measure with another individual, based
+    // on the number of arcs that differ between two solutions.
+    int brokenPairsDistance(Individual *other) const;
+
+    // Updates the proximity structures of this and the other individual.
+    void registerNearbyIndividual(Individual *other);
 
     // Returns the average distance of this individual to the individuals
     // nearest to it.

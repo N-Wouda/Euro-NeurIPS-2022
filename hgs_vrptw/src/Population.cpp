@@ -21,7 +21,7 @@ void Population::addIndividual(Individual const &indiv)
     auto indivPtr = std::make_unique<Individual>(indiv);
 
     for (auto const &other : subPop)  // update distance to other individuals
-        indivPtr->brokenPairsDistance(other.indiv.get());
+        indivPtr->registerNearbyIndividual(other.indiv.get());
 
     IndividualWrapper wrapper = {std::move(indivPtr), 0};
 
@@ -122,19 +122,7 @@ Individual const *Population::getBinaryTournament()
 std::pair<Individual const *, Individual const *> Population::selectParents()
 {
     Individual const *par1 = getBinaryTournament();
-
-    auto const nbClose
-        = std::min(par1->indivsByProximity.size(), params.config.nbClose);
-
-    Individual const *par2;
-
-    if (nbClose == 0)
-        par2 = getBinaryTournament();
-    else
-    {
-        auto const idx = rng.randint(nbClose);
-        par2 = par1->indivsByProximity[idx].second;
-    }
+    Individual const *par2 = getBinaryTournament();
 
     size_t numTries = 1;
     while ((par1 == par2 || *par1 == *par2)  // Try again a few more times
