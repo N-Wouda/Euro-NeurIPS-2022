@@ -125,7 +125,7 @@ std::pair<Individual const *, Individual const *> Population::selectParents()
     Individual const *par2 = getBinaryTournament();
 
     int const lowerBound = 0.05 * params.nbClients;
-    int const upperBound = 0.60 * params.nbClients;
+    int const upperBound = 0.50 * params.nbClients;
     int diversity = par1->brokenPairsDistance(par2);
 
     size_t numTries = 1;
