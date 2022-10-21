@@ -46,7 +46,7 @@ rollout_tlim_factor = 0.8
 n_simulations = 40
 n_lookahead = 3
 n_requests = 100
-dispatch_threshold = 0.18
+dispatch_threshold = 0.15
 
 node_ops = [
     "Exchange10",
