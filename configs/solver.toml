@@ -42,11 +42,11 @@ crossover_ops = [
 strategy = "rollout"
 
 [dynamic.strategy_params]
+rollout_tlim_factor = 0.8
+n_simulations = 40
 n_lookahead = 3
 n_requests = 100
-sim_tlim_factor = 0.7
-sim_solve_iters = 40
-dispatch_threshold = 0.18
+dispatch_threshold = 0.15
 
 node_ops = [
     "Exchange10",
