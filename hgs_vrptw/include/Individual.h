@@ -19,10 +19,6 @@ class Individual
     size_t capacityExcess = 0;  // Total excess load over all routes
     size_t timeWarp = 0;        // All route time warp of late arrivals
 
-    // The other individuals in the population (cannot be the depot 0), ordered
-    // by increasing proximity.
-    std::vector<std::pair<int, Individual *>> indivsByProximity;
-
     Params const *params;  // Problem parameters
 
     // For each vehicle, the associated sequence of deliveries (complete
@@ -40,6 +36,10 @@ class Individual
     void evaluateCompleteCost();
 
 public:
+    // The other individuals in the population (cannot be the depot 0), ordered
+    // by increasing proximity.
+    std::vector<std::pair<int, Individual *>> indivsByProximity;
+
     /**
      * Returns this individual's objective (penalized cost).
      */

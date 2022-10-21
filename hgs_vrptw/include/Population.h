@@ -55,7 +55,7 @@ private:
     void generatePopulation(size_t popSize);
 
     // Selects an individual by binary tournament
-    Individual const *getBinaryTournament(SubPopulation const &subPop);
+    Individual const *getBinaryTournament();
 
 public:
     // Add an individual in the population. Survivor selection is automatically

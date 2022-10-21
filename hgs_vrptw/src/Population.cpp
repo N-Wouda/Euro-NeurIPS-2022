@@ -105,26 +105,35 @@ void Population::restart()
     generatePopulation(params.config.minPopSize);
 }
 
-Individual const *Population::getBinaryTournament(SubPopulation const &subPop)
+Individual const *Population::getBinaryTournament()
 {
-    auto const popSize = subPop.size();
+    auto const fSize = feasible.size();
+    auto const popSize = fSize + infeasible.size();
 
     auto const idx1 = rng.randint(popSize);
-    auto &wrap1 = subPop[idx1];
+    auto &wrap1 = idx1 < fSize ? feasible[idx1] : infeasible[idx1 - fSize];
 
     auto const idx2 = rng.randint(popSize);
-    auto &wrap2 = subPop[idx2];
+    auto &wrap2 = idx2 < fSize ? feasible[idx2] : infeasible[idx2 - fSize];
 
     return (wrap1.fitness < wrap2.fitness ? wrap1.indiv : wrap2.indiv).get();
 }
 
 std::pair<Individual const *, Individual const *> Population::selectParents()
 {
-    // It can happen that we do not have an (in)feasible solution in the first
-    // few iterations. In that case, select from the other population.
-    return std::make_pair(
-        getBinaryTournament(feasible.empty() ? infeasible : feasible),
-        getBinaryTournament(infeasible.empty() ? feasible : infeasible));
+    Individual const *par1 = getBinaryTournament();
+
+    auto const nbClose
+        = std::min(par1->indivsByProximity.size(), params.config.nbClose);
+    auto const idx = rng.randint(nbClose);
+    Individual const *par2 = par1->indivsByProximity[idx].second;
+
+    size_t numTries = 1;
+    while ((par1 == par2 || *par1 == *par2)  // Try again a few more times
+           && numTries++ < 10)               // if same parent
+        par2 = getBinaryTournament();
+
+    return std::make_pair(par1, par2);
 }
 
 Population::Population(Params &params, XorShift128 &rng)
