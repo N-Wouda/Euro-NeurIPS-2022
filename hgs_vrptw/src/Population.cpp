@@ -124,10 +124,17 @@ std::pair<Individual const *, Individual const *> Population::selectParents()
     Individual const *par1 = getBinaryTournament();
     Individual const *par2 = getBinaryTournament();
 
+    int const lowerBound = 0.05 * params.nbClients;
+    int const upperBound = 0.40 * params.nbClients;
+    int diversity = par1->brokenPairsDistance(par2);
+
     size_t numTries = 1;
-    while ((par1 == par2 || *par1 == *par2)  // Try again a few more times
-           && numTries++ < 10)               // if same parent
+    while ((diversity < lowerBound || diversity > upperBound)
+           && numTries++ < 10)
+    {
         par2 = getBinaryTournament();
+        diversity = par1->brokenPairsDistance(par2);
+    }
 
     return std::make_pair(par1, par2);
 }
