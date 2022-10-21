@@ -125,8 +125,16 @@ std::pair<Individual const *, Individual const *> Population::selectParents()
 
     auto const nbClose
         = std::min(par1->indivsByProximity.size(), params.config.nbClose);
-    auto const idx = rng.randint(nbClose);
-    Individual const *par2 = par1->indivsByProximity[idx].second;
+
+    Individual const *par2;
+
+    if (nbClose == 0)
+        par2 = getBinaryTournament();
+    else
+    {
+        auto const idx = rng.randint(nbClose);
+        par2 = par1->indivsByProximity[idx].second;
+    }
 
     size_t numTries = 1;
     while ((par1 == par2 || *par1 == *par2)  // Try again a few more times
