@@ -63,7 +63,7 @@ def write(where: str, params, exp: int):
 def main():
     args = parse_args()
 
-    # Population management
+    # Penalty management
     space = dict(
         initialTimeWarpPenalty=Integer((1, 25), 1),
         nbPenaltyManagement=Integer((25, 500), 100),
