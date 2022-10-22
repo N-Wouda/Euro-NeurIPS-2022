@@ -1,7 +1,7 @@
 import argparse
-import json
 from dataclasses import dataclass
 
+import tomli_w
 from scipy.stats import qmc
 
 
@@ -35,9 +35,29 @@ def parse_args():
     return parser.parse_args()
 
 
-def write(where: str, scenario, exp: int):
-    with open(where + f"/{exp}.json", "w") as fh:
-        json.dump(scenario, fh)
+def write(where: str, params, exp: int):
+    static = dict(
+        node_ops=[
+            "Exchange10",
+            "Exchange11",
+            "Exchange20",
+            "MoveTwoClientsReversed",
+            "Exchange21",
+            "Exchange22",
+            "TwoOpt",
+        ],
+        route_ops=[
+            "RelocateStar",
+            "SwapStar",
+        ],
+        crossover_ops=[
+            "selective_route_exchange",
+        ],
+        params=params
+    )
+
+    with open(where + f"/{exp}.toml", "wb") as fh:
+        tomli_w.dump(dict(static=static), fh)
 
 
 def main():
