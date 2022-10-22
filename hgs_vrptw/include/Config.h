@@ -27,6 +27,8 @@ struct Config
     size_t minPopSize = 25;
     size_t generationSize = 40;   // max size before culling a generation
     size_t nbElite = 4;           // number of elite individuals in pop
+    double lbDiversity = 0.1;     // minimum pct difference in parent diversity
+    double ubDiversity = 0.5;     // maximum pct difference in parent diversity
     size_t nbClose = 5;           // # individuals when calculating diversity
     double targetFeasible = 0.4;  // target feasible pop fraction
     size_t nbKeepOnRestart = 0;   // # individuals to keep when restarting
@@ -74,6 +76,8 @@ struct Config
                     size_t minPopSize = 25,
                     size_t generationSize = 40,
                     size_t nbElite = 4,
+                    double lbDiversity = 0.1,
+                    double ubDiversity = 0.5,
                     size_t nbClose = 5,
                     double targetFeasible = 0.4,
                     size_t nbKeepOnRestart = 0,
@@ -101,6 +105,8 @@ struct Config
           minPopSize(minPopSize),
           generationSize(generationSize),
           nbElite(nbElite),
+          lbDiversity(lbDiversity),
+          ubDiversity(ubDiversity),
           nbClose(nbClose),
           targetFeasible(targetFeasible),
           nbKeepOnRestart(nbKeepOnRestart),

@@ -73,6 +73,8 @@ PYBIND11_MODULE(hgspy, m)
                       size_t,
                       size_t,
                       size_t,
+                      double,
+                      double,
                       size_t,
                       double,
                       size_t,
@@ -100,6 +102,8 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("minPopSize") = 25,
              py::arg("generationSize") = 40,
              py::arg("nbElite") = 4,
+             py::arg("lbDiversity") = 0.1,
+             py::arg("ubDiversity") = 0.5,
              py::arg("nbClose") = 5,
              py::arg("targetFeasible") = 0.4,
              py::arg("nbKeepOnRestart") = 0,
@@ -127,6 +131,8 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("minPopSize", &Config::minPopSize)
         .def_readonly("generationSize", &Config::generationSize)
         .def_readonly("nbElite", &Config::nbElite)
+        .def_readonly("lbDiversity", &Config::lbDiversity)
+        .def_readonly("ubDiversity", &Config::ubDiversity)
         .def_readonly("nbClose", &Config::nbClose)
         .def_readonly("targetFeasible", &Config::targetFeasible)
         .def_readonly("nbKeepOnRestart", &Config::nbKeepOnRestart)
