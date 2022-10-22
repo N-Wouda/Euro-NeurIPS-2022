@@ -56,7 +56,7 @@ def solve_dynamic(env, config, solver_seed):
             config.node_ops(),
             config.route_ops(),
             config.crossover_ops(),
-            hgspy.stop.MaxRuntime(solve_tlim),
+            hgspy.stop.MaxRuntime(10),
         )
 
         best = res.get_best_found()

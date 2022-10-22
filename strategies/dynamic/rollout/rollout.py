@@ -31,20 +31,39 @@ def rollout(
 
     # Parameters
     ep_inst = obs["epoch_instance"]
+    n_ep_reqs = ep_inst["is_depot"].size
     must_dispatch = set(np.flatnonzero(ep_inst["must_dispatch"]))
     rollout_tlim = rollout_tlim_factor * info["epoch_tlim"]
     sim_tlim = rollout_tlim / n_simulations
 
     dispatch_count = np.zeros(ep_inst["is_depot"].size, dtype=int)
 
+    # Initial solution based on epoch instance
+    res_init = hgs(
+        ep_inst,
+        hgspy.Config(**sim_config),
+        [getattr(hgspy.operators, op) for op in node_ops],
+        [getattr(hgspy.operators, op) for op in route_ops],
+        [getattr(hgspy.crossover, op) for op in crossover_ops],
+        hgspy.stop.MaxRuntime(10),
+    )
+    base_init = res_init.get_best_found().get_routes()
+
     for _ in range(n_simulations):
+        sim_inst = simulate_instance(info, obs, rng, n_lookahead, n_requests)
+
+        # Add each simulated request as single route to obtain full solution
+        sim_reqs = [[r] for r in range(n_ep_reqs, sim_inst["is_depot"].size)]
+        sim_init = base_init + sim_reqs
+
         res = hgs(
-            simulate_instance(info, obs, rng, n_lookahead, n_requests),
+            sim_inst,
             hgspy.Config(**sim_config),
             [getattr(hgspy.operators, op) for op in node_ops],
             [getattr(hgspy.operators, op) for op in route_ops],
             [getattr(hgspy.crossover, op) for op in crossover_ops],
             hgspy.stop.MaxRuntime(sim_tlim),
+            initial_solutions=[sim_init],
         )
 
         best = res.get_best_found()
