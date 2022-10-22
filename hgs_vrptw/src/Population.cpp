@@ -121,12 +121,12 @@ Individual const *Population::getBinaryTournament()
 
 std::pair<Individual const *, Individual const *> Population::selectParents()
 {
-    Individual const *par1 = getBinaryTournament();
-    Individual const *par2 = getBinaryTournament();
+    auto const *par1 = getBinaryTournament();
+    auto const *par2 = getBinaryTournament();
 
-    int const lowerBound = params.config.lbDiversity * params.nbClients;
-    int const upperBound = params.config.ubDiversity * params.nbClients;
-    int diversity = par1->brokenPairsDistance(par2);
+    auto const lowerBound = params.config.lbDiversity * params.nbClients;
+    auto const upperBound = params.config.ubDiversity * params.nbClients;
+    auto diversity = par1->brokenPairsDistance(par2);
 
     size_t tries = 1;
     while ((diversity < lowerBound || diversity > upperBound) && tries++ < 10)
