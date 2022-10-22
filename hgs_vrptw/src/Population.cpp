@@ -21,7 +21,7 @@ void Population::addIndividual(Individual const &indiv)
     auto indivPtr = std::make_unique<Individual>(indiv);
 
     for (auto const &other : subPop)  // update distance to other individuals
-        indivPtr->brokenPairsDistance(other.indiv.get());
+        indivPtr->registerNearbyIndividual(other.indiv.get());
 
     IndividualWrapper wrapper = {std::move(indivPtr), 0};
 
@@ -121,13 +121,19 @@ Individual const *Population::getBinaryTournament()
 
 std::pair<Individual const *, Individual const *> Population::selectParents()
 {
-    Individual const *par1 = getBinaryTournament();
-    Individual const *par2 = getBinaryTournament();
+    auto const *par1 = getBinaryTournament();
+    auto const *par2 = getBinaryTournament();
 
-    size_t numTries = 1;
-    while ((par1 == par2 || *par1 == *par2)  // Try again a few more times
-           && numTries++ < 10)               // if same parent
+    auto const lowerBound = params.config.lbDiversity * params.nbClients;
+    auto const upperBound = params.config.ubDiversity * params.nbClients;
+    auto diversity = par1->brokenPairsDistance(par2);
+
+    size_t tries = 1;
+    while ((diversity < lowerBound || diversity > upperBound) && tries++ < 10)
+    {
         par2 = getBinaryTournament();
+        diversity = par1->brokenPairsDistance(par2);
+    }
 
     return std::make_pair(par1, par2);
 }
