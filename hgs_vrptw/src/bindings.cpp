@@ -42,6 +42,7 @@ PYBIND11_MODULE(hgspy, m)
         .def("is_feasible", &Individual::isFeasible)
         .def("has_excess_capacity", &Individual::hasExcessCapacity)
         .def("has_time_warp", &Individual::hasTimeWarp)
+        .def("broken_pairs_distance", &Individual::brokenPairsDistance)
         .def("export_cvrplib_format", &Individual::exportCVRPLibFormat);
 
     py::class_<LocalSearch>(m, "LocalSearch")
@@ -72,6 +73,8 @@ PYBIND11_MODULE(hgspy, m)
                       size_t,
                       size_t,
                       size_t,
+                      double,
+                      double,
                       size_t,
                       double,
                       size_t,
@@ -85,7 +88,6 @@ PYBIND11_MODULE(hgspy, m)
                       bool,
                       int,
                       int,
-                      size_t,
                       size_t>(),
              py::arg("seed") = 0,
              py::arg("nbIter") = 10'000,
@@ -99,6 +101,8 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("minPopSize") = 25,
              py::arg("generationSize") = 40,
              py::arg("nbElite") = 4,
+             py::arg("lbDiversity") = 0.1,
+             py::arg("ubDiversity") = 0.5,
              py::arg("nbClose") = 5,
              py::arg("targetFeasible") = 0.4,
              py::arg("nbKeepOnRestart") = 0,
@@ -112,7 +116,6 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("shouldIntensify") = true,
              py::arg("circleSectorOverlapToleranceDegrees") = 0,
              py::arg("minCircleSectorSizeDegrees") = 15,
-             py::arg("destroyPct") = 20,
              py::arg("postProcessPathLength") = 6)
         .def_readonly("seed", &Config::seed)
         .def_readonly("nbIter", &Config::nbIter)
@@ -126,6 +129,8 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("minPopSize", &Config::minPopSize)
         .def_readonly("generationSize", &Config::generationSize)
         .def_readonly("nbElite", &Config::nbElite)
+        .def_readonly("lbDiversity", &Config::lbDiversity)
+        .def_readonly("ubDiversity", &Config::ubDiversity)
         .def_readonly("nbClose", &Config::nbClose)
         .def_readonly("targetFeasible", &Config::targetFeasible)
         .def_readonly("nbKeepOnRestart", &Config::nbKeepOnRestart)
@@ -139,7 +144,6 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("circleSectorOverlapTolerance",
                       &Config::circleSectorOverlapTolerance)
         .def_readonly("minCircleSectorSize", &Config::minCircleSectorSize)
-        .def_readonly("destroyPct", &Config::destroyPct)
         .def_readonly("postProcessPathLength", &Config::postProcessPathLength);
 
     py::class_<Params>(m, "Params")
@@ -231,7 +235,6 @@ PYBIND11_MODULE(hgspy, m)
     // Crossover operators (as a submodule)
     py::module xOps = m.def_submodule("crossover");
 
-    xOps.def("broken_pairs_exchange", &brokenPairsExchange);
     xOps.def("selective_route_exchange", &selectiveRouteExchange);
 
     // Local search operators (as a submodule)

@@ -58,7 +58,6 @@ try
     ls.addRouteOperator(swapStar);
 
     GeneticAlgorithm solver(params, rng, pop, ls);
-    solver.addCrossoverOperator(brokenPairsExchange);
     solver.addCrossoverOperator(selectiveRouteExchange);
 
     MaxRuntime stop(config.timeLimit);

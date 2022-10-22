@@ -101,9 +101,12 @@ public:
                && indivsByProximity.begin()->first == 0;
     }
 
-    // Computes and stores a distance measure with another individual, based on
-    // the number of arcs that differ between two solutions.
-    void brokenPairsDistance(Individual *other);
+    // Computes and returns a distance measure with another individual, based
+    // on the number of arcs that differ between two solutions.
+    int brokenPairsDistance(Individual const *other) const;
+
+    // Updates the proximity structures of this and the other individual.
+    void registerNearbyIndividual(Individual *other);
 
     // Returns the average distance of this individual to the individuals
     // nearest to it.

@@ -27,6 +27,8 @@ struct Config
     size_t minPopSize = 25;
     size_t generationSize = 40;   // max size before culling a generation
     size_t nbElite = 4;           // number of elite individuals in pop
+    double lbDiversity = 0.1;     // minimum pct difference in parent diversity
+    double ubDiversity = 0.5;     // maximum pct difference in parent diversity
     size_t nbClose = 5;           // # individuals when calculating diversity
     double targetFeasible = 0.4;  // target feasible pop fraction
     size_t nbKeepOnRestart = 0;   // # individuals to keep when restarting
@@ -56,9 +58,6 @@ struct Config
     // that even small circle sectors have 'overlap'
     int minCircleSectorSize = static_cast<int>(15 / 360. * 65536);
 
-    // Percentage of customers to remove in brokenPairsExchange
-    size_t destroyPct = 20;
-
     // Number of nodes we improve by enumeration in LS postprocessing
     size_t postProcessPathLength = 6;
 
@@ -74,6 +73,8 @@ struct Config
                     size_t minPopSize = 25,
                     size_t generationSize = 40,
                     size_t nbElite = 4,
+                    double lbDiversity = 0.1,
+                    double ubDiversity = 0.5,
                     size_t nbClose = 5,
                     double targetFeasible = 0.4,
                     size_t nbKeepOnRestart = 0,
@@ -87,7 +88,6 @@ struct Config
                     bool shouldIntensify = true,
                     int circleSectorOverlapToleranceDegrees = 0,
                     int minCircleSectorSizeDegrees = 15,
-                    size_t destroyPct = 20,
                     size_t postProcessPathLength = 6)
         : seed(seed),
           nbIter(nbIter),
@@ -101,6 +101,8 @@ struct Config
           minPopSize(minPopSize),
           generationSize(generationSize),
           nbElite(nbElite),
+          lbDiversity(lbDiversity),
+          ubDiversity(ubDiversity),
           nbClose(nbClose),
           targetFeasible(targetFeasible),
           nbKeepOnRestart(nbKeepOnRestart),
@@ -112,7 +114,6 @@ struct Config
           weightWaitTime(weightWaitTime),
           weightTimeWarp(weightTimeWarp),
           shouldIntensify(shouldIntensify),
-          destroyPct(destroyPct),
           postProcessPathLength(postProcessPathLength)
     {
         auto const overlap = circleSectorOverlapToleranceDegrees / 360. * 65536;
