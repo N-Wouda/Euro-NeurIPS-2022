@@ -58,9 +58,6 @@ struct Config
     // that even small circle sectors have 'overlap'
     int minCircleSectorSize = static_cast<int>(15 / 360. * 65536);
 
-    // Percentage of customers to remove in brokenPairsExchange
-    size_t destroyPct = 20;
-
     // Number of nodes we improve by enumeration in LS postprocessing
     size_t postProcessPathLength = 6;
 
@@ -91,7 +88,6 @@ struct Config
                     bool shouldIntensify = true,
                     int circleSectorOverlapToleranceDegrees = 0,
                     int minCircleSectorSizeDegrees = 15,
-                    size_t destroyPct = 20,
                     size_t postProcessPathLength = 6)
         : seed(seed),
           nbIter(nbIter),
@@ -118,7 +114,6 @@ struct Config
           weightWaitTime(weightWaitTime),
           weightTimeWarp(weightTimeWarp),
           shouldIntensify(shouldIntensify),
-          destroyPct(destroyPct),
           postProcessPathLength(postProcessPathLength)
     {
         auto const overlap = circleSectorOverlapToleranceDegrees / 360. * 65536;
