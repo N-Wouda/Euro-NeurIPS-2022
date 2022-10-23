@@ -63,16 +63,15 @@ def write(where: str, params, exp: int):
 def main():
     args = parse_args()
 
-    # Penalty management
+    # Population management
     space = dict(
-        initialTimeWarpPenalty=Integer((1, 25), 1),
-        nbPenaltyManagement=Integer((25, 500), 100),
-        feasBooster=Float((1, 10), 2.0),
-        penaltyIncrease=Float((1, 5), 1.2),
-        penaltyDecrease=Float((0.25, 1), 0.85),
-        targetFeasible=Float((0, 1), 0.4),
-        repairProbability=Integer((0, 100), 50),
-        repairBooster=Integer((1, 25), 10),
+        minPopSize=Integer((5, 100), 25),
+        generationSize=Integer((1, 100), 40),
+        nbElite=Float((0, 25), 4),
+        lbDiversity=Float((0, 0.25), 0.1),
+        ubDiversity=Float((0.25, 1), 0.5),
+        nbClose=Integer((1, 25), 5),
+        nbIter=Integer((1_000, 10_000), 10_000),
     )
 
     default = {name: val.default for name, val in space.items()}
