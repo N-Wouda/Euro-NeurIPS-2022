@@ -27,7 +27,7 @@ def rollout(
     """
     # Return the full epoch instance for the last epoch
     if obs["current_epoch"] == info["end_epoch"]:
-        return obs["epoch_instance"]
+        return obs["epoch_instance"], {}
 
     # Parameters
     ep_inst = obs["epoch_instance"]
@@ -36,6 +36,7 @@ def rollout(
     rollout_tlim = rollout_tlim_factor * info["epoch_tlim"]
     sim_tlim = rollout_tlim / n_simulations
 
+    stats = {"sim_sols": []}
     dispatch_count = np.zeros(ep_inst["is_depot"].size, dtype=int)
 
     # Initial solution based on epoch instance
@@ -47,7 +48,9 @@ def rollout(
         [getattr(hgspy.crossover, op) for op in crossover_ops],
         hgspy.stop.MaxRuntime(10),
     )
-    base_init = res_init.get_best_found().get_routes()
+    base_init = [x for x in res_init.get_best_found().get_routes() if x]
+    stats["base_init"] = base_init
+    stats["ep_inst"] = base_init
 
     for _ in range(n_simulations):
         sim_inst = simulate_instance(info, obs, rng, n_lookahead, n_requests)
@@ -65,13 +68,23 @@ def rollout(
             hgspy.stop.MaxRuntime(sim_tlim),
             initial_solutions=[sim_init],
         )
+        # stats = res.get_statistics()
+        # breakpoint()
 
         best = res.get_best_found()
 
+        ep_sol = []  # Store the epoch solutions
         for sim_route in best.get_routes():
             # Only dispatch routes that contain must dispatch requests
             if any(idx in must_dispatch for idx in sim_route):
                 dispatch_count[sim_route] += 1
+                ep_sol.append(sim_route)
+
+        stats["sim_sols"].append(ep_sol)
+
+    stats["dispatch_count"] = dispatch_count
+
+    # breakpoint()
 
     dispatch = (
         ep_inst["is_depot"]
@@ -80,4 +93,4 @@ def rollout(
         | (dispatch_count >= max(1, n_simulations) * dispatch_threshold)
     )
 
-    return filter_instance(ep_inst, dispatch)
+    return filter_instance(ep_inst, dispatch), stats

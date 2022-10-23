@@ -82,6 +82,7 @@ def main():
 
     func = partial(solve, **vars(args))
     func_args = glob(args.instance_pattern)
+    # func(func_args[0])
 
     tqdm_kwargs = dict(max_workers=args.num_procs, unit="instance")
     data = process_map(func, func_args, **tqdm_kwargs)

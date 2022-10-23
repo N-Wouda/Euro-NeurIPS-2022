@@ -43,7 +43,7 @@ def solve_dynamic(env, config, solver_seed):
             dispatch_inst = observation["epoch_instance"]
         else:
             strategy = STRATEGIES[config.strategy()]
-            dispatch_inst = strategy(
+            dispatch_inst, stats = strategy(
                 static_info, observation, rng, **config.strategy_params()
             )
 
