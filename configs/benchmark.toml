@@ -17,3 +17,14 @@ route_ops = [
 crossover_ops = [
     "selective_route_exchange",
 ]
+
+
+[static.params]
+initialTimeWarpPenalty = 17
+nbPenaltyManagement = 277
+feasBooster = 8.136363636363637
+penaltyIncrease = 3.6464646464646466
+penaltyDecrease = 0.8977272727272727
+targetFeasible = 0.19696969696969696
+repairProbability = 25
+repairBooster = 13
