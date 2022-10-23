@@ -53,7 +53,7 @@ def write(where: str, params, exp: int):
         crossover_ops=[
             "selective_route_exchange",
         ],
-        params=params
+        params=params,
     )
 
     with open(where + f"/{exp}.toml", "wb") as fh:

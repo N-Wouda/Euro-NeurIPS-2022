@@ -19,18 +19,18 @@ struct Config
     size_t initialTimeWarpPenalty = 6;
 
     size_t nbPenaltyManagement = 47;  // manage penalties every # iterations
-    double feasBooster = 2.5;          // special increase penalty if no feas
-    double penaltyIncrease = 1.34;      // regular increase if below target feas
-    double penaltyDecrease = 0.32;     // regular decrease if above target feas
+    double feasBooster = 2.5;         // special increase penalty if no feas
+    double penaltyIncrease = 1.34;    // regular increase if below target feas
+    double penaltyDecrease = 0.32;    // regular decrease if above target feas
 
     size_t minPopSize = 25;
-    size_t generationSize = 40;   // max size before culling a generation
-    size_t nbElite = 4;           // number of elite individuals in pop
-    double lbDiversity = 0.1;     // minimum pct difference in parent diversity
-    double ubDiversity = 0.5;     // maximum pct difference in parent diversity
-    size_t nbClose = 5;           // # individuals when calculating diversity
+    size_t generationSize = 40;    // max size before culling a generation
+    size_t nbElite = 4;            // number of elite individuals in pop
+    double lbDiversity = 0.1;      // minimum pct difference in parent diversity
+    double ubDiversity = 0.5;      // maximum pct difference in parent diversity
+    size_t nbClose = 5;            // # individuals when calculating diversity
     double targetFeasible = 0.43;  // target feasible pop fraction
-    size_t nbKeepOnRestart = 0;   // # individuals to keep when restarting
+    size_t nbKeepOnRestart = 0;    // # individuals to keep when restarting
 
     size_t repairProbability = 79;  // probability of repair if infeasible
     size_t repairBooster = 12;      // penalty booster when repairing
