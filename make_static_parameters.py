@@ -67,7 +67,7 @@ def main():
     space = dict(
         minPopSize=Integer((5, 100), 25),
         generationSize=Integer((1, 100), 40),
-        nbElite=Float((0, 25), 4),
+        nbElite=Integer((0, 25), 4),
         lbDiversity=Float((0, 0.25), 0.1),
         ubDiversity=Float((0.25, 1), 0.5),
         nbClose=Integer((1, 25), 5),
