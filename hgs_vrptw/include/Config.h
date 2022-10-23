@@ -16,15 +16,12 @@ struct Config
     int timeLimit = INT_MAX;         // time limit in seconds
     bool collectStatistics = false;  // collect runtime statistics?
 
-    // This was the default until now, but with this value feasible individuals
-    // often become infeasible during the local search in educate. This does not
-    // happen with initialTimeWarpPenalty = 10.
-    size_t initialTimeWarpPenalty = 1;
+    size_t initialTimeWarpPenalty = 6;
 
-    size_t nbPenaltyManagement = 100;  // manage penalties every # iterations
-    double feasBooster = 2.0;          // special increase penalty if no feas
-    double penaltyIncrease = 1.2;      // regular increase if below target feas
-    double penaltyDecrease = 0.85;     // regular decrease if above target feas
+    size_t nbPenaltyManagement = 47;  // manage penalties every # iterations
+    double feasBooster = 2.5;          // special increase penalty if no feas
+    double penaltyIncrease = 1.34;      // regular increase if below target feas
+    double penaltyDecrease = 0.32;     // regular decrease if above target feas
 
     size_t minPopSize = 25;
     size_t generationSize = 40;   // max size before culling a generation
@@ -32,11 +29,11 @@ struct Config
     double lbDiversity = 0.1;     // minimum pct difference in parent diversity
     double ubDiversity = 0.5;     // maximum pct difference in parent diversity
     size_t nbClose = 5;           // # individuals when calculating diversity
-    double targetFeasible = 0.4;  // target feasible pop fraction
+    double targetFeasible = 0.43;  // target feasible pop fraction
     size_t nbKeepOnRestart = 0;   // # individuals to keep when restarting
 
-    size_t repairProbability = 50;  // probability of repair if infeasible
-    size_t repairBooster = 10;      // penalty booster when repairing
+    size_t repairProbability = 79;  // probability of repair if infeasible
+    size_t repairBooster = 12;      // penalty booster when repairing
 
     size_t selectProbability = 90;  // offspring selection probability
 
@@ -67,21 +64,21 @@ struct Config
                     size_t nbIter = 10'000,
                     int timeLimit = INT_MAX,
                     bool collectStatistics = false,
-                    size_t initialTimeWarpPenalty = 1,
-                    size_t nbPenaltyManagement = 100,
-                    double feasBooster = 2.,
-                    double penaltyIncrease = 1.2,
-                    double penaltyDecrease = 0.85,
+                    size_t initialTimeWarpPenalty = 6,
+                    size_t nbPenaltyManagement = 47,
+                    double feasBooster = 2.5,
+                    double penaltyIncrease = 1.34,
+                    double penaltyDecrease = 0.32,
                     size_t minPopSize = 25,
                     size_t generationSize = 40,
                     size_t nbElite = 4,
                     double lbDiversity = 0.1,
                     double ubDiversity = 0.5,
                     size_t nbClose = 5,
-                    double targetFeasible = 0.4,
+                    double targetFeasible = 0.43,
                     size_t nbKeepOnRestart = 0,
-                    size_t repairProbability = 50,
-                    size_t repairBooster = 10,
+                    size_t repairProbability = 79,
+                    size_t repairBooster = 12,
                     size_t selectProbability = 90,
                     int nbVeh = INT_MAX,
                     size_t nbGranular = 40,
