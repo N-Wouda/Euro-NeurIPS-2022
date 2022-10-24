@@ -7,7 +7,7 @@ from scipy.stats import qmc
 
 @dataclass
 class Integer:
-    interval: tuple
+    interval: tuple[int, int]
     default: int
 
     def ppf(self, q: float) -> int:
@@ -17,7 +17,7 @@ class Integer:
 
 @dataclass
 class Float:
-    interval: tuple
+    interval: tuple[float, float]
     default: float
 
     def ppf(self, q: float) -> float:
@@ -63,15 +63,14 @@ def write(where: str, params, exp: int):
 def main():
     args = parse_args()
 
-    # Population management
+    # LS management
     space = dict(
-        minPopSize=Integer((5, 100), 25),
-        generationSize=Integer((1, 100), 40),
-        nbElite=Integer((0, 25), 4),
-        lbDiversity=Float((0, 0.25), 0.1),
-        ubDiversity=Float((0.25, 1), 0.5),
-        nbClose=Integer((1, 25), 5),
-        nbIter=Integer((1_000, 10_000), 10_000),
+        nbGranular=Integer((10, 100), 40),
+        weightWaitTime=Integer((1, 25), 2),
+        weightTimeWarp=Integer((1, 25), 10),
+        circleSectorOverlapToleranceDegrees=Integer((0, 359), 0),
+        minCircleSectorSizeDegrees=Integer((0, 359), 15),
+        postProcessPathLength=Integer((1, 8), 6),
     )
 
     default = {name: val.default for name, val in space.items()}
