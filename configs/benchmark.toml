@@ -17,3 +17,12 @@ route_ops = [
 crossover_ops = [
     "selective_route_exchange",
 ]
+
+[static.params]
+minPopSize = 92
+generationSize = 36
+nbElite = 23
+lbDiversity = 0.11742424242424243
+ubDiversity = 0.5795454545454546
+nbClose = 10
+nbIter = 5318
