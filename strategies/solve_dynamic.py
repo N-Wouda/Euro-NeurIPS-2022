@@ -1,11 +1,17 @@
 import time
 
 import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
 
 import hgspy
 from strategies.dynamic import STRATEGIES
 from strategies.static import hgs
 from .utils import sol2ep
+
+import plotting
+
+matplotlib.use("Agg")  # Don't show plots
 
 
 def solve_dynamic(env, config, solver_seed):
@@ -49,6 +55,19 @@ def solve_dynamic(env, config, solver_seed):
 
         solve_tlim = ep_tlim - (time.perf_counter() - start) + 1
 
+        if "sim_sols" in stats:
+            for idx, sim_sol in enumerate(stats["sim_sols"]):
+                fig, ax = plt.subplots(figsize=[12, 12])
+                plotting.plot_instance(
+                    ax, observation["epoch_instance"], sim_sol
+                )
+                plt.savefig(
+                    f"tmp2/epoch{observation['current_epoch']}-sim{idx}.jpg"
+                )
+                plt.close()
+
+        print(observation["current_epoch"])
+
         # TODO use a seed different from the dynamic rng for the static solver
         res = hgs(
             dispatch_inst,
@@ -66,6 +85,19 @@ def solve_dynamic(env, config, solver_seed):
 
         current_epoch = observation["current_epoch"]
         solutions[current_epoch] = ep_sol
+
+        ep_inst = observation["epoch_instance"]
+        n_dispatch = len(dispatch_inst["coords"]) - 1
+        n_requests = len(ep_inst["coords"]) - 1
+        n_must_dispatch = sum(ep_inst["must_dispatch"])
+        n_sol = len([x for route in ep_sol for x in route])
+        print(
+            f"Epoch: {observation['current_epoch']} / {static_info['end_epoch']}",
+            end=" - ",
+        )
+        print(
+            f"Dispatch: {n_dispatch} / {n_requests}, {n_must_dispatch=}, {n_sol=}"
+        )
 
         observation, reward, done, info = env.step(ep_sol)
         costs[current_epoch] = abs(reward)
