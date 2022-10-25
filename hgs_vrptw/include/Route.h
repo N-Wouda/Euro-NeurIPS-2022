@@ -95,7 +95,8 @@ public:  // TODO make fields private
     /**
      * Calculates time window data for segment [start, end].
      */
-    [[nodiscard]] inline TimeWindowSegment twBetween(size_t start, size_t end) const;
+    [[nodiscard]] inline TimeWindowSegment twBetween(size_t start,
+                                                     size_t end) const;
 
     /**
      * Calculates the distance for segment [start, end].
