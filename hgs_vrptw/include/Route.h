@@ -120,7 +120,6 @@ TimeWindowSegment Route::twBetween(size_t start, size_t end) const
 
     auto data = nodes[start - 1]->tw;
 
-    // ...and do the rest in one-step updates.
     for (size_t step = start; step != end; ++step)
         data = TimeWindowSegment::merge(data, nodes[step]->tw);
 
