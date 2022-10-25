@@ -12,14 +12,6 @@
 
 class Route
 {
-    constexpr static size_t jumpDistance = 4;
-
-    // Vector of jumps. Each element is a time window segment of the route
-    // between the indexed node and the node jumpDistance ahead in the route.
-    // This lets us jump to the next node in the route a given jump distance
-    // away. Very useful for speeding up time window calculations.
-    std::vector<TimeWindowSegment> jumps;
-
     CircleSector sector;        // Circle sector of the route's clients
     std::vector<Node *> nodes;  // List of nodes (in order) in this solution.
 
@@ -103,7 +95,7 @@ public:  // TODO make fields private
     /**
      * Calculates time window data for segment [start, end].
      */
-    [[nodiscard]] TimeWindowSegment twBetween(size_t start, size_t end) const;
+    [[nodiscard]] inline TimeWindowSegment twBetween(size_t start, size_t end) const;
 
     /**
      * Calculates the distance for segment [start, end].
@@ -121,6 +113,19 @@ public:  // TODO make fields private
      */
     void update();
 };
+
+TimeWindowSegment Route::twBetween(size_t start, size_t end) const
+{
+    assert(start <= end);
+
+    auto data = nodes[start - 1]->tw;
+
+    // ...and do the rest in one-step updates.
+    for (size_t step = start; step != end; ++step)
+        data = TimeWindowSegment::merge(data, nodes[step]->tw);
+
+    return data;
+}
 
 int Route::distBetween(size_t start, size_t end) const
 {
