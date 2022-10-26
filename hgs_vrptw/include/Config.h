@@ -50,7 +50,7 @@ struct Config
 
     // Margin to take (in degrees 0 - 359 as ints [0 - 65536]) to determine
     // overlap of circle sectors for SWAP*
-    int circleSectorOverlapTolerance = static_cast<int>(216/ 360. * 65536);
+    int circleSectorOverlapTolerance = static_cast<int>(216 / 360. * 65536);
 
     // Minimum size (in degrees as ints [0 - 65536]) for circle sectors such
     // that even small circle sectors have 'overlap'
