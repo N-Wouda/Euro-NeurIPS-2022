@@ -1,13 +1,11 @@
 #include "Params.h"
 
-#include "CircleSector.h"
 #include "Matrix.h"
 #include "XorShift128.h"
 
 #include <algorithm>
 #include <cmath>
 #include <fstream>
-#include <numeric>
 #include <set>
 #include <string>
 #include <vector>
@@ -71,11 +69,6 @@ Params::Params(Config const &config, std::string const &instPath)
             clients[nbClients].twEarly *= 10;
             clients[nbClients].twLate *= 10;
             clients[nbClients].servDur *= 10;
-            clients[nbClients].angle = CircleSector::positive_mod(
-                static_cast<int>(32768.
-                                 * atan2(clients[nbClients].y - clients[0].y,
-                                         clients[nbClients].x - clients[0].x)
-                                 / M_PI));
 
             // Keep track of the max demand, the total demand, and the
             // number of clients
@@ -179,11 +172,6 @@ Params::Params(Config const &config, std::string const &instPath)
                     }
 
                     clients[i].custNum--;
-                    clients[i].angle = CircleSector::positive_mod(
-                        static_cast<int>(32768.
-                                         * atan2(clients[i].y - clients[0].y,
-                                                 clients[i].x - clients[0].x)
-                                         / M_PI));
                 }
             }
             // Read the demand of each client (including the depot, which
@@ -385,13 +373,6 @@ Params::Params(Config const &config,
     clients = std::vector<Client>(nbClients + 1);
 
     for (size_t idx = 0; idx <= static_cast<size_t>(nbClients); ++idx)
-    {
-        auto const angle = CircleSector::positive_mod(
-            static_cast<int>(32768.
-                             * atan2(clients[nbClients].y - coords[idx].second,
-                                     clients[nbClients].x - coords[idx].first)
-                             / M_PI));
-
         clients[idx] = {static_cast<int>(idx + 1),
                         coords[idx].first,
                         coords[idx].second,
@@ -399,9 +380,7 @@ Params::Params(Config const &config,
                         demands[idx],
                         timeWindows[idx].first,
                         timeWindows[idx].second,
-                        releases[idx],
-                        angle};
-    }
+                        releases[idx]};
 
     calculateNeighbours();
 }

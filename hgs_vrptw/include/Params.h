@@ -25,10 +25,6 @@ class Params
         int twLate;       // Latest arrival (when using time windows)
         int releaseTime;  // Routes with this client cannot leave depot before
                           // this time
-
-        // Polar angle of the client around the depot (starting at east, moving
-        // counter-clockwise), measured in degrees and truncated for convenience
-        int angle;
     };
 
     // Penalty booster that increases the penalty on capacity and time window

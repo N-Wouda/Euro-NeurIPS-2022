@@ -1,7 +1,6 @@
 #ifndef HGS_VRPTW_ROUTE_H
 #define HGS_VRPTW_ROUTE_H
 
-#include "CircleSector.h"
 #include "Node.h"
 #include "TimeWindowSegment.h"
 
@@ -12,14 +11,13 @@
 
 class Route
 {
-    CircleSector sector;        // Circle sector of the route's clients
     std::vector<Node *> nodes;  // List of nodes (in order) in this solution.
 
     // Populates the nodes vector.
     void setupNodes();
 
-    // Sets the angle and sector data.
-    void setupSector();
+    // Sets the route center angle.
+    void setupAngle();
 
     // Sets forward node time windows.
     void setupRouteTimeWindows();
@@ -73,16 +71,6 @@ public:  // TODO make fields private
     {
         auto const &tw = nodes.back()->twBefore;
         return tw.totalTimeWarp();
-    }
-
-    /**
-     * Tests if this route overlaps the other route, that is, whether their
-     * circle sectors overlap with a given tolerance.
-     */
-    [[nodiscard]] bool overlapsWith(Route const &other) const
-    {
-        return CircleSector::overlap(
-            sector, other.sector, params->config.circleSectorOverlapTolerance);
     }
 
     [[nodiscard]] bool empty() const { return size() == 0; }

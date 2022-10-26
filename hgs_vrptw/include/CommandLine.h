@@ -76,17 +76,6 @@ public:
                     = static_cast<size_t>(atoi(argv[i + 1]));
             else if (std::string(argv[i]) == "-repairBooster")
                 config.repairBooster = static_cast<size_t>(atoi(argv[i + 1]));
-            else if (std::string(argv[i])
-                     == "-circleSectorOverlapToleranceDegrees")
-            {
-                auto const overlap = atoi(argv[i + 1]) / 360. * 65536;
-                config.circleSectorOverlapTolerance = static_cast<int>(overlap);
-            }
-            else if (std::string(argv[i]) == "-minCircleSectorSizeDegrees")
-            {
-                auto const minCircleSize = atoi(argv[i + 1]) / 360. * 65536;
-                config.minCircleSectorSize = static_cast<int>(minCircleSize);
-            }
         }
 
         return config;
