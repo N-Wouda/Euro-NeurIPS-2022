@@ -9,8 +9,6 @@
 // Stores all the parameters values
 struct Config
 {
-    // TODO group parameters by topic
-
     int seed = 0;                    // Random seed
     size_t nbIter = 10'000;          // iters without improvement
     int timeLimit = INT_MAX;         // time limit in seconds
