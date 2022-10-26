@@ -41,24 +41,23 @@ struct Config
 
     // Granular search parameter, limits the number of moves in the RI local
     // search
-    size_t nbGranular = 40;
+    size_t nbGranular = 34;
 
-    // See Vidal 2012, HGS for VRPTW. Multiplied by 10 for integer arithmetic.
-    int weightWaitTime = 2;   // weight for wait-time nearness
-    int weightTimeWarp = 10;  // weight for time warp nearness
+    int weightWaitTime = 18;  // weight for wait-time nearness
+    int weightTimeWarp = 20;  // weight for time warp nearness
 
     bool shouldIntensify = true;  // try to further improve a new best solution?
 
     // Margin to take (in degrees 0 - 359 as ints [0 - 65536]) to determine
     // overlap of circle sectors for SWAP*
-    int circleSectorOverlapTolerance = 0;
+    int circleSectorOverlapTolerance = static_cast<int>(216/ 360. * 65536);
 
     // Minimum size (in degrees as ints [0 - 65536]) for circle sectors such
     // that even small circle sectors have 'overlap'
-    int minCircleSectorSize = static_cast<int>(15 / 360. * 65536);
+    int minCircleSectorSize = static_cast<int>(332 / 360. * 65536);
 
     // Number of nodes we improve by enumeration in LS postprocessing
-    size_t postProcessPathLength = 6;
+    size_t postProcessPathLength = 7;
 
     explicit Config(int seed = 0,
                     size_t nbIter = 10'000,
@@ -81,13 +80,13 @@ struct Config
                     size_t repairBooster = 12,
                     size_t selectProbability = 90,
                     int nbVeh = INT_MAX,
-                    size_t nbGranular = 40,
-                    int weightWaitTime = 2,
-                    int weightTimeWarp = 10,
+                    size_t nbGranular = 34,
+                    int weightWaitTime = 18,
+                    int weightTimeWarp = 20,
                     bool shouldIntensify = true,
-                    int circleSectorOverlapToleranceDegrees = 0,
-                    int minCircleSectorSizeDegrees = 15,
-                    size_t postProcessPathLength = 6)
+                    int circleSectorOverlapToleranceDegrees = 216,
+                    int minCircleSectorSizeDegrees = 332,
+                    size_t postProcessPathLength = 7)
         : seed(seed),
           nbIter(nbIter),
           timeLimit(timeLimit),

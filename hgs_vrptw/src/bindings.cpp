@@ -110,13 +110,13 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("repairBooster") = 12,
              py::arg("selectProbability") = 90,
              py::arg("nbVeh") = INT_MAX,
-             py::arg("nbGranular") = 40,
-             py::arg("weightWaitTime") = 2,
-             py::arg("weightTimeWarp") = 10,
+             py::arg("nbGranular") = 34,
+             py::arg("weightWaitTime") = 18,
+             py::arg("weightTimeWarp") = 20,
              py::arg("shouldIntensify") = true,
-             py::arg("circleSectorOverlapToleranceDegrees") = 0,
-             py::arg("minCircleSectorSizeDegrees") = 15,
-             py::arg("postProcessPathLength") = 6)
+             py::arg("circleSectorOverlapToleranceDegrees") = 216,
+             py::arg("minCircleSectorSizeDegrees") = 332,
+             py::arg("postProcessPathLength") = 7)
         .def_readonly("seed", &Config::seed)
         .def_readonly("nbIter", &Config::nbIter)
         .def_readonly("timeLimit", &Config::timeLimit)
