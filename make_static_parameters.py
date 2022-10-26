@@ -25,9 +25,43 @@ class Float:
         return lo + q * (hi - lo)
 
 
+# These parameter groups, ranges, and default values have been discussed in
+# https://github.com/N-Wouda/Euro-NeurIPS-2022/issues/33.
+PARAM_SPACE = dict(
+    penalty=dict(  # penalty management parameters
+        initialTimeWarpPenalty=Integer((1, 25), 1),
+        nbPenaltyManagement=Integer((25, 500), 100),
+        feasBooster=Float((1, 10), 2.0),
+        penaltyIncrease=Float((1, 5), 1.2),
+        penaltyDecrease=Float((0.25, 1), 0.85),
+        targetFeasible=Float((0, 1), 0.4),
+        repairProbability=Integer((0, 100), 50),
+        repairBooster=Integer((1, 25), 10),
+    ),
+    population=dict(  # population management parameters
+        minPopSize=Integer((5, 100), 25),
+        generationSize=Integer((1, 100), 40),
+        nbElite=Integer((0, 25), 4),
+        lbDiversity=Float((0, 0.25), 0.1),
+        ubDiversity=Float((0.25, 1), 0.5),
+        nbClose=Integer((1, 25), 5),
+        nbIter=Integer((1_000, 10_000), 10_000),
+    ),
+    ls=dict(  # local search parameters
+        nbGranular=Integer((10, 100), 40),
+        weightWaitTime=Integer((1, 25), 2),
+        weightTimeWarp=Integer((1, 25), 10),
+        circleSectorOverlapToleranceDegrees=Integer((0, 359), 0),
+        minCircleSectorSizeDegrees=Integer((0, 359), 15),
+        postProcessPathLength=Integer((1, 8), 6),
+    ),
+)
+
+
 def parse_args():
     parser = argparse.ArgumentParser()
 
+    parser.add_argument("param_space", choices=PARAM_SPACE.keys())
     parser.add_argument("--num_samples", type=int, default=100)
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--out_dir", default="data/tune")
@@ -62,16 +96,7 @@ def write(where: str, params, exp: int):
 
 def main():
     args = parse_args()
-
-    # LS management
-    space = dict(
-        nbGranular=Integer((10, 100), 40),
-        weightWaitTime=Integer((1, 25), 2),
-        weightTimeWarp=Integer((1, 25), 10),
-        circleSectorOverlapToleranceDegrees=Integer((0, 359), 0),
-        minCircleSectorSizeDegrees=Integer((0, 359), 15),
-        postProcessPathLength=Integer((1, 8), 6),
-    )
+    space = PARAM_SPACE[args.param_space]
 
     default = {name: val.default for name, val in space.items()}
     write(args.out_dir, default, 1)
