@@ -12,11 +12,8 @@
 // data of the instance needed by the algorithm
 class Params
 {
-    // Structure of a Client, including its index, position, and all other
-    // variables and parameters
     struct Client
     {
-        int custNum;      // Index of the client
         int x;            // Coordinate X
         int y;            // Coordinate Y
         int servDur;      // Service duration
