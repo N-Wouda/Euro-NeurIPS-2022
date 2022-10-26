@@ -3,8 +3,6 @@
 #include <cmath>
 #include <ostream>
 
-using TWS = TimeWindowSegment;
-
 void Route::update()
 {
     auto const oldNodes = nodes;
@@ -29,11 +27,6 @@ void Route::update()
                 distance = nodes[pos - 1]->cumulatedDistance;
                 reverseDistance = nodes[pos - 1]->cumulatedReversalDistance;
             }
-
-            if (pos <= jumpDistance)
-                jumps.clear();
-            else
-                jumps.erase(jumps.begin() + pos - jumpDistance, jumps.end());
         }
 
         if (!foundChange)
@@ -49,42 +42,11 @@ void Route::update()
         node->cumulatedLoad = load;
         node->cumulatedDistance = distance;
         node->cumulatedReversalDistance = reverseDistance;
-        node->twBefore = TWS::merge(p(node)->twBefore, node->tw);
-
-        if (node->position > jumpDistance && nodes.size() > jumpDistance)
-        {
-            // We cannot use Route::twBetween here since the jumps are obviously
-            // not yet available.
-            auto *prev = nodes[pos - jumpDistance];
-            auto jump = prev->tw;
-
-            for (auto step = prev->position; step != node->position; ++step)
-                jump = TWS::merge(jump, nodes[step]->tw);
-
-            jumps.emplace_back(jump);
-        }
+        node->twBefore = TimeWindowSegment::merge(p(node)->twBefore, node->tw);
     }
 
     setupSector();
     setupRouteTimeWindows();
-}
-
-TimeWindowSegment Route::twBetween(size_t start, size_t end) const
-{
-    assert(start <= end);
-
-    auto data = nodes[start - 1]->tw;
-    auto nbJumps = (end - start) / jumpDistance;
-
-    // Jump as much as we can...
-    for (size_t step = 0; step != nbJumps; ++step)
-        data = TWS::merge(data, jumps[start + step * jumpDistance - 1]);
-
-    // ...and do the rest in one-step updates.
-    for (size_t step = start + nbJumps * jumpDistance; step != end; ++step)
-        data = TWS::merge(data, nodes[step]->tw);
-
-    return data;
 }
 
 void Route::setupNodes()
@@ -106,7 +68,7 @@ void Route::setupRouteTimeWindows()
     do  // forward time window data
     {
         auto *prev = p(node);
-        prev->twAfter = TWS::merge(prev->tw, node->twAfter);
+        prev->twAfter = TimeWindowSegment::merge(prev->tw, node->twAfter);
         node = prev;
     } while (!node->isDepot());
 }
