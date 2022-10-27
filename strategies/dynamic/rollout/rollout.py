@@ -41,8 +41,9 @@ def rollout(
 
     stats = {"sim_sols": []}
     dispatch_count = np.zeros(ep_inst["is_depot"].size, dtype=int)
+    counts = []
 
-    for _ in range(2):
+    for cycle_idx in range(3):
         ep_inst["release_times"] = to_postpone * 3600
 
         # Initial solution based on epoch instance
@@ -61,7 +62,7 @@ def rollout(
                 info,
                 obs,
                 rng,
-                n_lookahead,
+                n_lookahead + cycle_idx,
                 n_requests,
                 ep_release=to_postpone * 3600,
             )
@@ -98,14 +99,18 @@ def rollout(
         # Select requests to postpone based on thresholds
         postpone_count = n_simulations - dispatch_count
         postpone_threshold = 1 - dispatch_threshold
+        postpone_threshold = [0.65, 0.75, 0.85][cycle_idx]
         to_postpone = postpone_count >= postpone_threshold * n_simulations
         to_postpone[0] = False  # fix depot
+
+        counts.append(postpone_count)
         # breakpoint()
         dispatch_count *= 0  # reset dispatch count
 
         # stats["dispatch_count"] = dispatch_count
 
-        # breakpoint()
+    print(counts)
+    # breakpoint()
 
     dispatch = (
         ep_inst["is_depot"]

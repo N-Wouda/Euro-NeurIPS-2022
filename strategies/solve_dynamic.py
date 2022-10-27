@@ -55,18 +55,18 @@ def solve_dynamic(env, config, solver_seed):
 
         solve_tlim = ep_tlim - (time.perf_counter() - start) + 1
 
-        if "sim_sols" in stats:
-            for idx, sim_sol in enumerate(stats["sim_sols"]):
-                fig, ax = plt.subplots(figsize=[12, 12])
-                plotting.plot_instance(
-                    ax, observation["epoch_instance"], sim_sol
-                )
-                plt.savefig(
-                    f"tmp2/epoch{observation['current_epoch']}-sim{idx}.jpg"
-                )
-                plt.close()
+        # if "sim_sols" in stats:
+        #     for idx, sim_sol in enumerate(stats["sim_sols"]):
+        #         fig, ax = plt.subplots(figsize=[12, 12])
+        #         plotting.plot_instance(
+        #             ax, observation["epoch_instance"], sim_sol
+        #         )
+        #         plt.savefig(
+        #             f"tmp2/epoch{observation['current_epoch']}-sim{idx}.jpg"
+        #         )
+        #         plt.close()
 
-        print(observation["current_epoch"])
+        # print(observation["current_epoch"])
 
         # TODO use a seed different from the dynamic rng for the static solver
         res = hgs(
@@ -75,7 +75,7 @@ def solve_dynamic(env, config, solver_seed):
             config.node_ops(),
             config.route_ops(),
             config.crossover_ops(),
-            hgspy.stop.MaxRuntime(10),
+            hgspy.stop.MaxRuntime(20),
         )
 
         best = res.get_best_found()
