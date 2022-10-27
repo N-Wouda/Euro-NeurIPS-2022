@@ -41,9 +41,36 @@ crossover_ops = [
 
 strategy = "rollout"
 
+[dynamic.solver_params]
+# Pre-static tuning defaults
+initialTimeWarpPenalty = 1
+nbPenaltyManagement = 100
+feasBooster = 2.0
+penaltyIncrease = 1.2
+penaltyDecrease = 0.85
+minPopSize = 25
+generationSize = 40
+nbElite = 4
+lbDiversity = 0.1
+ubDiversity = 0.5
+nbClose = 5
+targetFeasible = 0.4
+nbKeepOnRestart = 0
+repairProbability = 50
+repairBooster = 10
+selectProbability = 90
+nbGranular = 40
+weightWaitTime = 2
+weightTimeWarp = 10
+shouldIntensify = true
+# circleSectorOverlapTolerance = 0
+# minCircleSectorSize = 2731
+postProcessPathLength = 6
+
+
 [dynamic.strategy_params]
-rollout_tlim_factor = 0.7
-n_cycles = 1
+rollout_tlim_factor = 0.8
+n_cycles = 2
 n_simulations = 50
 n_lookahead = 1
 n_requests = 100
@@ -71,9 +98,28 @@ crossover_ops = [
 
 [dynamic.strategy_params.sim_config]
 seed = 1
-collectStatistics = true
-generationSize = 10
-minPopSize = 3
-nbElite = 3
-nbGranular = 40
+initialTimeWarpPenalty = 25
 nbPenaltyManagement = 1
+minPopSize = 3
+generationSize = 10
+lbDiversity = 0.0
+shouldIntensify = false
+
+# Pre-static tuning defaults
+feasBooster = 2.0
+penaltyIncrease = 1.2
+penaltyDecrease = 0.85
+nbElite = 4
+ubDiversity = 0.5
+nbClose = 5
+targetFeasible = 0.4
+nbKeepOnRestart = 0
+repairProbability = 50
+repairBooster = 10
+selectProbability = 90
+nbGranular = 40
+weightWaitTime = 2
+weightTimeWarp = 10
+# circleSectorOverlapTolerance = 0
+# minCircleSectorSize = 2731
+postProcessPathLength = 6
