@@ -109,7 +109,7 @@ def rollout(
 
         # stats["dispatch_count"] = dispatch_count
 
-    print(counts)
+    print(np.array(counts))
     # breakpoint()
 
     dispatch = (
