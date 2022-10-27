@@ -41,12 +41,10 @@ crossover_ops = [
 
 strategy = "rollout"
 
-[dynamic.solver_params]
-nbIter = 250
-
 [dynamic.strategy_params]
-rollout_tlim_factor = 0.50
-n_simulations = 40
+rollout_tlim_factor = 0.7
+n_cycles = 1
+n_simulations = 50
 n_lookahead = 1
 n_requests = 100
 dispatch_threshold = 0.35
@@ -76,6 +74,6 @@ seed = 1
 collectStatistics = true
 generationSize = 10
 minPopSize = 3
-nbElite = 2
+nbElite = 3
 nbGranular = 40
 nbPenaltyManagement = 1
