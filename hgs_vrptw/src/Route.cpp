@@ -45,7 +45,7 @@ void Route::update()
         node->twBefore = TimeWindowSegment::merge(p(node)->twBefore, node->tw);
     }
 
-    setupSector();
+    setupAngle();
     setupRouteTimeWindows();
 }
 
@@ -73,15 +73,13 @@ void Route::setupRouteTimeWindows()
     } while (!node->isDepot());
 }
 
-void Route::setupSector()
+void Route::setupAngle()
 {
     if (empty())
     {
         angleCenter = 1.e30;
         return;
     }
-
-    sector.initialize(params->clients[n(depot)->client].angle);
 
     int cumulatedX = 0;
     int cumulatedY = 0;
@@ -93,8 +91,6 @@ void Route::setupSector()
 
         cumulatedX += params->clients[node->client].x;
         cumulatedY += params->clients[node->client].y;
-
-        sector.extend(params->clients[node->client].angle);
     }
 
     // This computes a pseudo-angle that sorts roughly equivalently to the atan2
@@ -104,20 +100,6 @@ void Route::setupSector()
     auto const dy = cumulatedY / routeSize - params->clients[0].y;
     auto const dx = cumulatedX / routeSize - params->clients[0].x;
     angleCenter = std::copysign(1. - dx / (std::fabs(dx) + std::fabs(dy)), dy);
-
-    // Enforce minimum size of circle sector
-    if (params->config.minCircleSectorSize > 0)
-    {
-        int const growSectorBy = (params->config.minCircleSectorSize
-                                  - CircleSector::positive_mod(sector) + 1)
-                                 / 2;
-
-        if (growSectorBy > 0)
-        {
-            sector.extend(sector.start - growSectorBy);
-            sector.extend(sector.end + growSectorBy);
-        }
-    }
 }
 
 std::ostream &operator<<(std::ostream &out, Route const &route)

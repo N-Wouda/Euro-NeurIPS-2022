@@ -86,8 +86,6 @@ PYBIND11_MODULE(hgspy, m)
                       int,
                       int,
                       bool,
-                      int,
-                      int,
                       size_t>(),
              py::arg("seed") = 0,
              py::arg("nbIter") = 10'000,
@@ -114,8 +112,6 @@ PYBIND11_MODULE(hgspy, m)
              py::arg("weightWaitTime") = 18,
              py::arg("weightTimeWarp") = 20,
              py::arg("shouldIntensify") = true,
-             py::arg("circleSectorOverlapToleranceDegrees") = 216,
-             py::arg("minCircleSectorSizeDegrees") = 332,
              py::arg("postProcessPathLength") = 7)
         .def_readonly("seed", &Config::seed)
         .def_readonly("nbIter", &Config::nbIter)
@@ -141,9 +137,6 @@ PYBIND11_MODULE(hgspy, m)
         .def_readonly("nbGranular", &Config::nbGranular)
         .def_readonly("weightWaitTime", &Config::weightWaitTime)
         .def_readonly("weightTimeWarp", &Config::weightTimeWarp)
-        .def_readonly("circleSectorOverlapTolerance",
-                      &Config::circleSectorOverlapTolerance)
-        .def_readonly("minCircleSectorSize", &Config::minCircleSectorSize)
         .def_readonly("postProcessPathLength", &Config::postProcessPathLength);
 
     py::class_<Params>(m, "Params")

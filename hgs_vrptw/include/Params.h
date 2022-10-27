@@ -12,11 +12,8 @@
 // data of the instance needed by the algorithm
 class Params
 {
-    // Structure of a Client, including its index, position, and all other
-    // variables and parameters
     struct Client
     {
-        int custNum;      // Index of the client
         int x;            // Coordinate X
         int y;            // Coordinate Y
         int servDur;      // Service duration
@@ -25,10 +22,6 @@ class Params
         int twLate;       // Latest arrival (when using time windows)
         int releaseTime;  // Routes with this client cannot leave depot before
                           // this time
-
-        // Polar angle of the client around the depot (starting at east, moving
-        // counter-clockwise), measured in degrees and truncated for convenience
-        int angle;
     };
 
     // Penalty booster that increases the penalty on capacity and time window

@@ -46,14 +46,6 @@ struct Config
 
     bool shouldIntensify = true;  // try to further improve a new best solution?
 
-    // Margin to take (in degrees 0 - 359 as ints [0 - 65536]) to determine
-    // overlap of circle sectors for SWAP*
-    int circleSectorOverlapTolerance = static_cast<int>(216 / 360. * 65536);
-
-    // Minimum size (in degrees as ints [0 - 65536]) for circle sectors such
-    // that even small circle sectors have 'overlap'
-    int minCircleSectorSize = static_cast<int>(332 / 360. * 65536);
-
     // Number of nodes we improve by enumeration in LS postprocessing
     size_t postProcessPathLength = 7;
 
@@ -82,8 +74,6 @@ struct Config
                     int weightWaitTime = 18,
                     int weightTimeWarp = 20,
                     bool shouldIntensify = true,
-                    int circleSectorOverlapToleranceDegrees = 216,
-                    int minCircleSectorSizeDegrees = 332,
                     size_t postProcessPathLength = 7)
         : seed(seed),
           nbIter(nbIter),
@@ -112,11 +102,6 @@ struct Config
           shouldIntensify(shouldIntensify),
           postProcessPathLength(postProcessPathLength)
     {
-        auto const overlap = circleSectorOverlapToleranceDegrees / 360. * 65536;
-        circleSectorOverlapTolerance = static_cast<int>(overlap);
-
-        auto const minCircleSize = minCircleSectorSizeDegrees / 360. * 65536;
-        minCircleSectorSize = static_cast<int>(minCircleSize);
     }
 };
 
