@@ -64,6 +64,16 @@ def parse_args():
 
 
 def write(where: str, params, exp: int):
+    # Defaults from penalty management
+    params["initialTimeWarpPenalty"] = 14
+    params["nbPenaltyManagement"] = 1
+    params["feasBooster"] = 9.045454545454545
+    params["penaltyIncrease"] = 2.0303030303030303
+    params["penaltyDecrease"] = 0.33712121212121215
+    params["targetFeasible"] = 0.18686868686868688
+    params["repairProbability"] = 53
+    params["repairBooster"] = 10
+
     static = dict(
         node_ops=[
             "Exchange10",
@@ -101,6 +111,7 @@ def main():
     for exp, sample in enumerate(samples, 2):
         values = [param.ppf(val) for param, val in zip(space.values(), sample)]
         scenario = {name: val for name, val in zip(space.keys(), values)}
+
         write(args.out_dir, scenario, exp)
 
 
