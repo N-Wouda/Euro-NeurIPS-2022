@@ -1,17 +1,11 @@
 import time
 
 import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
 
 import hgspy
 from strategies.dynamic import STRATEGIES
 from strategies.static import hgs
 from .utils import sol2ep
-
-import plotting
-
-matplotlib.use("Agg")  # Don't show plots
 
 
 def solve_dynamic(env, config, solver_seed):
