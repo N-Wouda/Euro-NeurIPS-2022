@@ -73,19 +73,6 @@ def solve_dynamic(env, config, solver_seed):
         current_epoch = observation["current_epoch"]
         solutions[current_epoch] = ep_sol
 
-        ep_inst = observation["epoch_instance"]
-        n_dispatch = len(dispatch_inst["coords"]) - 1
-        n_requests = len(ep_inst["coords"]) - 1
-        n_must_dispatch = sum(ep_inst["must_dispatch"])
-        n_sol = len([x for route in ep_sol for x in route])
-        print(
-            f"Epoch: {observation['current_epoch']} / {static_info['end_epoch']}",
-            end=" - ",
-        )
-        print(
-            f"Dispatch: {n_dispatch} / {n_requests}, {n_must_dispatch=}, {n_sol=}"
-        )
-
         observation, reward, done, info = env.step(ep_sol)
         costs[current_epoch] = abs(reward)
 
