@@ -28,7 +28,7 @@ def rollout(
     """
     # Return the full epoch instance for the last epoch
     if obs["current_epoch"] == info["end_epoch"]:
-        return obs["epoch_instance"], {}
+        return obs["epoch_instance"]
 
     # Parameters
     ep_inst = obs["epoch_instance"]
