@@ -64,17 +64,17 @@ weightWaitTime = 2
 weightTimeWarp = 10
 shouldIntensify = true
 # circleSectorOverlapTolerance = 0
-# minCircleSectorSize = 2731
+# minCircleSectorSizeDegrees = 15
 postProcessPathLength = 6
 
 
 [dynamic.strategy_params]
 rollout_tlim_factor = 0.8
-n_cycles = 2
+n_cycles = 1
 n_simulations = 50
 n_lookahead = 1
 n_requests = 100
-dispatch_threshold = 0.35
+dispatch_threshold = 0.30
 
 node_ops = [
     "Exchange10",
@@ -121,5 +121,5 @@ nbGranular = 40
 weightWaitTime = 2
 weightTimeWarp = 10
 # circleSectorOverlapTolerance = 0
-# minCircleSectorSize = 2731
+# minCircleSectorSizeDegrees = 15
 postProcessPathLength = 6
