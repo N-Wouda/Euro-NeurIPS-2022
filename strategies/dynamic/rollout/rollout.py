@@ -60,8 +60,6 @@ def rollout(
                 hgspy.stop.MaxRuntime(sim_tlim),
             )
 
-            best = res.get_best_found()
-
             for sim_route in best.get_routes():
                 # Only dispatch routes that contain must dispatch requests
                 if any(idx in must_dispatch for idx in sim_route):
@@ -76,6 +74,6 @@ def rollout(
 
         dispatch_count *= 0  # reset dispatch count
 
-    dispatch = ep_inst["is_depot"] | ep_inst["must_dispatch"] | ~to_postpone
+    to_dispatch = ep_inst["is_depot"] | ep_inst["must_dispatch"] | ~to_postpone
 
-    return filter_instance(ep_inst, dispatch)
+    return filter_instance(ep_inst, to_dispatch)
