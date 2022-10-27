@@ -64,19 +64,25 @@ def parse_args():
 
 
 def write(where: str, params, exp: int):
-    # Defaults from penalty management
-    params["initialTimeWarpPenalty"] = 14
-    params["nbPenaltyManagement"] = 1
-    params["feasBooster"] = 9.045454545454545
-    params["penaltyIncrease"] = 2.0303030303030303
-    params["penaltyDecrease"] = 0.33712121212121215
-    params["targetFeasible"] = 0.18686868686868688
-    params["repairProbability"] = 53
-    params["repairBooster"] = 10
-
-    # Defaults from population management
-    params["minPopSize"] = 3
-    params["generationSize"] = 8
+    # # Defaults from penalty management
+    # params["initialTimeWarpPenalty"] = 14
+    # params["nbPenaltyManagement"] = 1
+    # params["feasBooster"] = 9.045454545454545
+    # params["penaltyIncrease"] = 2.0303030303030303
+    # params["penaltyDecrease"] = 0.33712121212121215
+    # params["targetFeasible"] = 0.18686868686868688
+    # params["repairProbability"] = 53
+    # params["repairBooster"] = 10
+    #
+    # # Defaults from population management
+    # params["minPopSize"] = 3
+    # params["generationSize"] = 8
+    #
+    # # Defaults for local search management
+    # params["shouldIntensify"] = 0
+    # params["nbGranular"] = 16
+    # params["weightWaitTime"] = 5
+    # params["weightTimeWarp"] = 18
 
     static = dict(
         node_ops=[
