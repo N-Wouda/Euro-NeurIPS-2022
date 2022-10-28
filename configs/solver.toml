@@ -43,6 +43,7 @@ strategy = "rollout"
 
 [dynamic.strategy_params]
 rollout_tlim_factor = 0.7
+n_cycles = 1
 n_simulations = 50
 n_lookahead = 1
 n_requests = 100
