@@ -35,36 +35,6 @@ def plot_instance(ax, instance, routes=()):
     kwargs = dict(marker="*", zorder=3, s=750)
     ax.scatter(*depot_coords, c="tab:red", label="Depot", **kwargs)
 
-    if "must_dispatch" in instance:
-        must_dispatch = instance["must_dispatch"]
-        must_dispatch_coords = instance["coords"][must_dispatch].T
-        kwargs = dict(marker="^", zorder=3, s=150)
-        ax.scatter(
-            *must_dispatch_coords, c="tab:red", label="Must dispatch", **kwargs
-        )
-
-    if "certain_dispatch" in instance:
-        certain_dispatch = instance["certain_dispatch"]
-        certain_dispatch_coords = instance["coords"][certain_dispatch].T
-        kwargs = dict(marker="^", zorder=3, s=150)
-        ax.scatter(
-            *certain_dispatch_coords,
-            c="tab:orange",
-            label="Certain dispatch",
-            **kwargs
-        )
-
-    if "certain_postpone" in instance:
-        certain_postpone = instance["certain_postpone"]
-        certain_postpone_coords = instance["coords"][certain_postpone].T
-        kwargs = dict(marker="+", zorder=3, s=50)
-        ax.scatter(
-            *certain_postpone_coords,
-            c="tab:green",
-            label="Certain postpone",
-            **kwargs
-        )
-
     for route in routes:
         ax.plot(*instance["coords"][[0] + route + [0]].T)
 
