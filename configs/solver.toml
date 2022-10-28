@@ -41,6 +41,29 @@ crossover_ops = [
 
 strategy = "rollout"
 
+
+[dynamic.params]
+nbGranular = 30
+weightWaitTime = 2
+weightTimeWarp = 5
+postProcessPathLength = 1
+initialTimeWarpPenalty = 1
+nbPenaltyManagement = 100
+feasBooster = 2.0
+penaltyIncrease = 1.2
+penaltyDecrease = 0.85
+targetFeasible = 0.4
+repairProbability = 50
+repairBooster = 10
+minPopSize = 38
+generationSize = 32
+nbElite = 10
+lbDiversity = 0.14015151515151514
+ubDiversity = 0.36742424242424243
+nbClose = 17
+nbIter = 6318
+
+
 [dynamic.strategy_params]
 rollout_tlim_factor = 0.7
 n_cycles = 1
