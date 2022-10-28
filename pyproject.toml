@@ -23,7 +23,7 @@ optional = true
 
 [tool.poetry.group.tune.dependencies]
 tomli-w = "^1.0.0"
-
+scipy = "^1.9.2"
 
 [tool.poetry.dev-dependencies]
 black = "^22.6.0"
