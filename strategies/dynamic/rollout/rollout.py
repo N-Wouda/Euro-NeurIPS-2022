@@ -15,7 +15,7 @@ def rollout(
     n_simulations: int,
     n_lookahead: int,
     n_requests: int,
-    dispatch_threshold: float,
+    dispatch_thresholds: list,
     sim_config: dict,
     node_ops: list,
     route_ops: list,
@@ -27,6 +27,8 @@ def rollout(
     those simulations.
     """
     # Return the full epoch instance for the last epoch
+    epoch = obs["current_epoch"]
+
     if obs["current_epoch"] == info["end_epoch"]:
         return obs["epoch_instance"]
 
@@ -39,6 +41,9 @@ def rollout(
 
     dispatch_count = np.zeros(n_ep_reqs, dtype=int)
     to_postpone = np.zeros(n_ep_reqs, dtype=bool)
+
+    num_thresholds = len(dispatch_thresholds)
+    dispatch_threshold = dispatch_thresholds[min(epoch, num_thresholds - 1)]
 
     for _ in range(n_cycles):
         for _ in range(n_simulations):
