@@ -78,6 +78,15 @@ def write(where: str, params, exp: int):
     params["repairProbability"] = 50
     params["repairBooster"] = 10
 
+    # Tuned population parameters
+    params["minPopSize"] = 38
+    params["generationSize"] = 32
+    params["nbElite"] = 10
+    params["lbDiversity"] = 0.14015151515151514
+    params["ubDiversity"] = 0.36742424242424243
+    params["nbClose"] = 17
+    params["nbIter"] = 6318
+
     static = dict(
         node_ops=[
             "Exchange10",
