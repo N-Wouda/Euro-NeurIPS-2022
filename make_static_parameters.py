@@ -68,6 +68,16 @@ def parse_args():
 
 
 def write(where: str, params, exp: int):
+    # Tuned penalty params
+    params["initialTimeWarpPenalty"] = 1
+    params["nbPenaltyManagement"] = 100
+    params["feasBooster"] = 2.0
+    params["penaltyIncrease"] = 1.2
+    params["penaltyDecrease"] = 0.85
+    params["targetFeasible"] = 0.4
+    params["repairProbability"] = 50
+    params["repairBooster"] = 10
+
     static = dict(
         node_ops=[
             "Exchange10",
