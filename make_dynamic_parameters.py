@@ -48,8 +48,7 @@ def write(where: str, params, exp: int):
 def main():
     args = parse_args()
 
-    # TODO fix dispatch threshold dependency on n_lookahead, and make threshold
-    # dependent on
+    # TODO fix dispatch threshold dependency on n_lookahead
     space = dict(
         rollout_tlim_factor=Float((0.6, 1.0), 0.7),
         n_cycles=Integer((1, 3), 1),

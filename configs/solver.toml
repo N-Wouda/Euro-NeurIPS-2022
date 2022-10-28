@@ -96,7 +96,6 @@ crossover_ops = [
 
 [dynamic.strategy_params.sim_config]
 seed = 1
-seed = 1
 initialTimeWarpPenalty = 14
 nbPenaltyManagement = 1
 feasBooster = 9.045454545454545
