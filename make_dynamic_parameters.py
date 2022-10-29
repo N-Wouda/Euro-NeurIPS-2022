@@ -1,5 +1,6 @@
 import argparse
 from dataclasses import dataclass
+from random import seed, uniform
 
 import tomli_w
 from scipy.stats import qmc
@@ -47,18 +48,19 @@ def write(where: str, params, exp: int):
 
 def main():
     args = parse_args()
+    seed(args.seed)
 
-    # TODO fix dispatch threshold dependency on n_lookahead
     space = dict(
         rollout_tlim_factor=Float((0.6, 1.0), 0.7),
         n_cycles=Integer((1, 3), 1),
         n_simulations=Integer((25, 100), 50),
         n_lookahead=Integer((1, 5), 1),
         n_requests=Integer((50, 100), 100),
-        dispatch_threshold=Float((0.0, 1.0), 0.35),
     )
 
     default = {name: val.default for name, val in space.items()}
+    default["dispatch_thresholds"] = [0.35]
+
     write(args.out_dir, default, 1)
 
     sampler = qmc.LatinHypercube(d=len(space), centered=True, seed=args.seed)
@@ -67,6 +69,16 @@ def main():
     for exp, sample in enumerate(samples, 2):
         values = [param.ppf(val) for param, val in zip(space.values(), sample)]
         scenario = {name: val for name, val in zip(space.keys(), values)}
+
+        thresholds = [
+            uniform(0.2, 0.5),
+            uniform(0.1, 0.4),
+            uniform(0.05, 0.3),
+            uniform(0.05, 0.2),
+        ]
+
+        scenario["dispatch_thresholds"] = thresholds
+
         write(args.out_dir, scenario, exp)
 
 
