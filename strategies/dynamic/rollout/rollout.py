@@ -27,8 +27,6 @@ def rollout(
     those simulations.
     """
     # Return the full epoch instance for the last epoch
-    epoch = obs["current_epoch"]
-
     if obs["current_epoch"] == info["end_epoch"]:
         return obs["epoch_instance"]
 
@@ -42,6 +40,9 @@ def rollout(
     dispatch_count = np.zeros(n_ep_reqs, dtype=int)
     to_postpone = np.zeros(n_ep_reqs, dtype=bool)
 
+    # Get the threshold belonging to the current epoch, or the last one
+    # available if there are more epochs than thresholds.
+    epoch = obs["current_epoch"] - info["start_epoch"]
     num_thresholds = len(dispatch_thresholds)
     dispatch_threshold = dispatch_thresholds[min(epoch, num_thresholds - 1)]
 
