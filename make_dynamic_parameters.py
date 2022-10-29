@@ -51,7 +51,7 @@ def main():
     seed(args.seed)
 
     space = dict(
-        rollout_tlim_factor=Float((0.6, 1.0), 0.7),
+        rollout_tlim_factor=Float((0.5, 0.9), 0.7),
         n_cycles=Integer((1, 3), 1),
         n_simulations=Integer((25, 100), 50),
         n_lookahead=Integer((1, 5), 1),
