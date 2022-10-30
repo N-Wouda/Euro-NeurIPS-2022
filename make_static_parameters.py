@@ -51,8 +51,6 @@ PARAM_SPACE = dict(
         nbGranular=Integer((10, 100), 40),
         weightWaitTime=Integer((1, 25), 2),
         weightTimeWarp=Integer((1, 25), 10),
-        circleSectorOverlapToleranceDegrees=Integer((0, 359), 0),
-        minCircleSectorSizeDegrees=Integer((0, 359), 15),
         postProcessPathLength=Integer((1, 8), 6),
     ),
 )
