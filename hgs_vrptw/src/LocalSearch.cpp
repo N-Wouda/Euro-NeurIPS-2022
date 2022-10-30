@@ -32,17 +32,17 @@ void LocalSearch::search(Individual &indiv)
         searchCompleted = true;
 
         // Node operators are evaluated at neighbouring (U, V) pairs.
-        for (int const uClient : orderNodes)
+        for (auto const uClient : orderNodes)
         {
-            Node *U = &clients[uClient];
-            auto const lastTestedNode = lastTestedNodes[U->client];
-            lastTestedNodes[U->client] = nbMoves;
+            auto *U = &clients[uClient];
+            auto const lastTestedNode = lastTestedNodes[uClient];
+            lastTestedNodes[uClient] = nbMoves;
 
             // Shuffling the neighbours in this loop should not matter much as
             // we are already randomizing the nodes U.
-            for (auto const vClient : params.getNeighboursOf(U->client))
+            for (auto const vClient : params.getNeighboursOf(uClient))
             {
-                Node *V = &clients[vClient];
+                auto *V = &clients[vClient];
 
                 if (step == 0  // evaluate only if routes have changed recently
                     || lastModified[U->route->idx] > lastTestedNode
