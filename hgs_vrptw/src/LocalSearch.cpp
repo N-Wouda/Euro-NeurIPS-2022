@@ -27,8 +27,7 @@ void LocalSearch::search(Individual &indiv)
     searchCompleted = false;
     nbMoves = 0;
 
-    // At least two iterations as empty routes are not evaluated in the first
-    for (int step = 0; step <= 1 || !searchCompleted; ++step)
+    for (int step = 0; !searchCompleted; ++step)
     {
         searchCompleted = true;
 
