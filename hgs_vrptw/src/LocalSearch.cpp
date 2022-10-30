@@ -44,8 +44,7 @@ void LocalSearch::search(Individual &indiv)
             {
                 auto *V = &clients[vClient];
 
-                if (step == 0  // evaluate only if routes have changed recently
-                    || lastModified[U->route->idx] > lastTestedNode
+                if (lastModified[U->route->idx] > lastTestedNode
                     || lastModified[V->route->idx] > lastTestedNode)
                 {
                     if (applyNodeOps(U, V))
