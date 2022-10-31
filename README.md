@@ -34,7 +34,7 @@ poetry install
 Then, one needs to compile the static solver.
 Assuming the pybind submodule has been initialised, and `cmake` is available, the following should work:
 ```bash
-cmake -Brelease -Shgs_vrptw
+cmake -Brelease -Shgs_vrptw -DCMAKE_BUILD_TYPE=Release
 make --directory=release
 ```
 Then, the solver (both static and dynamic) can be called using the `solver.py` script.
