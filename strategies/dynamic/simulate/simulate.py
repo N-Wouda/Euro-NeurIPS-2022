@@ -6,11 +6,11 @@ from strategies.utils import filter_instance
 from .simulate_instance import simulate_instance
 
 
-def rollout(
+def simulate(
     info,
     obs,
     rng,
-    rollout_tlim_factor: float,
+    simulate_tlim_factor: float,
     n_cycles: int,
     n_simulations: int,
     n_lookahead: int,
@@ -34,8 +34,8 @@ def rollout(
     ep_inst = obs["epoch_instance"]
     n_ep_reqs = ep_inst["is_depot"].size
     must_dispatch = set(np.flatnonzero(ep_inst["must_dispatch"]))
-    rollout_tlim = rollout_tlim_factor * info["epoch_tlim"]
-    sim_tlim = rollout_tlim / (n_cycles * n_simulations)
+    total_sim_tlim = simulate_tlim_factor * info["epoch_tlim"]
+    single_sim_tlim = total_sim_tlim / (n_cycles * n_simulations)
 
     dispatch_count = np.zeros(n_ep_reqs, dtype=int)
     to_postpone = np.zeros(n_ep_reqs, dtype=bool)
@@ -63,7 +63,7 @@ def rollout(
                 [getattr(hgspy.operators, op) for op in node_ops],
                 [getattr(hgspy.operators, op) for op in route_ops],
                 [getattr(hgspy.crossover, op) for op in crossover_ops],
-                hgspy.stop.MaxRuntime(sim_tlim),
+                hgspy.stop.MaxRuntime(single_sim_tlim),
             )
 
             best = res.get_best_found()

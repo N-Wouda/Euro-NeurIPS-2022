@@ -1,5 +1,5 @@
 from .baselines import greedy, lazy, random
-from .rollout import rollout
+from .simulate import simulate
 
 # This dict stores strategies that can be used to decide which requests to
 # dispatch in each epoch. A strategy is a function that takes the following
@@ -17,5 +17,5 @@ STRATEGIES = {
     "greedy": greedy,
     "lazy": lazy,
     "random": random,
-    "rollout": rollout,
+    "simulate": simulate,
 }

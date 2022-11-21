@@ -39,7 +39,7 @@ crossover_ops = [
     "selective_route_exchange",
 ]
 
-strategy = "rollout"
+strategy = "simulate"
 
 
 [dynamic.params]
@@ -65,7 +65,7 @@ nbIter = 6318
 
 
 [dynamic.strategy_params]
-rollout_tlim_factor = 0.7703517587939699
+simulate_tlim_factor = 0.7703517587939699
 n_cycles = 3
 n_simulations = 40
 n_lookahead = 5
