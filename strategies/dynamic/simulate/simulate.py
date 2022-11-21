@@ -15,7 +15,7 @@ def simulate(
     n_simulations: int,
     n_lookahead: int,
     n_requests: int,
-    dispatch_thresholds: list,
+    postpone_thresholds: list,
     sim_config: dict,
     node_ops: list,
     route_ops: list,
@@ -43,8 +43,8 @@ def simulate(
     # Get the threshold belonging to the current epoch, or the last one
     # available if there are more epochs than thresholds.
     epoch = obs["current_epoch"] - info["start_epoch"]
-    num_thresholds = len(dispatch_thresholds)
-    dispatch_threshold = dispatch_thresholds[min(epoch, num_thresholds - 1)]
+    num_thresholds = len(postpone_thresholds)
+    postpone_threshold = postpone_thresholds[min(epoch, num_thresholds - 1)]
 
     for _ in range(n_cycles):
         for _ in range(n_simulations):
@@ -77,7 +77,6 @@ def simulate(
 
         # Select requests to postpone based on thresholds
         postpone_count = n_simulations - dispatch_count
-        postpone_threshold = 1 - dispatch_threshold
         to_postpone = postpone_count >= postpone_threshold * n_simulations
 
         dispatch_count *= 0  # reset dispatch count

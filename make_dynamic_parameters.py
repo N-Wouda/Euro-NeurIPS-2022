@@ -59,7 +59,7 @@ def main():
     )
 
     default = {name: val.default for name, val in space.items()}
-    default["dispatch_thresholds"] = [0.35]
+    default["postpone_thresholds"] = [0.65]
 
     write(args.out_dir, default, 1)
 
@@ -71,13 +71,13 @@ def main():
         scenario = {name: val for name, val in zip(space.keys(), values)}
 
         thresholds = [
-            uniform(0.2, 0.5),
-            uniform(0.1, 0.4),
-            uniform(0.05, 0.3),
-            uniform(0.05, 0.2),
+            uniform(0.5, 0.8),
+            uniform(0.6, 0.9),
+            uniform(0.70, 0.95),
+            uniform(0.80, 0.95),
         ]
 
-        scenario["dispatch_thresholds"] = thresholds
+        scenario["postpone_thresholds"] = thresholds
 
         write(args.out_dir, scenario, exp)
 
