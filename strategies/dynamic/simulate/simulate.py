@@ -6,16 +6,16 @@ from strategies.utils import filter_instance
 from .simulate_instance import simulate_instance
 
 
-def rollout(
+def simulate(
     info,
     obs,
     rng,
-    rollout_tlim_factor: float,
+    simulate_tlim_factor: float,
     n_cycles: int,
     n_simulations: int,
     n_lookahead: int,
     n_requests: int,
-    dispatch_thresholds: list,
+    postpone_thresholds: list,
     sim_config: dict,
     node_ops: list,
     route_ops: list,
@@ -34,8 +34,8 @@ def rollout(
     ep_inst = obs["epoch_instance"]
     n_ep_reqs = ep_inst["is_depot"].size
     must_dispatch = set(np.flatnonzero(ep_inst["must_dispatch"]))
-    rollout_tlim = rollout_tlim_factor * info["epoch_tlim"]
-    sim_tlim = rollout_tlim / (n_cycles * n_simulations)
+    total_sim_tlim = simulate_tlim_factor * info["epoch_tlim"]
+    single_sim_tlim = total_sim_tlim / (n_cycles * n_simulations)
 
     dispatch_count = np.zeros(n_ep_reqs, dtype=int)
     to_postpone = np.zeros(n_ep_reqs, dtype=bool)
@@ -43,8 +43,8 @@ def rollout(
     # Get the threshold belonging to the current epoch, or the last one
     # available if there are more epochs than thresholds.
     epoch = obs["current_epoch"] - info["start_epoch"]
-    num_thresholds = len(dispatch_thresholds)
-    dispatch_threshold = dispatch_thresholds[min(epoch, num_thresholds - 1)]
+    num_thresholds = len(postpone_thresholds)
+    postpone_threshold = postpone_thresholds[min(epoch, num_thresholds - 1)]
 
     for _ in range(n_cycles):
         for _ in range(n_simulations):
@@ -63,7 +63,7 @@ def rollout(
                 [getattr(hgspy.operators, op) for op in node_ops],
                 [getattr(hgspy.operators, op) for op in route_ops],
                 [getattr(hgspy.crossover, op) for op in crossover_ops],
-                hgspy.stop.MaxRuntime(sim_tlim),
+                hgspy.stop.MaxRuntime(single_sim_tlim),
             )
 
             best = res.get_best_found()
@@ -77,7 +77,6 @@ def rollout(
 
         # Select requests to postpone based on thresholds
         postpone_count = n_simulations - dispatch_count
-        postpone_threshold = 1 - dispatch_threshold
         to_postpone = postpone_count >= postpone_threshold * n_simulations
 
         dispatch_count *= 0  # reset dispatch count

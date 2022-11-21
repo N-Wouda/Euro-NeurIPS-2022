@@ -39,7 +39,7 @@ crossover_ops = [
     "selective_route_exchange",
 ]
 
-strategy = "rollout"
+strategy = "simulate"
 
 
 [dynamic.params]
@@ -65,16 +65,16 @@ nbIter = 6318
 
 
 [dynamic.strategy_params]
-rollout_tlim_factor = 0.7703517587939699
+simulate_tlim_factor = 0.7703517587939699
 n_cycles = 3
 n_simulations = 40
 n_lookahead = 5
 n_requests = 69
-dispatch_thresholds = [
-    0.37108417107355407,
-    0.1514551285533156,
-    0.26694526610874836,
-    0.19606628542395377,
+postpone_thresholds = [
+    0.6289158289264459,
+    0.8485448714466843,
+    0.7330547338912516,
+    0.8039337145760462,
 ]
 
 node_ops = [

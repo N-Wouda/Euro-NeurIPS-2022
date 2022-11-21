@@ -17,13 +17,13 @@ We also:
 - Removed many ineffective parameters and constructive heuristics
 - And more!
 
-Our dynamic strategy (`rollout`) simulates requests from future epochs.
+Our dynamic strategy (`simulate`) simulates requests from future epochs.
 In each epoch, we simulate multiple scenarios and quickly solve the resulting simulation instances using the static solver (in a few hundred milliseconds).
 We use the simulation solutions to determine which requests to postpone, and which to dispatch. 
 In particular, we postpone a request if it was infrequently paired with must-dispatch requests, otherwise we dispatch it.
 We then solve the resulting dispatch instance, again using the static solver. 
 We also:
-- Apply the rollout strategy in a recursive fashion
+- Apply the simulation strategy in a recursive fashion
 - Use epoch-specific thresholds to determine which requests to postpone
 - Postpone routes from dispatch solutions if they do not contain any must-dispatch requests
 - And more!
