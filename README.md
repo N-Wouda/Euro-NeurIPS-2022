@@ -2,7 +2,7 @@
 
 # EURO Meets NeurIPS 2022 Vehicle Routing Competition
 
-This repository hosts OptiML's contribution to the [2022 Euro meets NeurIPS vehicle routing competition](https://euro-neurips-vrp-2022.challenges.ortec.com/), where we finished second overall (1st on the static problem variant and 3rd on dynamic). 
+This repository hosts OptiML's contribution to the [2022 Euro meets NeurIPS vehicle routing competition](https://euro-neurips-vrp-2022.challenges.ortec.com/), where we finished second overall (1st on the static problem variant and 3rd on the dynamic one). 
 
 ## Solver
 
